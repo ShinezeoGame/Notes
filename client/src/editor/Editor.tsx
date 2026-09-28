@@ -14,10 +14,16 @@ import type { DocHandle } from '../lib/yjs';
 import { useSettings } from '../lib/settings';
 import { schema } from './schema';
 import { useAppCtx } from './context';
+import { Icon } from '../icons/Icon';
+import type { IconName } from '../icons/registry';
 
 type Props = { handle: DocHandle; editable: boolean };
 
-const Icon = ({ children }: { children: string }) => <span className="nb-slash-icon">{children}</span>;
+const SlashIcon = ({ name }: { name: IconName }) => (
+  <span className="nb-slash-icon">
+    <Icon name={name} size={18} />
+  </span>
+);
 
 type LooseBlock = { id: string; type: string; props: Record<string, unknown>; children?: LooseBlock[] };
 
@@ -90,7 +96,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'Créer une nouvelle page à l’intérieur de celle-ci',
         aliases: ['page', 'sous-page', 'souspage', 'subpage', 'nouvelle page'],
         group: 'Pages',
-        icon: <Icon>📄</Icon>,
+        icon: <SlashIcon name="file" />,
         onItemClick: () => {
           void (async () => {
             const id = await ctx.createSubpage!(ctx.currentPageId, '');
@@ -105,7 +111,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'Importer un document PDF avec aperçu',
         aliases: ['pdf', 'document', 'fichier pdf'],
         group: fr.slash_menu.image.group,
-        icon: <Icon>📑</Icon>,
+        icon: <SlashIcon name="filePdf" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'pdf' }),
       },
       {
@@ -113,7 +119,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'YouTube, Vimeo, Google Agenda, Drive, Figma…',
         aliases: ['youtube', 'embed', 'intégration', 'integration', 'iframe', 'vimeo', 'lien'],
         group: fr.slash_menu.image.group,
-        icon: <Icon>🎬</Icon>,
+        icon: <SlashIcon name="video" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'embed' }),
       },
       {
@@ -121,7 +127,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'Importer une image animée',
         aliases: ['gif', 'giphy', 'animation'],
         group: fr.slash_menu.image.group,
-        icon: <Icon>🎞️</Icon>,
+        icon: <SlashIcon name="image" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'image' }),
       },
       {
@@ -129,7 +135,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'Importer des événements (.ics, lien iCal ou compte Google)',
         aliases: ['agenda', 'calendar', 'calendrier', 'google', 'ics', 'événements', 'evenements'],
         group: fr.slash_menu.image.group,
-        icon: <Icon>📅</Icon>,
+        icon: <SlashIcon name="calendar" />,
         onItemClick: () => {
           void (async () => {
             const res = await ctx.importCalendar();
@@ -149,7 +155,7 @@ export function Editor({ handle, editable }: Props) {
         subtext: 'Intégrer le tableau de bord de vos applications et appareils',
         aliases: ['homelab', 'dashboard', 'tableau de bord', 'serveur', 'nas'],
         group: fr.slash_menu.image.group,
-        icon: <Icon>🏠</Icon>,
+        icon: <SlashIcon name="home" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'homelab' }),
       });
     }

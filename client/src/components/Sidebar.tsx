@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { useWorkspacePages, type PageMeta, type WorkspaceStore } from '../lib/workspace';
 import type { ConnStatus } from '../lib/yjs';
+import { Icon } from '../icons/Icon';
+import { PageIcon } from '../icons/pageIcon';
 
 type Props = {
   store: WorkspaceStore;
@@ -127,9 +129,11 @@ export function Sidebar(props: Props) {
             }}
             aria-label={expanded ? 'Replier' : 'Déplier'}
           >
-            {expanded ? '▾' : '▸'}
+            <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size={14} />
           </button>
-          <span className="nb-tree-icon">{page.icon || '📄'}</span>
+          <span className="nb-tree-icon">
+            <PageIcon icon={page.icon} size={16} />
+          </span>
           <span className="nb-tree-title">{page.title || 'Sans titre'}</span>
           <span className="nb-tree-actions">
             <button
@@ -143,7 +147,7 @@ export function Sidebar(props: Props) {
               }}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              ⋯
+              <Icon name="dots" size={16} />
             </button>
             <button
               type="button"
@@ -155,7 +159,7 @@ export function Sidebar(props: Props) {
                 props.onNewPage(page.id);
               }}
             >
-              +
+              <Icon name="plus" size={16} />
             </button>
           </span>
         </div>
@@ -182,14 +186,14 @@ export function Sidebar(props: Props) {
             <span className={`nb-status nb-status--${status}`} title={STATUS_LABEL[status]} />
           </div>
           <div className="nb-sidebar-tools">
-            <button type="button" className="nb-icon-btn" title="Rechercher (Ctrl+K)" onClick={props.onOpenSearch}>
-              🔍
+            <button type="button" className="nb-icon-btn" title="Rechercher (Ctrl+K)" aria-label="Rechercher" onClick={props.onOpenSearch}>
+              <Icon name="search" size={17} />
             </button>
-            <button type="button" className="nb-icon-btn" title="Réglages" onClick={props.onOpenSettings}>
-              ⚙️
+            <button type="button" className="nb-icon-btn" title="Réglages" aria-label="Réglages" onClick={props.onOpenSettings}>
+              <Icon name="settings" size={17} />
             </button>
-            <button type="button" className="nb-icon-btn nb-only-mobile" title="Fermer" onClick={onClose}>
-              ✕
+            <button type="button" className="nb-icon-btn nb-only-mobile" title="Fermer" aria-label="Fermer" onClick={onClose}>
+              <Icon name="close" size={17} />
             </button>
           </div>
         </div>
@@ -218,13 +222,13 @@ export function Sidebar(props: Props) {
 
         <div className="nb-sidebar-foot">
           <button type="button" className="nb-sidebar-link" onClick={() => props.onNewPage('')}>
-            <span>＋</span> Nouvelle page
+            <Icon name="plus" size={16} /> Nouvelle page
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenDashboard}>
-            <span>🏠</span> Homelab
+            <Icon name="home" size={16} /> Homelab
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
-            <span>🗑️</span> Corbeille
+            <Icon name="trash" size={16} /> Corbeille
           </button>
         </div>
       </aside>
@@ -236,17 +240,17 @@ export function Sidebar(props: Props) {
           onMouseDown={(e) => e.stopPropagation()}
         >
           <button type="button" onClick={() => { props.onNewPage(menu.pageId); toggleExpanded(menu.pageId, true); setMenu(null); }}>
-            ＋ Ajouter une sous-page
+            <Icon name="plus" size={16} /> Ajouter une sous-page
           </button>
           <button type="button" onClick={() => { props.onShare(menu.pageId); setMenu(null); }}>
-            🔗 Partager
+            <Icon name="share" size={16} /> Partager
           </button>
           <button type="button" onClick={() => { navigator.clipboard?.writeText(`${location.origin}${location.pathname}#/p/${menu.pageId}`); setMenu(null); }}>
-            📋 Copier le lien interne
+            <Icon name="copy" size={16} /> Copier le lien interne
           </button>
           <div className="nb-menu-sep" />
           <button type="button" className="nb-menu-danger" onClick={() => { props.onDelete(menu.pageId); setMenu(null); }}>
-            🗑️ Supprimer
+            <Icon name="trash" size={16} /> Supprimer
           </button>
         </div>
       ) : null}

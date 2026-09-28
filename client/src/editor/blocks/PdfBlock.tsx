@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blocknote/react';
 import type { BlockConfig } from '@blocknote/core';
 import { useAppCtx } from '../context';
+import { Icon } from '../../icons/Icon';
 
 const pdfConfig = {
   type: 'pdf',
@@ -80,7 +81,9 @@ function PdfView({ block, editor }: Props) {
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
         <button type="button" className="nb-placeholder-btn" onClick={pick} disabled={!editable || uploading}>
-          <span className="nb-placeholder-icon">📄</span>
+          <span className="nb-placeholder-icon">
+            <Icon name="filePdf" size={20} />
+          </span>
           {uploading ? 'Téléversement…' : 'Ajouter un PDF'}
         </button>
       </div>
@@ -91,7 +94,7 @@ function PdfView({ block, editor }: Props) {
     <div className="nb-pdf" contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title" title={name}>
-          📄 {name || 'Document PDF'}
+          <Icon name="filePdf" size={15} /> {name || 'Document PDF'}
           {numPages ? <span className="nb-muted"> · {numPages} page{numPages > 1 ? 's' : ''}</span> : null}
         </span>
         <span className="nb-media-actions">

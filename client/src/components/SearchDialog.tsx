@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from './Modal';
 import type { WorkspaceStore } from '../lib/workspace';
+import { PageIcon } from '../icons/pageIcon';
 
 type Props = { store: WorkspaceStore; onClose: () => void; onOpen: (pageId: string) => void };
 
@@ -50,7 +51,9 @@ export function SearchDialog({ store, onClose, onOpen }: Props) {
               onMouseEnter={() => setIndex(i)}
               onClick={() => open(p.id)}
             >
-              <span className="nb-tree-icon">{p.icon || '📄'}</span>
+              <span className="nb-tree-icon">
+                <PageIcon icon={p.icon} size={16} />
+              </span>
               <span className="nb-search-title">{p.title || 'Sans titre'}</span>
               {crumbs.length ? <span className="nb-search-crumbs">{crumbs.join(' / ')}</span> : null}
             </button>

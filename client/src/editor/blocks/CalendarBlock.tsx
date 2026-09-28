@@ -5,6 +5,7 @@ import { useAppCtx } from '../context';
 import { dayKey, formatDay, formatTimeRange, parseEventsJson, parseIcs, type CalEvent } from '../../lib/ics';
 import { fetchGoogleEvents, requestGoogleToken } from '../../lib/google';
 import { getSettings } from '../../lib/settings';
+import { Icon } from '../../icons/Icon';
 
 const calendarConfig = {
   type: 'calendar',
@@ -86,7 +87,9 @@ function CalendarView({ block, editor }: Props) {
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
         <button type="button" className="nb-placeholder-btn" onClick={configure} disabled={!editable}>
-          <span className="nb-placeholder-icon">📅</span>
+          <span className="nb-placeholder-icon">
+            <Icon name="calendar" size={20} />
+          </span>
           Importer un agenda Google
         </button>
       </div>
@@ -112,7 +115,11 @@ function CalendarView({ block, editor }: Props) {
                 ev.title
               )}
             </div>
-            {ev.location ? <div className="nb-cal-loc">📍 {ev.location}</div> : null}
+            {ev.location ? (
+              <div className="nb-cal-loc">
+                <Icon name="mapPin" size={13} /> {ev.location}
+              </div>
+            ) : null}
           </div>
         </div>
       ))}
@@ -123,7 +130,7 @@ function CalendarView({ block, editor }: Props) {
     <div className="nb-calendar" contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title">
-          📅 {title || 'Agenda'}
+          <Icon name="calendar" size={15} /> {title || 'Agenda'}
           <span className="nb-muted">
             {' '}
             · {events.length} événement{events.length > 1 ? 's' : ''}

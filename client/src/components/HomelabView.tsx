@@ -5,13 +5,16 @@ import {
   formatBytes,
   formatStat,
   formatUptime,
-  isImageIcon,
+  deviceVisual,
+  serviceVisual,
   type DeviceStatus,
   type Gauge,
   type HomelabStatus,
   type ServiceStatus,
   type StatValue,
 } from '../lib/homelab';
+import { AppTile, Icon } from '../icons/Icon';
+import type { IconName } from '../icons/registry';
 
 type PanelProps = { compact?: boolean; refreshSeconds?: number; onConfigure?: () => void; configured: boolean };
 
@@ -22,14 +25,17 @@ function barClass(percent: number | null | undefined): string {
   return '';
 }
 
-function GaugeBar({ label, gauge, hint }: { label: string; gauge: Gauge | null | undefined; hint?: string }) {
+function GaugeBar({ label, gauge, hint, warn }: { label: string; gauge: Gauge | null | undefined; hint?: string; warn?: boolean }) {
   if (!gauge) return null;
   const pct = gauge.percent == null ? null : Math.max(0, Math.min(100, gauge.percent));
   const detail = hint ?? (gauge.total ? `${formatBytes(gauge.used)} / ${formatBytes(gauge.total)}` : pct != null ? `${pct.toFixed(0)} %` : '—');
   return (
     <div className="hl-gauge">
       <div className="hl-gauge-head">
-        <span className="hl-gauge-label" title={label}>{label}</span>
+        <span className="hl-gauge-label" title={label}>
+          {warn ? <Icon name="alert" size={13} className="hl-warn-icon" title="Volume signalé en mauvais état" /> : null}
+          {label}
+        </span>
         <span className="hl-gauge-detail">{detail}{pct != null && gauge.total ? ` · ${pct.toFixed(0)} %` : ''}</span>
       </div>
       <div className={`hl-bar${barClass(pct)}`}>
@@ -39,9 +45,8 @@ function GaugeBar({ label, gauge, hint }: { label: string; gauge: Gauge | null |
   );
 }
 
-function ServiceIcon({ icon, fallback }: { icon: string; fallback: string }) {
-  if (icon && isImageIcon(icon)) return <img className="hl-icon-img" src={icon} alt="" loading="lazy" />;
-  return <span className="hl-icon">{icon || fallback}</span>;
+function VisualTile({ v, size }: { v: { name: IconName; src?: string; color: string }; size: number }) {
+  return <AppTile name={v.name} color={v.color} src={v.src} size={size} />;
 }
 
 function StatChip({ s }: { s: StatValue }) {
@@ -59,7 +64,7 @@ export function ServiceCard({ s, compact }: { s: ServiceStatus; compact?: boolea
   return (
     <button type="button" className={`hl-card hl-service${s.ok ? '' : ' hl-service--down'}${compact ? ' hl-card--compact' : ''}`} onClick={open} title={s.url}>
       <div className="hl-service-head">
-        <ServiceIcon icon={s.icon} fallback="🔗" />
+        <VisualTile v={serviceVisual(s)} size={compact ? 26 : 32} />
         <span className="hl-service-name">{s.name || s.type}</span>
         <span className={`hl-dot${s.ok ? ' hl-dot--up' : ' hl-dot--down'}`} title={s.ok ? 'En ligne' : 'Hors ligne'} />
         {s.latency != null ? <span className="hl-latency">{s.latency} ms</span> : null}
@@ -82,7 +87,7 @@ export function DeviceCard({ d, compact }: { d: DeviceStatus; compact?: boolean 
   return (
     <div className={`hl-card hl-device${d.ok ? '' : ' hl-device--down'}`}>
       <div className="hl-service-head">
-        <ServiceIcon icon={d.icon || ''} fallback="🖥️" />
+        <VisualTile v={deviceVisual(d)} size={compact ? 26 : 32} />
         <span className="hl-service-name">{d.name || d.hostname || d.type}</span>
         <span className={`hl-dot${d.ok ? ' hl-dot--up' : ' hl-dot--down'}`} />
       </div>
@@ -97,16 +102,24 @@ export function DeviceCard({ d, compact }: { d: DeviceStatus; compact?: boolean 
           <GaugeBar label="Mémoire" gauge={d.memory} hint={d.memory && !d.memory.total && d.memory.percent != null ? `${d.memory.percent.toFixed(0)} %` : undefined} />
           {!compact ? <GaugeBar label="Swap" gauge={d.swap && d.swap.total ? d.swap : null} /> : null}
           {(d.disks ?? []).slice(0, compact ? 2 : 12).map((disk) => (
-            <GaugeBar key={disk.name} label={disk.name} gauge={disk.error ? null : disk} />
+            <GaugeBar key={disk.name} label={disk.name} gauge={disk.error ? null : disk} warn={disk.warn} />
           ))}
           <div className="hl-device-foot">
-            {d.uptime != null ? <span>⏱ {formatUptime(d.uptime)}</span> : null}
+            {d.uptime != null ? (
+              <span title="Temps de fonctionnement">
+                <Icon name="clock" size={13} /> {formatUptime(d.uptime)}
+              </span>
+            ) : null}
             {(d.temps ?? []).slice(0, compact ? 1 : 4).map((t) => (
               <span key={t.label} className={t.value >= 75 ? 'hl-temp--hot' : ''} title={t.label}>
-                🌡 {t.label.length > 14 ? `${t.label.slice(0, 14)}…` : t.label} {t.value.toFixed(0)} °C
+                <Icon name="thermometer" size={13} /> {t.label.length > 14 ? `${t.label.slice(0, 14)}…` : t.label} {t.value.toFixed(0)} °C
               </span>
             ))}
-            {d.network ? <span>↓ {formatBytes(d.network.rx)}/s ↑ {formatBytes(d.network.tx)}/s</span> : null}
+            {d.network ? (
+              <span title="Réseau">
+                <Icon name="arrowDown" size={13} /> {formatBytes(d.network.rx)}/s <Icon name="arrowUp" size={13} /> {formatBytes(d.network.tx)}/s
+              </span>
+            ) : null}
             {(d.extra ?? []).map((e) => (
               <span key={e.label}>{e.label} : {formatStat(e)}</span>
             ))}

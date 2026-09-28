@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from './Modal';
 import { api, serverBase, type ShareInfo, type ShareMode } from '../lib/api';
 import { toast } from './Toast';
+import { Icon } from '../icons/Icon';
 
 type Props = { pageId: string; pageTitle: string; onClose: () => void; onOpenSettings: () => void };
 
@@ -77,10 +78,10 @@ export function ShareDialog({ pageId, pageTitle, onClose, onOpenSettings }: Prop
           </p>
           <div className="nb-row nb-gap">
             <button type="button" className="nb-btn nb-btn--primary" disabled={busy} onClick={() => void create('edit')}>
-              ✏️ Lien de modification
+              <Icon name="pencil" size={16} /> Lien de modification
             </button>
             <button type="button" className="nb-btn" disabled={busy} onClick={() => void create('view')}>
-              👁️ Lien en lecture seule
+              <Icon name="eye" size={16} /> Lien en lecture seule
             </button>
           </div>
           {error ? <div className="nb-error">{error}</div> : null}

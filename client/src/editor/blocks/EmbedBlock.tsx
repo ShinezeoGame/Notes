@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blocknote/react';
 import type { BlockConfig } from '@blocknote/core';
 import { normalizeEmbedUrl } from '../embed';
+import { Icon } from '../../icons/Icon';
 
 const embedConfig = {
   type: 'embed',
@@ -14,6 +15,16 @@ const embedConfig = {
 } as const satisfies BlockConfig;
 
 type Props = ReactCustomBlockRenderProps<typeof embedConfig>;
+
+function embedLabel(kind: string | undefined, url: string): string {
+  if (kind === 'youtube') return 'YouTube';
+  if (kind === 'gcal') return 'Google Agenda';
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'Contenu intégré';
+  }
+}
 
 function EmbedView({ block, editor }: Props) {
   const { url, height, title } = block.props;
@@ -57,7 +68,9 @@ function EmbedView({ block, editor }: Props) {
     return (
       <div className="nb-file-placeholder nb-embed-form" contentEditable={false}>
         <div className="nb-placeholder-row">
-          <span className="nb-placeholder-icon">🎬</span>
+          <span className="nb-placeholder-icon">
+            <Icon name="video" size={20} />
+          </span>
           <input
             className="nb-input"
             type="url"
@@ -91,7 +104,7 @@ function EmbedView({ block, editor }: Props) {
     <div className="nb-embed" contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title" title={url}>
-          🎬 {title || info?.kind === 'youtube' ? 'YouTube' : info?.kind === 'gcal' ? 'Google Agenda' : new URL(url).hostname}
+          <Icon name="video" size={15} /> {title || embedLabel(info?.kind, url)}
         </span>
         <span className="nb-media-actions">
           <button type="button" onClick={() => window.open(url, '_blank', 'noopener')}>

@@ -2,6 +2,7 @@ import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blockno
 import type { BlockConfig } from '@blocknote/core';
 import { HomelabPanel } from '../../components/HomelabView';
 import { useAppCtx } from '../context';
+import { Icon } from '../../icons/Icon';
 
 const homelabConfig = {
   type: 'homelab',
@@ -14,14 +15,18 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
   if (ctx.mode !== 'owner') {
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
-        <div className="nb-placeholder-btn">🏠 Tableau de bord homelab (visible uniquement par le propriétaire de l’espace)</div>
+        <div className="nb-placeholder-btn">
+          <Icon name="home" size={18} /> Tableau de bord homelab, visible uniquement par le propriétaire de l’espace
+        </div>
       </div>
     );
   }
   return (
     <div className="nb-homelab-block" contentEditable={false}>
       <div className="nb-media-toolbar">
-        <span className="nb-media-title">🏠 Homelab</span>
+        <span className="nb-media-title">
+          <Icon name="home" size={15} /> Homelab
+        </span>
         <span className="nb-media-actions">
           {editor.isEditable ? (
             <button type="button" onClick={() => editor.updateBlock(block, { props: { compact: !block.props.compact } })}>

@@ -19,6 +19,8 @@ import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { useHomelabConfig } from './lib/homelab';
+import { Icon } from './icons/Icon';
+import { PageIcon, encodePageIcon } from './icons/pageIcon';
 
 export default function App() {
   const route = useRoute();
@@ -116,7 +118,7 @@ function OwnerApp() {
       return;
     }
     const id = store.createPage('', 'Bienvenue');
-    store.update(id, { icon: '👋' });
+    store.update(id, { icon: encodePageIcon('sparkles', 'yellow') });
     navigate({ name: 'page', pageId: id });
   }, [store, wsHandle.ready, route.name]);
 
@@ -305,25 +307,27 @@ function TopBar(props: {
     <header className="nb-topbar">
       {props.showMenuButton ? (
         <button type="button" className="nb-icon-btn" onClick={props.onMenu} aria-label="Menu">
-          ☰
+          <Icon name="menu" size={18} />
         </button>
       ) : null}
       <nav className="nb-crumbs">
         {props.isTrash ? (
           <span className="nb-crumb-current">Corbeille</span>
         ) : props.isDashboard ? (
-          <span className="nb-crumb-current">🏠 Homelab</span>
+          <span className="nb-crumb-current">
+            <Icon name="home" size={15} /> Homelab
+          </span>
         ) : (
           <>
             {crumbs.map((c) => (
               <button key={c.id} type="button" onClick={() => props.onOpenPage(c.id)}>
-                {c.icon ? `${c.icon} ` : ''}
+                <PageIcon icon={c.icon} size={15} fallback={null} />
                 {c.title || 'Sans titre'}
               </button>
             ))}
             {page ? (
               <span className="nb-crumb-current">
-                {page.icon ? `${page.icon} ` : ''}
+                <PageIcon icon={page.icon} size={15} fallback={null} />
                 {page.title || 'Sans titre'}
               </span>
             ) : null}
@@ -339,7 +343,7 @@ function TopBar(props: {
             </button>
             <div className="nb-menu-anchor" onMouseDown={(e) => e.stopPropagation()}>
               <button type="button" className="nb-icon-btn" onClick={() => setMenuOpen((v) => !v)} aria-label="Plus d’options">
-                ⋯
+                <Icon name="dots" size={18} />
               </button>
               {menuOpen ? (
                 <div className="nb-menu nb-menu--right">
@@ -351,7 +355,7 @@ function TopBar(props: {
                       setMenuOpen(false);
                     }}
                   >
-                    📋 Copier le lien interne
+                    <Icon name="copy" size={16} /> Copier le lien interne
                   </button>
                   <button
                     type="button"
@@ -361,7 +365,7 @@ function TopBar(props: {
                       setMenuOpen(false);
                     }}
                   >
-                    🗑️ Supprimer la page
+                    <Icon name="trash" size={16} /> Supprimer la page
                   </button>
                 </div>
               ) : null}
@@ -465,7 +469,9 @@ function DashboardView({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigu
   }, []);
   return (
     <div className="nb-page hl-page">
-      <h1 className="nb-page-title-static">🏠 Homelab</h1>
+      <h1 className="nb-page-title-static">
+        <Icon name="home" size={34} /> Homelab
+      </h1>
       <HomelabPanel refreshSeconds={cfg.refreshSeconds} onConfigure={onConfigure} configured={configured} />
     </div>
   );

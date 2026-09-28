@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Editor } from '../editor/Editor';
 import type { PageRef } from '../editor/context';
 import type { DocHandle } from '../lib/yjs';
-import { EmojiPicker } from './EmojiPicker';
+import { IconPicker } from './IconPicker';
+import { Icon } from '../icons/Icon';
+import { PageIcon } from '../icons/pageIcon';
 
 type Props = {
   handle: DocHandle | null;
@@ -37,18 +39,24 @@ export function PageEditorPane(props: Props) {
   return (
     <div className="nb-page">
       <div className="nb-page-head">
-        <div className="nb-page-icon-wrap">
-          <button
-            type="button"
-            className={`nb-page-icon${icon ? '' : ' nb-page-icon--empty'}`}
-            onClick={() => editable && setPickerOpen((v) => !v)}
-            title={editable ? 'Changer l’icône' : undefined}
-            disabled={!editable}
-          >
-            {icon || (editable ? '➕' : '📄')}
-          </button>
+        <div className={`nb-page-icon-wrap${icon ? '' : ' nb-page-icon-wrap--empty'}`}>
+          {icon ? (
+            <button
+              type="button"
+              className="nb-page-icon"
+              onClick={() => editable && setPickerOpen((v) => !v)}
+              title={editable ? 'Changer l’icône' : undefined}
+              disabled={!editable}
+            >
+              <PageIcon icon={icon} size={64} />
+            </button>
+          ) : editable ? (
+            <button type="button" className="nb-page-icon-add" onClick={() => setPickerOpen((v) => !v)}>
+              <Icon name="smile" size={16} /> Ajouter une icône
+            </button>
+          ) : null}
           {pickerOpen ? (
-            <EmojiPicker
+            <IconPicker
               value={icon}
               onSelect={(e) => {
                 props.onIconChange(e);
@@ -93,7 +101,9 @@ export function PageEditorPane(props: Props) {
             <div className="nb-subpages-head">Sous-pages</div>
             {subpages.map((p) => (
               <button key={p.id} type="button" className="nb-subpage" onClick={() => props.onOpenPage(p.id)}>
-                <span className="nb-tree-icon">{p.icon || '📄'}</span>
+                <span className="nb-tree-icon">
+                  <PageIcon icon={p.icon} size={16} />
+                </span>
                 <span>{p.title || 'Sans titre'}</span>
               </button>
             ))}
@@ -101,7 +111,7 @@ export function PageEditorPane(props: Props) {
         ) : null}
         {props.onCreateSubpage && editable ? (
           <button type="button" className="nb-subpage nb-subpage--new" onClick={props.onCreateSubpage}>
-            <span>＋</span> Nouvelle sous-page
+            <Icon name="plus" size={16} /> Nouvelle sous-page
           </button>
         ) : null}
       </div>

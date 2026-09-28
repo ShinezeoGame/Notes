@@ -160,7 +160,7 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
 ### Créer votre espace (une seule fois)
 
 1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Mes notes » indique que la synchronisation fonctionne.
-2. Ouvrez **Réglages ⚙️** et copiez le lien **« Lier un autre appareil »**. Rangez‑le dans votre gestionnaire de mots de passe : c’est la clé de votre espace, ne le donnez à personne.
+2. Ouvrez les **Réglages**, avec la roue dentée en haut à gauche, et copiez le lien **« Lier un autre appareil »**. Rangez‑le dans votre gestionnaire de mots de passe : c’est la clé de votre espace, ne le donnez à personne.
 
 Avec `MAX_WORKSPACES=1`, plus personne ne peut créer d’espace sur votre serveur : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le tableau de bord homelab.
 

@@ -4,6 +4,7 @@ import { getSettings, isNative, normalizeServerUrl, parseJoinLink, resetWorkspac
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
 import { toast } from './Toast';
+import { Icon } from '../icons/Icon';
 
 type Props = { onClose: () => void };
 
@@ -35,7 +36,7 @@ export function SettingsDialog({ onClose }: Props) {
   const [googleId, setGoogleId] = useState(settings.googleClientId);
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
   const joinLink = settings.serverUrl ? `${settings.serverUrl}/#/join/${settings.workspaceId}/${settings.workspaceKey}` : null;
 
@@ -70,12 +71,12 @@ export function SettingsDialog({ onClose }: Props) {
   const runTest = async () => {
     const url = normalizeServerUrl(server);
     if (!url) {
-      setTestResult('Adresse invalide.');
+      setTestResult({ ok: false, text: 'Adresse invalide.' });
       return;
     }
     setTesting(true);
     const err = await testServer(url, settings.workspaceId, settings.workspaceKey);
-    setTestResult(err ?? 'Connexion réussie ✅');
+    setTestResult(err ? { ok: false, text: err } : { ok: true, text: 'Connexion réussie' });
     setTesting(false);
   };
 
@@ -153,7 +154,11 @@ export function SettingsDialog({ onClose }: Props) {
               {testing ? 'Test…' : 'Tester'}
             </button>
           </div>
-          {testResult ? <div className={testResult.includes('✅') ? 'nb-success' : 'nb-error'}>{testResult}</div> : null}
+          {testResult ? (
+            <div className={testResult.ok ? 'nb-success' : 'nb-error'}>
+              <Icon name={testResult.ok ? 'checkCircle' : 'xCircle'} size={15} /> {testResult.text}
+            </div>
+          ) : null}
         </label>
         <div className="nb-field">
           <span>Identifiant de l’espace de travail</span>

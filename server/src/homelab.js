@@ -555,7 +555,8 @@ async function truenasStats(dev) {
   const opts = { headers: { Authorization: `Bearer ${dev.token}` }, insecure: dev.insecure };
   const [info, pools] = await Promise.all([getJson(`${base}/api/v2.0/system/info`, opts), getJson(`${base}/api/v2.0/pool`, opts).catch(() => [])]);
   const disks = (Array.isArray(pools) ? pools : []).map((p) => ({
-    name: p.name + (p.healthy === false ? ' ⚠️' : ''),
+    name: p.name,
+    warn: p.healthy === false,
     total: n(p.size),
     used: n(p.allocated),
     percent: p.size ? Math.round((n(p.allocated) / n(p.size)) * 1000) / 10 : 0,

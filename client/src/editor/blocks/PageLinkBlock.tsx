@@ -1,5 +1,6 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { useAppCtx } from '../context';
+import { PageIcon } from '../../icons/pageIcon';
 
 function PageLinkView({ pageId }: { pageId: string }) {
   const ctx = useAppCtx();
@@ -20,7 +21,9 @@ function PageLinkView({ pageId }: { pageId: string }) {
       }}
       title={missing ? 'Cette page n’existe plus' : 'Ouvrir la page'}
     >
-      <span className="nb-pagelink-icon">{page?.icon || '📄'}</span>
+      <span className="nb-pagelink-icon">
+        <PageIcon icon={page?.icon} size={18} />
+      </span>
       <span className="nb-pagelink-title">{missing ? 'Page introuvable' : page.title || 'Sans titre'}</span>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getSettings, normalizeServerUrl, parseJoinLink, updateSettings } from '../lib/settings';
 import { clearLocalDocs } from '../lib/yjs';
+import { Icon } from '../icons/Icon';
 
 export function Onboarding() {
   const [mode, setMode] = useState<'choose' | 'connect'>('choose');
@@ -53,12 +54,16 @@ export function Onboarding() {
         {mode === 'choose' ? (
           <div className="nb-choices">
             <button type="button" className="nb-choice" onClick={offline}>
-              <span className="nb-choice-icon">📱</span>
+              <span className="nb-choice-icon">
+                <Icon name="smartphone" size={26} />
+              </span>
               <span className="nb-choice-title">Utiliser sur cet appareil</span>
               <span className="nb-muted">Tout reste en local. Vous pourrez connecter un serveur plus tard dans les réglages.</span>
             </button>
             <button type="button" className="nb-choice" onClick={() => setMode('connect')}>
-              <span className="nb-choice-icon">☁️</span>
+              <span className="nb-choice-icon">
+                <Icon name="cloud" size={26} />
+              </span>
               <span className="nb-choice-title">Se connecter à mon serveur</span>
               <span className="nb-muted">Synchronisation entre appareils, partage de pages et modification en direct.</span>
             </button>
