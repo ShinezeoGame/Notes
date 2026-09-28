@@ -253,6 +253,22 @@ button { font-family: inherit; }
 .nb-cal-title a { color: var(--text-strong); text-decoration-color: var(--border-strong); }
 .nb-cal-loc { color: var(--text-muted); font-size: 13px; display: flex; align-items: center; gap: 4px; }
 .nb-cal-toggle { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; padding: 6px 0; }
+.nb-cal-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.nb-cal-title .nb-cal-dot { margin-right: 7px; vertical-align: 1px; }
+.nb-cal-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 10px; border: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.nb-cal-legend-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.nb-cal-pick-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.nb-cal-pick { position: relative; gap: 10px; }
+.nb-cal-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-cal-pick-meta { margin-left: auto; padding-left: 8px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.nb-cal-pick-meta--error { color: var(--danger); }
+.nb-checkbox {
+  width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--cal, var(--accent)); display: inline-grid; place-items: center; flex-shrink: 0;
+  color: var(--cal-fg, #fff);
+}
+input:checked + .nb-checkbox { background: var(--cal, var(--accent)); }
+input:focus-visible + .nb-checkbox { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nb-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .nb-slash-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; color: var(--text); }
 
 /* ---------- Composants ---------- */
@@ -322,6 +338,8 @@ button { font-family: inherit; }
 .nb-list-item:hover:not(:disabled) { background: var(--bg-hover); }
 .nb-preview { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
 .nb-preview-list { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--text); }
+.nb-preview-list--dots { list-style: none; padding-left: 2px; }
+.nb-preview-list--dots .nb-cal-dot { margin-right: 8px; vertical-align: 1px; }
 
 /* Menu contextuel */
 .nb-menu {

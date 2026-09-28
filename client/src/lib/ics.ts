@@ -11,6 +11,9 @@ export type CalEvent = {
   location: string;
   description: string;
   url: string;
+  /** Nom et couleur de l'agenda d'origine (import de plusieurs agendas Google). */
+  calendar?: string;
+  color?: string;
 };
 
 export type ParsedCalendar = { name: string; events: CalEvent[] };

@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Modal } from './Modal';
 import { useAppCtx, type CalendarImportResult } from '../editor/context';
 import { parseIcs, type CalEvent } from '../lib/ics';
 import { useSettings } from '../lib/settings';
-import { fetchGoogleEvents, listGoogleCalendars, requestGoogleToken, type GoogleCalendar } from '../lib/google';
+import {
+  calendarName,
+  calendarsTitle,
+  fetchGoogleEvents,
+  googleSource,
+  listGoogleCalendars,
+  mergeCalendarEvents,
+  parseGoogleSource,
+  requestGoogleToken,
+  type GoogleCalendar,
+} from '../lib/google';
+import { Icon } from '../icons/Icon';
 
 type Props = {
   initial?: { source?: string; title?: string };
@@ -13,22 +24,49 @@ type Props = {
 
 type Tab = 'file' | 'url' | 'google';
 
+type Preview = { name: string; events: CalEvent[]; source: string };
+
+function without<T>(map: Record<string, T>, key: string): Record<string, T> {
+  const next = { ...map };
+  delete next[key];
+  return next;
+}
+
 export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
   const ctx = useAppCtx();
   const settings = useSettings();
   const initialSource = initial?.source ?? '';
+  const initialGoogleIds = parseGoogleSource(initialSource);
   const [tab, setTab] = useState<Tab>(initialSource.startsWith('google:') ? 'google' : initialSource ? 'url' : 'file');
+  // Le titre suit l'agenda choisi tant que l'utilisateur ne l'a pas modifié.
   const [title, setTitle] = useState(initial?.title ?? '');
+  const [titleEdited, setTitleEdited] = useState(Boolean(initial?.title));
   const [url, setUrl] = useState(initialSource.startsWith('google:') ? '' : initialSource);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [preview, setPreview] = useState<{ name: string; events: CalEvent[]; source: string } | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [calendars, setCalendars] = useState<GoogleCalendar[] | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [calEvents, setCalEvents] = useState<Record<string, CalEvent[]>>({});
+  const [calStatus, setCalStatus] = useState<Record<string, 'loading' | 'error'>>({});
+
+  const picked = useMemo(() => (calendars ?? []).filter((c) => selected.includes(c.id)), [calendars, selected]);
+  const googleLoading = picked.some((c) => calStatus[c.id] === 'loading');
+  const googlePreview = useMemo<Preview | null>(() => {
+    const parts = picked.filter((c) => calEvents[c.id]).map((c) => ({ cal: c, events: calEvents[c.id] }));
+    if (!parts.length) return null;
+    const cals = parts.map((p) => p.cal);
+    return { name: calendarsTitle(cals), events: mergeCalendarEvents(parts), source: googleSource(cals.map((c) => c.id)) };
+  }, [picked, calEvents]);
+
+  const current = tab === 'google' ? googlePreview : preview;
+  const shownTitle = titleEdited ? title : (current?.name ?? '');
+  const calendarCount = tab === 'google' && googlePreview ? picked.filter((c) => calEvents[c.id]).length : 1;
 
   const finish = () => {
-    if (!preview) return;
-    onResult({ title: title.trim() || preview.name, events: preview.events, source: preview.source });
+    if (!current) return;
+    onResult({ title: shownTitle.trim() || current.name, events: current.events, source: current.source });
     onClose();
   };
 
@@ -40,7 +78,6 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       const text = await file.text();
       const parsed = parseIcs(text);
       setPreview({ name: parsed.name, events: parsed.events, source: '' });
-      if (!title) setTitle(parsed.name);
     } catch {
       setError('Ce fichier n’est pas un calendrier iCal valide.');
     } finally {
@@ -59,11 +96,28 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       const text = await ctx.fetchIcs(url.trim());
       const parsed = parseIcs(text);
       setPreview({ name: parsed.name, events: parsed.events, source: url.trim() });
-      if (!title) setTitle(parsed.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Récupération impossible.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const loadCalendar = async (t: string, id: string) => {
+    setCalStatus((m) => ({ ...m, [id]: 'loading' }));
+    try {
+      const events = await fetchGoogleEvents(t, id);
+      setCalEvents((m) => ({ ...m, [id]: events }));
+      setCalStatus((m) => without(m, id));
+    } catch {
+      setCalStatus((m) => ({ ...m, [id]: 'error' }));
+    }
+  };
+
+  const ensureLoaded = (ids: string[]) => {
+    if (!token) return;
+    for (const id of ids) {
+      if (!calEvents[id] && calStatus[id] !== 'loading') void loadCalendar(token, id);
     }
   };
 
@@ -72,8 +126,18 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
     setError('');
     try {
       const t = await requestGoogleToken(settings.googleClientId);
+      const list = await listGoogleCalendars(t);
+      // Reprend les agendas du bloc modifié, sinon l'agenda principal.
+      const previous = initialGoogleIds.filter((id) => list.some((c) => c.id === id));
+      const primary = list.filter((c) => c.primary).map((c) => c.id);
+      const pick = previous.length ? previous : primary.length ? primary : list.slice(0, 1).map((c) => c.id);
+      if (previous.length && initial?.title === calendarsTitle(list.filter((c) => previous.includes(c.id)))) setTitleEdited(false);
       setToken(t);
-      setCalendars(await listGoogleCalendars(t));
+      setCalendars(list);
+      setCalEvents({});
+      setCalStatus({});
+      setSelected(pick);
+      for (const id of pick) void loadCalendar(t, id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connexion Google impossible.');
     } finally {
@@ -81,20 +145,36 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
     }
   };
 
-  const pickCalendar = async (cal: GoogleCalendar) => {
-    if (!token) return;
-    setBusy(true);
-    setError('');
-    try {
-      const events = await fetchGoogleEvents(token, cal.id);
-      setPreview({ name: cal.summary, events, source: `google:${cal.id}` });
-      if (!title) setTitle(cal.summary);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lecture de l’agenda impossible.');
-    } finally {
-      setBusy(false);
+  const toggleCalendar = (id: string) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter((x) => x !== id));
+    } else {
+      setSelected([...selected, id]);
+      ensureLoaded([id]);
     }
   };
+
+  const allSelected = Boolean(calendars?.length) && calendars!.every((c) => selected.includes(c.id));
+  const toggleAll = () => {
+    if (!calendars) return;
+    if (allSelected) {
+      setSelected([]);
+      return;
+    }
+    const ids = calendars.map((c) => c.id);
+    setSelected(ids);
+    ensureLoaded(ids);
+  };
+
+  // Aperçu : les prochains événements plutôt que ceux du mois écoulé.
+  const previewEvents = useMemo(() => {
+    if (!current) return [];
+    const now = new Date().toISOString();
+    const upcoming = current.events.filter((ev) => ev.end >= now);
+    return (upcoming.length ? upcoming : current.events).slice(0, 5);
+  }, [current]);
+  const dotted = previewEvents.some((ev) => ev.color);
+  const waiting = tab === 'google' && googleLoading;
 
   return (
     <Modal
@@ -106,8 +186,8 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
           <button type="button" className="nb-btn" onClick={onClose}>
             Annuler
           </button>
-          <button type="button" className="nb-btn nb-btn--primary" disabled={!preview} onClick={finish}>
-            Insérer {preview ? `(${preview.events.length} événements)` : ''}
+          <button type="button" className="nb-btn nb-btn--primary" disabled={!current || waiting} onClick={finish}>
+            {waiting ? 'Chargement…' : `Insérer ${current ? `(${current.events.length} événements)` : ''}`}
           </button>
         </>
       }
@@ -171,37 +251,78 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
               {busy ? 'Connexion…' : 'Se connecter avec Google'}
             </button>
           ) : (
-            <div className="nb-list">
-              {calendars.map((c) => (
-                <button key={c.id} type="button" className="nb-list-item" onClick={() => void pickCalendar(c)} disabled={busy}>
-                  <span className="nb-dot" style={{ background: c.backgroundColor || '#2383E2' }} />
-                  {c.summary}
-                  {c.primary ? <span className="nb-muted"> · principal</span> : null}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="nb-cal-pick-head">
+                <span className="nb-muted">
+                  {selected.length ? `${selected.length} agenda${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''}` : 'Cochez les agendas à afficher'}
+                </span>
+                {calendars.length > 1 ? (
+                  <button type="button" className="nb-cal-toggle" onClick={toggleAll}>
+                    {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  </button>
+                ) : null}
+              </div>
+              <div className="nb-list">
+                {calendars.map((c) => {
+                  const checked = selected.includes(c.id);
+                  const status = calStatus[c.id];
+                  const count = calEvents[c.id]?.length;
+                  const colors = { '--cal': c.backgroundColor || '#2383E2', '--cal-fg': c.foregroundColor || '#fff' } as CSSProperties;
+                  return (
+                    <label key={c.id} className="nb-list-item nb-cal-pick">
+                      <input type="checkbox" className="nb-sr-only" checked={checked} onChange={() => toggleCalendar(c.id)} />
+                      <span className="nb-checkbox" style={colors} aria-hidden="true">
+                        {checked ? <Icon name="check" size={13} strokeWidth={3} /> : null}
+                      </span>
+                      <span className="nb-cal-pick-name">
+                        {calendarName(c)}
+                        {c.primary ? <span className="nb-muted"> · principal</span> : null}
+                      </span>
+                      <span className={`nb-cal-pick-meta${status === 'error' ? ' nb-cal-pick-meta--error' : ''}`}>
+                        {status === 'loading'
+                          ? 'Chargement…'
+                          : status === 'error'
+                            ? 'Lecture impossible'
+                            : checked && count !== undefined
+                              ? `${count} événement${count > 1 ? 's' : ''}`
+                              : ''}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       ) : null}
 
       {error ? <div className="nb-error">{error}</div> : null}
 
-      {preview ? (
+      {current ? (
         <div className="nb-preview">
           <label className="nb-field">
             <span>Titre du bloc</span>
-            <input className="nb-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input
+              className="nb-input"
+              value={shownTitle}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setTitleEdited(true);
+              }}
+            />
           </label>
           <div className="nb-muted">
-            {preview.events.length} événement(s) trouvé(s) sur la période (30 jours passés → 12 mois à venir).
+            {current.events.length} événement(s) trouvé(s)
+            {calendarCount > 1 ? ` dans ${calendarCount} agendas` : ''} sur la période (30 jours passés → 12 mois à venir).
           </div>
-          <ul className="nb-preview-list">
-            {preview.events.slice(0, 5).map((ev) => (
-              <li key={ev.id}>
+          <ul className={`nb-preview-list${dotted ? ' nb-preview-list--dots' : ''}`}>
+            {previewEvents.map((ev) => (
+              <li key={`${ev.id}|${ev.start}`}>
+                {dotted ? <span className="nb-cal-dot" style={{ background: ev.color }} title={ev.calendar} /> : null}
                 {new Date(ev.start).toLocaleDateString('fr-FR')} · {ev.title}
               </li>
             ))}
-            {preview.events.length > 5 ? <li className="nb-muted">…</li> : null}
+            {current.events.length > previewEvents.length ? <li className="nb-muted">…</li> : null}
           </ul>
         </div>
       ) : null}

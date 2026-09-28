@@ -3,7 +3,7 @@ import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blockno
 import type { BlockConfig } from '@blocknote/core';
 import { useAppCtx } from '../context';
 import { dayKey, formatDay, formatTimeRange, parseEventsJson, parseIcs, type CalEvent } from '../../lib/ics';
-import { fetchGoogleEvents, requestGoogleToken } from '../../lib/google';
+import { fetchGoogleCalendarsEvents, parseGoogleSource, requestGoogleToken } from '../../lib/google';
 import { getSettings } from '../../lib/settings';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
@@ -45,6 +45,13 @@ function CalendarView({ block, editor }: Props) {
   const groups = useMemo(() => groupByDay(events), [events]);
   const past = groups.filter(([k]) => k < todayKey);
   const upcoming = groups.filter(([k]) => k >= todayKey);
+  // Légende et pastilles de couleur quand le bloc réunit plusieurs agendas.
+  const legend = useMemo(() => {
+    const byName = new Map<string, string>();
+    for (const ev of events) if (ev.calendar && !byName.has(ev.calendar)) byName.set(ev.calendar, ev.color || '#2383E2');
+    return Array.from(byName, ([name, color]) => ({ name, color }));
+  }, [events]);
+  const multi = legend.length > 1;
 
   const apply = (res: { title: string; events: CalEvent[]; source: string }) => {
     editor.updateBlock(block, {
@@ -61,11 +68,12 @@ function CalendarView({ block, editor }: Props) {
     try {
       let events: CalEvent[];
       let name = title;
+      let failed: string[] = [];
       if (isGoogle) {
         const clientId = getSettings().googleClientId;
         if (!clientId) throw new Error('Renseignez un ID client Google dans les réglages pour actualiser cet agenda.');
         const token = await requestGoogleToken(clientId);
-        events = await fetchGoogleEvents(token, source.slice('google:'.length));
+        ({ events, failed } = await fetchGoogleCalendarsEvents(token, parseGoogleSource(source)));
       } else {
         const text = await ctx.fetchIcs!(source);
         const parsed = parseIcs(text);
@@ -73,7 +81,8 @@ function CalendarView({ block, editor }: Props) {
         name = title || parsed.name;
       }
       apply({ title: name, events, source });
-      ctx.notify(`Agenda actualisé : ${events.length} événement(s).`);
+      if (failed.length) ctx.notify(`Agenda actualisé : ${events.length} événement(s). Lecture impossible : ${failed.join(', ')}.`, 'error');
+      else ctx.notify(`Agenda actualisé : ${events.length} événement(s).`);
     } catch (err) {
       ctx.notify(err instanceof Error ? err.message : 'Actualisation impossible.', 'error');
     } finally {
@@ -106,10 +115,11 @@ function CalendarView({ block, editor }: Props) {
         {key === todayKey ? <span className="nb-cal-badge">Aujourd’hui</span> : null}
       </div>
       {evs.map((ev) => (
-        <div key={ev.id} className="nb-cal-event">
+        <div key={`${ev.id}|${ev.start}`} className="nb-cal-event">
           <div className="nb-cal-time">{formatTimeRange(ev)}</div>
           <div className="nb-cal-body">
             <div className="nb-cal-title">
+              {multi ? <span className="nb-cal-dot" style={{ background: ev.color || '#2383E2' }} title={ev.calendar} /> : null}
               {ev.url ? (
                 <a href={ev.url} target="_blank" rel="noopener noreferrer">
                   {ev.title}
@@ -164,6 +174,16 @@ function CalendarView({ block, editor }: Props) {
           ) : null}
         </span>
       </div>
+      {multi ? (
+        <div className="nb-cal-legend">
+          {legend.map((c) => (
+            <span key={c.name} className="nb-cal-legend-item">
+              <span className="nb-cal-dot" style={{ background: c.color }} />
+              {c.name}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="nb-cal-list" style={{ maxHeight: liveHeight }}>
         {past.length ? (
           <button type="button" className="nb-cal-toggle" onClick={() => setShowPast((v) => !v)}>
@@ -186,7 +206,7 @@ export const CalendarBlock = createReactBlockSpec(calendarConfig, {
     return (
       <ul>
         {events.map((ev) => (
-          <li key={ev.id}>
+          <li key={`${ev.id}|${ev.start}`}>
             {new Date(ev.start).toLocaleString('fr-FR')} — {ev.title}
           </li>
         ))}

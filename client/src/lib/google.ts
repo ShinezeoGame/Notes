@@ -57,7 +57,81 @@ export async function requestGoogleToken(clientId: string): Promise<string> {
   });
 }
 
-export type GoogleCalendar = { id: string; summary: string; primary?: boolean; backgroundColor?: string };
+export type GoogleCalendar = {
+  id: string;
+  summary: string;
+  summaryOverride?: string;
+  primary?: boolean;
+  backgroundColor?: string;
+  foregroundColor?: string;
+};
+
+const DEFAULT_COLOR = '#2383E2';
+const MAX_MERGED_EVENTS = 2000;
+
+export function calendarName(cal: GoogleCalendar): string {
+  return cal.summaryOverride || cal.summary || cal.id;
+}
+
+/** Titre proposé pour un bloc : nom de l'agenda, ou « Mes agendas » s'il y en a plusieurs. */
+export function calendarsTitle(cals: GoogleCalendar[]): string {
+  if (cals.length === 1) return calendarName(cals[0]);
+  return cals.length > 1 ? 'Mes agendas' : '';
+}
+
+/** Source d'un bloc agenda : « google:id1,id2… » (un seul identifiant pour les anciens blocs). */
+export function googleSource(ids: string[]): string {
+  return `google:${ids.map(encodeURIComponent).join(',')}`;
+}
+
+export function parseGoogleSource(source: string): string[] {
+  if (!source.startsWith('google:')) return [];
+  return source
+    .slice('google:'.length)
+    .split(',')
+    .filter(Boolean)
+    .map((part) => {
+      try {
+        return decodeURIComponent(part);
+      } catch {
+        return part;
+      }
+    });
+}
+
+/** Réunit les événements de plusieurs agendas : ordre chronologique, sans doublons (invitations présentes dans deux agendas). */
+export function mergeCalendarEvents(parts: { cal: GoogleCalendar; events: CalEvent[] }[]): CalEvent[] {
+  const seen = new Set<string>();
+  const out: CalEvent[] = [];
+  for (const { cal, events } of parts) {
+    for (const ev of events) {
+      const key = `${ev.id}|${ev.start}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...ev, calendar: calendarName(cal), color: cal.backgroundColor || DEFAULT_COLOR });
+    }
+  }
+  out.sort((a, b) => a.start.localeCompare(b.start));
+  return out.slice(0, MAX_MERGED_EVENTS);
+}
+
+/** Relit plusieurs agendas (bouton « Actualiser ») ; les agendas devenus inaccessibles sont signalés sans bloquer les autres. */
+export async function fetchGoogleCalendarsEvents(
+  token: string,
+  ids: string[],
+): Promise<{ events: CalEvent[]; failed: string[] }> {
+  const known = new Map((await listGoogleCalendars(token)).map((c) => [c.id, c] as const));
+  const cals = ids.map((id) => known.get(id) ?? { id, summary: id });
+  const results = await Promise.allSettled(cals.map((c) => fetchGoogleEvents(token, c.id)));
+  const parts: { cal: GoogleCalendar; events: CalEvent[] }[] = [];
+  const failed: string[] = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') parts.push({ cal: cals[i], events: r.value });
+    else failed.push(calendarName(cals[i]));
+  });
+  if (!parts.length) throw results.find((r): r is PromiseRejectedResult => r.status === 'rejected')?.reason ?? new Error('Agenda introuvable.');
+  return { events: mergeCalendarEvents(parts), failed };
+}
 
 async function gfetch<T>(url: string, token: string): Promise<T> {
   const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
