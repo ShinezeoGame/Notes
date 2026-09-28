@@ -48,10 +48,11 @@ Lancez la construction et le démarrage (quelques minutes la première fois) :
 
 ```bash
 docker compose up -d --build
+sleep 5                                   # laisser l’application démarrer
 curl http://localhost:3000/api/health     # ou le port choisi dans NOTES_PORT
 ```
 
-La réponse `{"ok":true,…}` confirme que le serveur tourne. **N’ouvrez pas encore l’application dans un navigateur** : le premier appareil qui s’y connecte crée votre espace, et il doit le faire via l’adresse publique définitive (étape 3).
+La réponse `{"ok":true,…}` confirme que le serveur tourne. `curl: (56) Recv failure: Connection reset by peer` signifie seulement que l’application n’écoute pas encore : relancez `curl` quelques secondes plus tard. Si l’erreur persiste, `docker compose logs notes` affiche la cause. **N’ouvrez pas encore l’application dans un navigateur** : le premier appareil qui s’y connecte crée votre espace, et il doit le faire via l’adresse publique définitive (étape 3).
 
 Les données (pages, fichiers importés, liens de partage) sont stockées dans le dossier `Notes/data`.
 
