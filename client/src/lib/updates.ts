@@ -199,7 +199,7 @@ async function bootNative() {
   } catch {
     /* ignore */
   }
-  if (pending?.version === BUILD.id) toast('Notes a été mis à jour.');
+  if (pending?.version === BUILD.id) toast(`Notes a été mis à jour : version ${BUILD.id} du ${formatBuildDate(BUILD.builtAt)}.`);
   else if (pending?.version) toast('La nouvelle version n’a pas pu démarrer : la version précédente est conservée.', 'error');
 
   await callNative('AppUpdate', 'cleanup', { keep: bundle }).catch(() => {});
