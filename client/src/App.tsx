@@ -18,7 +18,7 @@ import { ToastHost, toast } from './components/Toast';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
-import { useHomelabConfig } from './lib/homelab';
+import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 
@@ -181,6 +181,7 @@ function OwnerApp() {
       notify: toast,
       openDashboard: () => navigate('#/dashboard'),
       homelabConfigured,
+      workspaceDoc: store?.doc ?? null,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, pageId, openPage, uploadFile, importCalendar, settings.serverUrl, homelabConfigured],
@@ -472,7 +473,15 @@ function DashboardView({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigu
       <h1 className="nb-page-title-static">
         <Icon name="home" size={34} /> Homelab
       </h1>
-      <HomelabPanel refreshSeconds={cfg.refreshSeconds} onConfigure={onConfigure} configured={configured} />
+      <HomelabPanel
+        refreshSeconds={cfg.refreshSeconds}
+        onConfigure={onConfigure}
+        configured={configured}
+        layout={cardLayout(cfg)}
+        onResize={(id, size) => saveCardSize(doc, id, size)}
+        onResetLayout={() => resetCardSizes(doc)}
+        refreshKey={configStatusKey(cfg)}
+      />
     </div>
   );
 }

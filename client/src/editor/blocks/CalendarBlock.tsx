@@ -6,6 +6,7 @@ import { dayKey, formatDay, formatTimeRange, parseEventsJson, parseIcs, type Cal
 import { fetchGoogleEvents, requestGoogleToken } from '../../lib/google';
 import { getSettings } from '../../lib/settings';
 import { Icon } from '../../icons/Icon';
+import { ResizableFrame, normalizeWidth } from '../resize';
 
 const calendarConfig = {
   type: 'calendar',
@@ -14,6 +15,8 @@ const calendarConfig = {
     events: { default: '[]' },
     source: { default: '' },
     updatedAt: { default: 0 },
+    width: { default: 100 },
+    height: { default: 520 },
   },
   content: 'none',
 } as const satisfies BlockConfig;
@@ -32,7 +35,7 @@ function groupByDay(events: CalEvent[]) {
 
 function CalendarView({ block, editor }: Props) {
   const ctx = useAppCtx();
-  const { title, events: eventsJson, source, updatedAt } = block.props;
+  const { title, events: eventsJson, source, updatedAt, width, height } = block.props;
   const editable = editor.isEditable;
   const events = useMemo(() => parseEventsJson(eventsJson), [eventsJson]);
   const [showPast, setShowPast] = useState(false);
@@ -127,7 +130,18 @@ function CalendarView({ block, editor }: Props) {
   );
 
   return (
-    <div className="nb-calendar" contentEditable={false}>
+    <ResizableFrame
+      editable={editable}
+      width={normalizeWidth(width)}
+      onWidthCommit={(pct) => editor.updateBlock(block, { props: { width: pct } })}
+      height={height}
+      minHeight={160}
+      maxHeight={2000}
+      onHeightCommit={(px) => editor.updateBlock(block, { props: { height: px } })}
+      className="nb-calendar"
+    >
+      {(liveHeight) => (
+    <div contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title">
           <Icon name="calendar" size={15} /> {title || 'Agenda'}
@@ -150,7 +164,7 @@ function CalendarView({ block, editor }: Props) {
           ) : null}
         </span>
       </div>
-      <div className="nb-cal-list">
+      <div className="nb-cal-list" style={{ maxHeight: liveHeight }}>
         {past.length ? (
           <button type="button" className="nb-cal-toggle" onClick={() => setShowPast((v) => !v)}>
             {showPast ? 'Masquer' : 'Afficher'} les événements passés ({past.reduce((n, [, e]) => n + e.length, 0)})
@@ -160,6 +174,8 @@ function CalendarView({ block, editor }: Props) {
         {upcoming.length ? upcoming.map(renderGroup) : <div className="nb-media-status">Aucun événement à venir.</div>}
       </div>
     </div>
+      )}
+    </ResizableFrame>
   );
 }
 

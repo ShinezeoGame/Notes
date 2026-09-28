@@ -2,16 +2,20 @@ import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blockno
 import type { BlockConfig } from '@blocknote/core';
 import { HomelabPanel } from '../../components/HomelabView';
 import { useAppCtx } from '../context';
+import { cardLayout, saveCardSize, useHomelabConfig } from '../../lib/homelab';
 import { Icon } from '../../icons/Icon';
+import { ResizableFrame, normalizeWidth } from '../resize';
 
 const homelabConfig = {
   type: 'homelab',
-  propSchema: { compact: { default: true } },
+  propSchema: { compact: { default: true }, width: { default: 100 } },
   content: 'none',
 } as const satisfies BlockConfig;
 
 function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof homelabConfig>) {
   const ctx = useAppCtx();
+  const doc = ctx.workspaceDoc ?? null;
+  const cfg = useHomelabConfig(doc);
   if (ctx.mode !== 'owner') {
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
@@ -22,7 +26,14 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
     );
   }
   return (
-    <div className="nb-homelab-block" contentEditable={false}>
+    <ResizableFrame
+      editable={editor.isEditable}
+      width={normalizeWidth(block.props.width)}
+      onWidthCommit={(pct) => editor.updateBlock(block, { props: { width: pct } })}
+      className="nb-homelab-block"
+    >
+      {() => (
+    <div contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title">
           <Icon name="home" size={15} /> Homelab
@@ -39,9 +50,16 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
         </span>
       </div>
       <div className="nb-homelab-body">
-        <HomelabPanel compact={block.props.compact} configured={ctx.homelabConfigured ?? false} />
+        <HomelabPanel
+          compact={block.props.compact}
+          configured={ctx.homelabConfigured ?? false}
+          layout={cardLayout(cfg)}
+          onResize={doc && editor.isEditable ? (id, size) => saveCardSize(doc, id, size) : undefined}
+        />
       </div>
     </div>
+      )}
+    </ResizableFrame>
   );
 }
 

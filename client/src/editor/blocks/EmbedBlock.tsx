@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blocknote/react';
 import type { BlockConfig } from '@blocknote/core';
 import { normalizeEmbedUrl } from '../embed';
 import { Icon } from '../../icons/Icon';
+import { ResizableFrame } from '../resize';
 
 const embedConfig = {
   type: 'embed',
   propSchema: {
     url: { default: '' },
     height: { default: 420 },
+    width: { default: 100 },
     title: { default: '' },
   },
   content: 'none',
@@ -27,15 +29,11 @@ function embedLabel(kind: string | undefined, url: string): string {
 }
 
 function EmbedView({ block, editor }: Props) {
-  const { url, height, title } = block.props;
+  const { url, height, width, title } = block.props;
   const editable = editor.isEditable;
   const [editing, setEditing] = useState(!url);
   const [draft, setDraft] = useState(url);
   const [error, setError] = useState('');
-  const [liveHeight, setLiveHeight] = useState(height);
-  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
-
-  useEffect(() => setLiveHeight(height), [height]);
 
   const submit = () => {
     const info = normalizeEmbedUrl(draft);
@@ -47,21 +45,6 @@ function EmbedView({ block, editor }: Props) {
     editor.updateBlock(block, { props: { url: draft.trim(), height: nextHeight } });
     setError('');
     setEditing(false);
-  };
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (!editable) return;
-    dragRef.current = { startY: e.clientY, startH: liveHeight };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    setLiveHeight(Math.max(120, Math.min(1400, dragRef.current.startH + (e.clientY - dragRef.current.startY))));
-  };
-  const onPointerUp = () => {
-    if (!dragRef.current) return;
-    dragRef.current = null;
-    if (liveHeight !== height) editor.updateBlock(block, { props: { height: liveHeight } });
   };
 
   if (editing || !url) {
@@ -101,7 +84,18 @@ function EmbedView({ block, editor }: Props) {
 
   const info = normalizeEmbedUrl(url);
   return (
-    <div className="nb-embed" contentEditable={false}>
+    <ResizableFrame
+      editable={editable}
+      width={width}
+      onWidthCommit={(pct) => editor.updateBlock(block, { props: { width: pct } })}
+      height={height}
+      minHeight={120}
+      maxHeight={1600}
+      onHeightCommit={(px) => editor.updateBlock(block, { props: { height: px } })}
+      className="nb-embed"
+    >
+      {(liveHeight, resizing) => (
+    <div contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title" title={url}>
           <Icon name="video" size={15} /> {title || embedLabel(info?.kind, url)}
@@ -126,24 +120,16 @@ function EmbedView({ block, editor }: Props) {
       <iframe
         className="nb-embed-frame"
         src={info?.src ?? url}
-        style={{ height: liveHeight }}
+        style={{ height: liveHeight, pointerEvents: resizing ? 'none' : undefined }}
         title={title || 'Contenu intégré'}
         loading="lazy"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
       />
-      {editable ? (
-        <div
-          className="nb-resize-handle"
-          title="Glisser pour redimensionner"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        />
-      ) : null}
     </div>
+      )}
+    </ResizableFrame>
   );
 }
 

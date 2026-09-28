@@ -26,6 +26,9 @@ export type Service = {
   username?: string;
   password?: string;
   insecure?: boolean;
+  /** Taille du module dans le tableau de bord : colonnes (1 à 4) et hauteur (1 à 4). */
+  w?: number;
+  h?: number;
 };
 
 export type Device = {
@@ -40,6 +43,9 @@ export type Device = {
   node?: string;
   mounts?: string;
   insecure?: boolean;
+  /** Taille du module dans le tableau de bord : colonnes (1 à 4) et hauteur (1 à 4). */
+  w?: number;
+  h?: number;
 };
 
 export type HomelabConfig = { services: Service[]; devices: Device[]; refreshSeconds: number };
@@ -131,9 +137,13 @@ export function saveHomelabConfig(doc: Y.Doc, cfg: HomelabConfig) {
   }, 'local');
 }
 
-export function useHomelabConfig(doc: Y.Doc): HomelabConfig {
-  const [cfg, setCfg] = useState(() => readHomelabConfig(doc));
+export function useHomelabConfig(doc: Y.Doc | null): HomelabConfig {
+  const [cfg, setCfg] = useState(() => (doc ? readHomelabConfig(doc) : EMPTY));
   useEffect(() => {
+    if (!doc) {
+      setCfg(EMPTY);
+      return;
+    }
     const map = doc.getMap('homelab');
     const handler = () => setCfg(readHomelabConfig(doc));
     map.observe(handler);
@@ -244,3 +254,51 @@ export const SERVICE_ICON_CHOICES: IconName[] = [
 
 /** Icônes proposées dans le formulaire d'un appareil. */
 export const DEVICE_ICON_CHOICES: IconName[] = ['server', 'hardDrive', 'monitor', 'laptop', 'cube', 'chartBar', 'database', 'cloud', 'smartphone', 'home'];
+
+// ---------- Taille des modules du tableau de bord ----------
+
+export type CardSize = { w: number; h: number };
+export const MAX_CARD_W = 4;
+export const MAX_CARD_H = 4;
+
+const clampSize = (v: unknown, max: number) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, max) : 1;
+};
+
+/** Tailles de tous les modules, indexées par identifiant. */
+export function cardLayout(cfg: HomelabConfig): Record<string, CardSize> {
+  const out: Record<string, CardSize> = {};
+  for (const item of [...cfg.services, ...cfg.devices]) out[item.id] = { w: clampSize(item.w, MAX_CARD_W), h: clampSize(item.h, MAX_CARD_H) };
+  return out;
+}
+
+/** Enregistre la taille d'un module (lu à nouveau dans le document pour ne rien écraser). */
+export function saveCardSize(doc: Y.Doc, id: string, size: CardSize) {
+  const cfg = readHomelabConfig(doc);
+  const w = clampSize(size.w, MAX_CARD_W);
+  const h = clampSize(size.h, MAX_CARD_H);
+  saveHomelabConfig(doc, {
+    ...cfg,
+    services: cfg.services.map((x) => (x.id === id ? { ...x, w, h } : x)),
+    devices: cfg.devices.map((x) => (x.id === id ? { ...x, w, h } : x)),
+  });
+}
+
+export function resetCardSizes(doc: Y.Doc) {
+  const cfg = readHomelabConfig(doc);
+  const strip = <T extends { w?: number; h?: number }>(x: T): T => {
+    const { w: _w, h: _h, ...rest } = x;
+    return rest as T;
+  };
+  saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(strip), devices: cfg.devices.map(strip) });
+}
+
+/** Empreinte de la configuration (hors tailles) : change quand il faut réinterroger le serveur. */
+export function configStatusKey(cfg: HomelabConfig): string {
+  const strip = <T extends { w?: number; h?: number }>(x: T) => {
+    const { w: _w, h: _h, ...rest } = x;
+    return rest;
+  };
+  return JSON.stringify([cfg.services.map(strip), cfg.devices.map(strip)]);
+}

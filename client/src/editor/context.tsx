@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type * as Y from 'yjs';
 import type { CalEvent } from '../lib/ics';
 
 export type PageRef = { id: string; title: string; icon: string };
@@ -20,6 +21,8 @@ export type AppContextValue = {
   openDashboard?: () => void;
   /** Vrai si au moins une application ou un appareil est configuré. */
   homelabConfigured?: boolean;
+  /** Document de l'espace de travail (configuration du homelab, tailles des modules). */
+  workspaceDoc?: Y.Doc | null;
 };
 
 export const AppContext = createContext<AppContextValue | null>(null);

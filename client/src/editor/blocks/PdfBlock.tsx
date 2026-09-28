@@ -3,6 +3,7 @@ import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blockno
 import type { BlockConfig } from '@blocknote/core';
 import { useAppCtx } from '../context';
 import { Icon } from '../../icons/Icon';
+import { ResizableFrame, normalizeWidth } from '../resize';
 
 const pdfConfig = {
   type: 'pdf',
@@ -11,6 +12,7 @@ const pdfConfig = {
     url: { default: '' },
     caption: { default: '' },
     height: { default: 560 },
+    width: { default: 100 },
   },
   content: 'none',
 } as const satisfies BlockConfig;
@@ -19,7 +21,7 @@ type Props = ReactCustomBlockRenderProps<typeof pdfConfig>;
 
 function PdfView({ block, editor }: Props) {
   const ctx = useAppCtx();
-  const { url, name, height } = block.props;
+  const { url, name, height, width } = block.props;
   const editable = editor.isEditable;
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,8 @@ function PdfView({ block, editor }: Props) {
       cleanup?.();
       void (doc?.destroy ? doc.destroy() : doc?.loadingTask?.destroy());
     };
-  }, [url]);
+    // Nouveau rendu quand la largeur change, pour que les pages remplissent le cadre.
+  }, [url, width]);
 
   if (!url) {
     return (
@@ -91,7 +94,18 @@ function PdfView({ block, editor }: Props) {
   }
 
   return (
-    <div className="nb-pdf" contentEditable={false}>
+    <ResizableFrame
+      editable={editable}
+      width={normalizeWidth(width)}
+      onWidthCommit={(pct) => editor.updateBlock(block, { props: { width: pct } })}
+      height={height}
+      minHeight={200}
+      maxHeight={2400}
+      onHeightCommit={(px) => editor.updateBlock(block, { props: { height: px } })}
+      className="nb-pdf"
+    >
+      {(liveHeight) => (
+    <div contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title" title={name}>
           <Icon name="filePdf" size={15} /> {name || 'Document PDF'}
@@ -120,7 +134,7 @@ function PdfView({ block, editor }: Props) {
           ) : null}
         </span>
       </div>
-      <div className="nb-pdf-viewport" style={{ maxHeight: expanded ? 'none' : height }} ref={containerRef} />
+      <div className="nb-pdf-viewport" style={{ maxHeight: expanded ? 'none' : liveHeight }} ref={containerRef} />
       {state === 'loading' ? <div className="nb-media-status">Chargement du PDF…</div> : null}
       {state === 'error' ? (
         <div className="nb-media-status">
@@ -131,6 +145,8 @@ function PdfView({ block, editor }: Props) {
         </div>
       ) : null}
     </div>
+      )}
+    </ResizableFrame>
   );
 }
 

@@ -1,8 +1,13 @@
 import { useEffect } from 'react';
 import { BlockNoteView } from '@blocknote/mantine';
 import {
+  FormattingToolbar,
+  FormattingToolbarController,
+  SideMenu,
+  SideMenuController,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
+  getFormattingToolbarItems,
   useCreateBlockNote,
   useEditorChange,
   type DefaultReactSuggestionItem,
@@ -16,6 +21,7 @@ import { schema } from './schema';
 import { useAppCtx } from './context';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
+import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
 
 type Props = { handle: DocHandle; editable: boolean };
 
@@ -163,8 +169,17 @@ export function Editor({ handle, editable }: Props) {
   };
 
   return (
-    <BlockNoteView editor={editor} theme="dark" editable={editable} slashMenu={false} className="nb-editor">
+    <BlockNoteView editor={editor} theme="dark" editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
       <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
+      <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
+      <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />
     </BlockNoteView>
   );
+}
+
+/** Barre de mise en forme par défaut, complétée par la taille du texte et la largeur des images. */
+function NotesFormattingToolbar() {
+  const items = getFormattingToolbarItems();
+  items.splice(1, 0, <TextSizeSelect key="nbTextSizeSelect" />, <MediaWidthSelect key="nbMediaWidthSelect" />);
+  return <FormattingToolbar>{items}</FormattingToolbar>;
 }

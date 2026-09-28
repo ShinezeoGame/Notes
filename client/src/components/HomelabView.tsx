@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { api, serverBase } from '../lib/api';
 import {
   CATEGORIES,
   formatBytes,
   formatStat,
   formatUptime,
+  MAX_CARD_H,
+  MAX_CARD_W,
   deviceVisual,
+  type CardSize,
   serviceVisual,
   type DeviceStatus,
   type Gauge,
@@ -16,7 +19,21 @@ import {
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 
-type PanelProps = { compact?: boolean; refreshSeconds?: number; onConfigure?: () => void; configured: boolean };
+type PanelProps = {
+  compact?: boolean;
+  refreshSeconds?: number;
+  onConfigure?: () => void;
+  configured: boolean;
+  /** Taille de chaque module (colonnes × hauteur), indexée par identifiant. */
+  layout?: Record<string, CardSize>;
+  /** Fourni quand les modules peuvent être redimensionnés depuis ce panneau. */
+  onResize?: (id: string, size: CardSize) => void;
+  onResetLayout?: () => void;
+  /** Change quand la configuration change : le panneau se réactualise aussitôt. */
+  refreshKey?: string;
+};
+
+const DEFAULT_SIZE: CardSize = { w: 1, h: 1 };
 
 function barClass(percent: number | null | undefined): string {
   if (percent == null) return '';
@@ -59,30 +76,40 @@ function StatChip({ s }: { s: StatValue }) {
   );
 }
 
-export function ServiceCard({ s, compact }: { s: ServiceStatus; compact?: boolean }) {
-  const open = () => s.url && window.open(s.url, '_blank', 'noopener');
+export function ServiceCard({ s, compact, size = DEFAULT_SIZE, editing = false }: { s: ServiceStatus; compact?: boolean; size?: CardSize; editing?: boolean }) {
+  const open = () => !editing && s.url && window.open(s.url, '_blank', 'noopener');
+  const area = size.w * size.h;
+  // Un module agrandi affiche plus de statistiques.
+  const maxStats = compact ? (area > 1 ? 4 * area : 0) : area > 1 ? 12 : 4;
   return (
-    <button type="button" className={`hl-card hl-service${s.ok ? '' : ' hl-service--down'}${compact ? ' hl-card--compact' : ''}`} onClick={open} title={s.url}>
+    <button
+      type="button"
+      className={`hl-card hl-service${s.ok ? '' : ' hl-service--down'}${compact ? ' hl-card--compact' : ''}`}
+      onClick={open}
+      title={editing ? undefined : s.url}
+      tabIndex={editing ? -1 : undefined}
+    >
       <div className="hl-service-head">
         <VisualTile v={serviceVisual(s)} size={compact ? 26 : 32} />
         <span className="hl-service-name">{s.name || s.type}</span>
         <span className={`hl-dot${s.ok ? ' hl-dot--up' : ' hl-dot--down'}`} title={s.ok ? 'En ligne' : 'Hors ligne'} />
         {s.latency != null ? <span className="hl-latency">{s.latency} ms</span> : null}
       </div>
-      {!compact && s.stats.length ? (
+      {maxStats > 0 && s.stats.length ? (
         <div className="hl-chips">
-          {s.stats.slice(0, 4).map((st) => (
+          {s.stats.slice(0, maxStats).map((st) => (
             <StatChip key={st.label} s={st} />
           ))}
         </div>
       ) : null}
       {s.error ? <div className="hl-error">{s.error}</div> : null}
-      {!compact && s.version ? <div className="hl-version">v{s.version}</div> : null}
+      {(!compact || area > 1) && s.version ? <div className="hl-version">v{s.version}</div> : null}
     </button>
   );
 }
 
-export function DeviceCard({ d, compact }: { d: DeviceStatus; compact?: boolean }) {
+export function DeviceCard({ d, compact: compactView, size = DEFAULT_SIZE }: { d: DeviceStatus; compact?: boolean; size?: CardSize }) {
+  const compact = compactView && size.w * size.h === 1;
   const cpuGauge: Gauge | null = d.cpu != null ? { total: 0, used: 0, percent: d.cpu } : null;
   return (
     <div className={`hl-card hl-device${d.ok ? '' : ' hl-device--down'}`}>
@@ -133,7 +160,8 @@ export function DeviceCard({ d, compact }: { d: DeviceStatus; compact?: boolean 
 }
 
 /** Panneau autonome : interroge le serveur et affiche appareils + applications. */
-export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure, configured }: PanelProps) {
+export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure, configured, layout, onResize, onResetLayout, refreshKey }: PanelProps) {
+  const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState<HomelabStatus | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -171,6 +199,16 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
     };
   }, [refresh, refreshSeconds, configured]);
 
+  // Configuration modifiée (application ou appareil ajouté…) : nouvelle interrogation sans attendre l'intervalle.
+  const lastKey = useRef(refreshKey);
+  useEffect(() => {
+    if (refreshKey === undefined || refreshKey === lastKey.current) return;
+    lastKey.current = refreshKey;
+    // Laisse le temps à la modification d'atteindre le serveur par la synchronisation.
+    const t = setTimeout(() => void refresh(true), 700);
+    return () => clearTimeout(t);
+  }, [refreshKey, refresh]);
+
   const grouped = useMemo(() => {
     const groups = new Map<string, ServiceStatus[]>();
     for (const s of status?.services ?? []) {
@@ -207,13 +245,33 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
   const ago = status ? Math.max(0, Math.round((now - status.fetchedAt) / 1000)) : null;
 
   return (
-    <div className={`hl-panel${compact ? ' hl-panel--compact' : ''}`}>
+    <div className={`hl-panel${compact ? ' hl-panel--compact' : ''}${editing ? ' hl-panel--editing' : ''}`}>
+      {editing ? (
+        <div className="hl-edit-hint">
+          <Icon name="gripCorner" size={14} /> Tirez le coin inférieur droit d’un module pour changer sa largeur et sa hauteur.
+        </div>
+      ) : null}
       <div className="hl-toolbar">
         <span className="nb-muted">
           {status ? `Actualisé il y a ${ago} s` : loading ? 'Interrogation…' : ''}
           {status && downCount ? <span className="hl-down-count"> · {downCount} hors ligne</span> : null}
         </span>
-        <span className="nb-row nb-gap">
+        <span className="nb-row nb-gap hl-toolbar-actions">
+          {onResize ? (
+            <button
+              type="button"
+              className={`nb-btn nb-btn--sm${editing ? ' nb-btn--primary' : ''}`}
+              onClick={() => setEditing((v) => !v)}
+              title="Changer la taille des modules"
+            >
+              <Icon name={editing ? 'check' : 'resize'} size={14} /> {editing ? 'Terminer' : 'Redimensionner'}
+            </button>
+          ) : null}
+          {editing && onResetLayout ? (
+            <button type="button" className="nb-btn nb-btn--sm" onClick={onResetLayout}>
+              Tailles par défaut
+            </button>
+          ) : null}
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => void refresh(true)} disabled={loading}>
             {loading ? '…' : 'Actualiser'}
           </button>
@@ -229,23 +287,140 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
       {status?.devices.length ? (
         <section className="hl-section">
           {!compact ? <h2>Appareils</h2> : null}
-          <div className="hl-grid hl-grid--devices">
-            {status.devices.map((d) => (
-              <DeviceCard key={d.id} d={d} compact={compact} />
-            ))}
-          </div>
+          <CardGrid
+            className="hl-grid hl-grid--devices"
+            compact={compact}
+            editing={editing}
+            items={status.devices.map((d) => ({
+              id: d.id,
+              size: layout?.[d.id] ?? DEFAULT_SIZE,
+              render: (size: CardSize) => <DeviceCard d={d} compact={compact} size={size} />,
+            }))}
+            onResize={onResize}
+          />
         </section>
       ) : null}
       {grouped.map(([cat, list]) => (
         <section key={cat} className="hl-section">
           {!compact ? <h2>{cat}</h2> : null}
-          <div className="hl-grid">
-            {list.map((s) => (
-              <ServiceCard key={s.id} s={s} compact={compact} />
-            ))}
-          </div>
+          <CardGrid
+            className="hl-grid"
+            compact={compact}
+            editing={editing}
+            items={list.map((s) => ({
+              id: s.id,
+              size: layout?.[s.id] ?? DEFAULT_SIZE,
+              render: (size: CardSize) => <ServiceCard s={s} compact={compact} size={size} editing={editing} />,
+            }))}
+            onResize={onResize}
+          />
         </section>
       ))}
+    </div>
+  );
+}
+
+// ---------- Grille de modules redimensionnables ----------
+
+type GridItem = { id: string; size: CardSize; render: (size: CardSize) => ReactNode };
+type Metrics = { cols: number; colWidth: number; gap: number };
+
+/** Mesure la grille réelle (nombre de colonnes, largeur d'une colonne, espacement). */
+function useGridMetrics(ref: React.RefObject<HTMLDivElement | null>): Metrics {
+  const [m, setM] = useState<Metrics>({ cols: 1, colWidth: 230, gap: 10 });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const cs = getComputedStyle(el);
+      const tracks = cs.gridTemplateColumns.split(' ').filter((t) => t.endsWith('px'));
+      const next = { cols: Math.max(1, tracks.length), colWidth: parseFloat(tracks[0] ?? '230') || 230, gap: parseFloat(cs.columnGap) || 0 };
+      setM((prev) => (prev.cols === next.cols && Math.abs(prev.colWidth - next.colWidth) < 1 && prev.gap === next.gap ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return m;
+}
+
+function CardGrid({ className, items, compact, editing, onResize }: { className: string; items: GridItem[]; compact: boolean; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const metrics = useGridMetrics(ref);
+  const rowUnit = compact ? 96 : 150;
+  return (
+    <div className={className} ref={ref}>
+      {items.map((it) => (
+        <CardCell key={it.id} item={it} metrics={metrics} rowUnit={rowUnit} editing={editing && Boolean(onResize)} onResize={onResize} />
+      ))}
+    </div>
+  );
+}
+
+const clampInt = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)));
+
+function CardCell({ item, metrics, rowUnit, editing, onResize }: { item: GridItem; metrics: Metrics; rowUnit: number; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
+  const [live, setLive] = useState<CardSize | null>(null);
+  const liveRef = useRef<CardSize | null>(null);
+  const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const maxW = Math.min(MAX_CARD_W, metrics.cols);
+  const size = live ?? item.size;
+  const w = clampInt(size.w, 1, maxW);
+  const h = clampInt(size.h, 1, MAX_CARD_H);
+
+  const down = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    drag.current = { x: e.clientX, y: e.clientY, w, h };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const move = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const next = {
+      w: clampInt(d.w + (e.clientX - d.x) / (metrics.colWidth + metrics.gap), 1, maxW),
+      h: clampInt(d.h + (e.clientY - d.y) / (rowUnit + metrics.gap), 1, MAX_CARD_H),
+    };
+    liveRef.current = next;
+    setLive((prev) => (prev && prev.w === next.w && prev.h === next.h ? prev : next));
+  };
+  const up = () => {
+    const d = drag.current;
+    drag.current = null;
+    const next = liveRef.current;
+    liveRef.current = null;
+    setLive(null);
+    if (d && next && (next.w !== d.w || next.h !== d.h)) onResize?.(item.id, next);
+  };
+
+  const style = {
+    gridColumn: `span ${w}`,
+    minHeight: h > 1 ? h * rowUnit + (h - 1) * metrics.gap : undefined,
+  };
+  return (
+    <div className={`hl-cell${editing ? ' hl-cell--editing' : ''}${live ? ' hl-cell--resizing' : ''}`} style={style}>
+      {item.render({ w, h })}
+      {editing ? (
+        <>
+          <div className="hl-size-badge">
+            {w} × {h}
+          </div>
+          <div
+            className="hl-grip"
+            role="slider"
+            aria-label="Taille du module"
+            aria-valuetext={`${w} colonne(s), hauteur ${h}`}
+            title="Glisser pour redimensionner"
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerCancel={up}
+          >
+            <Icon name="gripCorner" size={16} />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
