@@ -45,7 +45,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      - name: Préparer le SDK Android (préinstallé sur ubuntu-latest)
+        run: |
+          SDKM="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort | tail -1)"
+          echo "sdkmanager: $SDKM"
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" "platform-tools" "platforms;android-36" "build-tools;36.0.0" >/dev/null
 
       - name: Construire l'APK (debug, installable directement)
         working-directory: android
