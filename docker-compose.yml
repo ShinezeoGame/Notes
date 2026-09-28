@@ -4,7 +4,8 @@ services:
   notes:
     build: .
     ports:
-      - '3000:3000'
+      # Port d'accès sur le serveur (NOTES_PORT dans .env) ; changez-le s'il est déjà utilisé
+      - '${NOTES_PORT:-3000}:3000'
     environment:
       # Adresse publique HTTPS (ex. https://notes.mondomaine.fr) : liens de partage et fichiers importés
       - PUBLIC_URL=${PUBLIC_URL:-}

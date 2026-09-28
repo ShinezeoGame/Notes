@@ -15,21 +15,40 @@ docker compose version
 ## 1. Installer l’application sur le serveur
 
 ```bash
-git clone https://github.com/ShinezeoGame/Notes.git
+git clone https://github.com/ShinezeoGame/Notes.git   # dépôt public ; sinon voir l’encadré ci-dessous
 cd Notes
 cp .env.example .env
 nano .env
 ```
 
-> Si le dépôt est privé, `git clone` demande un identifiant : votre nom d’utilisateur GitHub et, comme mot de passe, un jeton d’accès personnel (GitHub → Settings → Developer settings → Personal access tokens).
+> **Dépôt privé** : GitHub refuse les mots de passe pour `git clone`. Le plus simple sur un serveur est une clé de déploiement en lecture seule :
+>
+> ```bash
+> ssh-keygen -t ed25519 -f ~/.ssh/notes_deploy -N "" -C "notes-server"
+> cat ~/.ssh/notes_deploy.pub      # copiez toute la ligne affichée
+> ```
+>
+> Collez cette ligne dans GitHub → dépôt Notes → Settings → Deploy keys → Add deploy key (sans cocher « Allow write access »), puis clonez **en SSH** (et non en `https://`) :
+>
+> ```bash
+> GIT_SSH_COMMAND="ssh -i ~/.ssh/notes_deploy" git clone git@github.com:ShinezeoGame/Notes.git
+> cd Notes
+> git config core.sshCommand "ssh -i ~/.ssh/notes_deploy"
+> ```
 
 Dans `.env`, laissez pour l’instant `MAX_WORKSPACES=1` ; `PUBLIC_URL`, `COMPOSE_PROFILES` et le reste se remplissent à l’étape 2.
+
+Vérifiez que le port 3000 est libre ; si la commande suivante affiche une ligne, il est déjà pris par une autre application : mettez `NOTES_PORT=3100` (ou un autre port libre) dans `.env` et utilisez ce port partout où ce guide indique 3000 côté serveur.
+
+```bash
+ss -ltn | grep ':3000 '
+```
 
 Lancez la construction et le démarrage (quelques minutes la première fois) :
 
 ```bash
 docker compose up -d --build
-curl http://localhost:3000/api/health
+curl http://localhost:3000/api/health     # ou le port choisi dans NOTES_PORT
 ```
 
 La réponse `{"ok":true,…}` confirme que le serveur tourne. **N’ouvrez pas encore l’application dans un navigateur** : le premier appareil qui s’y connecte crée votre espace, et il doit le faire via l’adresse publique définitive (étape 3).
@@ -89,7 +108,7 @@ Nécessite une IP publique (pas de CGNAT) et un nom de domaine pointant dessus. 
 
    Caddy obtient le certificat HTTPS Let’s Encrypt en une minute environ (`docker compose logs caddy` pour suivre).
 
-**Vous avez déjà un reverse proxy** (Nginx Proxy Manager, Traefik, SWAG…) qui occupe les ports 80/443 ? Laissez `COMPOSE_PROFILES` vide et créez un hôte `notes.mondomaine.fr` → `http://IP-DU-SERVEUR:3000` avec **Websockets Support** activé. Pour Nginx Proxy Manager, ajoutez aussi dans l’onglet *Advanced* : `client_max_body_size 200m;` (sinon les fichiers de plus de 1 Mo sont refusés).
+**Vous avez déjà un reverse proxy** (Nginx Proxy Manager, Traefik, SWAG…) qui occupe les ports 80/443 ? Laissez `COMPOSE_PROFILES` vide et créez un hôte `notes.mondomaine.fr` → `http://IP-DU-SERVEUR:3000` (ou le port `NOTES_PORT`) avec **Websockets Support** activé. Pour Nginx Proxy Manager, ajoutez aussi dans l’onglet *Advanced* : `client_max_body_size 200m;` (sinon les fichiers de plus de 1 Mo sont refusés).
 
 **Vérification** : sur votre téléphone, Wi‑Fi coupé, ouvrez `https://notes.mondomaine.fr/api/health`. Vous devez voir `{"ok":true,…}`.
 
