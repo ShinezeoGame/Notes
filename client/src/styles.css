@@ -399,7 +399,7 @@ button { font-family: inherit; }
 .hl-empty { text-align: center; padding: 32px; }
 .hl-section { margin-bottom: 22px; }
 .hl-section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 0 0 10px; font-weight: 600; }
-.hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; align-items: start; }
 .hl-grid--devices { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .hl-card {
   display: flex; flex-direction: column; gap: 8px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text);
