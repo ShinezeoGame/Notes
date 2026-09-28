@@ -33,12 +33,15 @@ Variables d’environnement du serveur :
 | `DATA_DIR` | Dossier des données (documents, uploads, liens de partage) | `server/data` |
 | `PUBLIC_URL` | Adresse publique (utilisée pour les liens de partage et d’upload derrière un proxy) | déduite de la requête |
 | `MAX_UPLOAD_MB` | Taille maximale d’un fichier importé | `200` |
+| `MAX_WORKSPACES` | Nombre maximal d’espaces de travail (`0` = illimité). Mettez `1` sur un serveur accessible depuis Internet | `0` (Docker : `1`) |
 
 ### Déployer le serveur (pour partager et synchroniser)
 
 Le partage de pages et la synchronisation entre appareils nécessitent que le serveur soit joignable par les autres (Internet ou réseau local).
 
-- **Docker** : `docker compose up -d` (données persistées dans le volume `notes-data`). Placez‑le derrière un reverse proxy HTTPS (Caddy, Nginx, Traefik) et définissez `PUBLIC_URL=https://notes.mondomaine.fr`.
+**Guide pas à pas (serveur maison + accès depuis Internet en HTTPS) : [INSTALLATION.md](INSTALLATION.md).**
+
+- **Docker** : `cp .env.example .env`, adaptez-le, puis `docker compose up -d --build` (données dans le dossier `./data`). Pour l’accès HTTPS depuis Internet : `docker compose --profile tunnel up -d` (Cloudflare Tunnel) ou `docker compose --profile caddy up -d` (Caddy).
 - **Hébergeurs Node** (Render, Railway, Fly.io, VPS…) : commande de build `npm install && npm run build`, commande de démarrage `npm start`, et un disque persistant monté sur `DATA_DIR`.
 - **Réseau local uniquement** : `npm start` sur votre ordinateur, puis utilisez `http://<ip-de-l-ordinateur>:3000` depuis le téléphone (même Wi‑Fi).
 

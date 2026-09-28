@@ -1,0 +1,7 @@
+# Utilisé par le profil « caddy » de docker-compose.yml.
+# Caddy obtient et renouvelle automatiquement le certificat HTTPS pour $DOMAIN
+# et relaie aussi les WebSockets (modification en direct).
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy notes:3000
+}

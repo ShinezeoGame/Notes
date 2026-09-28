@@ -228,6 +228,15 @@ function OwnerApp() {
             onDelete={() => pageId && deletePage(pageId)}
             onOpenPage={openPage}
           />
+          {status === 'denied' ? (
+            <div className="nb-banner nb-banner--error">
+              Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Ouvrez le lien « Lier un
+              autre appareil » copié depuis un appareil déjà connecté.
+              <button type="button" className="nb-btn nb-btn--sm" onClick={() => setDialog({ type: 'settings' })}>
+                Réglages
+              </button>
+            </div>
+          ) : null}
           <div className="nb-content">
             {route.name === 'trash' ? (
               <TrashView store={store} onOpenPage={openPage} />

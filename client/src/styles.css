@@ -454,3 +454,4 @@ select.nb-input { appearance: auto; }
   .hl-grid, .hl-grid--devices { grid-template-columns: 1fr; }
   .hl-config-item { flex-wrap: wrap; }
 }
+.nb-banner--error { background: #4a2323; color: #f5c2c2; flex-wrap: wrap; text-align: center; }

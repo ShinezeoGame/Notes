@@ -48,6 +48,17 @@ function safeEqual(a, b) {
 }
 
 /**
+ * Nombre maximal d'espaces de travail sur ce serveur (0 = illimité).
+ * Sur un serveur exposé à Internet, 1 empêche tout inconnu de créer son propre espace
+ * (et donc d'utiliser l'upload ou le tableau de bord homelab). Les invités passent par les liens de partage.
+ */
+const MAX_WORKSPACES = Math.max(0, Number(process.env.MAX_WORKSPACES) || 0);
+
+export function registrationClosed() {
+  return MAX_WORKSPACES > 0 && Object.keys(workspaces).length >= MAX_WORKSPACES;
+}
+
+/**
  * Autorise (et enregistre à la première utilisation) un espace de travail.
  * Le premier client qui présente une clé pour un identifiant inconnu en devient propriétaire.
  */
@@ -56,6 +67,7 @@ export function authorizeWorkspace(wsId, key) {
   const h = hashKey(key);
   const existing = workspaces[wsId];
   if (!existing) {
+    if (registrationClosed()) return false;
     workspaces[wsId] = { keyHash: h, createdAt: Date.now() };
     writeJsonAtomic(WS_FILE, workspaces);
     return true;

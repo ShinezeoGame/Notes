@@ -16,8 +16,10 @@ import {
   getShare,
   isValidId,
   listShares,
+  registrationClosed,
   safeUploadName,
   uploadDirFor,
+  workspaceExists,
 } from './store.js';
 import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
@@ -76,7 +78,14 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now() }));
 app.post('/api/workspaces/claim', (req, res) => {
   const { wsId, key } = req.body || {};
   if (!isValidId(wsId) || typeof key !== 'string') return res.status(400).json({ error: 'Requête invalide.' });
-  if (!authorizeWorkspace(wsId, key)) return res.status(403).json({ error: 'Cette clé ne correspond pas à cet espace de travail.' });
+  if (!authorizeWorkspace(wsId, key)) {
+    const closed = !workspaceExists(wsId) && registrationClosed();
+    return res.status(403).json({
+      error: closed
+        ? 'Ce serveur n’accepte pas de nouvel espace de travail. Utilisez le lien « Lier un appareil » copié depuis les réglages d’un appareil déjà connecté.'
+        : 'Cette clé ne correspond pas à cet espace de travail.',
+    });
+  }
   res.json({ ok: true, wsId });
 });
 

@@ -1,15 +1,49 @@
+# Déploiement de Notes. Voir INSTALLATION.md pour le guide complet.
+# Les réglages se font dans un fichier .env (copier .env.example).
 services:
   notes:
     build: .
     ports:
       - '3000:3000'
     environment:
-      # Adresse publique (https recommandé) utilisée pour générer les liens de partage et d'upload
+      # Adresse publique HTTPS (ex. https://notes.mondomaine.fr) : liens de partage et fichiers importés
       - PUBLIC_URL=${PUBLIC_URL:-}
-      - MAX_UPLOAD_MB=200
+      # 1 = seul votre espace peut exister sur ce serveur (recommandé s'il est accessible depuis Internet)
+      - MAX_WORKSPACES=${MAX_WORKSPACES:-1}
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
     volumes:
-      - notes-data:/data
+      # Toutes les données (pages, fichiers importés, liens de partage) : dossier ./data à sauvegarder
+      - ./data:/data
+      # Tableau de bord homelab : montez ici en lecture seule les disques à surveiller, par exemple :
+      # - /mnt/media:/mnt/media:ro
     restart: unless-stopped
 
+  # Option A – Cloudflare Tunnel : docker compose --profile tunnel up -d
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+    depends_on: [notes]
+    restart: unless-stopped
+    profiles: [tunnel]
+
+  # Option B – Caddy (HTTPS automatique, ports 80/443 ouverts sur la box) : docker compose --profile caddy up -d
+  caddy:
+    image: caddy:2
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - DOMAIN=${DOMAIN:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [notes]
+    restart: unless-stopped
+    profiles: [caddy]
+
 volumes:
-  notes-data:
+  caddy-data:
+  caddy-config:

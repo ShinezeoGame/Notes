@@ -2,6 +2,8 @@ node_modules
 */node_modules
 client/dist
 server/data
+data
+.env
 android
 .git
 .github
