@@ -99,11 +99,14 @@ jobs:
           if [[ "$TAG" != v* ]]; then
             gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           fi
+          {
+            echo "APK Android construit automatiquement depuis la branche \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA)."
+            echo
+            echo "- **notes-debug.apk** : installable directement sur le téléphone (autoriser les sources inconnues)."
+            echo "- **notes-release.apk** : présent uniquement si un keystore de release est configuré dans les secrets du dépôt."
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" $FILES $PRE \
             --target "$GITHUB_SHA" \
             --title "Notes – APK Android ($TAG)" \
-            --notes "APK Android construit automatiquement depuis \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA).
-
-- **notes-debug.apk** : installable directement sur le téléphone (autoriser les sources inconnues).
-- **notes-release.apk** : présent uniquement si un keystore de release est configuré dans les secrets du dépôt." \
+            --notes-file "$RUNNER_TEMP/notes.md" \
             || gh release upload "$TAG" $FILES --clobber
