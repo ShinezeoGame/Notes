@@ -62,7 +62,7 @@ Détail :
 
 Il n’est plus nécessaire de retélécharger l’APK à chaque nouvelle version :
 
-1. Mettez le serveur à jour (`git pull && docker compose up -d --build`, voir [INSTALLATION.md](INSTALLATION.md)).
+1. Le serveur se met à jour : automatiquement toutes les 15 minutes après `sh scripts/install-auto-update.sh` (une fois), ou à la main avec `git pull && docker compose up -d --build` (voir [INSTALLATION.md](INSTALLATION.md)).
 2. Le téléphone vérifie la version du serveur toutes les heures et affiche la notification **Mise à jour de Notes disponible** (autorisation demandée au premier lancement ; option dans *Réglages → Application et mises à jour*).
 3. Touchez la notification, ou le bouton **Mettre à jour** du bandeau affiché dans l’application : la nouvelle version (environ 4 Mo) est téléchargée depuis le serveur, vérifiée fichier par fichier (SHA-256), puis l’application redémarre dessus. Vos notes restent sur l’appareil.
 

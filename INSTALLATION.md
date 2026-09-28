@@ -181,13 +181,39 @@ Un lien donne accès à la page **et à toutes ses sous‑pages** : partagez une
 
 ### Tableau de bord homelab
 
-Le serveur tournant dans votre homelab, la section **Homelab** peut interroger vos applications avec leurs adresses locales (`http://192.168.1.10:8989`…). Pour afficher l’occupation de vos disques dans la carte « Hôte de ce serveur », ajoutez‑les en lecture seule dans `docker-compose.yml` (section `volumes` du service `notes`, par ex. `- /mnt/media:/mnt/media:ro`), puis listez `/mnt/media` dans les points de montage de l’appareil.
+Le serveur tournant dans votre homelab, la section **Homelab** peut interroger vos applications avec leurs adresses locales (`http://192.168.1.10:8989`…). Pour afficher l’occupation de vos disques dans la carte « Hôte de ce serveur », montez‑les en lecture seule dans un fichier `docker-compose.override.yml` à côté de `docker-compose.yml` (plutôt que de modifier ce dernier, ce qui bloquerait la mise à jour automatique) :
+
+```yaml
+services:
+  notes:
+    volumes:
+      - /mnt/media:/mnt/media:ro
+```
+
+Appliquez avec `docker compose up -d`, puis listez `/mnt/media` dans les points de montage de l’appareil.
+
+### Mise à jour automatique (recommandé)
+
+Une seule commande, à lancer une fois dans le dossier `Notes` :
+
+```bash
+sh scripts/install-auto-update.sh
+```
+
+Toutes les 15 minutes, le serveur regarde si une nouvelle version est publiée sur le dépôt ; si oui, il la récupère et se reconstruit (quelques secondes d’interruption), puis les téléphones reçoivent la notification de mise à jour. Si Docker demande les droits administrateur, le script le détecte et installe la tâche pour root (mot de passe demandé une fois).
+
+- Journal : `tail -n 20 auto-update.log`
+- Vérifier tout de suite : `sh scripts/auto-update.sh` (précédé de `sudo` si Docker l'exige ; `--force` pour reconstruire même sans nouveauté)
+- Arrêter : `sh scripts/install-auto-update.sh --remove`
+- Autre fréquence, par exemple chaque nuit à 4 h : `NOTES_UPDATE_SCHEDULE='0 4 * * *' sh scripts/install-auto-update.sh`
+
+Si une nouvelle version ne se construit pas, l’ancienne continue de fonctionner et le journal indique l’erreur. Ne modifiez pas les fichiers du dépôt sur le serveur : vos réglages vont dans `.env` et `docker-compose.override.yml` (sinon le journal signale une « mise à jour bloquée »).
 
 ### Entretien
 
 ```bash
 cd Notes
-git pull && docker compose up -d --build     # mettre à jour
+git pull && docker compose up -d --build     # mettre à jour à la main
 docker compose logs -f notes                 # voir les journaux
 tar czf ~/notes-$(date +%F).tar.gz data      # sauvegarder toutes les données
 ```

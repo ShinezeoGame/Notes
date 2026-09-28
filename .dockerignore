@@ -7,3 +7,6 @@ data
 android
 .git
 .github
+*.log
+.auto-update*
+docker-compose.override.yml

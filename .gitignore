@@ -6,6 +6,12 @@ server/data/
 .DS_Store
 .env
 .env.local
+# Réglages propres au serveur (volumes, ports…) : conservés lors des mises à jour automatiques
+docker-compose.override.yml
+# État et verrou de la mise à jour automatique (scripts/auto-update.sh)
+.auto-update
+.auto-update.lock
+.auto-update.build
 
 # Android build outputs (le projet Capacitor lui-même est versionné)
 android/.gradle/
