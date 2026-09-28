@@ -37,13 +37,17 @@ export async function loadPdf(url: string): Promise<PdfDocument> {
   return pdfjs.getDocument({ url, withCredentials: false }).promise;
 }
 
+/** Largeur maximale d'une page affichée : au-delà (page en pleine largeur), les pages sont centrées
+ * plutôt que dessinées en images géantes. */
+const MAX_PAGE_WIDTH = 1100;
+
 /**
  * Affiche toutes les pages d'un PDF dans `container`, en ne dessinant que celles visibles.
  * Renvoie une fonction de nettoyage.
  */
 export async function renderPdfInto(pdf: PdfDocument, container: HTMLElement, onProgress?: (done: number) => void) {
   container.replaceChildren();
-  const width = Math.max(200, container.clientWidth - 2);
+  const width = Math.min(MAX_PAGE_WIDTH, Math.max(200, container.clientWidth - 2));
   const first = await pdf.getPage(1);
   const base = first.getViewport({ scale: 1 });
   const scale = width / base.width;
@@ -61,6 +65,7 @@ export async function renderPdfInto(pdf: PdfDocument, container: HTMLElement, on
       canvas.height = Math.floor(viewport.height * dpr);
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
+      holder.style.width = `${viewport.width}px`;
       holder.style.height = `${viewport.height}px`;
       const context = canvas.getContext('2d');
       if (!context) return;
@@ -91,6 +96,7 @@ export async function renderPdfInto(pdf: PdfDocument, container: HTMLElement, on
     const holder = document.createElement('div');
     holder.className = 'nb-pdf-page';
     holder.dataset.page = String(i);
+    holder.style.width = `${base.width * scale}px`;
     holder.style.height = `${base.height * scale}px`;
     container.appendChild(holder);
     io.observe(holder);

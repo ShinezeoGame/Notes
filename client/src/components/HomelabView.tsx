@@ -1,12 +1,23 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { api, serverBase } from '../lib/api';
 import {
   CATEGORIES,
   formatBytes,
   formatStat,
   formatUptime,
-  MAX_CARD_H,
-  MAX_CARD_W,
+  clampCardHeight,
+  clampCardWidth,
   deviceVisual,
   type CardSize,
   serviceVisual,
@@ -24,7 +35,7 @@ type PanelProps = {
   refreshSeconds?: number;
   onConfigure?: () => void;
   configured: boolean;
-  /** Taille de chaque module (colonnes × hauteur), indexée par identifiant. */
+  /** Taille de chaque module (largeur en %, hauteur en px ; absentes = automatiques), indexée par identifiant. */
   layout?: Record<string, CardSize>;
   /** Fourni quand les modules peuvent être redimensionnés depuis ce panneau. */
   onResize?: (id: string, size: CardSize) => void;
@@ -33,7 +44,7 @@ type PanelProps = {
   refreshKey?: string;
 };
 
-const DEFAULT_SIZE: CardSize = { w: 1, h: 1 };
+const AUTO_SIZE: CardSize = {};
 
 function barClass(percent: number | null | undefined): string {
   if (percent == null) return '';
@@ -76,15 +87,52 @@ function StatChip({ s }: { s: StatValue }) {
   );
 }
 
-export function ServiceCard({ s, compact, size = DEFAULT_SIZE, editing = false }: { s: ServiceStatus; compact?: boolean; size?: CardSize; editing?: boolean }) {
+/** Dimensions réelles d'un module : largeur en px, hauteur imposée en px (absente = selon le contenu). */
+export type CardFit = { width: number; height?: number };
+
+/** Hauteur d'une rangée de statistiques (pastille de 40 px + 6 px d'espacement). */
+const CHIP_ROW = 46;
+
+/** Masque les éléments coupés par le bas de la liste (ils resteraient à moitié visibles). */
+function hideClipped(el: HTMLElement | null) {
+  if (!el) return;
+  const limit = el.clientHeight + 1;
+  for (const child of Array.from(el.children) as HTMLElement[]) {
+    child.style.visibility = child.offsetTop + child.offsetHeight > limit ? 'hidden' : '';
+  }
+}
+
+/** Liste qui masque les éléments qui ne tiennent pas quand la hauteur du module est imposée ou limitée. */
+function FitList({ className, maxHeight, children }: { className: string; maxHeight?: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Après chaque rendu (statistiques mises à jour) et à chaque changement de taille.
+  useLayoutEffect(() => hideClipped(ref.current));
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => hideClipped(el));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`hl-fit ${className}`} style={maxHeight !== undefined ? { maxHeight } : undefined}>
+      {children}
+    </div>
+  );
+}
+
+export function ServiceCard({ s, compact, fit, editing = false }: { s: ServiceStatus; compact?: boolean; fit?: CardFit; editing?: boolean }) {
   const open = () => !editing && s.url && window.open(s.url, '_blank', 'noopener');
-  const area = size.w * size.h;
-  // Un module agrandi affiche plus de statistiques.
-  const maxStats = compact ? (area > 1 ? 4 * area : 0) : area > 1 ? 12 : 4;
+  const fixed = fit?.height !== undefined;
+  // Hauteur automatique : deux rangées de statistiques (une en vue compacte, si le module est assez large).
+  // Hauteur imposée : autant de statistiques que la place le permet.
+  const autoRows = compact ? ((fit?.width ?? 0) >= 300 ? 1 : 0) : 2;
+  const showStats = s.stats.length > 0 && (fixed || autoRows > 0);
   return (
     <button
       type="button"
-      className={`hl-card hl-service${s.ok ? '' : ' hl-service--down'}${compact ? ' hl-card--compact' : ''}`}
+      className={`hl-card hl-service${s.ok ? '' : ' hl-service--down'}${compact ? ' hl-card--compact' : ''}${fixed ? ' hl-card--fixed' : ''}`}
+      style={fixed ? { height: fit.height } : undefined}
       onClick={open}
       title={editing ? undefined : s.url}
       tabIndex={editing ? -1 : undefined}
@@ -95,24 +143,26 @@ export function ServiceCard({ s, compact, size = DEFAULT_SIZE, editing = false }
         <span className={`hl-dot${s.ok ? ' hl-dot--up' : ' hl-dot--down'}`} title={s.ok ? 'En ligne' : 'Hors ligne'} />
         {s.latency != null ? <span className="hl-latency">{s.latency} ms</span> : null}
       </div>
-      {maxStats > 0 && s.stats.length ? (
-        <div className="hl-chips">
-          {s.stats.slice(0, maxStats).map((st) => (
+      {showStats ? (
+        <FitList className="hl-chips" maxHeight={fixed ? undefined : autoRows * CHIP_ROW - 6}>
+          {s.stats.map((st) => (
             <StatChip key={st.label} s={st} />
           ))}
-        </div>
+        </FitList>
       ) : null}
       {s.error ? <div className="hl-error">{s.error}</div> : null}
-      {(!compact || area > 1) && s.version ? <div className="hl-version">v{s.version}</div> : null}
+      {(!compact || fixed) && s.version ? <div className="hl-version">v{s.version}</div> : null}
     </button>
   );
 }
 
-export function DeviceCard({ d, compact: compactView, size = DEFAULT_SIZE }: { d: DeviceStatus; compact?: boolean; size?: CardSize }) {
-  const compact = compactView && size.w * size.h === 1;
+export function DeviceCard({ d, compact: compactView, fit }: { d: DeviceStatus; compact?: boolean; fit?: CardFit }) {
+  const fixed = fit?.height !== undefined;
+  // Vue compacte réduite tant que la hauteur est automatique ; une hauteur imposée affiche tout ce qui tient.
+  const compact = Boolean(compactView) && !fixed;
   const cpuGauge: Gauge | null = d.cpu != null ? { total: 0, used: 0, percent: d.cpu } : null;
   return (
-    <div className={`hl-card hl-device${d.ok ? '' : ' hl-device--down'}`}>
+    <div className={`hl-card hl-device${d.ok ? '' : ' hl-device--down'}${fixed ? ' hl-card--fixed' : ''}`} style={fixed ? { height: fit.height } : undefined}>
       <div className="hl-service-head">
         <VisualTile v={deviceVisual(d)} size={compact ? 26 : 32} />
         <span className="hl-service-name">{d.name || d.hostname || d.type}</span>
@@ -124,13 +174,15 @@ export function DeviceCard({ d, compact: compactView, size = DEFAULT_SIZE }: { d
             {[d.hostname, d.model, d.os].filter(Boolean).join(' · ')}
             {d.cores ? ` · ${d.cores} cœurs` : ''}
           </div>
-          <GaugeBar label="CPU" gauge={cpuGauge} hint={d.cpu != null ? `${d.cpu.toFixed(0)} %${d.load?.length ? ` · charge ${d.load.slice(0, 3).join(' / ')}` : ''}` : undefined} />
-          {d.cpu == null && d.load?.length ? <div className="hl-device-meta">Charge : {d.load.slice(0, 3).join(' / ')}</div> : null}
-          <GaugeBar label="Mémoire" gauge={d.memory} hint={d.memory && !d.memory.total && d.memory.percent != null ? `${d.memory.percent.toFixed(0)} %` : undefined} />
-          {!compact ? <GaugeBar label="Swap" gauge={d.swap && d.swap.total ? d.swap : null} /> : null}
-          {(d.disks ?? []).slice(0, compact ? 2 : 12).map((disk) => (
-            <GaugeBar key={disk.name} label={disk.name} gauge={disk.error ? null : disk} warn={disk.warn} />
-          ))}
+          <FitList className="hl-gauges">
+            <GaugeBar label="CPU" gauge={cpuGauge} hint={d.cpu != null ? `${d.cpu.toFixed(0)} %${d.load?.length ? ` · charge ${d.load.slice(0, 3).join(' / ')}` : ''}` : undefined} />
+            {d.cpu == null && d.load?.length ? <div className="hl-device-meta">Charge : {d.load.slice(0, 3).join(' / ')}</div> : null}
+            <GaugeBar label="Mémoire" gauge={d.memory} hint={d.memory && !d.memory.total && d.memory.percent != null ? `${d.memory.percent.toFixed(0)} %` : undefined} />
+            {!compact ? <GaugeBar label="Swap" gauge={d.swap && d.swap.total ? d.swap : null} /> : null}
+            {(d.disks ?? []).slice(0, compact ? 2 : 24).map((disk) => (
+              <GaugeBar key={disk.name} label={disk.name} gauge={disk.error ? null : disk} warn={disk.warn} />
+            ))}
+          </FitList>
           <div className="hl-device-foot">
             {d.uptime != null ? (
               <span title="Temps de fonctionnement">
@@ -248,7 +300,8 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
     <div className={`hl-panel${compact ? ' hl-panel--compact' : ''}${editing ? ' hl-panel--editing' : ''}`}>
       {editing ? (
         <div className="hl-edit-hint">
-          <Icon name="gripCorner" size={14} /> Tirez le coin inférieur droit d’un module pour changer sa largeur et sa hauteur.
+          <Icon name="gripCorner" size={14} /> Tirez le bord droit, le bord inférieur ou le coin d’un module pour le redimensionner librement. Double-clic sur le
+          coin : taille automatique.
         </div>
       ) : null}
       <div className="hl-toolbar">
@@ -290,11 +343,12 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
           <CardGrid
             className="hl-grid hl-grid--devices"
             compact={compact}
+            minWidth={compact ? 240 : 300}
             editing={editing}
             items={status.devices.map((d) => ({
               id: d.id,
-              size: layout?.[d.id] ?? DEFAULT_SIZE,
-              render: (size: CardSize) => <DeviceCard d={d} compact={compact} size={size} />,
+              size: layout?.[d.id] ?? AUTO_SIZE,
+              render: (fit: CardFit) => <DeviceCard d={d} compact={compact} fit={fit} />,
             }))}
             onResize={onResize}
           />
@@ -306,11 +360,12 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
           <CardGrid
             className="hl-grid"
             compact={compact}
+            minWidth={compact ? 170 : 230}
             editing={editing}
             items={list.map((s) => ({
               id: s.id,
-              size: layout?.[s.id] ?? DEFAULT_SIZE,
-              render: (size: CardSize) => <ServiceCard s={s} compact={compact} size={size} editing={editing} />,
+              size: layout?.[s.id] ?? AUTO_SIZE,
+              render: (fit: CardFit) => <ServiceCard s={s} compact={compact} fit={fit} editing={editing} />,
             }))}
             onResize={onResize}
           />
@@ -321,106 +376,186 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
 }
 
 // ---------- Grille de modules redimensionnables ----------
+// 120 colonnes (1/2, 1/3, 1/4, 1/5, 1/6 et 1/8 de rangée tombent juste) et des rangées de 4 px : la largeur (en % de la
+// rangée) et la hauteur (en px) se règlent librement, et les modules s'emboîtent sans laisser de trou.
 
-type GridItem = { id: string; size: CardSize; render: (size: CardSize) => ReactNode };
-type Metrics = { cols: number; colWidth: number; gap: number };
+const COLS = 120;
+const ROW = 4;
+const DIVISORS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40, 60, 120];
+/** Largeurs « aimantées » (en colonnes) : quart, tiers, moitié… */
+const SNAP_SPANS = [15, 20, 24, 30, 40, 48, 60, 72, 80, 90, 96, 120];
+/** En dessous de cette largeur (téléphone), un module par ligne. */
+const STACK_BELOW = 560;
 
-/** Mesure la grille réelle (nombre de colonnes, largeur d'une colonne, espacement). */
-function useGridMetrics(ref: React.RefObject<HTMLDivElement | null>): Metrics {
-  const [m, setM] = useState<Metrics>({ cols: 1, colWidth: 230, gap: 10 });
+type GridItem = { id: string; size: CardSize; render: (fit: CardFit) => ReactNode };
+type Geometry = { colW: number; gap: number; stacked: boolean; autoSpan: number; minSpan: number };
+type Live = { span?: number; h?: number };
+
+function useElementWidth(ref: React.RefObject<HTMLDivElement | null>): number {
+  const [width, setWidth] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const measure = () => {
-      const cs = getComputedStyle(el);
-      const tracks = cs.gridTemplateColumns.split(' ').filter((t) => t.endsWith('px'));
-      const next = { cols: Math.max(1, tracks.length), colWidth: parseFloat(tracks[0] ?? '230') || 230, gap: parseFloat(cs.columnGap) || 0 };
-      setM((prev) => (prev.cols === next.cols && Math.abs(prev.colWidth - next.colWidth) < 1 && prev.gap === next.gap ? prev : next));
-    };
+    const measure = () => setWidth(el.clientWidth);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
   }, [ref]);
-  return m;
+  return width;
 }
 
-function CardGrid({ className, items, compact, editing, onResize }: { className: string; items: GridItem[]; compact: boolean; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
+function CardGrid({
+  className,
+  items,
+  compact,
+  minWidth,
+  editing,
+  onResize,
+}: {
+  className: string;
+  items: GridItem[];
+  compact: boolean;
+  /** Largeur minimale d'un module en taille automatique (px). */
+  minWidth: number;
+  editing: boolean;
+  onResize?: (id: string, size: CardSize) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const metrics = useGridMetrics(ref);
-  const rowUnit = compact ? 96 : 150;
+  // La grille déborde de l'espacement à droite : chaque cellule porte son espacement.
+  const gridWidth = useElementWidth(ref);
+  const gap = compact ? 6 : 10;
+  const geo = useMemo<Geometry>(() => {
+    const colW = gridWidth / COLS;
+    const stacked = gridWidth < STACK_BELOW;
+    const perRow = Math.max(1, Math.floor(gridWidth / (minWidth + gap)));
+    const divisor = [...DIVISORS].reverse().find((d) => d <= perRow) ?? 1;
+    const minPx = compact ? 120 : 150;
+    return {
+      colW,
+      gap,
+      stacked,
+      autoSpan: stacked ? COLS : COLS / divisor,
+      minSpan: colW > 0 ? Math.min(COLS, Math.ceil((minPx + gap) / colW)) : 1,
+    };
+  }, [gridWidth, gap, minWidth, compact]);
   return (
-    <div className={className} ref={ref}>
-      {items.map((it) => (
-        <CardCell key={it.id} item={it} metrics={metrics} rowUnit={rowUnit} editing={editing && Boolean(onResize)} onResize={onResize} />
-      ))}
+    <div className={className} ref={ref} style={{ '--hl-gap': `${gap}px` } as CSSProperties}>
+      {gridWidth > 0
+        ? items.map((it) => <CardCell key={it.id} item={it} geo={geo} editing={editing && Boolean(onResize)} onResize={onResize} />)
+        : null}
     </div>
   );
 }
 
-const clampInt = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)));
+function sizeLabel(pct: number | undefined, height: number | undefined): string {
+  return `${pct === undefined ? 'auto' : `${pct} %`} × ${height === undefined ? 'auto' : `${height} px`}`;
+}
 
-function CardCell({ item, metrics, rowUnit, editing, onResize }: { item: GridItem; metrics: Metrics; rowUnit: number; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
-  const [live, setLive] = useState<CardSize | null>(null);
-  const liveRef = useRef<CardSize | null>(null);
-  const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const maxW = Math.min(MAX_CARD_W, metrics.cols);
-  const size = live ?? item.size;
-  const w = clampInt(size.w, 1, maxW);
-  const h = clampInt(size.h, 1, MAX_CARD_H);
+function CardCell({ item, geo, editing, onResize }: { item: GridItem; geo: Geometry; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [natural, setNatural] = useState(0);
+  const [live, setLive] = useState<Live | null>(null);
+  const liveRef = useRef<Live | null>(null);
+  const drag = useRef<{ axis: 'x' | 'y' | 'xy'; x: number; y: number; span: number; h: number } | null>(null);
 
-  const down = (e: ReactPointerEvent<HTMLDivElement>) => {
+  const clampSpan = (n: number) => (geo.stacked ? COLS : Math.min(COLS, Math.max(geo.minSpan, Math.round(n))));
+  const storedSpan = item.size.w !== undefined ? (item.size.w / 100) * COLS : geo.autoSpan;
+  const span = clampSpan(live?.span ?? storedSpan);
+  const fixedH = live?.h ?? item.size.h;
+  const width = Math.max(0, span * geo.colW - geo.gap);
+
+  // Hauteur naturelle du module (hauteur automatique) : détermine le nombre de rangées occupées.
+  useLayoutEffect(() => {
+    const el = boxRef.current?.firstElementChild as HTMLElement | null;
+    if (!el) return;
+    const measure = () => setNatural(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const rows = Math.max(1, Math.ceil(((fixedH ?? natural) + geo.gap) / ROW));
+
+  const commit = (size: CardSize) => {
+    if (size.w !== item.size.w || size.h !== item.size.h) onResize?.(item.id, size);
+  };
+
+  const start = (axis: 'x' | 'y' | 'xy') => (e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    drag.current = { x: e.clientX, y: e.clientY, w, h };
+    drag.current = { axis, x: e.clientX, y: e.clientY, span, h: fixedH ?? natural };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const move = (e: ReactPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     if (!d) return;
-    const next = {
-      w: clampInt(d.w + (e.clientX - d.x) / (metrics.colWidth + metrics.gap), 1, maxW),
-      h: clampInt(d.h + (e.clientY - d.y) / (rowUnit + metrics.gap), 1, MAX_CARD_H),
-    };
+    const next: Live = {};
+    if (d.axis !== 'y') {
+      const raw = clampSpan(d.span + (e.clientX - d.x) / geo.colW);
+      next.span = SNAP_SPANS.find((v) => v >= geo.minSpan && Math.abs(v - raw) <= 2) ?? raw;
+    }
+    if (d.axis !== 'x') next.h = clampCardHeight(Math.round((d.h + e.clientY - d.y) / ROW) * ROW);
     liveRef.current = next;
-    setLive((prev) => (prev && prev.w === next.w && prev.h === next.h ? prev : next));
+    setLive(next);
   };
-  const up = () => {
+  const end = () => {
     const d = drag.current;
-    drag.current = null;
     const next = liveRef.current;
+    drag.current = null;
     liveRef.current = null;
     setLive(null);
-    if (d && next && (next.w !== d.w || next.h !== d.h)) onResize?.(item.id, next);
+    if (!d || !next) return;
+    const size: CardSize = { ...item.size };
+    if (next.span !== undefined && next.span !== d.span) size.w = clampCardWidth((next.span / COLS) * 100);
+    if (next.h !== undefined && next.h !== d.h) size.h = next.h;
+    commit(size);
   };
+  // Clavier (poignée d'angle) : flèches = petits pas, Maj + flèches = grands pas.
+  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const big = e.shiftKey;
+    if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !geo.stacked) {
+      const s = clampSpan(span + (e.key === 'ArrowRight' ? 1 : -1) * (big ? 12 : 2));
+      commit({ ...item.size, w: clampCardWidth((s / COLS) * 100) });
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      commit({ ...item.size, h: clampCardHeight((fixedH ?? natural) + (e.key === 'ArrowDown' ? 1 : -1) * (big ? 40 : 8)) });
+    } else return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const reset = () => commit({});
 
-  const style = {
-    gridColumn: `span ${w}`,
-    minHeight: h > 1 ? h * rowUnit + (h - 1) * metrics.gap : undefined,
-  };
+  const handlers = { onPointerMove: move, onPointerUp: end, onPointerCancel: end };
+  const pct = item.size.w === undefined && live?.span === undefined ? undefined : Math.round((span / COLS) * 100);
   return (
-    <div className={`hl-cell${editing ? ' hl-cell--editing' : ''}${live ? ' hl-cell--resizing' : ''}`} style={style}>
-      {item.render({ w, h })}
-      {editing ? (
-        <>
-          <div className="hl-size-badge">
-            {w} × {h}
-          </div>
-          <div
-            className="hl-grip"
-            role="slider"
-            aria-label="Taille du module"
-            aria-valuetext={`${w} colonne(s), hauteur ${h}`}
-            title="Glisser pour redimensionner"
-            onPointerDown={down}
-            onPointerMove={move}
-            onPointerUp={up}
-            onPointerCancel={up}
-          >
-            <Icon name="gripCorner" size={16} />
-          </div>
-        </>
-      ) : null}
+    <div
+      className={`hl-cell${editing ? ' hl-cell--editing' : ''}${live ? ' hl-cell--resizing' : ''}`}
+      style={{ gridColumn: `span ${span}`, gridRow: `span ${rows}` }}
+      data-card-id={item.id}
+    >
+      <div className="hl-cell-box" ref={boxRef}>
+        {item.render({ width, height: fixedH })}
+        {editing ? (
+          <>
+            <div className="hl-size-badge">{sizeLabel(pct, fixedH)}</div>
+            {!geo.stacked ? <div className="hl-rs hl-rs--x" title="Glisser pour changer la largeur" onPointerDown={start('x')} {...handlers} /> : null}
+            <div className="hl-rs hl-rs--y" title="Glisser pour changer la hauteur" onPointerDown={start('y')} {...handlers} />
+            <div
+              className="hl-grip"
+              role="button"
+              tabIndex={0}
+              aria-label={`Taille du module : ${sizeLabel(pct, fixedH)}. Flèches pour ajuster, double-clic pour la taille automatique.`}
+              title="Glisser pour redimensionner · double-clic : taille automatique"
+              onPointerDown={start(geo.stacked ? 'y' : 'xy')}
+              onDoubleClick={reset}
+              onKeyDown={onKey}
+              {...handlers}
+            >
+              <Icon name="gripCorner" size={16} />
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -26,7 +26,10 @@ export type Service = {
   username?: string;
   password?: string;
   insecure?: boolean;
-  /** Taille du module dans le tableau de bord : colonnes (1 à 4) et hauteur (1 à 4). */
+  /** Taille libre du module : largeur en % de la rangée, hauteur en px (absentes = automatiques). */
+  width?: number;
+  height?: number;
+  /** Ancienne taille en cases (colonnes × hauteurs), convertie à la lecture. */
   w?: number;
   h?: number;
 };
@@ -43,7 +46,10 @@ export type Device = {
   node?: string;
   mounts?: string;
   insecure?: boolean;
-  /** Taille du module dans le tableau de bord : colonnes (1 à 4) et hauteur (1 à 4). */
+  /** Taille libre du module : largeur en % de la rangée, hauteur en px (absentes = automatiques). */
+  width?: number;
+  height?: number;
+  /** Ancienne taille en cases (colonnes × hauteurs), convertie à la lecture. */
   w?: number;
   h?: number;
 };
@@ -257,48 +263,63 @@ export const DEVICE_ICON_CHOICES: IconName[] = ['server', 'hardDrive', 'monitor'
 
 // ---------- Taille des modules du tableau de bord ----------
 
-export type CardSize = { w: number; h: number };
-export const MAX_CARD_W = 4;
-export const MAX_CARD_H = 4;
+/** Taille libre d'un module : largeur en % de la rangée, hauteur en px ; absente = automatique. */
+export type CardSize = { w?: number; h?: number };
+export const CARD_MIN_W = 5;
+export const CARD_MIN_H = 48;
+export const CARD_MAX_H = 1600;
 
-const clampSize = (v: unknown, max: number) => {
-  const n = Math.round(Number(v));
-  return Number.isFinite(n) && n >= 1 ? Math.min(n, max) : 1;
+type SizeFields = { id: string; width?: number; height?: number; w?: number; h?: number };
+
+const finite = (v: unknown): number | undefined => {
+  const n = Number(v);
+  return v != null && v !== '' && Number.isFinite(n) ? n : undefined;
 };
+export const clampCardWidth = (pct: number) => Math.round(Math.min(100, Math.max(CARD_MIN_W, pct)) * 100) / 100;
+export const clampCardHeight = (px: number) => Math.round(Math.min(CARD_MAX_H, Math.max(CARD_MIN_H, px)));
+
+function sizeOf(x: SizeFields): CardSize {
+  let w = finite(x.width);
+  let h = finite(x.height);
+  // Ancien format (1 à 4 cases) : une colonne ≈ un quart de rangée, une hauteur ≈ 150 px.
+  const legacyW = finite(x.w);
+  const legacyH = finite(x.h);
+  if (w === undefined && legacyW !== undefined && legacyW > 1) w = legacyW * 25;
+  if (h === undefined && legacyH !== undefined && legacyH > 1) h = legacyH * 150 + (legacyH - 1) * 10;
+  return { w: w === undefined ? undefined : clampCardWidth(w), h: h === undefined ? undefined : clampCardHeight(h) };
+}
+
+function withoutSize<T extends SizeFields>(x: T): T {
+  const { width: _width, height: _height, w: _w, h: _h, ...rest } = x;
+  return rest as T;
+}
 
 /** Tailles de tous les modules, indexées par identifiant. */
 export function cardLayout(cfg: HomelabConfig): Record<string, CardSize> {
   const out: Record<string, CardSize> = {};
-  for (const item of [...cfg.services, ...cfg.devices]) out[item.id] = { w: clampSize(item.w, MAX_CARD_W), h: clampSize(item.h, MAX_CARD_H) };
+  for (const item of [...cfg.services, ...cfg.devices]) out[item.id] = sizeOf(item);
   return out;
 }
 
-/** Enregistre la taille d'un module (lu à nouveau dans le document pour ne rien écraser). */
+/** Enregistre la taille d'un module (lu à nouveau dans le document pour ne rien écraser) ; une dimension absente redevient automatique. */
 export function saveCardSize(doc: Y.Doc, id: string, size: CardSize) {
   const cfg = readHomelabConfig(doc);
-  const w = clampSize(size.w, MAX_CARD_W);
-  const h = clampSize(size.h, MAX_CARD_H);
-  saveHomelabConfig(doc, {
-    ...cfg,
-    services: cfg.services.map((x) => (x.id === id ? { ...x, w, h } : x)),
-    devices: cfg.devices.map((x) => (x.id === id ? { ...x, w, h } : x)),
-  });
+  const apply = <T extends SizeFields>(x: T): T => {
+    if (x.id !== id) return x;
+    const next = withoutSize(x);
+    if (size.w !== undefined) next.width = clampCardWidth(size.w);
+    if (size.h !== undefined) next.height = clampCardHeight(size.h);
+    return next;
+  };
+  saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(apply), devices: cfg.devices.map(apply) });
 }
 
 export function resetCardSizes(doc: Y.Doc) {
   const cfg = readHomelabConfig(doc);
-  const strip = <T extends { w?: number; h?: number }>(x: T): T => {
-    const { w: _w, h: _h, ...rest } = x;
-    return rest as T;
-  };
-  saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(strip), devices: cfg.devices.map(strip) });
+  saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(withoutSize), devices: cfg.devices.map(withoutSize) });
 }
 
 /** Empreinte de la configuration (hors tailles) : change quand il faut réinterroger le serveur. */
 export function configStatusKey(cfg: HomelabConfig): string {
-  const strip = <T extends { w?: number; h?: number }>(x: T) => {
-    const { w: _w, h: _h, ...rest } = x;
-    return rest;
-  };
-  return JSON.stringify([cfg.services.map(strip), cfg.devices.map(strip)]);
+  return JSON.stringify([cfg.services.map(withoutSize), cfg.devices.map(withoutSize)]);
 }

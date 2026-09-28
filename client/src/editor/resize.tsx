@@ -4,7 +4,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNod
 
 type Props = {
   editable: boolean;
-  /** Largeur en pourcentage de la page (20 à 100). */
+  /** Largeur en pourcentage de la page (10 à 100). */
   width: number;
   onWidthCommit: (pct: number) => void;
   height?: number;
@@ -20,10 +20,12 @@ type Drag = { axis: 'x' | 'y'; startX: number; startY: number; startW: number; s
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 export const WIDTH_PRESETS = [25, 50, 75, 100];
+/** Largeurs « aimantées » pendant le glissement (au pourcent près sinon). */
+const WIDTH_MAGNETS = [25, 33, 50, 67, 75, 100];
 
 export function normalizeWidth(width: unknown): number {
   const n = Number(width);
-  return Number.isFinite(n) && n > 0 ? clamp(Math.round(n), 20, 100) : 100;
+  return Number.isFinite(n) && n > 0 ? clamp(Math.round(n), 10, 100) : 100;
 }
 
 export function ResizableFrame({ editable, width, onWidthCommit, height, minHeight = 160, maxHeight = 2000, onHeightCommit, className, children }: Props) {
@@ -46,7 +48,8 @@ export function ResizableFrame({ editable, width, onWidthCommit, height, minHeig
     const d = drag.current;
     if (!d) return;
     if (d.axis === 'x') {
-      const pct = clamp(Math.round(((d.startW + e.clientX - d.startX) / d.parentW) * 20) * 5, 20, 100);
+      const raw = clamp(Math.round(((d.startW + e.clientX - d.startX) / d.parentW) * 100), 10, 100);
+      const pct = WIDTH_MAGNETS.find((m) => Math.abs(m - raw) <= 1) ?? raw;
       live.current.w = pct;
       setLiveW(pct);
     } else {

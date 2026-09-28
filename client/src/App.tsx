@@ -360,6 +360,15 @@ function TopBar(props: {
                   </button>
                   <button
                     type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={!page.narrow}
+                    onClick={() => store.update(page.id, { narrow: !page.narrow })}
+                  >
+                    <Icon name="width" size={16} /> Pleine largeur
+                    <span className={`nb-switch${page.narrow ? '' : ' nb-switch--on'}`} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
                     className="nb-menu-danger"
                     onClick={() => {
                       props.onDelete();
@@ -387,6 +396,13 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
   useEffect(() => {
     document.title = page ? `${page.title || 'Sans titre'} – Notes` : 'Notes';
   }, [page?.title, page]);
+
+  // Les invités d'un lien de partage lisent la largeur dans le document de la page.
+  const narrowFlag = Boolean(page?.narrow);
+  useEffect(() => {
+    const meta = ready ? handle?.doc.getMap('meta') : undefined;
+    if (meta && Boolean(meta.get('narrow')) !== narrowFlag) meta.set('narrow', narrowFlag);
+  }, [handle, ready, narrowFlag]);
 
   if (!page) {
     return (
@@ -428,6 +444,7 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
         ready={ready}
         title={page.title}
         icon={page.icon}
+        narrow={page.narrow}
         editable={!inTrash}
         onTitleChange={setTitle}
         onIconChange={setIcon}

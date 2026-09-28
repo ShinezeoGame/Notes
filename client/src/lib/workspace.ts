@@ -13,6 +13,8 @@ export type PageMeta = {
   updatedAt: number;
   deleted: boolean;
   deletedAt: number;
+  /** Colonne centrée plutôt que pleine largeur. */
+  narrow: boolean;
 };
 
 type PageMap = Y.Map<unknown>;
@@ -28,6 +30,7 @@ function toMeta(id: string, m: PageMap): PageMeta {
     updatedAt: Number(m.get('updatedAt') ?? 0),
     deleted: Boolean(m.get('deleted')),
     deletedAt: Number(m.get('deletedAt') ?? 0),
+    narrow: Boolean(m.get('narrow')),
   };
 }
 
@@ -151,7 +154,7 @@ export class WorkspaceStore {
     return id;
   }
 
-  update(id: string, patch: Partial<Pick<PageMeta, 'title' | 'icon' | 'parentId' | 'order'>>) {
+  update(id: string, patch: Partial<Pick<PageMeta, 'title' | 'icon' | 'parentId' | 'order' | 'narrow'>>) {
     const m = this.pages.get(id);
     if (!m) return;
     this.doc.transact(() => {

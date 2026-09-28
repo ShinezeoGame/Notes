@@ -11,6 +11,8 @@ type Props = {
   ready: boolean;
   title: string;
   icon: string;
+  /** Colonne centrée (sinon pleine largeur). */
+  narrow?: boolean;
   editable: boolean;
   onTitleChange: (title: string) => void;
   onIconChange: (icon: string) => void;
@@ -37,7 +39,7 @@ export function PageEditorPane(props: Props) {
   };
 
   return (
-    <div className="nb-page">
+    <div className={`nb-page${props.narrow ? ' nb-page--narrow' : ''}`}>
       <div className="nb-page-head">
         <div className={`nb-page-icon-wrap${icon ? '' : ' nb-page-icon-wrap--empty'}`}>
           {icon ? (

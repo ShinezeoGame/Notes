@@ -26,12 +26,12 @@ export function useDocHandle(room: string | null, auth: Auth, persist: boolean) 
   return state;
 }
 
-/** Observe la carte `meta` (titre, icône) d'un document de page. */
-export function usePageMeta(doc: Y.Doc | null): { title: string; icon: string } {
+/** Observe la carte `meta` (titre, icône, largeur) d'un document de page. */
+export function usePageMeta(doc: Y.Doc | null): { title: string; icon: string; narrow: boolean } {
   const read = () => {
-    if (!doc) return { title: '', icon: '' };
+    if (!doc) return { title: '', icon: '', narrow: false };
     const m = doc.getMap('meta');
-    return { title: String(m.get('title') ?? ''), icon: String(m.get('icon') ?? '') };
+    return { title: String(m.get('title') ?? ''), icon: String(m.get('icon') ?? ''), narrow: Boolean(m.get('narrow')) };
   };
   const [meta, setMeta] = useState(read);
   useEffect(() => {

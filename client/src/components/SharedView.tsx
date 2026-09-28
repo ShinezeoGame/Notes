@@ -170,6 +170,7 @@ export function SharedView({ token, pageId }: Props) {
               ready={ready}
               title={title}
               icon={icon}
+              narrow={meta.narrow}
               editable={canEdit}
               onTitleChange={setTitle}
               onIconChange={setIcon}
