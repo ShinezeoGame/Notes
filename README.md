@@ -43,7 +43,9 @@ Le partage de pages et la synchronisation entre appareils nécessitent que le se
 
 ## Application Android (APK)
 
-L’APK est construit automatiquement par le workflow GitHub Actions `Android APK` à chaque push :
+L’APK est construit automatiquement par le workflow GitHub Actions `Android APK` à chaque push. Dernière version : **https://github.com/ShinezeoGame/Notes/releases/tag/latest** (fichier `notes-debug.apk`).
+
+Détail :
 
 1. Onglet **Actions** du dépôt → dernier run → artefact `notes-apk`, **ou** onglet **Releases** : chaque branche publie une pré-release `apk-<branche>` (et `latest` pour la branche principale) contenant `notes-debug.apk`.
 2. Sur le téléphone, téléchargez `notes-debug.apk`, autorisez l’installation depuis des sources inconnues, installez.
