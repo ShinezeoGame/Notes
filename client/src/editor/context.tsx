@@ -16,6 +16,10 @@ export type AppContextValue = {
   fetchIcs: ((url: string) => Promise<string>) | null;
   importCalendar: (initial?: { source?: string; title?: string }) => Promise<CalendarImportResult | null>;
   notify: (message: string, kind?: 'info' | 'error') => void;
+  /** Ouvre la vue Tableau de bord (propriétaire uniquement). */
+  openDashboard?: () => void;
+  /** Vrai si au moins une application ou un appareil est configuré. */
+  homelabConfigured?: boolean;
 };
 
 export const AppContext = createContext<AppContextValue | null>(null);

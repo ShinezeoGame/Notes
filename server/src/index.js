@@ -19,7 +19,8 @@ import {
   safeUploadName,
   uploadDirFor,
 } from './store.js';
-import { authorizeRoom, createPageInWorkspace, flushAll, pageInShare, setupWSConnection, shareTree } from './ws.js';
+import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
+import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -151,6 +152,37 @@ app.post('/api/share/:token/pages', async (req, res) => {
   }
   const id = createPageInWorkspace(share.wsId, parentId, typeof title === 'string' ? title.slice(0, 200) : '');
   res.json({ id });
+});
+
+// ---------- Tableau de bord homelab ----------
+// La configuration (applications, appareils, secrets) vit dans le document Yjs de l'espace ;
+// le serveur interroge les services et renvoie uniquement les résultats.
+async function readHomelabConfig(wsId) {
+  const doc = getDoc(wsRoom(wsId));
+  await doc.whenLoaded;
+  return parseConfig(doc.getMap('homelab').get('config') || '');
+}
+
+app.get('/api/homelab/status', requireOwner, async (req, res) => {
+  try {
+    const config = await readHomelabConfig(req.wsId);
+    const data = await homelabStatus(req.wsId, config, { force: req.query.force === '1' });
+    res.json(data);
+  } catch (err) {
+    console.error('[homelab]', err);
+    res.status(500).json({ error: 'Impossible d’interroger le homelab.' });
+  }
+});
+
+app.post('/api/homelab/test', requireOwner, async (req, res) => {
+  const { service, device } = req.body || {};
+  try {
+    if (service && typeof service === 'object') return res.json(await checkService({ id: 'test', ...service }));
+    if (device && typeof device === 'object') return res.json(await checkDevice({ id: 'test', ...device }));
+    res.status(400).json({ error: 'Rien à tester.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Test impossible.' });
+  }
 });
 
 // Récupération d'un flux iCal (Google Agenda "adresse secrète") côté serveur pour éviter CORS.

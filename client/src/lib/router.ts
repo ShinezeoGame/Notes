@@ -4,6 +4,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'page'; pageId: string }
   | { name: 'trash' }
+  | { name: 'dashboard' }
   | { name: 'shared'; token: string; pageId: string | null }
   | { name: 'join'; wsId: string; key: string };
 
@@ -12,6 +13,7 @@ export function parseRoute(hash: string): Route {
   let m: RegExpExecArray | null;
   if ((m = /^\/p\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'page', pageId: m[1] };
   if (/^\/trash/.test(h)) return { name: 'trash' };
+  if (/^\/dashboard/.test(h)) return { name: 'dashboard' };
   if ((m = /^\/s\/([A-Za-z0-9_-]+)(?:\/p\/([A-Za-z0-9_-]+))?/.exec(h)))
     return { name: 'shared', token: m[1], pageId: m[2] ?? null };
   if ((m = /^\/join\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'join', wsId: m[1], key: m[2] };
@@ -24,6 +26,8 @@ export function routeToHash(route: Route): string {
       return `#/p/${route.pageId}`;
     case 'trash':
       return '#/trash';
+    case 'dashboard':
+      return '#/dashboard';
     case 'shared':
       return route.pageId ? `#/s/${route.token}/p/${route.pageId}` : `#/s/${route.token}`;
     case 'join':

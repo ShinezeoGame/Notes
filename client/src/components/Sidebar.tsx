@@ -12,6 +12,7 @@ type Props = {
   onOpenPage: (id: string) => void;
   onNewPage: (parentId: string) => void;
   onOpenTrash: () => void;
+  onOpenDashboard: () => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
   onShare: (pageId: string) => void;
@@ -218,6 +219,9 @@ export function Sidebar(props: Props) {
         <div className="nb-sidebar-foot">
           <button type="button" className="nb-sidebar-link" onClick={() => props.onNewPage('')}>
             <span>＋</span> Nouvelle page
+          </button>
+          <button type="button" className="nb-sidebar-link" onClick={props.onOpenDashboard}>
+            <span>🏠</span> Homelab
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
             <span>🗑️</span> Corbeille

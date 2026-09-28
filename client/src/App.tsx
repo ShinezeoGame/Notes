@@ -16,6 +16,9 @@ import { SharedView } from './components/SharedView';
 import { Sidebar, STATUS_LABEL } from './components/Sidebar';
 import { ToastHost, toast } from './components/Toast';
 import { TrashView } from './components/TrashView';
+import { HomelabPanel } from './components/HomelabView';
+import { HomelabConfigDialog } from './components/HomelabConfigDialog';
+import { useHomelabConfig } from './lib/homelab';
 
 export default function App() {
   const route = useRoute();
@@ -68,7 +71,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   );
 }
 
-type Dialog = null | { type: 'search' } | { type: 'settings' } | { type: 'share'; pageId: string };
+type Dialog = null | { type: 'search' } | { type: 'settings' } | { type: 'share'; pageId: string } | { type: 'homelab' };
 
 function OwnerApp() {
   const settings = useSettings();
@@ -149,6 +152,8 @@ function OwnerApp() {
     [],
   );
 
+  const homelabConfigured = useHomelabConfiguredFlag(wsHandle.handle?.doc ?? null);
+
   const uploadFile = useCallback(async (file: File) => {
     if (serverBase()) return (await api.upload(file, ownerAuth())).url;
     if (file.size > 15 * 1024 * 1024) {
@@ -172,9 +177,11 @@ function OwnerApp() {
       fetchIcs: serverBase() ? (url) => api.fetchIcs(url, ownerAuth()).then((r) => r.text) : null,
       importCalendar,
       notify: toast,
+      openDashboard: () => navigate('#/dashboard'),
+      homelabConfigured,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, pageId, openPage, uploadFile, importCalendar, settings.serverUrl],
+    [store, pageId, openPage, uploadFile, importCalendar, settings.serverUrl, homelabConfigured],
   );
 
   if (!store || !wsHandle.ready) {
@@ -199,6 +206,10 @@ function OwnerApp() {
             navigate('#/trash');
             setSidebarOpen(false);
           }}
+          onOpenDashboard={() => {
+            navigate('#/dashboard');
+            setSidebarOpen(false);
+          }}
           onOpenSearch={() => setDialog({ type: 'search' })}
           onOpenSettings={() => setDialog({ type: 'settings' })}
           onShare={(id) => setDialog({ type: 'share', pageId: id })}
@@ -209,6 +220,7 @@ function OwnerApp() {
             store={store}
             pageId={pageId}
             isTrash={route.name === 'trash'}
+            isDashboard={route.name === 'dashboard'}
             status={status}
             showMenuButton={isMobile}
             onMenu={() => setSidebarOpen(true)}
@@ -219,6 +231,8 @@ function OwnerApp() {
           <div className="nb-content">
             {route.name === 'trash' ? (
               <TrashView store={store} onOpenPage={openPage} />
+            ) : route.name === 'dashboard' ? (
+              <DashboardView doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />
             ) : pageId ? (
               <OwnerPage key={pageId} store={store} pageId={pageId} onOpenPage={openPage} />
             ) : (
@@ -230,6 +244,7 @@ function OwnerApp() {
 
       {dialog?.type === 'search' ? <SearchDialog store={store} onClose={() => setDialog(null)} onOpen={openPage} /> : null}
       {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'share' ? (
         <ShareDialog
           pageId={dialog.pageId}
@@ -256,6 +271,7 @@ function TopBar(props: {
   store: WorkspaceStore;
   pageId: string | null;
   isTrash: boolean;
+  isDashboard?: boolean;
   status: ReturnType<typeof useDocStatus>;
   showMenuButton: boolean;
   onMenu: () => void;
@@ -286,6 +302,8 @@ function TopBar(props: {
       <nav className="nb-crumbs">
         {props.isTrash ? (
           <span className="nb-crumb-current">Corbeille</span>
+        ) : props.isDashboard ? (
+          <span className="nb-crumb-current">🏠 Homelab</span>
         ) : (
           <>
             {crumbs.map((c) => (
@@ -407,5 +425,39 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
         }}
       />
     </>
+  );
+}
+
+function useHomelabConfiguredFlag(doc: import('yjs').Doc | null): boolean {
+  const [flag, setFlag] = useState(false);
+  useEffect(() => {
+    if (!doc) return;
+    const map = doc.getMap('homelab');
+    const read = () => {
+      try {
+        const cfg = JSON.parse(String(map.get('config') ?? '{}')) as { services?: unknown[]; devices?: unknown[] };
+        setFlag(Boolean(cfg.services?.length || cfg.devices?.length));
+      } catch {
+        setFlag(false);
+      }
+    };
+    map.observe(read);
+    read();
+    return () => map.unobserve(read);
+  }, [doc]);
+  return flag;
+}
+
+function DashboardView({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigure: () => void }) {
+  const cfg = useHomelabConfig(doc);
+  const configured = cfg.services.length > 0 || cfg.devices.length > 0;
+  useEffect(() => {
+    document.title = 'Homelab – Notes';
+  }, []);
+  return (
+    <div className="nb-page hl-page">
+      <h1 className="nb-page-title-static">🏠 Homelab</h1>
+      <HomelabPanel refreshSeconds={cfg.refreshSeconds} onConfigure={onConfigure} configured={configured} />
+    </div>
   );
 }

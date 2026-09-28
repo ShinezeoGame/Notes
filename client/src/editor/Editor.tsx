@@ -143,6 +143,16 @@ export function Editor({ handle, editable }: Props) {
         },
       },
     ];
+    if (ctx.mode === 'owner') {
+      mediaItems.push({
+        title: 'Homelab',
+        subtext: 'Intégrer le tableau de bord de vos applications et appareils',
+        aliases: ['homelab', 'dashboard', 'tableau de bord', 'serveur', 'nas'],
+        group: fr.slash_menu.image.group,
+        icon: <Icon>🏠</Icon>,
+        onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'homelab' }),
+      });
+    }
     return filterSuggestionItems([...pageItems, ...defaults, ...mediaItems], query);
   };
 

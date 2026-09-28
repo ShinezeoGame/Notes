@@ -3,6 +3,7 @@ import { PageLinkBlock } from './blocks/PageLinkBlock';
 import { PdfBlock } from './blocks/PdfBlock';
 import { EmbedBlock } from './blocks/EmbedBlock';
 import { CalendarBlock } from './blocks/CalendarBlock';
+import { HomelabBlock } from './blocks/HomelabBlock';
 
 export const schema = BlockNoteSchema.create({
   blockSpecs: {
@@ -11,6 +12,7 @@ export const schema = BlockNoteSchema.create({
     pdf: PdfBlock(),
     embed: EmbedBlock(),
     calendar: CalendarBlock(),
+    homelab: HomelabBlock(),
   },
 });
 
