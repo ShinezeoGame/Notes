@@ -60,9 +60,13 @@ Les données (pages, fichiers importés, liens de partage) sont stockées dans l
 
 ## 2. Rendre l’application accessible depuis Internet
 
-Choisissez **une** des deux options.
+Choisissez **une** des trois options :
 
-### Option A — Cloudflare Tunnel (recommandée)
+- vous avez un nom de domaine → **option A** (Cloudflare Tunnel) ;
+- pas de domaine, mais Tailscale est installé sur le serveur → **option C** (Tailscale Funnel), la plus rapide ;
+- sinon → **option B** (Caddy) avec un sous‑domaine gratuit DuckDNS.
+
+### Option A — Cloudflare Tunnel (votre nom de domaine)
 
 Aucun port à ouvrir sur la box, fonctionne même sans IP fixe ou derrière un CGNAT, HTTPS automatique. Il faut un nom de domaine géré par Cloudflare (achat ~10 €/an, ou transfert gratuit de la gestion DNS d’un domaine existant).
 
@@ -109,11 +113,45 @@ Nécessite une IP publique (pas de CGNAT) et un nom de domaine pointant dessus. 
 
    Caddy obtient le certificat HTTPS Let’s Encrypt en une minute environ (`docker compose logs caddy` pour suivre).
 
+### Option C — Tailscale Funnel (sans nom de domaine)
+
+Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’application sur une adresse HTTPS publique et gratuite du type `https://serveur.tailxxxx.ts.net`, sans domaine ni port à ouvrir. Les invités n’ont pas besoin de Tailscale pour ouvrir vos liens de partage.
+
+1. Vérifiez que Tailscale est en version 1.52 ou plus récente :
+
+   ```bash
+   tailscale version
+   ```
+
+2. Publiez le port de Notes (3000, ou la valeur de `NOTES_PORT`) :
+
+   ```bash
+   sudo tailscale funnel --bg 3000
+   ```
+
+   La première fois, la commande affiche un lien `https://login.tailscale.com/…` : ouvrez‑le, connectez‑vous et acceptez l’activation de Funnel (et des certificats HTTPS si c’est demandé). Si la commande s’est arrêtée entre‑temps, relancez‑la. Elle affiche ensuite l’adresse publique après « Available on the internet ». Avec `--bg`, la publication est conservée après un redémarrage.
+
+3. Dans `.env`, laissez `COMPOSE_PROFILES=` vide et indiquez l’adresse affichée, sans `/` final :
+
+   ```ini
+   PUBLIC_URL=https://serveur.tailxxxx.ts.net
+   ```
+
+4. Appliquez :
+
+   ```bash
+   docker compose up -d
+   ```
+
+`tailscale funnel status` affiche la publication en cours ; `sudo tailscale funnel --https=443 off` la retire.
+
+> `tailscale` introuvable alors que le serveur est joignable par son adresse Tailscale ? Tailscale tourne alors dans un conteneur qui partage le réseau de l’hôte (app CasaOS, par exemple) : remplacez `sudo tailscale` par `docker exec NOM_DU_CONTENEUR tailscale`, le nom étant visible avec `docker ps`.
+
 **Vous avez déjà un reverse proxy** (Nginx Proxy Manager, Traefik, SWAG…) qui occupe les ports 80/443 ? Laissez `COMPOSE_PROFILES` vide et créez un hôte `notes.mondomaine.fr` → `http://IP-DU-SERVEUR:3000` (ou le port `NOTES_PORT`) avec **Websockets Support** activé. Pour Nginx Proxy Manager, ajoutez aussi dans l’onglet *Advanced* : `client_max_body_size 200m;` (sinon les fichiers de plus de 1 Mo sont refusés).
 
-**Vérification** : sur votre téléphone, Wi‑Fi coupé, ouvrez `https://notes.mondomaine.fr/api/health`. Vous devez voir `{"ok":true,…}`.
+**Vérification** : sur votre téléphone, Wi‑Fi coupé et Tailscale désactivé, ouvrez `https://VOTRE-ADRESSE/api/health`. Vous devez voir `{"ok":true,…}`. La toute première connexion HTTPS peut prendre quelques secondes, le temps que le certificat soit créé.
 
-> Accès pour vous seul ? [Tailscale](https://tailscale.com) permet d’y accéder partout sans rien exposer, mais les personnes hors de votre réseau Tailscale ne pourront pas ouvrir les liens de partage.
+> Choisissez l’adresse définitive dès maintenant : les fichiers importés dans vos pages gardent l’adresse publique en vigueur au moment de l’import.
 
 ---
 
