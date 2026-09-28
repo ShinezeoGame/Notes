@@ -1,0 +1,11 @@
+{
+  "name": "Notes",
+  "short_name": "Notes",
+  "description": "Prise de notes style Notion, pages imbriquées et collaboration en direct.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#191919",
+  "theme_color": "#191919",
+  "lang": "fr",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

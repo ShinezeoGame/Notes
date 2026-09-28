@@ -1,0 +1,20 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "lib0": "^1.0.0-rc.22",
+    "multer": "^2.4.0",
+    "ws": "^8.22.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33"
+  }
+}

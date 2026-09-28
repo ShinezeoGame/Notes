@@ -1,0 +1,109 @@
+name: Android APK
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Construire l'APK
+    runs-on: ubuntu-latest
+    env:
+      HAS_RELEASE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire le client web
+        run: npm run build
+        env:
+          # Variables de dépôt optionnelles (Settings → Secrets and variables → Actions → Variables)
+          VITE_DEFAULT_SERVER_URL: ${{ vars.DEFAULT_SERVER_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+
+      - name: Copier le client dans le projet Android
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Construire l'APK (debug, installable directement)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../notes-debug.apk
+
+      - name: Construire l'APK release signé (si un keystore est configuré)
+        if: env.HAS_RELEASE_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          cp app/build/outputs/apk/release/app-release.apk ../notes-release.apk
+
+      - name: Publier l'APK comme artefact du workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: notes-apk
+          path: |
+            notes-debug.apk
+            notes-release.apk
+          if-no-files-found: error
+
+      - name: Publier l'APK dans une Release GitHub
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"; PRE=""
+          elif [[ "$GITHUB_REF_NAME" == "${{ github.event.repository.default_branch }}" ]]; then
+            TAG="latest"; PRE="--prerelease"
+          else
+            SAFE="$(echo "$GITHUB_REF_NAME" | sed 's#[^A-Za-z0-9._-]#-#g')"
+            TAG="apk-$SAFE"; PRE="--prerelease"
+          fi
+          FILES="notes-debug.apk"
+          [ -f notes-release.apk ] && FILES="$FILES notes-release.apk"
+          if [[ "$TAG" != v* ]]; then
+            gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          fi
+          gh release create "$TAG" $FILES $PRE \
+            --target "$GITHUB_SHA" \
+            --title "Notes – APK Android ($TAG)" \
+            --notes "APK Android construit automatiquement depuis \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA).
+
+- **notes-debug.apk** : installable directement sur le téléphone (autoriser les sources inconnues).
+- **notes-release.apk** : présent uniquement si un keystore de release est configuré dans les secrets du dépôt." \
+            || gh release upload "$TAG" $FILES --clobber

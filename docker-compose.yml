@@ -1,0 +1,15 @@
+services:
+  notes:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      # Adresse publique (https recommandé) utilisée pour générer les liens de partage et d'upload
+      - PUBLIC_URL=${PUBLIC_URL:-}
+      - MAX_UPLOAD_MB=200
+    volumes:
+      - notes-data:/data
+    restart: unless-stopped
+
+volumes:
+  notes-data:

@@ -1,0 +1,28 @@
+{
+  "name": "notes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application de prise de notes style Notion (web + Android) avec collaboration en direct",
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev -w client\" \"npm run dev -w server\"",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "concurrently": "^10.0.5"
+  }
+}
