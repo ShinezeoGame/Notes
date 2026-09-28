@@ -21,6 +21,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Vérification périodique des mises à jour (notification quand une version est disponible) -->
+        <service
+            android:name=".UpdateCheckJob"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -33,4 +39,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Notification de mise à jour disponible (Android 13+ : autorisation demandée par l'application) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Conserver la vérification périodique des mises à jour après un redémarrage du téléphone -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>

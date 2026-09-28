@@ -23,6 +23,7 @@ import {
 } from './store.js';
 import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
+import { createAppUpdates } from './appUpdates.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -228,12 +229,38 @@ app.post('/api/ics/fetch', requireEditor, async (req, res) => {
 // ---------- Client (build Vite) ----------
 
 const clientDist = path.resolve(__dirname, '../../client/dist');
+
+// Mises à jour de l'application (navigateurs ouverts et application Android).
+const appUpdates = createAppUpdates(clientDist);
+app.get('/api/app/version', (_req, res) => {
+  const v = appUpdates.readVersion();
+  res.set('Cache-Control', 'no-store');
+  if (!v) return res.status(404).json({ error: 'Client non construit.' });
+  res.json(v);
+});
+app.get('/api/app/manifest', (_req, res) => {
+  const m = appUpdates.manifest();
+  res.set('Cache-Control', 'no-store');
+  if (!m) return res.status(404).json({ error: 'Client non construit.' });
+  res.json(m);
+});
+
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {
-  app.use(express.static(clientDist, { index: 'index.html', maxAge: '1h' }));
+  app.use(
+    express.static(clientDist, {
+      index: 'index.html',
+      // Fichiers nommés d'après leur contenu : cache permanent ; le reste (index.html…) est revalidé à chaque visite.
+      setHeaders(res, filePath) {
+        const immutable = path.relative(clientDist, filePath).startsWith(`assets${path.sep}`);
+        res.setHeader('Cache-Control', immutable ? 'public, max-age=31536000, immutable' : 'no-cache');
+      },
+    }),
+  );
   app.use((req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/ws')) {
       return next();
     }
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {

@@ -14,6 +14,7 @@ Application de prise de notes façon **Notion** : thème gris très foncé, page
 - **Redimensionnement** : taille du texte des paragraphes, titres et listes (menu ⠿ du bloc > *Taille du texte*, ou liste *Normal* de la barre de mise en forme sur une sélection) ; largeur des images et vidéos (poignées latérales, menu ⠿ > *Largeur*, ou liste de la barre d’outils : 25 à 100 %) ; largeur (au pourcent près) et hauteur des blocs PDF, vidéo intégrée, agenda et homelab (poignées à droite et en bas) ; modules du tableau de bord homelab en taille libre (bouton *Redimensionner*, puis tirer le bord droit, le bord inférieur ou le coin d’un module ; flèches du clavier sur le coin ; double-clic sur le coin pour revenir à la taille automatique). Les modules s’emboîtent sans laisser de trou, un module agrandi affiche plus de statistiques et, sur téléphone, les modules s’empilent.
 - **Tableau de bord homelab** (entrée « Homelab » de la barre latérale, ou bloc `/Homelab` dans une page) : état et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Notes lui-même.
 - **Android** : application native via Capacitor, APK construit automatiquement par GitHub Actions.
+- **Mises à jour sans réinstaller** : quand le serveur est mis à jour, l’application Android reçoit une notification « Mise à jour de Notes disponible » et se met à jour d’un geste, en téléchargeant la nouvelle version depuis votre serveur ; les navigateurs ouverts proposent de recharger la page.
 
 ## Démarrage rapide (ordinateur)
 
@@ -56,6 +57,16 @@ Détail :
 1. Onglet **Actions** du dépôt → dernier run → artefact `notes-apk`, **ou** onglet **Releases** : chaque branche publie une pré-release `apk-<branche>` (et `latest` pour la branche principale) contenant `notes-debug.apk`.
 2. Sur le téléphone, téléchargez `notes-debug.apk`, autorisez l’installation depuis des sources inconnues, installez.
 3. Au premier lancement, choisissez **Utiliser sur cet appareil** (hors ligne) ou **Se connecter à mon serveur** : collez l’adresse du serveur, ou le lien « Lier un appareil » copié depuis *Réglages* de l’application web pour retrouver exactement les mêmes pages.
+
+### Mises à jour de l’application
+
+Il n’est plus nécessaire de retélécharger l’APK à chaque nouvelle version :
+
+1. Mettez le serveur à jour (`git pull && docker compose up -d --build`, voir [INSTALLATION.md](INSTALLATION.md)).
+2. Le téléphone vérifie la version du serveur toutes les heures et affiche la notification **Mise à jour de Notes disponible** (autorisation demandée au premier lancement ; option dans *Réglages → Application et mises à jour*).
+3. Touchez la notification, ou le bouton **Mettre à jour** du bandeau affiché dans l’application : la nouvelle version (environ 4 Mo) est téléchargée depuis le serveur, vérifiée fichier par fichier (SHA-256), puis l’application redémarre dessus. Vos notes restent sur l’appareil.
+
+Si la nouvelle version ne démarre pas, l’application revient à la précédente au lancement suivant. Seules les évolutions de la partie native Android (rares) demandent d’installer un nouvel APK : l’application le signale alors avec un lien de téléchargement. Dans un navigateur, un bandeau **Recharger** apparaît quand le serveur a été mis à jour.
 
 Options facultatives (Settings → Secrets and variables → Actions) :
 

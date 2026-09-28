@@ -383,6 +383,28 @@ input:focus-visible + .nb-checkbox { outline: 2px solid var(--accent); outline-o
 .nb-toast { background: #2c2c2c; color: var(--text-strong); padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow); font-size: 14px; max-width: 90vw; }
 .nb-toast--error { background: #4a2323; }
 
+/* Mise à jour de l'application */
+.nb-update {
+  position: fixed; right: 20px; bottom: 20px; z-index: 900; /* sous les fenêtres (1000) et les messages (2000) */ display: flex; align-items: center; gap: 10px; max-width: min(460px, calc(100vw - 32px));
+  background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 10px 10px 14px;
+  font-size: 14px; color: var(--text-strong);
+}
+.nb-update--error { border-color: rgba(235, 87, 87, 0.6); }
+.nb-update-icon { color: var(--accent); flex-shrink: 0; }
+.nb-update--error .nb-update-icon { color: var(--danger); }
+.nb-update-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.nb-update-bar { height: 4px; border-radius: 2px; background: var(--bg-active); overflow: hidden; min-width: 200px; }
+.nb-update-bar > div { height: 100%; background: var(--accent); transition: width 0.2s; }
+.nb-update-status { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--text); margin-bottom: 10px; }
+.nb-update-status .nb-svg-icon { flex-shrink: 0; margin-top: 2px; color: var(--success); }
+.nb-update-status--new .nb-svg-icon { color: var(--accent); }
+.nb-update-version { margin: 0 0 8px; font-size: 13px; }
+.nb-update-actions { flex-wrap: wrap; margin-bottom: 10px; }
+.nb-update-notify { margin: 4px 0 0; }
+@media (max-width: 768px) {
+  .nb-update { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+}
+
 .nb-only-mobile { display: none !important; }
 
 /* ---------- Mobile ---------- */

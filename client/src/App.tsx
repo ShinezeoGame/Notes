@@ -15,6 +15,8 @@ import { ShareDialog } from './components/ShareDialog';
 import { SharedView } from './components/SharedView';
 import { Sidebar, STATUS_LABEL } from './components/Sidebar';
 import { ToastHost, toast } from './components/Toast';
+import { UpdateBanner } from './components/UpdateBanner';
+import { startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
@@ -30,9 +32,11 @@ export default function App() {
   else if (route.name === 'join') content = <JoinView wsId={route.wsId} keyValue={route.key} />;
   else if (!settings.onboarded) content = <Onboarding />;
   else content = <OwnerApp />;
+  useEffect(() => startUpdateChecks(), []);
   return (
     <>
       {content}
+      <UpdateBanner />
       <ToastHost />
     </>
   );

@@ -5,6 +5,68 @@ import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
 import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
+import {
+  BUILD,
+  applyUpdate,
+  checkForUpdate,
+  formatBuildDate,
+  isUpdateAvailable,
+  needsNewApp,
+  setUpdateNotifications,
+  useUpdateState,
+} from '../lib/updates';
+
+/** Version installée, version du serveur, recherche et installation des mises à jour. */
+function UpdatesSection() {
+  const settings = useSettings();
+  const u = useUpdateState();
+  const native = isNative();
+  const available = isUpdateAvailable(u);
+  const busy = u.checking || u.progress !== null;
+  let status: string;
+  if (!settings.serverUrl) status = 'Les mises à jour sont distribuées par votre serveur Notes : configurez-le ci-dessus.';
+  else if (u.checking) status = 'Recherche d’une mise à jour…';
+  else if (!u.remote) status = 'Version du serveur inconnue (serveur injoignable ?).';
+  else if (!available) status = 'L’application est à jour.';
+  else if (needsNewApp(u)) status = 'Une nouvelle version existe, mais elle demande une application Android plus récente (APK).';
+  else status = `Nouvelle version disponible : ${u.remote.version}${u.remote.builtAt ? ` (${formatBuildDate(u.remote.builtAt)})` : ''}.`;
+
+  return (
+    <section className="nb-settings-section">
+      <h3>Application et mises à jour</h3>
+      <p className="nb-muted nb-update-version">
+        Version {BUILD.id} du {formatBuildDate(BUILD.builtAt)}
+        {u.appVersion ? ` · application Android ${u.appVersion}` : ''}
+      </p>
+      <div className={`nb-update-status${available ? ' nb-update-status--new' : ''}`}>
+        <Icon name={available ? 'sparkles' : settings.serverUrl && u.remote ? 'checkCircle' : 'refresh'} size={16} />
+        <span>{status}</span>
+      </div>
+      {settings.serverUrl ? (
+        <div className="nb-row nb-gap nb-update-actions">
+          {available ? (
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => void applyUpdate()} disabled={busy}>
+              {needsNewApp(u) ? 'Télécharger l’APK' : native ? 'Mettre à jour maintenant' : 'Recharger la page'}
+            </button>
+          ) : null}
+          <button type="button" className="nb-btn" onClick={() => void checkForUpdate()} disabled={busy}>
+            Rechercher une mise à jour
+          </button>
+        </div>
+      ) : null}
+      {native ? (
+        <label className="nb-check nb-update-notify">
+          <input
+            type="checkbox"
+            checked={settings.updateNotifications !== false}
+            onChange={(e) => void setUpdateNotifications(e.target.checked)}
+          />
+          Me prévenir par une notification quand une mise à jour est disponible
+        </label>
+      ) : null}
+    </section>
+  );
+}
 
 type Props = { onClose: () => void };
 
@@ -203,6 +265,8 @@ export function SettingsDialog({ onClose }: Props) {
           Sans ID client, vous pouvez toujours importer un fichier .ics ou l’adresse secrète iCal de votre agenda Google.
         </p>
       </section>
+
+      <UpdatesSection />
 
       <section className="nb-settings-section nb-settings-danger">
         <h3>Zone sensible</h3>

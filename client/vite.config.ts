@@ -1,11 +1,69 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Version de l'API native (plugin Android « AppUpdate ») dont ce client a besoin. À augmenter quand le client
+ * se met à utiliser une nouvelle fonction native : une application Android plus ancienne ne téléchargera pas
+ * cette version et proposera d'installer le nouvel APK.
+ */
+const MIN_NATIVE_API = 1;
+
+/** Empreinte des sources : identique pour un même code, quelle que soit la machine qui construit (serveur, GitHub). */
+function sourceHash(): string {
+  const hash = createHash('sha256');
+  const add = (file: string) => {
+    hash.update(path.relative(root, file).replace(/\\/g, '/')).update('\0').update(readFileSync(file)).update('\0');
+  };
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir).sort()) {
+      const full = path.join(dir, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else add(full);
+    }
+  };
+  walk(path.join(root, 'src'));
+  walk(path.join(root, 'public'));
+  for (const file of ['index.html', 'package.json', 'vite.config.ts', '../package-lock.json']) {
+    try {
+      add(path.join(root, file));
+    } catch {
+      /* fichier absent (construction partielle) */
+    }
+  }
+  return hash.digest('hex').slice(0, 12);
+}
+
+const BUILD = { id: sourceHash(), builtAt: new Date().toISOString(), minNative: MIN_NATIVE_API };
+
+/** Publie `version.json`, lu par le serveur pour annoncer les mises à jour aux applications. */
+function versionFile(): Plugin {
+  return {
+    name: 'notes-version',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: `${JSON.stringify({ version: BUILD.id, builtAt: BUILD.builtAt, minNative: BUILD.minNative }, null, 2)}\n`,
+      });
+    },
+  };
+}
 
 // En développement, l'API et le WebSocket du serveur Node (port 3000) sont proxifiés
 // afin que le client se comporte comme en production (même origine).
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), versionFile()],
   base: './',
+  define: {
+    __APP_BUILD__: JSON.stringify(BUILD),
+  },
   server: {
     port: 5173,
     host: true,

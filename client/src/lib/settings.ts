@@ -10,6 +10,8 @@ export type Settings = {
   userColor: string;
   /** ID client OAuth Google (optionnel) pour importer un agenda via son compte Google. */
   googleClientId: string;
+  /** Application Android : notification quand une mise à jour est disponible. */
+  updateNotifications: boolean;
   onboarded: boolean;
   lastPageId: string | null;
   expanded: Record<string, boolean>;
@@ -41,6 +43,7 @@ function defaults(): Settings {
     userName: `Utilisateur ${Math.floor(1000 + Math.random() * 9000)}`,
     userColor: randomColor(),
     googleClientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || '',
+    updateNotifications: true,
     onboarded: isStandaloneWeb(),
     lastPageId: null,
     expanded: {},

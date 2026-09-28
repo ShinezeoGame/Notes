@@ -193,3 +193,5 @@ tar czf ~/notes-$(date +%F).tar.gz data      # sauvegarder toutes les données
 ```
 
 Restaurer une sauvegarde : arrêtez (`docker compose down`), remplacez le dossier `data` par celui de l’archive, relancez (`docker compose up -d`).
+
+Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour de Notes disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.

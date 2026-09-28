@@ -7,8 +7,11 @@ android {
         applicationId "com.shinezeo.notes"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Numéro de construction GitHub Actions : chaque APK remplace le précédent et Capacitor reprend alors
+        // le client web inclus dans l'APK plutôt qu'une version téléchargée plus ancienne.
+        def buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionCode buildNumber
+        versionName "1.${buildNumber}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
