@@ -340,21 +340,46 @@ try {
     await assertAlive('après l’import d’un PDF reçu');
   });
 
+  /** Fenêtre au premier plan (celle qui reçoit la touche Retour). */
+  const focused = () => {
+    const lines = adb('shell', 'dumpsys', 'window').split('\n');
+    const current = lines.find((l) => l.includes('mCurrentFocus=')) ?? '';
+    return /=null\b/.test(current) ? (lines.find((l) => l.includes('mFocusedApp=')) ?? '') : current;
+  };
+  const appInFront = () => focused().includes(`${PKG}/`);
+
+  /**
+   * Ferme une fenêtre d'Android ouverte par l'application (menu de partage, sélecteur de fichiers) avec Retour,
+   * comme l'utilisateur qui renonce. On attend qu'elle ait le premier plan (la première ouverture peut prendre
+   * plusieurs secondes sur l'émulateur), puis Retour jusqu'au retour de l'application (un premier appui peut
+   * seulement fermer le clavier).
+   */
+  async function dismiss(what, re) {
+    await until(what, () => re.test(focused()), 60_000, 1500);
+    await sleep(1500);
+    await until(
+      `retour à l’application (${what} fermé)`,
+      () => {
+        if (appInFront()) return true;
+        adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
+        return false;
+      },
+      45_000,
+      2500,
+    );
+  }
+
   await pdfStep('Atelier PDF : « Partager » ouvre le menu de partage d’Android', async () => {
     const id = await nativePdf('partage.pdf');
     await js(`window.Capacitor.nativePromise('NotesFiles', 'share', { id: '${id}', title: 'partage.pdf' }).then(() => true)`);
-    await until('menu de partage', () => /ChooserActivity|ResolverActivity/.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);
-    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
-    await sleep(2000);
+    await dismiss('menu de partage', /ChooserActivity|ResolverActivity|intentresolver/);
     await assertAlive('après le partage');
   });
 
   await pdfStep('Atelier PDF : « Enregistrer » ouvre le sélecteur de fichiers ; Retour = annulé', async () => {
     const id = await nativePdf('enregistre.pdf');
     await js(`(window.__pdfSave = null, window.Capacitor.nativePromise('NotesFiles', 'save', { id: '${id}' }).then((r) => (window.__pdfSave = r), (e) => (window.__pdfSave = { error: String(e) })), true)`);
-    await until('sélecteur de fichiers', () => /documentsui/i.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);
-    await sleep(2000);
-    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
+    await dismiss('sélecteur de fichiers', /documentsui/i);
     const result = await until('réponse de l’enregistrement', () => js('window.__pdfSave'), 30_000, 1000);
     if (result.saved !== false) throw new Error('réponse inattendue : ' + JSON.stringify(result));
     await assertAlive('après l’annulation de l’enregistrement');
