@@ -71,10 +71,12 @@ function UpdatesSection() {
 
 type Props = { onClose: () => void };
 
-async function testServer(url: string, wsId: string, key: string): Promise<string | null> {
+type TestResult = { ok: boolean; text: string; pairable?: boolean };
+
+async function testServer(url: string, wsId: string, key: string): Promise<TestResult> {
   try {
     const r = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) return `Le serveur a répondu ${r.status}.`;
+    if (!r.ok) return { ok: false, text: `Le serveur a répondu ${r.status}.` };
     const c = await fetch(`${url}/api/workspaces/claim`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -83,11 +85,12 @@ async function testServer(url: string, wsId: string, key: string): Promise<strin
     });
     if (!c.ok) {
       const data = (await c.json().catch(() => null)) as { error?: string } | null;
-      return data?.error || `Le serveur a refusé l’espace de travail (${c.status}).`;
+      // Espace refusé (serveur qui a déjà son espace) : cet appareil se relie avec un code.
+      return { ok: false, text: data?.error || `Le serveur a refusé l’espace de travail (${c.status}).`, pairable: c.status === 403 };
     }
-    return null;
+    return { ok: true, text: 'Connexion réussie' };
   } catch {
-    return 'Serveur injoignable. Vérifiez l’adresse (https://…) et votre connexion.';
+    return { ok: false, text: 'Serveur injoignable. Vérifiez l’adresse (https://…) et votre connexion.' };
   }
 }
 
@@ -99,7 +102,7 @@ export function SettingsDialog({ onClose }: Props) {
   const [googleId, setGoogleId] = useState(settings.googleClientId);
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
 
   const joinLink = settings.serverUrl ? `${settings.serverUrl}/#/join/${settings.workspaceId}/${settings.workspaceKey}` : null;
@@ -133,14 +136,16 @@ export function SettingsDialog({ onClose }: Props) {
   };
 
   const runTest = async () => {
-    const url = normalizeServerUrl(server);
+    // Lien « Lier un appareil » collé : on teste l'espace du lien, pas celui de cet appareil.
+    const join = parseJoinLink(server);
+    const url = join?.serverUrl ?? normalizeServerUrl(server);
     if (!url) {
       setTestResult({ ok: false, text: 'Adresse invalide.' });
       return;
     }
     setTesting(true);
-    const err = await testServer(url, settings.workspaceId, settings.workspaceKey);
-    setTestResult(err ? { ok: false, text: err } : { ok: true, text: 'Connexion réussie' });
+    const result = await testServer(url, join?.workspaceId ?? settings.workspaceId, join?.workspaceKey ?? settings.workspaceKey);
+    setTestResult(join && result.ok ? { ok: true, text: 'Lien valide : touchez « Enregistrer » pour relier cet appareil.' } : result);
     setTesting(false);
   };
 
@@ -221,6 +226,13 @@ export function SettingsDialog({ onClose }: Props) {
           {testResult ? (
             <div className={testResult.ok ? 'nb-success' : 'nb-error'}>
               <Icon name={testResult.ok ? 'checkCircle' : 'xCircle'} size={15} /> {testResult.text}
+              {testResult.pairable ? (
+                <div className="nb-test-action">
+                  <button type="button" className="nb-btn nb-btn--primary" onClick={() => setLinkOpen(true)}>
+                    Saisir un code
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </label>
@@ -267,7 +279,7 @@ export function SettingsDialog({ onClose }: Props) {
             </button>
           </div>
         </div>
-        {linkOpen ? <LinkWithCodeDialog onClose={() => setLinkOpen(false)} /> : null}
+        {linkOpen ? <LinkWithCodeDialog server={parseJoinLink(server)?.serverUrl ?? normalizeServerUrl(server)} onClose={() => setLinkOpen(false)} /> : null}
       </section>
 
       <section className="nb-settings-section">

@@ -696,6 +696,7 @@ select.nb-input { appearance: auto; }
 .nb-pair-intro { margin-top: 0; }
 .nb-pair-note { font-size: 13px; margin: 10px 0 0; }
 .nb-connect .nb-pair-note { margin: 4px 0 16px; }
+.nb-test-action { margin-top: 8px; }
 .nb-code-input { font-size: 24px; letter-spacing: 0.2em; font-variant-numeric: tabular-nums; max-width: 220px; text-align: center; }
 .nb-join-link { margin-top: 6px; font-size: 13px; }
 .nb-join-link summary { cursor: pointer; color: var(--text-muted); margin-bottom: 8px; }

@@ -73,11 +73,14 @@ export function PairingCodePanel() {
   );
 }
 
-/** Nouvel appareil : saisie de l'adresse du serveur (application) et du code affiché sur un appareil déjà relié. */
-export function LinkWithCodeDialog({ onClose }: { onClose: () => void }) {
+/**
+ * Nouvel appareil : saisie de l'adresse du serveur (application) et du code affiché sur un appareil déjà relié.
+ * `server` : adresse déjà saisie ailleurs (réglages), à défaut celle enregistrée.
+ */
+export function LinkWithCodeDialog({ server: initialServer, onClose }: { server?: string | null; onClose: () => void }) {
   const settings = useSettings();
   const web = isStandaloneWeb();
-  const [server, setServer] = useState(web ? location.origin : (settings.serverUrl ?? ''));
+  const [server, setServer] = useState(web ? location.origin : (initialServer || settings.serverUrl || ''));
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
