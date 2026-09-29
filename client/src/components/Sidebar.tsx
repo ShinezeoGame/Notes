@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { useWorkspacePages, type PageMeta, type WorkspaceStore } from '../lib/workspace';
 import type { ConnStatus } from '../lib/yjs';
+import { promptInstall, useInstallState } from '../lib/pwa';
 import { Icon } from '../icons/Icon';
 import { PageIcon } from '../icons/pageIcon';
 
@@ -37,6 +38,9 @@ export function Sidebar(props: Props) {
   const { store, currentPageId, status, open, onClose } = props;
   useWorkspacePages(store);
   const settings = useSettings();
+  const install = useInstallState();
+  // Proposition d'installation seulement sur ordinateur (le téléphone a son application Android).
+  const desktop = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<DropHint>(null);
   const [menu, setMenu] = useState<Menu>(null);
@@ -234,6 +238,11 @@ export function Sidebar(props: Props) {
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
             <Icon name="trash" size={16} /> Corbeille
           </button>
+          {install.canInstall && desktop ? (
+            <button type="button" className="nb-sidebar-link nb-sidebar-install" onClick={() => void promptInstall()}>
+              <Icon name="download" size={16} /> Installer l’application
+            </button>
+          ) : null}
         </div>
       </aside>
 

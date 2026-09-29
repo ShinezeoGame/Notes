@@ -56,10 +56,42 @@ function versionFile(): Plugin {
   };
 }
 
+/**
+ * Publie `sw.js` (modèle `src/sw.js`) avec la version et les fichiers de cette construction : l'application
+ * installée sur un ordinateur s'ouvre alors même sans réseau. Chaque construction donne un nouveau `sw.js`, que
+ * le navigateur installe à la visite suivante (et qui efface les fichiers de la version précédente).
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'notes-service-worker',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const publicDir = path.join(root, 'public');
+      const files = new Set(Object.keys(bundle));
+      const walk = (dir: string) => {
+        for (const name of readdirSync(dir).sort()) {
+          const full = path.join(dir, name);
+          if (statSync(full).isDirectory()) walk(full);
+          else files.add(path.relative(publicDir, full).replace(/\\/g, '/'));
+        }
+      };
+      walk(publicDir);
+      const list = [...files].filter((f) => !f.endsWith('.map') && !['index.html', 'sw.js', 'version.json'].includes(f)).sort();
+      const source = readFileSync(path.join(root, 'src/sw.js'), 'utf8')
+        .split('__NOTES_VERSION__')
+        .join(JSON.stringify(BUILD.id))
+        .split('__NOTES_FILES__')
+        .join(JSON.stringify(list));
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+    },
+  };
+}
+
 // En développement, l'API et le WebSocket du serveur Node (port 3000) sont proxifiés
 // afin que le client se comporte comme en production (même origine).
 export default defineConfig({
-  plugins: [react(), versionFile()],
+  plugins: [react(), versionFile(), serviceWorker()],
   base: './',
   define: {
     __APP_BUILD__: JSON.stringify(BUILD),

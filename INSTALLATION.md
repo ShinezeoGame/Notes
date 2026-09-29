@@ -173,6 +173,15 @@ Sur un appareil déjà relié : **Réglages → Afficher un code de liaison**. U
 
 Les pages créées sur un appareil avant de le relier ne sont pas transférées. Après 5 codes faux, le serveur fait patienter une minute ; après 10, tous les codes en cours sont annulés.
 
+### Installer Notes sur Windows (ou Mac, Linux)
+
+Notes s’installe comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
+
+1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
+2. Cliquez sur **Installer l’application** en bas de la barre latérale (ou **Réglages → Installer Notes sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
+
+Notes s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison** et **Homelab**). Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
+
 ### Partager une page en modification en direct
 
 1. Ouvrez la page, cliquez sur **Partager** (en haut à droite) → **Lien de modification** (ou **Lien en lecture seule**). Le lien est copié.

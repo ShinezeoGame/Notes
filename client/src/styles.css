@@ -399,6 +399,10 @@ input:focus-visible + .nb-checkbox { outline: 2px solid var(--accent); outline-o
 .nb-update-status .nb-svg-icon { flex-shrink: 0; margin-top: 2px; color: var(--success); }
 .nb-update-status--new .nb-svg-icon { color: var(--accent); }
 .nb-update-version { margin: 0 0 8px; font-size: 13px; }
+.nb-install { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 12px 0 0; font-size: 13px; }
+.nb-install-note { margin: 12px 0 0; font-size: 13px; }
+.nb-install-note > .nb-svg-icon { vertical-align: -3px; margin-right: 4px; color: var(--success); }
+.nb-sidebar-install { color: var(--accent); }
 .nb-update-actions { flex-wrap: wrap; margin-bottom: 10px; }
 .nb-update-notify { margin: 4px 0 0; }
 @media (max-width: 768px) {

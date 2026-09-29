@@ -1,6 +1,6 @@
 # Notes
 
-Application de prise de notes façon **Notion** : thème gris très foncé, pages imbriquées à volonté, éditeur par blocs (commande `/`), import d’images, GIF, vidéos, PDF, intégrations YouTube, import d’**agenda Google**, et **partage de pages avec modification en direct** par d’autres personnes. Fonctionne sur le web et comme application Android (APK).
+Application de prise de notes façon **Notion** : thème gris très foncé, pages imbriquées à volonté, éditeur par blocs (commande `/`), import d’images, GIF, vidéos, PDF, intégrations YouTube, import d’**agenda Google**, et **partage de pages avec modification en direct** par d’autres personnes. Fonctionne sur le web, comme application Android (APK) et comme application installée sur ordinateur (Windows, Mac, Linux).
 
 ## Fonctionnalités
 
@@ -14,7 +14,8 @@ Application de prise de notes façon **Notion** : thème gris très foncé, page
 - **Redimensionnement** : taille du texte des paragraphes, titres et listes (menu ⠿ du bloc > *Taille du texte*, ou liste *Normal* de la barre de mise en forme sur une sélection) ; largeur des images et vidéos (poignées latérales, menu ⠿ > *Largeur*, ou liste de la barre d’outils : 25 à 100 %) ; largeur (au pourcent près) et hauteur des blocs PDF, vidéo intégrée, agenda et homelab (poignées à droite et en bas) ; modules du tableau de bord homelab en taille libre (bouton *Redimensionner*, puis tirer le bord droit, le bord inférieur ou le coin d’un module ; flèches du clavier sur le coin ; double-clic sur le coin pour revenir à la taille automatique). Les modules s’emboîtent sans laisser de trou, un module agrandi affiche plus de statistiques et, sur téléphone, les modules s’empilent.
 - **Maison connectée** (entrée « Maison » de la barre latérale, ou bloc `/Maison` dans une page) : lumières (marche/arrêt, luminosité, couleur, température de blanc), prises et interrupteurs, volets, thermostats, serrures, enceintes, aspirateurs, scènes, capteurs (température, humidité, portes, mouvement…) et caméras (image et vidéo en direct), regroupés par pièce, avec favoris et recherche. Fonctionne avec Home Assistant, qui prend en charge la plupart des marques (Philips Hue, IKEA, Tapo, Tuya/Smart Life, Shelly, Xiaomi, Netatmo, caméras ONVIF…).
 - **Tableau de bord homelab** (entrée « Homelab » de la barre latérale, ou bloc `/Homelab` dans une page) : état et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Notes lui-même.
-- **Android** : application native via Capacitor, APK construit automatiquement par GitHub Actions.
+- **Android** : application native via Capacitor, APK construit automatiquement par GitHub Actions, et testé sur un émulateur Android 14 (lancement, liaison au serveur, notification, mise à jour) avant d’être publié.
+- **Windows, Mac, Linux** : application installable depuis Edge, Chrome ou Brave (bouton **Installer l’application** de la barre latérale) : fenêtre à part, icône dans le menu Démarrer, ouverture même sans réseau, mises à jour automatiques depuis le serveur.
 - **Mises à jour sans réinstaller** : quand le serveur est mis à jour, l’application Android reçoit une notification « Mise à jour de Notes disponible » et se met à jour d’un geste, en téléchargeant la nouvelle version depuis votre serveur ; les navigateurs ouverts proposent de recharger la page.
 
 ## Démarrage rapide (ordinateur)
@@ -119,7 +120,7 @@ Bouton **Partager** en haut à droite (ou menu `⋯` d’une page dans la barre 
 client/   React + Vite + BlockNote (éditeur) + Yjs (CRDT) — thème sombre
 server/   Node.js : Express (API, uploads, proxy iCal, fichiers statiques) + WebSocket Yjs (synchronisation, droits, persistance)
 android/  Projet Capacitor Android (APK)
-.github/  Workflow de construction de l’APK
+.github/  Workflow de construction de l’APK et test sur émulateur Android
 ```
 
 - Chaque page est un document Yjs (`pg_<espace>_<page>`) ; l’arborescence (titres, icônes, hiérarchie) est un document Yjs séparé (`ws_<espace>`).

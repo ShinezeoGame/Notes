@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
-import { getSettings, isNative, normalizeServerUrl, parseJoinLink, resetWorkspace, updateSettings, useSettings } from '../lib/settings';
+import { getSettings, isNative, isStandaloneWeb, normalizeServerUrl, parseJoinLink, resetWorkspace, updateSettings, useSettings } from '../lib/settings';
+import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
 import { toast } from './Toast';
@@ -65,7 +66,43 @@ function UpdatesSection() {
           Me prévenir par une notification quand une mise à jour est disponible
         </label>
       ) : null}
+      {!native && isStandaloneWeb() ? <InstallBlock /> : null}
     </section>
+  );
+}
+
+/** Navigateur : installer Notes comme une application (menu Démarrer, barre des tâches, fenêtre à part). */
+function InstallBlock() {
+  const { canInstall, installed } = useInstallState();
+  if (isInstalledApp()) {
+    return (
+      <p className="nb-muted nb-install-note">
+        <Icon name="checkCircle" size={15} /> Application Notes installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.
+      </p>
+    );
+  }
+  if (canInstall) {
+    return (
+      <div className="nb-install">
+        <button type="button" className="nb-btn nb-btn--primary" onClick={() => void promptInstall()}>
+          <Icon name="download" size={15} /> Installer Notes sur cet ordinateur
+        </button>
+        <span className="nb-muted">Dans sa propre fenêtre, depuis le menu Démarrer ou la barre des tâches, même sans réseau.</span>
+      </div>
+    );
+  }
+  if (installed) {
+    return (
+      <p className="nb-muted nb-install-note">
+        <Icon name="checkCircle" size={15} /> Notes est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.
+      </p>
+    );
+  }
+  return (
+    <p className="nb-muted nb-install-note">
+      Installer Notes comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite
+      de la barre d’adresse (ou menu ⋯ → Applications → Installer Notes). Déjà installée ? Ouvrez-la depuis le menu Démarrer.
+    </p>
   );
 }
 
