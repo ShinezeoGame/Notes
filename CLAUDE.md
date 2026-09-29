@@ -3,6 +3,14 @@
 Application de notes façon Notion (web + Android) avec collaboration en direct. Code commenté en français ; textes
 de l'interface et messages de commit en français. Architecture : section « Architecture » du README.
 
+## Style des réponses (caveman)
+
+Pour économiser des tokens, l'utilisateur a demandé le skill caveman (`.claude/skills/caveman/`, repris de
+[JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman), licence MIT) : l'activer au niveau `lite` dès la
+première réponse de chaque session, en français. L'utilisateur n'est pas développeur : les étapes qu'il doit suivre
+restent complètes et claires. Il change de niveau avec `/caveman full` ou `/caveman ultra` et revient aux réponses
+normales avec « stop caveman ».
+
 ## Carte du code (graphify)
 
 [graphify](https://github.com/Graphify-Labs/graphify) dresse la carte du code (symboles, fichiers, lignes, qui appelle
