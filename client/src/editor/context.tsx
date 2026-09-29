@@ -19,6 +19,8 @@ export type AppContextValue = {
   notify: (message: string, kind?: 'info' | 'error') => void;
   /** Ouvre la vue Tableau de bord (propriétaire uniquement). */
   openDashboard?: () => void;
+  /** Ouvre la vue Maison (propriétaire uniquement). */
+  openSmartHome?: () => void;
   /** Vrai si au moins une application ou un appareil est configuré. */
   homelabConfigured?: boolean;
   /** Document de l'espace de travail (configuration du homelab, tailles des modules). */

@@ -24,6 +24,7 @@ import {
 import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
 import { createAppUpdates } from './appUpdates.js';
+import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -193,6 +194,56 @@ app.post('/api/homelab/test', requireOwner, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message || 'Test impossible.' });
   }
+});
+
+// ---------- Maison connectée (Home Assistant) ----------
+// Adresse et jeton de Home Assistant vivent dans le document Yjs de l'espace ; le serveur relaie états et commandes.
+async function readHomeConfig(wsId) {
+  const doc = getDoc(wsRoom(wsId));
+  await doc.whenLoaded;
+  return parseHomeConfig(doc.getMap('smarthome').get('config') || '');
+}
+
+app.get('/api/home/states', requireOwner, async (req, res) => {
+  const cfg = await readHomeConfig(req.wsId);
+  if (!isHomeConfigured(cfg)) return res.json({ configured: false, entities: [], fetchedAt: Date.now() });
+  try {
+    const entities = await homeStates(cfg);
+    for (const e of entities) {
+      if (e.domain !== 'camera') continue;
+      e.snapshot = cameraUrl(req.wsId, e.id, 'snapshot');
+      e.stream = cameraUrl(req.wsId, e.id, 'stream');
+    }
+    res.json({ configured: true, entities, fetchedAt: Date.now() });
+  } catch (err) {
+    res.json({ configured: true, entities: [], error: err.message, fetchedAt: Date.now() });
+  }
+});
+
+app.post('/api/home/call', requireOwner, async (req, res) => {
+  const cfg = await readHomeConfig(req.wsId);
+  if (!isHomeConfigured(cfg)) return res.status(400).json({ error: 'Home Assistant n’est pas configuré.' });
+  try {
+    res.json({ entities: await callHome(cfg, req.body || {}) });
+  } catch (err) {
+    res.status(err.status || 502).json({ error: err.message || 'Commande impossible.' });
+  }
+});
+
+app.post('/api/home/test', requireOwner, async (req, res) => {
+  res.json(await testHome(parseHomeConfig(req.body || {})));
+});
+
+// Images et vidéos des caméras : adresses signées (balise <img>, sans en-têtes d'authentification).
+app.get('/api/home/camera/:entityId/:kind', async (req, res) => {
+  const { entityId, kind } = req.params;
+  const ws = String(req.query.ws || '');
+  if (!['snapshot', 'stream'].includes(kind) || !/^camera\.[a-z0-9_]+$/.test(entityId) || !isValidId(ws) || !verifyCamera(ws, entityId, req.query.exp, req.query.sig)) {
+    return res.status(403).json({ error: 'Adresse de caméra expirée ou invalide.' });
+  }
+  const cfg = await readHomeConfig(ws);
+  if (!isHomeConfigured(cfg)) return res.status(404).json({ error: 'Home Assistant n’est pas configuré.' });
+  proxyCamera(cfg, entityId, kind, res);
 });
 
 // Récupération d'un flux iCal (Google Agenda "adresse secrète") côté serveur pour éviter CORS.

@@ -1,5 +1,6 @@
 import { getSettings } from './settings';
 import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from './homelab';
+import type { HomeEntity, HomeStates } from './smarthome';
 
 export class ApiError extends Error {
   status: number;
@@ -86,6 +87,11 @@ export const api = {
   homelabStatus: (force = false) => request<HomelabStatus>(`/api/homelab/status${force ? '?force=1' : ''}`, { auth: ownerAuth() }),
   homelabTest: (payload: { service?: Service; device?: Device }) =>
     request<ServiceStatus | DeviceStatus>('/api/homelab/test', { method: 'POST', body: JSON.stringify(payload), auth: ownerAuth() }),
+  homeStates: () => request<HomeStates>('/api/home/states', { auth: ownerAuth() }),
+  homeCall: (entity_id: string, service: string, data?: Record<string, unknown>) =>
+    request<{ entities: HomeEntity[] }>('/api/home/call', { method: 'POST', body: JSON.stringify({ entity_id, service, data }), auth: ownerAuth() }),
+  homeTest: (cfg: { url: string; token: string; insecure: boolean }) =>
+    request<{ ok: boolean; message: string }>('/api/home/test', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),
   fetchIcs: (url: string, auth: Auth) =>
     request<{ text: string }>('/api/ics/fetch', { method: 'POST', body: JSON.stringify({ url }), auth }),
 };

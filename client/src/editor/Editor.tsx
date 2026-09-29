@@ -164,6 +164,14 @@ export function Editor({ handle, editable }: Props) {
         icon: <SlashIcon name="home" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'homelab' }),
       });
+      mediaItems.push({
+        title: 'Maison',
+        subtext: 'Lumières, prises, volets, chauffage et caméras (Home Assistant)',
+        aliases: ['maison', 'domotique', 'home assistant', 'lumière', 'lampe', 'ampoule', 'caméra', 'prise', 'volet', 'chauffage'],
+        group: fr.slash_menu.image.group,
+        icon: <SlashIcon name="bulb" />,
+        onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'smarthome' }),
+      });
     }
     return filterSuggestionItems([...pageItems, ...defaults, ...mediaItems], query);
   };

@@ -192,6 +192,10 @@ services:
 
 Appliquez avec `docker compose up -d`, puis listez `/mnt/media` dans les points de montage de l’appareil.
 
+### Maison connectée (Home Assistant)
+
+La section **Maison** pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Notes → **Maison** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Notes tourne dans son propre conteneur).
+
 ### Mise à jour automatique (recommandé)
 
 Une seule commande, à lancer une fois dans le dossier `Notes` :

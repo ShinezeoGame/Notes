@@ -4,6 +4,7 @@ import { PdfBlock } from './blocks/PdfBlock';
 import { EmbedBlock } from './blocks/EmbedBlock';
 import { CalendarBlock } from './blocks/CalendarBlock';
 import { HomelabBlock } from './blocks/HomelabBlock';
+import { SmartHomeBlock } from './blocks/SmartHomeBlock';
 import { TextSizeStyle } from './styles/TextSize';
 
 export const schema = BlockNoteSchema.create({
@@ -14,6 +15,7 @@ export const schema = BlockNoteSchema.create({
     embed: EmbedBlock(),
     calendar: CalendarBlock(),
     homelab: HomelabBlock(),
+    smarthome: SmartHomeBlock(),
   },
   styleSpecs: {
     ...defaultStyleSpecs,

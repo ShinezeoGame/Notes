@@ -19,6 +19,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
+import { SmartHomeView } from './components/SmartHomeView';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
@@ -184,6 +185,7 @@ function OwnerApp() {
       importCalendar,
       notify: toast,
       openDashboard: () => navigate('#/dashboard'),
+      openSmartHome: () => navigate('#/maison'),
       homelabConfigured,
       workspaceDoc: store?.doc ?? null,
     }),
@@ -217,6 +219,10 @@ function OwnerApp() {
             navigate('#/dashboard');
             setSidebarOpen(false);
           }}
+          onOpenSmartHome={() => {
+            navigate('#/maison');
+            setSidebarOpen(false);
+          }}
           onOpenSearch={() => setDialog({ type: 'search' })}
           onOpenSettings={() => setDialog({ type: 'settings' })}
           onShare={(id) => setDialog({ type: 'share', pageId: id })}
@@ -228,6 +234,7 @@ function OwnerApp() {
             pageId={pageId}
             isTrash={route.name === 'trash'}
             isDashboard={route.name === 'dashboard'}
+            isSmartHome={route.name === 'smarthome'}
             status={status}
             showMenuButton={isMobile}
             onMenu={() => setSidebarOpen(true)}
@@ -249,6 +256,8 @@ function OwnerApp() {
               <TrashView store={store} onOpenPage={openPage} />
             ) : route.name === 'dashboard' ? (
               <DashboardView doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />
+            ) : route.name === 'smarthome' ? (
+              <SmartHomeView doc={store.doc} />
             ) : pageId ? (
               <OwnerPage key={pageId} store={store} pageId={pageId} onOpenPage={openPage} />
             ) : (
@@ -288,6 +297,7 @@ function TopBar(props: {
   pageId: string | null;
   isTrash: boolean;
   isDashboard?: boolean;
+  isSmartHome?: boolean;
   status: ReturnType<typeof useDocStatus>;
   showMenuButton: boolean;
   onMenu: () => void;
@@ -318,6 +328,10 @@ function TopBar(props: {
       <nav className="nb-crumbs">
         {props.isTrash ? (
           <span className="nb-crumb-current">Corbeille</span>
+        ) : props.isSmartHome ? (
+          <span className="nb-crumb-current">
+            <Icon name="bulb" size={15} /> Maison
+          </span>
         ) : props.isDashboard ? (
           <span className="nb-crumb-current">
             <Icon name="home" size={15} /> Homelab
