@@ -199,6 +199,9 @@ try {
   await step('Premier lancement : l’application s’ouvre et reste ouverte', async () => {
     adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
     await until('écran « Bienvenue dans Notes »', () => js("document.body?.innerText.includes('Bienvenue dans Notes')"), 120_000, 2000);
+    const ua = await js('navigator.userAgent');
+    report.push(`   WebView : ${ua}`);
+    console.log(`   WebView : ${ua}`);
     await sleep(6000);
     await assertAlive('au premier lancement');
   });
@@ -277,11 +280,59 @@ try {
       return id;
     })()`);
 
-  await step('Atelier PDF : « Ouvrir avec Notes » importe un PDF reçu d’une autre application', async () => {
+  /** État de l'atelier PDF au moment d'un échec : page, messages, journal natif, fichiers du cache. */
+  async function pdfDiagnostics() {
+    const lines = ['--- atelier PDF : page ---'];
+    try {
+      lines.push(
+        await js(`JSON.stringify({
+          hash: location.hash,
+          notesFiles: (window.Capacitor?.PluginHeaders ?? []).some((h) => h.name === 'NotesFiles'),
+          busy: document.querySelector('.pdf-busy')?.textContent ?? null,
+          toasts: [...document.querySelectorAll('.nb-toast')].map((t) => t.textContent),
+          text: document.body.innerText.slice(0, 300),
+        }, null, 1)`),
+      );
+    } catch (e) {
+      lines.push(`page illisible : ${e.message}`);
+    }
+    lines.push('--- erreurs de la page ---', ...consoleLog.slice(-30));
+    lines.push(
+      '--- journal natif (NotesFiles, console) ---',
+      adb('logcat', '-d', '-v', 'time', '-s', 'NotesFiles:V', 'Capacitor/Console:V', 'Capacitor:V', 'Capacitor/Plugin:V')
+        .split('\n')
+        .filter((l) => !/Handling local request|Notifying listeners|callback ID|To native|from native/i.test(l))
+        .slice(-60)
+        .join('\n'),
+    );
+    lines.push('--- cache de l’application ---', adb('shell', 'run-as', PKG, 'ls', '-la', 'cache/incoming', 'cache/exports'));
+    const text = lines.join('\n');
+    console.log(text);
+    try {
+      fs.mkdirSync(OUT, { recursive: true });
+      fs.appendFileSync(path.join(OUT, 'diagnostic.txt'), `${text}\n`);
+    } catch {
+      /* rapport facultatif */
+    }
+  }
+
+  /** Étape de l'atelier PDF : diagnostic détaillé si elle échoue. */
+  const pdfStep = (name, fn) =>
+    step(name, async () => {
+      try {
+        await fn();
+      } catch (e) {
+        if (!(e instanceof Closed)) await pdfDiagnostics();
+        throw e;
+      }
+    });
+
+  await pdfStep('Atelier PDF : « Ouvrir avec Notes » importe un PDF reçu d’une autre application', async () => {
     const id = await nativePdf('recu.pdf');
     // Adresse de notre propre FileProvider : l'application lit ce fichier comme un PDF envoyé par une autre.
     const uri = `content://${PKG}.fileprovider/my_cache_images/exports/${id}/recu.pdf`;
-    adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', uri, '-t', 'application/pdf', '-n', `${PKG}/.MainActivity`);
+    console.log(adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', uri, '-t', 'application/pdf', '-n', `${PKG}/.MainActivity`));
+    await until('fichier transmis à la page (atelier PDF ouvert)', () => js("location.hash.startsWith('#/pdf')"), 30_000, 1000);
     await until('PDF importé et ouvert', () => js("/^#\\/pdf\\/[A-Za-z0-9_-]+$/.test(location.hash) && document.querySelectorAll('.pdfa-page').length === 1"), 90_000, 2000);
     await until('page affichée', () => js("!!document.querySelector('.pdfa-page canvas.pdf-canvas:not(.pdf-canvas--loading)')"), 60_000, 2000);
     const name = await js("document.querySelector('.nb-crumb-current')?.textContent ?? ''");
@@ -289,7 +340,7 @@ try {
     await assertAlive('après l’import d’un PDF reçu');
   });
 
-  await step('Atelier PDF : « Partager » ouvre le menu de partage d’Android', async () => {
+  await pdfStep('Atelier PDF : « Partager » ouvre le menu de partage d’Android', async () => {
     const id = await nativePdf('partage.pdf');
     await js(`window.Capacitor.nativePromise('NotesFiles', 'share', { id: '${id}', title: 'partage.pdf' }).then(() => true)`);
     await until('menu de partage', () => /ChooserActivity|ResolverActivity/.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);
@@ -298,7 +349,7 @@ try {
     await assertAlive('après le partage');
   });
 
-  await step('Atelier PDF : « Enregistrer » ouvre le sélecteur de fichiers ; Retour = annulé', async () => {
+  await pdfStep('Atelier PDF : « Enregistrer » ouvre le sélecteur de fichiers ; Retour = annulé', async () => {
     const id = await nativePdf('enregistre.pdf');
     await js(`(window.__pdfSave = null, window.Capacitor.nativePromise('NotesFiles', 'save', { id: '${id}' }).then((r) => (window.__pdfSave = r), (e) => (window.__pdfSave = { error: String(e) })), true)`);
     await until('sélecteur de fichiers', () => /documentsui/i.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);

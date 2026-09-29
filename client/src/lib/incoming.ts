@@ -1,6 +1,7 @@
 // Fichiers reçus d'autres applications : « Ouvrir avec Notes » et « Partager » sur Android, « Ouvrir avec » de
 // Windows pour l'application installée sur l'ordinateur. Ils sont importés dans l'atelier PDF.
 import { useSyncExternalStore } from 'react';
+import { toast } from '../components/Toast';
 import { callNative, hasNativePlugin, onNative } from './native';
 import { navigate } from './router';
 
@@ -41,21 +42,28 @@ type NativeFile = { name: string; mime: string; path: string; size: number };
 
 /** Récupère les fichiers copiés par l'application Android (dossier de l'application, lu par la WebView). */
 async function pullNative() {
-  const res = await callNative<{ files?: NativeFile[] }>(NATIVE, 'takeIncoming').catch(() => null);
+  const res = await callNative<{ files?: NativeFile[] }>(NATIVE, 'takeIncoming').catch((err) => {
+    console.warn('Fichiers reçus indisponibles', err);
+    return null;
+  });
   const list = res?.files ?? [];
   if (list.length === 0) return;
   const cap = (window as unknown as { Capacitor?: { convertFileSrc?: (p: string) => string } }).Capacitor;
   const files: File[] = [];
+  const unreadable: string[] = [];
   for (const f of list) {
     try {
       const r = await fetch(cap?.convertFileSrc ? cap.convertFileSrc(f.path) : f.path);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const blob = await r.blob();
       files.push(new File([blob], f.name, { type: f.mime || blob.type }));
     } catch (err) {
       console.warn('Fichier reçu illisible', f.name, err);
+      unreadable.push(f.name);
     }
   }
   void callNative(NATIVE, 'releaseIncoming', { paths: list.map((f) => f.path) }).catch(() => {});
+  if (unreadable.length) toast(`Fichier reçu illisible : ${unreadable.join(', ')}`, 'error');
   receive(files);
 }
 
