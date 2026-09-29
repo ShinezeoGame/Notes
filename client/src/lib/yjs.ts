@@ -9,7 +9,14 @@ import { wsBase, type Auth } from './api';
 export const wsRoom = (wsId: string) => `ws_${wsId}`;
 export const pgRoom = (wsId: string, pageId: string) => `pg_${wsId}_${pageId}`;
 
-export type ConnStatus = 'offline' | 'connecting' | 'connected' | 'disconnected' | 'denied';
+export type ConnStatus = 'offline' | 'connecting' | 'connected' | 'disconnected' | 'denied' | 'outdated';
+
+/**
+ * Version du format des pages que ce client sait lire, envoyée au serveur. Une version plus ancienne effacerait les
+ * blocs qu'elle ne connaît pas (colonnes depuis la version 2) : le serveur ne la synchronise donc plus. À augmenter
+ * avec MIN_PAGE_SCHEMA (server/src/ws.js) à chaque nouveau type de bloc.
+ */
+export const DOC_SCHEMA = 2;
 
 export type DocHandle = {
   room: string;
@@ -77,15 +84,18 @@ export function acquireDoc(room: string, opts: { auth: Auth; persist: boolean })
   };
   if (base) {
     provider = new WebsocketProvider(base, room, doc, {
-      params: opts.auth as unknown as Record<string, string>,
+      params: { ...(opts.auth as unknown as Record<string, string>), schema: String(DOC_SCHEMA) },
       maxBackoffTime: 15_000,
     });
     provider.on('status', ({ status }: { status: 'connected' | 'disconnected' | 'connecting' }) => {
-      if (handle.status !== 'denied') setStatus(handle, status);
+      if (handle.status !== 'denied' && handle.status !== 'outdated') setStatus(handle, status);
     });
     provider.on('connection-close', (event: CloseEvent | null) => {
       if (event && event.code === 4401) {
         setStatus(handle, 'denied');
+      } else if (event && event.code === 4426) {
+        // Serveur plus récent : ce client doit être mis à jour avant de synchroniser cette page.
+        setStatus(handle, 'outdated');
       }
     });
     handle.provider = provider;

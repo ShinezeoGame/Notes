@@ -23,6 +23,17 @@ export const pgRoom = (wsId, pageId) => `pg_${wsId}_${pageId}`;
 /** Document d'un PDF de l'atelier PDF (pages, annotations, formulaire). */
 export const pdfRoom = (wsId, pdfId) => `pdf_${wsId}_${pdfId}`;
 
+/**
+ * Version minimale du format des pages (paramètre « schema » envoyé par le client, 1 s'il est absent). Un client
+ * plus ancien effacerait les blocs qu'il ne connaît pas (colonnes depuis la version 2) : ses connexions aux pages sont
+ * refusées (code 4426 ; les clients récents affichent alors qu'une mise à jour est nécessaire), ses modifications
+ * attendent sur l'appareil. À augmenter avec DOC_SCHEMA (client/src/lib/yjs.ts).
+ */
+export const MIN_PAGE_SCHEMA = 2;
+
+/** Vrai pour le document d'une page (contenu de l'éditeur). */
+export const isPageRoom = (room) => PG_ROOM_RE.test(room);
+
 /** room -> WSSharedDoc */
 export const docs = new Map();
 

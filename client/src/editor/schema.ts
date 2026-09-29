@@ -6,10 +6,12 @@ import { CalendarBlock } from './blocks/CalendarBlock';
 import { HomelabBlock } from './blocks/HomelabBlock';
 import { SmartHomeBlock } from './blocks/SmartHomeBlock';
 import { TextSizeStyle } from './styles/TextSize';
+import { columnBlockSpecs } from './columns';
 
 export const schema = BlockNoteSchema.create({
   blockSpecs: {
     ...defaultBlockSpecs,
+    ...columnBlockSpecs,
     pageLink: PageLinkBlock(),
     pdf: PdfBlock(),
     embed: EmbedBlock(),

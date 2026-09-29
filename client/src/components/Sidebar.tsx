@@ -33,6 +33,7 @@ export const STATUS_LABEL: Record<ConnStatus, string> = {
   connected: 'Synchronisé',
   disconnected: 'Déconnecté – nouvelle tentative…',
   denied: 'Accès refusé par le serveur',
+  outdated: 'Mise à jour de Notes nécessaire',
 };
 
 export function Sidebar(props: Props) {

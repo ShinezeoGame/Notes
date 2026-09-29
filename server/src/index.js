@@ -29,6 +29,8 @@ import {
   deleteDoc,
   flushAll,
   getDoc,
+  isPageRoom,
+  MIN_PAGE_SCHEMA,
   pageInShare,
   pdfRoom,
   setupWSConnection,
@@ -373,11 +375,17 @@ server.on('upgrade', (req, socket, head) => {
   const room = decodeURIComponent(url.pathname.slice('/ws/'.length));
   const key = url.searchParams.get('key') || undefined;
   const share = url.searchParams.get('share') || undefined;
+  const schema = Number(url.searchParams.get('schema')) || 1;
   wss.handleUpgrade(req, socket, head, async (ws) => {
     try {
       const auth = await authorizeRoom(room, { key, share });
       if (!auth.ok) {
         ws.close(4401, auth.reason);
+        return;
+      }
+      // Client trop ancien pour les pages (voir MIN_PAGE_SCHEMA) : 4426, il cesse de se reconnecter.
+      if (isPageRoom(room) && schema < MIN_PAGE_SCHEMA) {
+        ws.close(4426, 'update-required');
         return;
       }
       await setupWSConnection(ws, room, { readOnly: auth.readOnly });

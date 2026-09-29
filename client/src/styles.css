@@ -131,7 +131,7 @@ button { font-family: inherit; }
 .nb-status--connected { background: var(--success); }
 .nb-status--connecting { background: var(--warning); animation: nb-pulse 1.2s infinite; }
 .nb-status--disconnected { background: var(--warning); }
-.nb-status--denied { background: var(--danger); }
+.nb-status--denied, .nb-status--outdated { background: var(--danger); }
 @keyframes nb-pulse { 50% { opacity: 0.3; } }
 
 /* ---------- Page ---------- */
@@ -657,6 +657,16 @@ select.nb-input { appearance: auto; }
 @media (max-width: 768px) {
   .nb-page-icon .nb-svg-icon, .nb-page-icon .nb-page-img-icon { width: var(--nb-icon-size-m); height: var(--nb-icon-size-m); }
   .nb-iconpicker-grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+/* ---------- Colonnes (blocs côte à côte) ---------- */
+/* Mise en forme de base : CSS de BlockNote (.bn-block-column-list, .bn-block-column). */
+/* Pendant le survol d'une séparation, le menu ⠿ de la colonne de droite ne la recouvre pas. */
+.nb-col-resize-hover .bn-side-menu { visibility: hidden; }
+/* Téléphone : colonnes l'une sous l'autre, en pleine largeur. */
+@media (max-width: 600px) {
+  .nb-editor .bn-block-column-list { flex-direction: column; }
+  .nb-editor .bn-block-column { flex-grow: 0 !important; padding: 0; overflow-x: visible; }
 }
 
 /* ---------- Redimensionnement ---------- */

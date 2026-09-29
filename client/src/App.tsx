@@ -16,7 +16,7 @@ import { SharedView } from './components/SharedView';
 import { Sidebar, STATUS_LABEL } from './components/Sidebar';
 import { ToastHost, toast } from './components/Toast';
 import { UpdateBanner } from './components/UpdateBanner';
-import { startUpdateChecks } from './lib/updates';
+import { applyUpdate, startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { SmartHomeView } from './components/SmartHomeView';
@@ -253,6 +253,15 @@ function OwnerApp() {
             onDelete={() => pageId && deletePage(pageId)}
             onOpenPage={openPage}
           />
+          {status === 'outdated' ? (
+            <div className="nb-banner nb-banner--error">
+              Cette page utilise une nouveauté de Notes (colonnes…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
+              sur l’appareil en attendant.
+              <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
+                Mettre à jour
+              </button>
+            </div>
+          ) : null}
           {status === 'denied' ? (
             <div className="nb-banner nb-banner--error">
               Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Reliez‑le avec le code à 6 chiffres

@@ -22,6 +22,7 @@ import { useAppCtx } from './context';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
+import { columnsDropCursor, insertColumns } from './columns';
 
 type Props = { handle: DocHandle; editable: boolean };
 
@@ -48,6 +49,8 @@ export function Editor({ handle, editable }: Props) {
     withCollaboration({
       schema,
       dictionary: fr,
+      // Barre verticale quand un bloc glissé vise le bord d'un autre : ils se placeront côte à côte.
+      dropCursor: columnsDropCursor,
       uploadFile: (file: File) => ctx.uploadFile(file),
       tables: { splitCells: true, cellBackgroundColor: true, cellTextColor: true, headers: true },
       collaboration: {
@@ -173,7 +176,15 @@ export function Editor({ handle, editable }: Props) {
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'smarthome' }),
       });
     }
-    return filterSuggestionItems([...pageItems, ...defaults, ...mediaItems], query);
+    const layoutItems: DefaultReactSuggestionItem[] = [2, 3].map((n) => ({
+      title: `${n} colonnes`,
+      subtext: n === 2 ? 'Deux blocs côte à côte (texte, image, vidéo, module…)' : 'Trois blocs côte à côte',
+      aliases: ['colonnes', 'colonne', 'columns', 'côte à côte', 'cote a cote', 'mise en page', 'layout'],
+      group: 'Mise en page',
+      icon: <SlashIcon name={n === 2 ? 'columns2' : 'columns3'} />,
+      onItemClick: () => insertColumns(editor, n),
+    }));
+    return filterSuggestionItems([...pageItems, ...defaults, ...mediaItems, ...layoutItems], query);
   };
 
   return (
