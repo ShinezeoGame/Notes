@@ -139,6 +139,7 @@ client/   React + Vite + BlockNote (éditeur) + Yjs (CRDT) — thème sombre
 server/   Node.js : Express (API, uploads, proxy iCal, fichiers statiques) + WebSocket Yjs (synchronisation, droits, persistance)
 android/  Projet Capacitor Android (APK)
 .github/  Workflow de construction de l’APK et test sur émulateur Android
+CLAUDE.md Repères pour Claude Code, dont la carte du code (graphify) qui lui évite de relire tout le projet
 ```
 
 - Chaque page est un document Yjs (`pg_<espace>_<page>`) ; l’arborescence (titres, icônes, hiérarchie) est un document Yjs séparé (`ws_<espace>`).

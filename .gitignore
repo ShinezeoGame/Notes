@@ -27,3 +27,6 @@ android/app/*.iml
 android/capacitor-cordova-android-plugins/build/
 *.keystore
 !android/app/debug.keystore
+
+# Carte du code pour Claude Code (graphify, voir CLAUDE.md), reconstruite dans chaque session
+graphify-out/
