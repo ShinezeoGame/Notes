@@ -52,6 +52,19 @@ export function PageCover({ cover, coverY, height, editable, onChange, onHeightC
   const [dragging, setDragging] = useState(false);
   const [liveHeight, setLiveHeight] = useState<number | null>(null); // hauteur pendant le glissement
   const resize = useRef<{ startY: number; start: number } | null>(null);
+  // Téléphone (pas de survol) : boutons affichés après un toucher sur la bannière, cachés en touchant ailleurs.
+  const [active, setActive] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const lastPointer = useRef('mouse');
+
+  useEffect(() => {
+    if (!active) return;
+    const onDown = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setActive(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [active]);
   const boxRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const drag = useRef<{ startY: number; start: number; overflow: number } | null>(null);
@@ -61,6 +74,7 @@ export function PageCover({ cover, coverY, height, editable, onChange, onHeightC
   useEffect(() => {
     setPos(null);
     setPicker(false);
+    setActive(false);
   }, [cover]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -115,14 +129,21 @@ export function PageCover({ cover, coverY, height, editable, onChange, onHeightC
   const style: React.CSSProperties & Record<string, string> = gradient ? { background: gradient } : {};
   if (shownHeight) style['--nb-cover-h'] = `${shownHeight}px`;
   return (
-    <div className="nb-cover-wrap">
+    <div ref={wrapRef} className={`nb-cover-wrap${active ? ' nb-cover-wrap--active' : ''}`}>
       <div
         ref={boxRef}
         className={`nb-cover${shownHeight ? ' nb-cover--custom' : ''}${repositioning ? ' nb-cover--repositioning' : ''}${dragging ? ' nb-cover--dragging' : ''}`}
         style={style}
-        onPointerDown={onPointerDown}
+        onPointerDown={(e) => {
+          lastPointer.current = e.pointerType;
+          onPointerDown(e);
+        }}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
+        onClick={() => {
+          // Au clic (et non au relâchement) : sinon le clic qui suit tomberait sur un bouton tout juste affiché.
+          if (editable && !repositioning && lastPointer.current !== 'mouse') setActive((v) => !v);
+        }}
         onPointerCancel={endDrag}
         tabIndex={repositioning ? 0 : undefined}
         aria-label={repositioning ? 'Position de la bannière : flèches haut et bas' : undefined}

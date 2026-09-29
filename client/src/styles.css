@@ -65,7 +65,7 @@ button { font-family: inherit; }
 
 /* ---------- Barre supérieure ---------- */
 .nb-topbar {
-  display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px; padding-top: env(safe-area-inset-top);
+  display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px;
   box-sizing: content-box; flex-shrink: 0;
 }
 .nb-crumbs { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; flex: 1; }
@@ -82,7 +82,6 @@ button { font-family: inherit; }
 /* ---------- Barre latérale ---------- */
 .nb-sidebar {
   width: 260px; flex-shrink: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column;
-  padding-top: env(safe-area-inset-top);
 }
 .nb-sidebar-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 6px; }
 .nb-workspace { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -165,12 +164,11 @@ button { font-family: inherit; }
 /* Poignée de hauteur, sous la bannière */
 .nb-cover-resize {
   position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); width: 72px; height: 14px; z-index: 4; cursor: ns-resize; touch-action: none;
-  display: grid; place-items: center; opacity: 0; transition: opacity 0.15s; outline: none;
+  display: grid; place-items: center; opacity: 0; transition: opacity 0.15s; outline: none; pointer-events: none;
 }
 .nb-cover-resize span { width: 44px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
-.nb-cover-wrap:hover .nb-cover-resize, .nb-cover-resize:focus-visible, .nb-cover-resize--active { opacity: 1; }
+.nb-cover-wrap--active .nb-cover-resize, .nb-cover-resize:focus-visible, .nb-cover-resize--active { opacity: 1; pointer-events: auto; }
 .nb-cover-resize:focus-visible span { background: var(--accent); }
-@media (hover: none) { .nb-cover-resize { opacity: 0.8; } }
 .nb-cover img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
 .nb-cover--repositioning { cursor: grab; touch-action: none; outline: none; }
 .nb-cover--repositioning::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--accent); pointer-events: none; }
@@ -181,9 +179,13 @@ button { font-family: inherit; }
 }
 .nb-cover-actions {
   position: absolute; right: 16px; bottom: 12px; z-index: 3; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; opacity: 0; transition: opacity 0.15s;
+  pointer-events: none;
 }
-.nb-cover-wrap:hover .nb-cover-actions, .nb-cover-actions:focus-within, .nb-cover-actions--visible { opacity: 1; }
-@media (hover: none) { .nb-cover-actions { opacity: 1; } }
+/* Cachés (et intouchables) tant qu'on ne survole pas la bannière, ou, sur téléphone, qu'on ne l'a pas touchée */
+@media (hover: hover) {
+  .nb-cover-wrap:hover .nb-cover-actions, .nb-cover-wrap:hover .nb-cover-resize { opacity: 1; pointer-events: auto; }
+}
+.nb-cover-wrap--active .nb-cover-actions, .nb-cover-actions:focus-within, .nb-cover-actions--visible { opacity: 1; pointer-events: auto; }
 .nb-cover-actions button {
   background: rgba(25, 25, 25, 0.78); color: #fff; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 6px; padding: 5px 10px; font-size: 12px;
   cursor: pointer; backdrop-filter: blur(6px);
