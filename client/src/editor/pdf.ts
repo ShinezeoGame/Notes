@@ -1,26 +1,8 @@
-// Build « legacy » de pdf.js : compatible avec les WebView Android et navigateurs un peu anciens.
+// Build « legacy » de pdf.js : compatible avec les WebView Android et navigateurs un peu anciens. Les fonctions
+// récentes qui leur manquent encore sont ajoutées avant pdf.js, ici et dans son worker.
+import './pdf-polyfills';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
-import workerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-
-// Polyfills pour les API très récentes utilisées par pdf.js (Map.prototype.getOrInsert*).
-type MapWithUpsert = Map<unknown, unknown> & {
-  getOrInsert?: (k: unknown, v: unknown) => unknown;
-  getOrInsertComputed?: (k: unknown, fn: (k: unknown) => unknown) => unknown;
-};
-for (const proto of [Map.prototype, WeakMap.prototype] as unknown as MapWithUpsert[]) {
-  if (typeof proto.getOrInsert !== 'function') {
-    proto.getOrInsert = function (this: Map<unknown, unknown>, k: unknown, v: unknown) {
-      if (!this.has(k)) this.set(k, v);
-      return this.get(k);
-    };
-  }
-  if (typeof proto.getOrInsertComputed !== 'function') {
-    proto.getOrInsertComputed = function (this: Map<unknown, unknown>, k: unknown, fn: (k: unknown) => unknown) {
-      if (!this.has(k)) this.set(k, fn(k));
-      return this.get(k);
-    };
-  }
-}
+import workerSrc from './pdf-worker?worker&url';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 

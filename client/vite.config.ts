@@ -110,4 +110,8 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 3000,
   },
+  // Worker de pdf.js (editor/pdf-worker.ts) en module, comme pdf.js le démarre.
+  worker: {
+    format: 'es',
+  },
 });
