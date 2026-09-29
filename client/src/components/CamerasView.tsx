@@ -202,7 +202,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   const needsFfmpeg = !ffmpeg && cameras.some((c) => c.brand !== 'image');
   return (
     <div className={`cam-panel${compact ? ' cam-panel--compact' : ''}`}>
-      {!cameraId && canConfigure && doc ? (
+      {!cameraId && !compact && canConfigure && doc ? (
         <div className="cam-toolbar">
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditing('new')}>
             <Icon name="plus" size={14} /> Ajouter une caméra

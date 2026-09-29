@@ -13,8 +13,8 @@ type DropPosition = NonNullable<ReturnType<NonNullable<DropCursorHooks['computeD
 
 type Side = 'left' | 'right';
 
-/** Dépôt à côté d'un bloc (hors colonnes) ou d'une colonne. */
-export type SideDrop = { side: Side; kind: 'block' | 'column'; pos: number; node: PMNode };
+/** Dépôt à côté d'un bloc (hors colonnes) ou d'une colonne ; `edge` : bord visible d'un module rétréci (barre de dépôt). */
+export type SideDrop = { side: Side; kind: 'block' | 'column'; pos: number; node: PMNode; edge?: number };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -47,8 +47,21 @@ function targetAt(doc: PMNode, pos: number): Omit<SideDrop, 'side'> | null {
 }
 
 /**
+ * Partie visible d'un bloc sans texte (module, image, vidéo…), plus étroite que la page quand il a été rétréci.
+ * Null pour un bloc de texte, qui occupe toute la largeur.
+ */
+function visibleBox(dom: HTMLElement): DOMRect | null {
+  const content = dom.querySelector('.bn-block-content');
+  if (!content || content.querySelector('.bn-inline-content')) return null;
+  const frame = content.querySelector('.nb-resizable, .bn-file-block-content-wrapper');
+  const box = (frame ?? content).getBoundingClientRect();
+  return box.width > 0 ? box : null;
+}
+
+/**
  * Dépôt « à côté » au point (x, y), ou null (dépôt ordinaire, entre deux blocs). La marge de gauche, où l'on
- * glisse les blocs pour les réordonner, n'en fait pas partie : il faut viser le bord du bloc lui-même.
+ * glisse les blocs pour les réordonner, n'en fait pas partie : il faut viser le bord du bloc lui-même. À côté d'un
+ * module ou d'une image : son tiers droit et tout l'espace libre à sa droite (module rétréci), ou son bord gauche.
  */
 export function sideDropAt(view: EditorView, x: number, y: number): SideDrop | null {
   if (!view.editable) return null;
@@ -71,10 +84,19 @@ export function sideDropAt(view: EditorView, x: number, y: number): SideDrop | n
   const firstColumn = target.kind === 'column' && $target.index() === 0;
   const leftZone = target.kind === 'column' ? clamp(rect.width * 0.15, 24, 80) : clamp(rect.width * 0.12, 24, 64);
   const rightZone = target.kind === 'column' ? clamp(rect.width * 0.15, 24, 80) : clamp(rect.width * 0.22, 48, 160);
+  const visible = target.kind === 'block' ? visibleBox(dom) : null;
   let side: Side;
-  if (x >= rect.right - rightZone) side = 'right';
+  if (visible) {
+    if (x >= visible.right - clamp(visible.width * 0.3, 48, 280)) side = 'right';
+    else if (x >= rect.left && x <= visible.left + clamp(visible.width * 0.15, 24, 120)) side = 'left';
+    else return null;
+  } else if (x >= rect.right - rightZone) side = 'right';
   else if (x <= rect.left + leftZone && (x >= rect.left || (target.kind === 'column' && !firstColumn))) side = 'left';
   else return null;
+  // Barre de dépôt contre le module lui-même plutôt qu'au bord de la page.
+  let edge: number | undefined;
+  if (visible && side === 'right' && visible.right < rect.right - 8) edge = visible.right + 6;
+  if (visible && side === 'left' && visible.left > rect.left + 8) edge = visible.left - 6;
 
   const targetEnd = target.pos + target.node.nodeSize;
   if (target.kind === 'block') {
@@ -97,7 +119,7 @@ export function sideDropAt(view: EditorView, x: number, y: number): SideDrop | n
       return null;
     }
   }
-  return { side, ...target };
+  return { side, ...target, edge };
 }
 
 /** Retire les blocs déplacés ; une colonne vidée disparaît (et la rangée, s'il ne reste qu'une colonne). */
@@ -153,6 +175,19 @@ export function dropBeside(view: EditorView, drop: SideDrop): boolean {
   return true;
 }
 
+/**
+ * BlockNote dessine la barre verticale au bord du bloc, qui occupe toute la largeur de la page : pour un module
+ * rétréci, elle est déplacée contre le module (juste après que BlockNote l'a placée).
+ */
+function placeCursor(view: EditorView, orientation: DropPosition['orientation'], edge: number | undefined) {
+  if (edge == null) return;
+  const parent = view.dom.offsetParent as HTMLElement | null;
+  const line = parent?.querySelector<HTMLElement>(`:scope > .prosemirror-dropcursor-${orientation}`);
+  if (!parent || !line) return;
+  const box = parent.getBoundingClientRect();
+  line.style.left = `${edge - box.left + parent.scrollLeft - line.offsetWidth / 2}px`;
+}
+
 /** Barre verticale de dépôt contre le bord d'un bloc ou d'une colonne (option dropCursor de l'éditeur). */
 export const columnsDropCursor: DropCursorOptions = {
   hooks: {
@@ -160,7 +195,9 @@ export const columnsDropCursor: DropCursorOptions = {
       if (!view.dragging) return defaultPosition;
       const drop = sideDropAt(view, event.clientX, event.clientY);
       if (!drop) return defaultPosition;
-      return { pos: drop.pos, orientation: drop.side === 'left' ? 'block-vertical-left' : 'block-vertical-right' };
+      const orientation = drop.side === 'left' ? 'block-vertical-left' : 'block-vertical-right';
+      queueMicrotask(() => placeCursor(view, orientation, drop.edge));
+      return { pos: drop.pos, orientation };
     },
   },
 };

@@ -23,6 +23,7 @@ import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
 import { columnsDropCursor, insertColumns } from './columns';
+import { yjsSelectionGuard } from './yjsSelectionGuard';
 
 type Props = { handle: DocHandle; editable: boolean };
 
@@ -51,6 +52,8 @@ export function Editor({ handle, editable }: Props) {
       dictionary: fr,
       // Barre verticale quand un bloc glissé vise le bord d'un autre : ils se placeront côte à côte.
       dropCursor: columnsDropCursor,
+      // Annulation (Ctrl+Z) sûre après le déplacement d'un module : voir yjsSelectionGuard.
+      extensions: [yjsSelectionGuard()],
       uploadFile: (file: File) => ctx.uploadFile(file),
       tables: { splitCells: true, cellBackgroundColor: true, cellTextColor: true, headers: true },
       collaboration: {

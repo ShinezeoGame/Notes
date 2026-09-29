@@ -37,11 +37,10 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
     >
       {() => (
         <div contentEditable={false}>
-          <div className="nb-media-toolbar">
+          <div className="nb-media-toolbar cam-block-toolbar">
             <span className="nb-media-title">
-              <Icon name="cctv" size={15} /> {camera ? camera.name : cameraId ? 'Caméra' : 'Caméras'}
-            </span>
-            <span className="nb-media-actions">
+              <Icon name="cctv" size={15} />
+              {/* Liste de choix à la place du titre : le bandeau tient même dans une colonne étroite. */}
               {editor.isEditable && cfg.cameras.length > 1 ? (
                 <select
                   className="nb-media-select"
@@ -56,7 +55,11 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
                     </option>
                   ))}
                 </select>
-              ) : null}
+              ) : (
+                <span className="cam-block-name">{camera ? camera.name : cameraId ? 'Caméra' : 'Caméras'}</span>
+              )}
+            </span>
+            <span className="nb-media-actions">
               <button type="button" onClick={() => ctx.openCameras?.()}>
                 Ouvrir
               </button>
