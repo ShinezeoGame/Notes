@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppCtx } from '../editor/context';
+import { ICON_SIZE_RANGE } from '../lib/hooks';
 import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
 import { PAGE_COLORS, PAGE_ICON_CHOICES, encodePageIcon, resolvePageIcon, type PageColor } from '../icons/pageIcon';
@@ -10,11 +11,14 @@ type Props = {
   onClose: () => void;
   /** Recadrage avant utilisation : nouvelle image importée (`file`) ou image actuelle (`src`). */
   onCrop?: (req: { file?: File; src?: string }) => void;
+  /** Taille de l'icône en haut de la page (px), réglable si `onSizeChange` est fourni (0 = taille par défaut). */
+  size?: number;
+  onSizeChange?: (size: number) => void;
 };
 
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export function IconPicker({ value, onSelect, onClose, onCrop }: Props) {
+export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_RANGE.default, onSizeChange }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const current = resolvePageIcon(value);
   const [color, setColor] = useState<PageColor>(current.kind === 'svg' ? current.color : 'default');
@@ -95,6 +99,26 @@ export function IconPicker({ value, onSelect, onClose, onCrop }: Props) {
     </div>
   );
 
+  const sizeControl =
+    value && onSizeChange ? (
+      <div className="nb-iconpicker-size">
+        <span>Taille</span>
+        <input
+          type="range"
+          min={ICON_SIZE_RANGE.min}
+          max={ICON_SIZE_RANGE.max}
+          step={4}
+          value={size}
+          onChange={(e) => onSizeChange(Number(e.target.value))}
+          aria-label="Taille de l’icône"
+        />
+        <span className="nb-muted nb-iconpicker-size-value">{size} px</span>
+        <button type="button" className="nb-btn nb-btn--sm" onClick={() => onSizeChange(0)} disabled={size === ICON_SIZE_RANGE.default}>
+          Par défaut
+        </button>
+      </div>
+    ) : null;
+
   if (tab === 'image') {
     return (
       <div
@@ -156,6 +180,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop }: Props) {
           </div>
           {error ? <div className="nb-error">{error}</div> : null}
         </div>
+        {sizeControl}
       </div>
     );
   }
@@ -210,6 +235,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop }: Props) {
           );
         })}
       </div>
+      {sizeControl}
     </div>
   );
 }

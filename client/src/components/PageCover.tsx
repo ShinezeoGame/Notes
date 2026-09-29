@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppCtx } from '../editor/context';
+import { COVER_HEIGHT_RANGE } from '../lib/hooks';
 import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
 
@@ -36,15 +37,21 @@ type CoverProps = {
   cover: string;
   /** Position verticale de l'image (0 = haut, 100 = bas). */
   coverY: number;
+  /** Hauteur choisie (px) ; 0 = hauteur automatique selon l'écran. */
+  height: number;
   editable: boolean;
   onChange: (cover: string, y?: number) => void;
+  /** Nouvelle hauteur (px) ; 0 = revenir à la hauteur automatique. */
+  onHeightChange: (height: number) => void;
 };
 
-/** Bannière en haut de la page : image (repositionnable) ou dégradé ; changer, repositionner, retirer. */
-export function PageCover({ cover, coverY, editable, onChange }: CoverProps) {
+/** Bannière en haut de la page : image (repositionnable) ou dégradé ; changer, repositionner, retirer, hauteur. */
+export function PageCover({ cover, coverY, height, editable, onChange, onHeightChange }: CoverProps) {
   const [picker, setPicker] = useState(false);
   const [pos, setPos] = useState<number | null>(null); // position en cours de réglage
   const [dragging, setDragging] = useState(false);
+  const [liveHeight, setLiveHeight] = useState<number | null>(null); // hauteur pendant le glissement
+  const resize = useRef<{ startY: number; start: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const drag = useRef<{ startY: number; start: number; overflow: number } | null>(null);
@@ -78,13 +85,41 @@ export function PageCover({ cover, coverY, editable, onChange }: CoverProps) {
     setDragging(false);
   };
 
+  // Hauteur : poignée sous la bannière (glisser, flèches du clavier, double-clic = hauteur automatique).
+  const shownHeight = liveHeight ?? height;
+  const clampHeight = (h: number) => Math.round(clamp(h, COVER_HEIGHT_RANGE.min, COVER_HEIGHT_RANGE.max));
+  const currentHeight = () => shownHeight || boxRef.current?.getBoundingClientRect().height || 240;
+  const onResizeDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* pointeur déjà relâché */
+    }
+    resize.current = { startY: e.clientY, start: currentHeight() };
+    setLiveHeight(clampHeight(resize.current.start));
+  };
+  const onResizeMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = resize.current;
+    if (r) setLiveHeight(clampHeight(r.start + e.clientY - r.startY));
+  };
+  const onResizeEnd = () => {
+    if (!resize.current) return;
+    resize.current = null;
+    if (liveHeight !== null && liveHeight !== height) onHeightChange(liveHeight);
+    setLiveHeight(null);
+  };
+
   const repositioning = pos !== null;
+  const style: React.CSSProperties & Record<string, string> = gradient ? { background: gradient } : {};
+  if (shownHeight) style['--nb-cover-h'] = `${shownHeight}px`;
   return (
     <div className="nb-cover-wrap">
       <div
         ref={boxRef}
-        className={`nb-cover${repositioning ? ' nb-cover--repositioning' : ''}${dragging ? ' nb-cover--dragging' : ''}`}
-        style={gradient ? { background: gradient } : undefined}
+        className={`nb-cover${shownHeight ? ' nb-cover--custom' : ''}${repositioning ? ' nb-cover--repositioning' : ''}${dragging ? ' nb-cover--dragging' : ''}`}
+        style={style}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -102,6 +137,30 @@ export function PageCover({ cover, coverY, editable, onChange }: CoverProps) {
         {gradient ? null : <img ref={imgRef} src={cover} alt="" draggable={false} style={{ objectPosition: `center ${y}%` }} />}
         {repositioning ? <div className="nb-cover-hint">Glissez l’image pour la repositionner</div> : null}
       </div>
+      {editable && !repositioning ? (
+        <div
+          className={`nb-cover-resize${liveHeight !== null ? ' nb-cover-resize--active' : ''}`}
+          role="slider"
+          tabIndex={0}
+          aria-label="Hauteur de la bannière"
+          aria-valuemin={COVER_HEIGHT_RANGE.min}
+          aria-valuemax={COVER_HEIGHT_RANGE.max}
+          aria-valuenow={Math.round(currentHeight())}
+          title="Glissez pour changer la hauteur (double-clic : hauteur automatique)"
+          onPointerDown={onResizeDown}
+          onPointerMove={onResizeMove}
+          onPointerUp={onResizeEnd}
+          onPointerCancel={onResizeEnd}
+          onDoubleClick={() => onHeightChange(0)}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+            e.preventDefault();
+            onHeightChange(clampHeight(currentHeight() + (e.key === 'ArrowDown' ? 10 : -10)));
+          }}
+        >
+          <span />
+        </div>
+      ) : null}
       {editable ? (
         <div className={`nb-cover-actions${repositioning ? ' nb-cover-actions--visible' : ''}`}>
           {repositioning ? (

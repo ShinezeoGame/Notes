@@ -26,6 +26,16 @@ export function useDocHandle(room: string | null, auth: Auth, persist: boolean) 
   return state;
 }
 
+/** Taille de l'icône en haut de page et hauteur de la bannière, en px. */
+export const ICON_SIZE_RANGE = { min: 32, max: 200, default: 64 } as const;
+export const COVER_HEIGHT_RANGE = { min: 100, max: 600 } as const;
+
+/** Nombre dans l'intervalle, sinon 0 (valeur par défaut). */
+function sizeIn(v: unknown, range: { min: number; max: number }): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.round(Math.min(range.max, Math.max(range.min, n))) : 0;
+}
+
 export type PageDocMeta = {
   title: string;
   icon: string;
@@ -34,12 +44,16 @@ export type PageDocMeta = {
   coverY: number;
   /** Image d'origine et recadrage de l'icône (JSON), pour la recadrer à nouveau. */
   iconSource: string;
+  /** Taille de l'icône en haut de la page (px) ; 0 = taille par défaut. */
+  iconSize: number;
+  /** Hauteur de la bannière (px) ; 0 = hauteur automatique. */
+  coverHeight: number;
 };
 
 /** Observe la carte `meta` (titre, icône, largeur, bannière) d'un document de page. */
 export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
   const read = (): PageDocMeta => {
-    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50, iconSource: '' };
+    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50, iconSource: '', iconSize: 0, coverHeight: 0 };
     const m = doc.getMap('meta');
     const y = Number(m.get('coverY'));
     return {
@@ -49,6 +63,8 @@ export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
       cover: String(m.get('cover') ?? ''),
       coverY: Number.isFinite(y) && m.has('coverY') ? Math.min(100, Math.max(0, y)) : 50,
       iconSource: String(m.get('iconSource') ?? ''),
+      iconSize: sizeIn(m.get('iconSize'), ICON_SIZE_RANGE),
+      coverHeight: sizeIn(m.get('coverHeight'), COVER_HEIGHT_RANGE),
     };
   };
   const [meta, setMeta] = useState(read);

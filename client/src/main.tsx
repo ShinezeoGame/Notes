@@ -4,8 +4,10 @@ import '@blocknote/mantine/style.css';
 import './styles.css';
 import App from './App';
 import { startPwa } from './lib/pwa';
+import { styleSystemBars } from './lib/native';
 
 startPwa();
+styleSystemBars();
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

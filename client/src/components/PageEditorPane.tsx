@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Editor } from '../editor/Editor';
 import { useAppCtx, type PageRef } from '../editor/context';
 import type { DocHandle } from '../lib/yjs';
-import { usePageMeta } from '../lib/hooks';
+import { ICON_SIZE_RANGE, usePageMeta } from '../lib/hooks';
 import { prepareImage } from '../lib/images';
 import { IconPicker } from './IconPicker';
 import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
@@ -43,6 +43,13 @@ export function PageEditorPane(props: Props) {
       m.set('coverY', y);
     });
     setCoverPickerOpen(false);
+  };
+
+  // Taille de l'icône et hauteur de la bannière (0 = valeur par défaut), enregistrées dans le document de la page.
+  const iconSize = meta.iconSize || ICON_SIZE_RANGE.default;
+  const setMetaNumber = (key: 'iconSize' | 'coverHeight', value: number) => {
+    const m = handle?.doc.getMap('meta');
+    if (m && Number(m.get(key) ?? 0) !== value) m.set(key, value);
   };
 
   // Icône en image : recadrée avant utilisation ; l'image d'origine est gardée pour recadrer à nouveau.
@@ -98,9 +105,18 @@ export function PageEditorPane(props: Props) {
 
   return (
     <>
-      {cover ? <PageCover cover={cover} coverY={meta.coverY} editable={editable} onChange={setCover} /> : null}
+      {cover ? (
+        <PageCover
+          cover={cover}
+          coverY={meta.coverY}
+          height={meta.coverHeight}
+          editable={editable}
+          onChange={setCover}
+          onHeightChange={(h) => setMetaNumber('coverHeight', h)}
+        />
+      ) : null}
       <div className={`nb-page${props.narrow ? ' nb-page--narrow' : ''}${cover ? ' nb-page--cover' : ''}`}>
-        <div className="nb-page-head">
+        <div className="nb-page-head" style={{ '--nb-icon-size': `${iconSize}px` } as React.CSSProperties}>
           <div className={`nb-page-icon-wrap${icon ? '' : ' nb-page-icon-wrap--empty'}`}>
             {icon ? (
               <button
@@ -110,7 +126,7 @@ export function PageEditorPane(props: Props) {
                 title={editable ? 'Changer l’icône' : undefined}
                 disabled={!editable}
               >
-                <PageIcon icon={icon} size={64} />
+                <PageIcon icon={icon} size={iconSize} />
               </button>
             ) : null}
             {editable && (!icon || !cover) ? (
@@ -137,6 +153,8 @@ export function PageEditorPane(props: Props) {
                 }}
                 onClose={() => setPickerOpen(false)}
                 onCrop={ready ? requestCrop : undefined}
+                size={iconSize}
+                onSizeChange={ready ? (v) => setMetaNumber('iconSize', v === ICON_SIZE_RANGE.default ? 0 : v) : undefined}
               />
             ) : null}
             {cropReq ? (

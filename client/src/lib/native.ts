@@ -28,3 +28,11 @@ export function onNative<T>(plugin: string, event: string, callback: (data: T) =
   const handle = cap.addListener(plugin, event, (data) => callback(data as T));
   return () => void handle.remove();
 }
+
+/**
+ * Application Android : icônes claires dans la barre d'état et la barre de navigation (fond sombre de Notes),
+ * même quand le téléphone est en thème clair.
+ */
+export function styleSystemBars() {
+  if (hasNativePlugin('SystemBars')) void callNative('SystemBars', 'setStyle', { style: 'DARK' }).catch(() => {});
+}
