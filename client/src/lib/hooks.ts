@@ -26,12 +26,20 @@ export function useDocHandle(room: string | null, auth: Auth, persist: boolean) 
   return state;
 }
 
-export type PageDocMeta = { title: string; icon: string; narrow: boolean; cover: string; coverY: number };
+export type PageDocMeta = {
+  title: string;
+  icon: string;
+  narrow: boolean;
+  cover: string;
+  coverY: number;
+  /** Image d'origine et recadrage de l'icône (JSON), pour la recadrer à nouveau. */
+  iconSource: string;
+};
 
 /** Observe la carte `meta` (titre, icône, largeur, bannière) d'un document de page. */
 export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
   const read = (): PageDocMeta => {
-    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50 };
+    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50, iconSource: '' };
     const m = doc.getMap('meta');
     const y = Number(m.get('coverY'));
     return {
@@ -40,6 +48,7 @@ export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
       narrow: Boolean(m.get('narrow')),
       cover: String(m.get('cover') ?? ''),
       coverY: Number.isFinite(y) && m.has('coverY') ? Math.min(100, Math.max(0, y)) : 50,
+      iconSource: String(m.get('iconSource') ?? ''),
     };
   };
   const [meta, setMeta] = useState(read);

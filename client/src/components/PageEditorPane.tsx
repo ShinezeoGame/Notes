@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Editor } from '../editor/Editor';
-import type { PageRef } from '../editor/context';
+import { useAppCtx, type PageRef } from '../editor/context';
 import type { DocHandle } from '../lib/yjs';
 import { usePageMeta } from '../lib/hooks';
+import { prepareImage } from '../lib/images';
 import { IconPicker } from './IconPicker';
+import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
 import { CoverPicker, PageCover, isValidCover } from './PageCover';
+import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
 import { PageIcon } from '../icons/pageIcon';
 
@@ -40,6 +43,45 @@ export function PageEditorPane(props: Props) {
       m.set('coverY', y);
     });
     setCoverPickerOpen(false);
+  };
+
+  // Icône en image : recadrée avant utilisation ; l'image d'origine est gardée pour recadrer à nouveau.
+  const app = useAppCtx();
+  const [cropReq, setCropReq] = useState<{ src: string; file?: File; initial: CropState | null } | null>(null);
+  const setIcon = (value: string) => {
+    props.onIconChange(value);
+    const m = handle?.doc.getMap('meta');
+    if (m?.get('iconSource')) m.set('iconSource', '');
+  };
+  const requestCrop = ({ file, src }: { file?: File; src?: string }) => {
+    setPickerOpen(false);
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+        return;
+      }
+      setCropReq({ src: URL.createObjectURL(file), file, initial: null });
+      return;
+    }
+    const source = parseIconSource(meta.iconSource);
+    if (source) setCropReq({ src: source.src, initial: { cx: source.cx, cy: source.cy, zoom: source.zoom } });
+    else if (src) setCropReq({ src, initial: null });
+  };
+  const closeCrop = () => {
+    if (cropReq?.file) URL.revokeObjectURL(cropReq.src);
+    setCropReq(null);
+  };
+  const finishCrop = async (img: HTMLImageElement, crop: CropState | null) => {
+    if (!cropReq) return;
+    let original = cropReq.src;
+    if (cropReq.file) {
+      // Image d'origine (réduite à 1024 px) : GIF et SVG tels quels, JPEG pour les photos, PNG sinon.
+      original = await app.uploadFile(await prepareImage(cropReq.file, 1024, 1024, cropReq.file.type === 'image/jpeg'));
+    }
+    const iconUrl = crop ? await app.uploadFile(new File([await renderCrop(img, crop)], 'icone.png', { type: 'image/png' })) : original;
+    props.onIconChange(iconUrl);
+    handle?.doc.getMap('meta').set('iconSource', crop ? JSON.stringify({ src: original, ...crop }) : '');
+    closeCrop();
   };
 
   useEffect(() => {
@@ -90,10 +132,20 @@ export function PageEditorPane(props: Props) {
               <IconPicker
                 value={icon}
                 onSelect={(e) => {
-                  props.onIconChange(e);
+                  setIcon(e);
                   setPickerOpen(false);
                 }}
                 onClose={() => setPickerOpen(false)}
+                onCrop={ready ? requestCrop : undefined}
+              />
+            ) : null}
+            {cropReq ? (
+              <ImageCropDialog
+                src={cropReq.src}
+                initial={cropReq.initial}
+                animated={cropReq.file?.type === 'image/gif'}
+                onCancel={closeCrop}
+                onDone={finishCrop}
               />
             ) : null}
           </div>
@@ -149,4 +201,17 @@ export function PageEditorPane(props: Props) {
       </div>
     </>
   );
+}
+
+/** Image d'origine et recadrage de l'icône, enregistrés dans le document de la page. */
+function parseIconSource(raw: string): ({ src: string } & CropState) | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as Partial<{ src: string } & CropState>;
+    if (typeof v.src !== 'string' || !/^(https?:\/\/|data:image\/)/.test(v.src)) return null;
+    const num = (n: unknown, d: number) => (typeof n === 'number' && Number.isFinite(n) ? n : d);
+    return { src: v.src, cx: num(v.cx, 0.5), cy: num(v.cy, 0.5), zoom: num(v.zoom, 1) };
+  } catch {
+    return null;
+  }
 }

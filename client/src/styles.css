@@ -577,6 +577,41 @@ select.nb-input { appearance: auto; }
 .nb-iconpicker-image { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13px; }
 .nb-iconpicker-image .nb-row { width: 100%; }
 .nb-iconpicker-preview { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: var(--bg); }
+
+/* Recadrage d'une icône en image */
+.nb-crop-stage {
+  position: relative; height: 300px; display: grid; place-items: center; overflow: hidden; border-radius: 8px; background: #0f0f0f; touch-action: none;
+  cursor: grab; user-select: none;
+}
+.nb-crop-stage:active { cursor: grabbing; }
+.nb-crop-frame {
+  position: relative; width: 240px; height: 240px; border-radius: 6px; outline: none;
+  /* Damier : zones transparentes de l'icône */
+  background: repeating-conic-gradient(#2a2a2a 0 25%, #202020 0 50%) 0 0 / 16px 16px;
+}
+.nb-crop-frame img { position: absolute; max-width: none; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+/* Voile sur la partie de l'image hors du cadre, bordure du cadre par-dessus l'image */
+.nb-crop-frame::after {
+  content: ''; position: absolute; inset: 0; border-radius: 6px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.nb-crop-frame:focus-visible::after { box-shadow: 0 0 0 2px var(--accent), 0 0 0 9999px rgba(0, 0, 0, 0.6); }
+.nb-crop-loading { position: absolute; color: var(--text-muted); font-size: 13px; }
+.nb-crop-controls { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 4px; }
+.nb-crop-zoom { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
+.nb-crop-zoom input { flex: 1; accent-color: var(--accent); }
+.nb-crop-previews { display: flex; align-items: flex-end; gap: 14px; margin: 10px 0 4px; font-size: 13px; }
+.nb-crop-preview {
+  position: relative; display: inline-block; overflow: hidden; border-radius: 4px; flex-shrink: 0;
+  background: repeating-conic-gradient(#2a2a2a 0 25%, #202020 0 50%) 0 0 / 8px 8px;
+}
+.nb-crop-preview img { position: absolute; max-width: none; pointer-events: none; }
+.nb-crop-help { font-size: 12px; margin: 6px 0 0; }
+.nb-crop-keep { margin-right: auto; }
+@media (max-width: 480px) {
+  .nb-crop-stage { height: 260px; }
+  .nb-crop-frame { width: 200px; height: 200px; }
+}
 .nb-iconpicker-colors { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 2px; }
 .nb-iconpicker-color { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--bg-elevated); box-shadow: 0 0 0 1px var(--border-strong); cursor: pointer; padding: 0; }
 .nb-iconpicker-color--active { box-shadow: 0 0 0 2px var(--text-strong); }

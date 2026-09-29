@@ -4,11 +4,17 @@ import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
 import { PAGE_COLORS, PAGE_ICON_CHOICES, encodePageIcon, resolvePageIcon, type PageColor } from '../icons/pageIcon';
 
-type Props = { value: string; onSelect: (icon: string) => void; onClose: () => void };
+type Props = {
+  value: string;
+  onSelect: (icon: string) => void;
+  onClose: () => void;
+  /** Recadrage avant utilisation : nouvelle image importée (`file`) ou image actuelle (`src`). */
+  onCrop?: (req: { file?: File; src?: string }) => void;
+};
 
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export function IconPicker({ value, onSelect, onClose }: Props) {
+export function IconPicker({ value, onSelect, onClose, onCrop }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const current = resolvePageIcon(value);
   const [color, setColor] = useState<PageColor>(current.kind === 'svg' ? current.color : 'default');
@@ -20,8 +26,12 @@ export function IconPicker({ value, onSelect, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  // Image personnelle (logo…) : réduite à 256 px, transparence conservée.
+  // Image personnelle (logo…) : recadrée avant utilisation, sinon réduite à 256 px (transparence conservée).
   const upload = async (file: File) => {
+    if (onCrop) {
+      onCrop({ file });
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -106,7 +116,16 @@ export function IconPicker({ value, onSelect, onClose }: Props) {
       >
         {tabs}
         <div className="nb-iconpicker-image">
-          {current.kind === 'img' ? <img className="nb-iconpicker-preview" src={current.src} alt="Image actuelle" /> : null}
+          {current.kind === 'img' ? (
+            <div className="nb-row nb-gap">
+              <img className="nb-iconpicker-preview" src={current.src} alt="Image actuelle" />
+              {onCrop ? (
+                <button type="button" className="nb-btn" onClick={() => onCrop({ src: current.src })}>
+                  <Icon name="crop" size={15} /> Recadrer
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => fileRef.current?.click()} disabled={busy}>
             <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
           </button>
