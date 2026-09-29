@@ -21,9 +21,7 @@ function emit() {
 
 /** Vrai dans la fenêtre de l'application installée (sans barre d'adresse). */
 export function isInstalledApp(): boolean {
-  return ['standalone', 'window-controls-overlay', 'minimal-ui', 'fullscreen'].some(
-    (mode) => window.matchMedia?.(`(display-mode: ${mode})`).matches,
-  );
+  return ['standalone', 'window-controls-overlay', 'minimal-ui', 'fullscreen'].some((mode) => window.matchMedia?.(`(display-mode: ${mode})`).matches);
 }
 
 /** Au démarrage (navigateur uniquement) : écoute la proposition d'installation et enregistre le service worker. */

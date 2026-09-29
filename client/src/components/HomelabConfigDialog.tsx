@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type * as Y from 'yjs';
 import { Modal } from './Modal';
 import { api } from '../lib/api';
@@ -24,6 +24,8 @@ import {
   type ServiceType,
 } from '../lib/homelab';
 import { toast } from './Toast';
+import { useAppCtx } from '../editor/context';
+import { prepareImage } from '../lib/images';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 
@@ -262,6 +264,22 @@ function TestMessage({ result }: { result: TestResult }) {
 /** Choix de l'icône : icône du type par défaut, une icône du jeu, ou l'URL d'une image. */
 function IconChoiceField({ value, choices, visual, onChange }: { value: string; choices: IconName[]; visual: { name: IconName; color: string }; onChange: (icon: string) => void }) {
   const [url, setUrl] = useState(isImageIcon(value) ? value : '');
+  const app = useAppCtx();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  // Logo personnel : réduit à 256 px, transparence conservée.
+  const upload = async (file: File) => {
+    setBusy(true);
+    try {
+      const src = await app.uploadFile(await prepareImage(file, 256, 256, false));
+      setUrl(src);
+      onChange(src);
+    } catch (err) {
+      toast(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="nb-field hl-span2">
       <span>Icône</span>
@@ -286,15 +304,32 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
           </button>
         ))}
       </div>
-      <input
-        className="nb-input"
-        placeholder="…ou l’URL d’une image, par exemple https://…/logo.png"
-        value={url}
-        onChange={(e) => {
-          setUrl(e.target.value);
-          onChange(e.target.value.trim());
-        }}
-      />
+      <div className="nb-row nb-gap">
+        <input
+          className="nb-input"
+          placeholder="…ou l’URL d’une image, par exemple https://…/logo.png"
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            onChange(e.target.value.trim());
+          }}
+        />
+        <button type="button" className="nb-btn" onClick={() => fileRef.current?.click()} disabled={busy}>
+          <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          aria-label="Image de l’icône"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void upload(file);
+          }}
+        />
+      </div>
     </div>
   );
 }

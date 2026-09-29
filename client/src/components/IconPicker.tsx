@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAppCtx } from '../editor/context';
+import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
 import { PAGE_COLORS, PAGE_ICON_CHOICES, encodePageIcon, resolvePageIcon, type PageColor } from '../icons/pageIcon';
 
@@ -11,6 +13,27 @@ export function IconPicker({ value, onSelect, onClose }: Props) {
   const current = resolvePageIcon(value);
   const [color, setColor] = useState<PageColor>(current.kind === 'svg' ? current.color : 'default');
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<'icons' | 'image'>(current.kind === 'img' ? 'image' : 'icons');
+  const app = useAppCtx();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [link, setLink] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  // Image personnelle (logo…) : réduite à 256 px, transparence conservée.
+  const upload = async (file: File) => {
+    setBusy(true);
+    setError('');
+    try {
+      onSelect(await app.uploadFile(await prepareImage(file, 256, 256, false)));
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
+      setBusy(false);
+    }
+  };
+  const applyLink = () => {
+    if (isImageLink(link)) onSelect(link.trim());
+  };
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -34,8 +57,93 @@ export function IconPicker({ value, onSelect, onClose }: Props) {
 
   const colorValue = PAGE_COLORS[color].value;
 
+  const tabs = (
+    <div className="nb-iconpicker-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={tab === 'icons'}
+        className={tab === 'icons' ? 'nb-iconpicker-tab--active' : ''}
+        onClick={() => setTab('icons')}
+      >
+        Icônes
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={tab === 'image'}
+        className={tab === 'image' ? 'nb-iconpicker-tab--active' : ''}
+        onClick={() => setTab('image')}
+      >
+        Image
+      </button>
+      {value ? (
+        <button type="button" className="nb-iconpicker-remove" onClick={() => onSelect('')}>
+          Retirer
+        </button>
+      ) : null}
+    </div>
+  );
+
+  if (tab === 'image') {
+    return (
+      <div
+        className="nb-iconpicker"
+        ref={ref}
+        onPaste={(e) => {
+          const file = firstImage(e.clipboardData);
+          if (file) {
+            e.preventDefault();
+            void upload(file);
+          }
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const file = firstImage(e.dataTransfer);
+          if (file) void upload(file);
+        }}
+      >
+        {tabs}
+        <div className="nb-iconpicker-image">
+          {current.kind === 'img' ? <img className="nb-iconpicker-preview" src={current.src} alt="Image actuelle" /> : null}
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => fileRef.current?.click()} disabled={busy}>
+            <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            aria-label="Image de l’icône"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void upload(file);
+            }}
+          />
+          <span className="nb-muted">Votre logo, une photo… Ou glissez-la ici, ou collez-la (Ctrl+V). Idéal : une image carrée, PNG transparent.</span>
+          <div className="nb-row nb-gap">
+            <input
+              className="nb-input"
+              placeholder="Lien d’une image (https://…)"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyLink()}
+            />
+            <button type="button" className="nb-btn" onClick={applyLink} disabled={!isImageLink(link)}>
+              Utiliser
+            </button>
+          </div>
+          {error ? <div className="nb-error">{error}</div> : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="nb-iconpicker" ref={ref}>
+      {tabs}
       <div className="nb-iconpicker-head">
         <input className="nb-input" placeholder="Rechercher une icône…" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
         <button
@@ -49,11 +157,6 @@ export function IconPicker({ value, onSelect, onClose }: Props) {
         >
           Aléatoire
         </button>
-        {value ? (
-          <button type="button" className="nb-btn" onClick={() => onSelect('')}>
-            Retirer
-          </button>
-        ) : null}
       </div>
       <div className="nb-iconpicker-colors" role="radiogroup" aria-label="Couleur de l’icône">
         {(Object.keys(PAGE_COLORS) as PageColor[]).map((key) => (

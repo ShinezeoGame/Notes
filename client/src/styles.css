@@ -146,6 +146,47 @@ button { font-family: inherit; }
 .nb-page-icon-add:hover { background: var(--bg-hover); color: var(--text); }
 .nb-page-head:hover .nb-page-icon-add, .nb-page-icon-add:focus-visible { opacity: 1; }
 @media (hover: none) { .nb-page-icon-add { opacity: 0.8; } }
+.nb-page-controls { display: flex; flex-wrap: wrap; gap: 2px; align-self: flex-end; margin-left: 4px; }
+.nb-page-icon-add:disabled { cursor: default; }
+
+/* Bannière en haut de page (image repositionnable ou dégradé) */
+.nb-cover-wrap { position: relative; }
+.nb-cover { position: relative; height: 30vh; min-height: 160px; max-height: 300px; overflow: hidden; background: var(--bg-elevated); touch-action: auto; }
+.nb-cover img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+.nb-cover--repositioning { cursor: grab; touch-action: none; outline: none; }
+.nb-cover--repositioning::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--accent); pointer-events: none; }
+.nb-cover--dragging { cursor: grabbing; }
+.nb-cover-hint {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.6); color: #fff; padding: 6px 12px;
+  border-radius: 6px; font-size: 13px; pointer-events: none; white-space: nowrap;
+}
+.nb-cover-actions {
+  position: absolute; right: 16px; bottom: 12px; z-index: 3; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; opacity: 0; transition: opacity 0.15s;
+}
+.nb-cover-wrap:hover .nb-cover-actions, .nb-cover-actions:focus-within, .nb-cover-actions--visible { opacity: 1; }
+@media (hover: none) { .nb-cover-actions { opacity: 1; } }
+.nb-cover-actions button {
+  background: rgba(25, 25, 25, 0.78); color: #fff; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 6px; padding: 5px 10px; font-size: 12px;
+  cursor: pointer; backdrop-filter: blur(6px);
+}
+.nb-cover-actions button:hover { background: rgba(45, 45, 45, 0.92); }
+.nb-page--cover { padding-top: 0; }
+.nb-page--cover .nb-page-icon-wrap:not(.nb-page-icon-wrap--empty) { margin-top: -42px; z-index: 2; }
+/* L'icône chevauche la bannière : seule l'icône capte les clics, pas toute la rangée. */
+.nb-page--cover .nb-page-icon-wrap { pointer-events: none; }
+.nb-page--cover .nb-page-icon-wrap > * { pointer-events: auto; }
+.nb-page--cover .nb-page-icon-wrap--empty { margin-top: 10px; }
+.nb-coverpicker {
+  position: absolute; top: 100%; left: 0; z-index: 900; width: 420px; max-width: calc(100vw - 24px); background: var(--bg-elevated); border-radius: 10px;
+  box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.nb-coverpicker--cover { top: calc(100% - 6px); left: auto; right: 16px; }
+.nb-coverpicker-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 13px; }
+.nb-coverpicker-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; }
+.nb-coverpicker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.nb-coverpicker-item { height: 44px; border-radius: 6px; border: none; cursor: pointer; padding: 0; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.nb-coverpicker-item:hover { filter: brightness(1.08); }
+.nb-coverpicker-item--active { box-shadow: 0 0 0 2px var(--text-strong); }
 .nb-page-title {
   display: block; width: 100%; font-size: 40px; font-weight: 700; line-height: 1.2; color: var(--text-strong); background: none; border: none; outline: none;
   resize: none; font-family: inherit; padding: 6px 0 4px; margin: 0; overflow: hidden;
@@ -425,6 +466,11 @@ input:focus-visible + .nb-checkbox { outline: 2px solid var(--accent); outline-o
   .nb-page { padding: 12px 8px 120px; }
   .nb-page-head { padding: 0 20px; }
   .nb-page-icon-wrap { height: 64px; }
+  .nb-cover { height: 22vh; min-height: 120px; }
+  .nb-cover-actions { right: 8px; bottom: 8px; }
+  .nb-coverpicker--cover { right: 8px; }
+  .nb-page--cover { padding-top: 0; }
+  .nb-page--cover .nb-page-icon-wrap:not(.nb-page-icon-wrap--empty) { margin-top: -34px; }
   .nb-page-title { font-size: 30px; }
   .nb-editor .bn-editor { padding-inline: 20px; }
   .nb-editor-skeleton, .nb-subpages { padding-left: 20px; padding-right: 20px; }
@@ -500,7 +546,7 @@ select.nb-input { appearance: auto; }
 /* ---------- Icônes SVG ---------- */
 .nb-svg-icon { display: inline-block; flex-shrink: 0; }
 .nb-icon-muted { color: var(--text-muted); }
-.nb-page-img-icon { object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.nb-page-img-icon { object-fit: contain; border-radius: 4px; flex-shrink: 0; }
 .nb-pagelink-icon { display: inline-flex; }
 .nb-media-title .nb-svg-icon { vertical-align: -3px; margin-right: 6px; }
 .nb-app-tile { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -520,6 +566,17 @@ select.nb-input { appearance: auto; }
   box-shadow: var(--shadow); padding: 10px;
 }
 .nb-iconpicker-head { display: flex; gap: 6px; }
+.nb-iconpicker-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin: -2px 0 10px; }
+.nb-iconpicker-tabs button {
+  background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); font-size: 13px; padding: 4px 10px 7px; cursor: pointer;
+  margin-bottom: -1px;
+}
+.nb-iconpicker-tabs button:hover { color: var(--text); }
+.nb-iconpicker-tabs .nb-iconpicker-tab--active { color: var(--text-strong); border-bottom-color: var(--text-strong); }
+.nb-iconpicker-tabs .nb-iconpicker-remove { margin-left: auto; }
+.nb-iconpicker-image { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13px; }
+.nb-iconpicker-image .nb-row { width: 100%; }
+.nb-iconpicker-preview { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: var(--bg); }
 .nb-iconpicker-colors { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 2px; }
 .nb-iconpicker-color { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--bg-elevated); box-shadow: 0 0 0 1px var(--border-strong); cursor: pointer; padding: 0; }
 .nb-iconpicker-color--active { box-shadow: 0 0 0 2px var(--text-strong); }
