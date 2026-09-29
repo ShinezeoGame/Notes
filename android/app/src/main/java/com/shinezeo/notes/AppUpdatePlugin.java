@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
@@ -30,6 +31,9 @@ import org.json.JSONObject;
  * serveur Notes dans le stockage de l'application, puis le JavaScript bascule la WebView dessus (plugin WebView de
  * Capacitor). Une tâche périodique ({@link UpdateCheckJob}) prévient par une notification quand une version est
  * disponible.
+ *
+ * <p>Une exception qui sort d'une méthode de plugin ferme l'application (Capacitor la relance) : chaque méthode
+ * renvoie donc ses erreurs au JavaScript ({@link #fail}) au lieu de les laisser remonter.
  */
 @CapacitorPlugin(
     name = "AppUpdate",
@@ -42,6 +46,12 @@ public class AppUpdatePlugin extends Plugin {
 
     static final String NOTIFICATIONS = "notifications";
     private static final String BUNDLES_DIR = "bundles";
+    private static final String TAG = "NotesUpdates";
+
+    private static void fail(PluginCall call, Exception e, String message) {
+        Log.w(TAG, message, e);
+        call.reject(message, e);
+    }
 
     @PluginMethod
     public void getInfo(PluginCall call) {
@@ -60,47 +70,64 @@ public class AppUpdatePlugin extends Plugin {
     /** Adresse du serveur, version en cours et choix de l'utilisateur, lus par la vérification en arrière-plan. */
     @PluginMethod
     public void configure(PluginCall call) {
-        UpdateCheckJob.saveSettings(
-            getContext(),
-            call.getString("serverUrl", ""),
-            call.getString("currentVersion", ""),
-            Boolean.TRUE.equals(call.getBoolean("notify", true))
-        );
-        UpdateCheckJob.schedule(getContext());
-        call.resolve();
+        try {
+            UpdateCheckJob.saveSettings(
+                getContext(),
+                call.getString("serverUrl", ""),
+                call.getString("currentVersion", ""),
+                Boolean.TRUE.equals(call.getBoolean("notify", true))
+            );
+            JSObject ret = new JSObject();
+            ret.put("scheduled", UpdateCheckJob.schedule(getContext()));
+            call.resolve(ret);
+        } catch (Exception e) {
+            fail(call, e, "Vérification des mises à jour indisponible.");
+        }
     }
 
     /** La mise à jour est affichée dans l'application : pas de notification pour cette version. */
     @PluginMethod
     public void markSeen(PluginCall call) {
-        UpdateCheckJob.setLastNotified(getContext(), call.getString("version", ""));
-        UpdateNotifier.cancel(getContext());
-        call.resolve();
+        try {
+            UpdateCheckJob.setLastNotified(getContext(), call.getString("version", ""));
+            UpdateNotifier.cancel(getContext());
+            call.resolve();
+        } catch (Exception e) {
+            fail(call, e, "Notification non mise à jour.");
+        }
     }
 
     /** Vrai si l'application vient d'être ouverte depuis la notification de mise à jour (une seule fois). */
     @PluginMethod
     public void consumeLaunchRequest(PluginCall call) {
-        boolean requested = false;
-        if (getActivity() != null) {
-            Intent intent = getActivity().getIntent();
-            if (intent != null && intent.getBooleanExtra(UpdateNotifier.EXTRA_UPDATE, false)) {
-                intent.removeExtra(UpdateNotifier.EXTRA_UPDATE);
-                requested = true;
+        try {
+            boolean requested = false;
+            if (getActivity() != null) {
+                Intent intent = getActivity().getIntent();
+                if (intent != null && intent.getBooleanExtra(UpdateNotifier.EXTRA_UPDATE, false)) {
+                    intent.removeExtra(UpdateNotifier.EXTRA_UPDATE);
+                    requested = true;
+                }
             }
+            JSObject ret = new JSObject();
+            ret.put("update", requested);
+            call.resolve(ret);
+        } catch (Exception e) {
+            fail(call, e, "Lancement non lu.");
         }
-        JSObject ret = new JSObject();
-        ret.put("update", requested);
-        call.resolve(ret);
     }
 
     @Override
     protected void handleOnNewIntent(Intent intent) {
         super.handleOnNewIntent(intent);
-        if (intent != null && intent.getBooleanExtra(UpdateNotifier.EXTRA_UPDATE, false)) {
-            intent.removeExtra(UpdateNotifier.EXTRA_UPDATE);
-            // Conservé jusqu'à l'écoute par le JavaScript (WebView encore en chargement).
-            notifyListeners("updateRequested", new JSObject(), true);
+        try {
+            if (intent != null && intent.getBooleanExtra(UpdateNotifier.EXTRA_UPDATE, false)) {
+                intent.removeExtra(UpdateNotifier.EXTRA_UPDATE);
+                // Conservé jusqu'à l'écoute par le JavaScript (WebView encore en chargement).
+                notifyListeners("updateRequested", new JSObject(), true);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Ouverture depuis la notification non traitée", e);
         }
     }
 
@@ -110,60 +137,81 @@ public class AppUpdatePlugin extends Plugin {
      */
     @PluginMethod
     public void download(PluginCall call) {
-        String baseUrl = call.getString("baseUrl", "").replaceAll("/+$", "");
-        String version = call.getString("version", "");
-        JSArray files = call.getArray("files");
-        if (baseUrl.isEmpty() || !version.matches("[A-Za-z0-9._-]{1,64}") || files == null || files.length() == 0) {
-            call.reject("Paramètres de mise à jour invalides.");
-            return;
+        try {
+            String baseUrl = call.getString("baseUrl", "").replaceAll("/+$", "");
+            String version = call.getString("version", "");
+            JSArray files = call.getArray("files");
+            if (baseUrl.isEmpty() || !version.matches("[A-Za-z0-9._-]{1,64}") || files == null || files.length() == 0) {
+                call.reject("Paramètres de mise à jour invalides.");
+                return;
+            }
+            new Thread(
+                () -> {
+                    try {
+                        File dir = downloadBundle(baseUrl, version, files);
+                        JSObject ret = new JSObject();
+                        ret.put("path", dir.getAbsolutePath());
+                        call.resolve(ret);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Téléchargement de la mise à jour impossible", e);
+                        call.reject(e.getMessage() != null ? e.getMessage() : "Téléchargement impossible.");
+                    }
+                },
+                "notes-update-download"
+            ).start();
+        } catch (Exception e) {
+            fail(call, e, "Téléchargement impossible.");
         }
-        new Thread(
-            () -> {
-                try {
-                    File dir = downloadBundle(baseUrl, version, files);
-                    JSObject ret = new JSObject();
-                    ret.put("path", dir.getAbsolutePath());
-                    call.resolve(ret);
-                } catch (Exception e) {
-                    call.reject(e.getMessage() != null ? e.getMessage() : "Téléchargement impossible.");
-                }
-            },
-            "notes-update-download"
-        ).start();
     }
 
     /** Supprime les versions téléchargées, sauf le dossier `keep` (version en cours). */
     @PluginMethod
     public void cleanup(PluginCall call) {
-        String keep = call.getString("keep", "");
-        File[] entries = new File(getContext().getFilesDir(), BUNDLES_DIR).listFiles();
-        if (entries != null) {
-            for (File entry : entries) {
-                if (!entry.getName().equals(keep)) deleteRecursive(entry);
+        try {
+            String keep = call.getString("keep", "");
+            File[] entries = new File(getContext().getFilesDir(), BUNDLES_DIR).listFiles();
+            if (entries != null) {
+                for (File entry : entries) {
+                    if (!entry.getName().equals(keep)) deleteRecursive(entry);
+                }
             }
+            call.resolve();
+        } catch (Exception e) {
+            fail(call, e, "Nettoyage des anciennes versions impossible.");
         }
-        call.resolve();
     }
 
     @Override
     @PluginMethod
     public void checkPermissions(PluginCall call) {
-        call.resolve(notificationPermission());
+        try {
+            call.resolve(notificationPermission());
+        } catch (Exception e) {
+            fail(call, e, "Autorisation de notification inconnue.");
+        }
     }
 
     @Override
     @PluginMethod
     public void requestPermissions(PluginCall call) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && getPermissionState(NOTIFICATIONS) != PermissionState.GRANTED) {
-            requestPermissionForAlias(NOTIFICATIONS, call, "notificationPermissionCallback");
-        } else {
-            call.resolve(notificationPermission());
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && getPermissionState(NOTIFICATIONS) != PermissionState.GRANTED) {
+                requestPermissionForAlias(NOTIFICATIONS, call, "notificationPermissionCallback");
+            } else {
+                call.resolve(notificationPermission());
+            }
+        } catch (Exception e) {
+            fail(call, e, "Autorisation de notification non demandée.");
         }
     }
 
     @PermissionCallback
     private void notificationPermissionCallback(PluginCall call) {
-        call.resolve(notificationPermission());
+        try {
+            call.resolve(notificationPermission());
+        } catch (Exception e) {
+            fail(call, e, "Autorisation de notification inconnue.");
+        }
     }
 
     private JSObject notificationPermission() {

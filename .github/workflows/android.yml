@@ -5,17 +5,24 @@ on:
     branches: ['**']
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      apk_run_id:
+        description: "Tester seulement l'APK d'une exécution précédente (identifiant de l'exécution, visible dans son adresse), sans construire ni publier"
+        required: false
+        default: ''
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: apk-${{ github.ref }}
+  group: apk-${{ github.ref }}-${{ inputs.apk_run_id || 'build' }}
   cancel-in-progress: true
 
 jobs:
   apk:
     name: Construire l'APK
+    if: ${{ !inputs.apk_run_id }}
     runs-on: ubuntu-latest
     env:
       HAS_RELEASE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -85,10 +92,90 @@ jobs:
             notes-release.apk
           if-no-files-found: error
 
+  # L'APK est essayé sur un vrai système Android avant d'être publié : une application qui se ferme au lancement
+  # ne doit jamais arriver sur un téléphone.
+  smoke:
+    name: Tester l'APK sur un émulateur Android 14
+    needs: apk
+    if: ${{ !cancelled() && (needs.apk.result == 'success' || inputs.apk_run_id) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire le client (serveur de test) et une nouvelle version pour tester la mise à jour
+        run: |
+          npm run build
+          cp -r client/dist "$RUNNER_TEMP/client-v1"
+          printf '\n// Version de test : mise à jour sur l’émulateur\n' >> client/src/main.tsx
+          npm run build
+          cp -r client/dist "$RUNNER_TEMP/client-v2"
+          git checkout -- client/src/main.tsx
+          rm -rf client/dist
+          cp -r "$RUNNER_TEMP/client-v1" client/dist
+
+      - name: Récupérer l'APK construit
+        if: ${{ !inputs.apk_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+          path: apk
+
+      - name: Récupérer l'APK de l'exécution demandée
+        if: ${{ inputs.apk_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+          path: apk
+          run-id: ${{ inputs.apk_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Activer KVM (émulateur accéléré)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: "Émulateur : lancement, liaison au serveur, notification et mise à jour"
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: bash .github/android-smoke/run.sh apk/notes-debug.apk "$RUNNER_TEMP/client-v2"
+
+      - name: Journaux du test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-emulateur
+          path: smoke-out
+          if-no-files-found: ignore
+
+  release:
+    name: Publier l'APK
+    needs: [apk, smoke]
+    if: ${{ github.event_name != 'pull_request' && !inputs.apk_run_id }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+
       - name: Publier l'APK dans une Release GitHub
-        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -e
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then

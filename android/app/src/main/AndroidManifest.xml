@@ -43,4 +43,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Conserver la vérification périodique des mises à jour après un redémarrage du téléphone -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Vérification « avec réseau » (JobScheduler) : obligatoire à partir d'Android 14, sinon refus (SecurityException) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 </manifest>

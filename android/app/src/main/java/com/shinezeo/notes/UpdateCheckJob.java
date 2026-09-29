@@ -7,6 +7,7 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -20,6 +21,7 @@ import org.json.JSONObject;
  */
 public class UpdateCheckJob extends JobService {
 
+    private static final String TAG = "NotesUpdates";
     private static final int JOB_ID = 4202;
     private static final long INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
     private static final String PREFS = "NotesUpdates";
@@ -67,24 +69,32 @@ public class UpdateCheckJob extends JobService {
         prefs(context).edit().putString(KEY_LAST_NOTIFIED, version == null ? "" : version).apply();
     }
 
-    /** Programme (ou annule) la vérification selon les réglages ; sans effet si elle est déjà programmée. */
-    static void schedule(Context context) {
-        JobScheduler scheduler = context.getSystemService(JobScheduler.class);
-        if (scheduler == null) return;
-        SharedPreferences p = prefs(context);
-        boolean wanted = p.getBoolean(KEY_NOTIFY, true) && !p.getString(KEY_SERVER, "").isEmpty();
-        if (!wanted) {
-            scheduler.cancel(JOB_ID);
-            return;
+    /**
+     * Programme (ou annule) la vérification selon les réglages ; sans effet si elle est déjà programmée.
+     * Renvoie faux si le système refuse la programmation (l'application continue de fonctionner sans notification).
+     */
+    static boolean schedule(Context context) {
+        try {
+            JobScheduler scheduler = context.getSystemService(JobScheduler.class);
+            if (scheduler == null) return false;
+            SharedPreferences p = prefs(context);
+            boolean wanted = p.getBoolean(KEY_NOTIFY, true) && !p.getString(KEY_SERVER, "").isEmpty();
+            if (!wanted) {
+                scheduler.cancel(JOB_ID);
+                return true;
+            }
+            JobInfo existing = scheduler.getPendingJob(JOB_ID);
+            if (existing != null && existing.getIntervalMillis() == INTERVAL_MS) return true;
+            JobInfo job = new JobInfo.Builder(JOB_ID, new ComponentName(context, UpdateCheckJob.class))
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setPeriodic(INTERVAL_MS)
+                .setPersisted(true)
+                .build();
+            return scheduler.schedule(job) == JobScheduler.RESULT_SUCCESS;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Vérification des mises à jour non programmée", e);
+            return false;
         }
-        JobInfo existing = scheduler.getPendingJob(JOB_ID);
-        if (existing != null && existing.getIntervalMillis() == INTERVAL_MS) return;
-        JobInfo job = new JobInfo.Builder(JOB_ID, new ComponentName(context, UpdateCheckJob.class))
-            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-            .setPeriodic(INTERVAL_MS)
-            .setPersisted(true)
-            .build();
-        scheduler.schedule(job);
     }
 
     static void check(Context context) throws Exception {
