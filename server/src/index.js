@@ -41,6 +41,18 @@ import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab
 import { createAppUpdates } from './appUpdates.js';
 import { claimPairing, startPairing } from './pairing.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
+import {
+  cameraKind,
+  cameraLink,
+  hasFfmpeg,
+  openVideo,
+  parseCamera,
+  parseCamerasConfig,
+  stopCameras,
+  streamImage,
+  testCamera,
+  verifyCameraLink,
+} from './cameras.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -287,6 +299,48 @@ app.get('/api/home/camera/:entityId/:kind', async (req, res) => {
   proxyCamera(cfg, entityId, kind, res);
 });
 
+// ---------- Caméras de surveillance (reliées directement, sans Home Assistant) ----------
+// La liste des caméras (adresses, identifiants) vit dans le document Yjs de l'espace ; le serveur s'y connecte et ne
+// renvoie aux navigateurs que la vidéo, par des adresses signées.
+async function readCamerasConfig(wsId) {
+  const doc = getDoc(wsRoom(wsId));
+  await doc.whenLoaded;
+  return parseCamerasConfig(doc.getMap('cameras').get('config') || '');
+}
+
+app.get('/api/cameras', requireOwner, async (req, res) => {
+  const cameras = await readCamerasConfig(req.wsId);
+  res.json({
+    ffmpeg: await hasFfmpeg(),
+    cameras: cameras.map((c) => ({ id: c.id, name: c.name, kind: cameraKind(c), live: cameraLink(req.wsId, c.id) })),
+  });
+});
+
+app.post('/api/cameras/test', requireOwner, async (req, res) => {
+  res.json(await testCamera(parseCamera(req.body?.camera)));
+});
+
+// Direct d'une caméra : ?q=hd (flux principal) ou sd ; ?accept=avc,hevc,vp9 : formats que l'appareil sait lire.
+app.get('/api/cameras/:id/live', async (req, res) => {
+  const ws = String(req.query.ws || '');
+  const id = req.params.id;
+  if (!isValidId(ws) || !verifyCameraLink(ws, id, req.query.exp, req.query.sig)) {
+    return res.status(403).json({ error: 'Adresse de caméra expirée ou invalide.' });
+  }
+  const cam = (await readCamerasConfig(ws)).find((c) => c.id === id);
+  if (!cam) return res.status(404).json({ error: 'Cette caméra n’existe plus.' });
+  if (cameraKind(cam) === 'image') return streamImage(cam, res);
+  const accept = String(req.query.accept || 'avc')
+    .split(',')
+    .filter((f) => ['avc', 'hevc', 'vp9'].includes(f));
+  try {
+    const hub = await openVideo(cam, req.query.q === 'hd' ? 'hd' : 'sd', accept);
+    hub.addViewer(res);
+  } catch (err) {
+    if (!res.headersSent) res.status(err.status || 502).json({ error: err.message || 'Vidéo indisponible.' });
+  }
+});
+
 // Récupération d'un flux iCal (Google Agenda "adresse secrète") côté serveur pour éviter CORS.
 const BLOCKED_HOST_RE = /^(localhost|127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$|.*\.local$)/i;
 app.post('/api/ics/fetch', requireEditor, async (req, res) => {
@@ -406,6 +460,7 @@ server.listen(PORT, HOST, () => {
 
 async function shutdown() {
   console.log('Arrêt : sauvegarde des documents…');
+  stopCameras();
   await flushAll();
   process.exit(0);
 }

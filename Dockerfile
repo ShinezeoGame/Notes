@@ -11,6 +11,8 @@ RUN npm run build
 
 # Étape 2 : image d'exécution (serveur Node + client construit)
 FROM node:22-alpine
+# ffmpeg : lecture des flux vidéo des caméras de surveillance (RTSP…)
+RUN apk add --no-cache ffmpeg
 WORKDIR /app
 ENV NODE_ENV=production DATA_DIR=/data PORT=3000 HOST=0.0.0.0
 COPY package.json package-lock.json ./

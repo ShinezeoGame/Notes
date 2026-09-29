@@ -20,6 +20,7 @@ import { applyUpdate, startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { SmartHomeView } from './components/SmartHomeView';
+import { CamerasView } from './components/CamerasView';
 import { LinkWithCodeDialog } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
@@ -192,6 +193,7 @@ function OwnerApp() {
       notify: toast,
       openDashboard: () => navigate('#/dashboard'),
       openSmartHome: () => navigate('#/maison'),
+      openCameras: () => navigate('#/cameras'),
       homelabConfigured,
       workspaceDoc: store?.doc ?? null,
     }),
@@ -229,6 +231,10 @@ function OwnerApp() {
             navigate('#/maison');
             setSidebarOpen(false);
           }}
+          onOpenCameras={() => {
+            navigate('#/cameras');
+            setSidebarOpen(false);
+          }}
           onOpenPdf={() => {
             navigate('#/pdf');
             setSidebarOpen(false);
@@ -245,6 +251,7 @@ function OwnerApp() {
             isTrash={route.name === 'trash'}
             isDashboard={route.name === 'dashboard'}
             isSmartHome={route.name === 'smarthome'}
+            isCameras={route.name === 'cameras'}
             pdf={route.name === 'pdf' ? { name: pdfName } : null}
             status={status}
             showMenuButton={isMobile}
@@ -255,7 +262,7 @@ function OwnerApp() {
           />
           {status === 'outdated' ? (
             <div className="nb-banner nb-banner--error">
-              Cette page utilise une nouveauté de Notes (colonnes…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
+              Cette page utilise une nouveauté de Notes (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
               sur l’appareil en attendant.
               <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
                 Mettre à jour
@@ -278,6 +285,8 @@ function OwnerApp() {
               <DashboardView doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />
             ) : route.name === 'smarthome' ? (
               <SmartHomeView doc={store.doc} />
+            ) : route.name === 'cameras' ? (
+              <CamerasView doc={store.doc} />
             ) : route.name === 'pdf' ? (
               <Suspense fallback={<div className="nb-center nb-loading">Chargement de l’atelier PDF…</div>}>
                 <PdfApp doc={store.doc} pdfId={pdfId} />
@@ -323,6 +332,7 @@ function TopBar(props: {
   isTrash: boolean;
   isDashboard?: boolean;
   isSmartHome?: boolean;
+  isCameras?: boolean;
   /** Atelier PDF : nom du PDF ouvert (vide dans la bibliothèque). */
   pdf?: { name: string } | null;
   status: ReturnType<typeof useDocStatus>;
@@ -358,6 +368,10 @@ function TopBar(props: {
         ) : props.isSmartHome ? (
           <span className="nb-crumb-current">
             <Icon name="bulb" size={15} /> Maison
+          </span>
+        ) : props.isCameras ? (
+          <span className="nb-crumb-current">
+            <Icon name="cctv" size={15} /> Caméras
           </span>
         ) : props.isDashboard ? (
           <span className="nb-crumb-current">

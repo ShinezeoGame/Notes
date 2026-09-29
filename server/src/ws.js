@@ -29,7 +29,7 @@ export const pdfRoom = (wsId, pdfId) => `pdf_${wsId}_${pdfId}`;
  * refusées (code 4426 ; les clients récents affichent alors qu'une mise à jour est nécessaire), ses modifications
  * attendent sur l'appareil. À augmenter avec DOC_SCHEMA (client/src/lib/yjs.ts).
  */
-export const MIN_PAGE_SCHEMA = 2;
+export const MIN_PAGE_SCHEMA = 3;
 
 /** Vrai pour le document d'une page (contenu de l'éditeur). */
 export const isPageRoom = (room) => PG_ROOM_RE.test(room);

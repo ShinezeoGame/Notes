@@ -1,6 +1,7 @@
 import { getSettings } from './settings';
 import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from './homelab';
 import type { HomeEntity, HomeStates } from './smarthome';
+import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
 
 export class ApiError extends Error {
   status: number;
@@ -93,6 +94,9 @@ export const api = {
     request<{ entities: HomeEntity[] }>('/api/home/call', { method: 'POST', body: JSON.stringify({ entity_id, service, data }), auth: ownerAuth() }),
   homeTest: (cfg: { url: string; token: string; insecure: boolean }) =>
     request<{ ok: boolean; message: string }>('/api/home/test', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),
+  cameras: () => request<CamerasStatus>('/api/cameras', { auth: ownerAuth() }),
+  cameraTest: (camera: Camera) =>
+    request<CameraTestResult>('/api/cameras/test', { method: 'POST', body: JSON.stringify({ camera }), auth: ownerAuth() }),
   fetchIcs: (url: string, auth: Auth) =>
     request<{ text: string }>('/api/ics/fetch', { method: 'POST', body: JSON.stringify({ url }), auth }),
   deletePdf: (id: string, files: string[]) =>

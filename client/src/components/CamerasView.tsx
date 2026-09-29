@@ -1,0 +1,270 @@
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import type * as Y from 'yjs';
+import { cameraVersion, liveUrl, useCameras, type Camera, type CameraLink } from '../lib/cameras';
+import { LivePlayer, type PlayerState } from '../lib/livePlayer';
+import { Icon } from '../icons/Icon';
+import { Modal } from './Modal';
+import { CameraConfigDialog } from './CameraConfigDialog';
+
+const BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
+/** Vrai quand l'élément est (presque) à l'écran et l'application au premier plan : sinon le direct est coupé. */
+function useOnScreen(ref: RefObject<HTMLElement | null>): boolean {
+  const [inView, setInView] = useState(true);
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible');
+  useEffect(() => {
+    const onChange = () => setPageVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', onChange);
+    return () => document.removeEventListener('visibilitychange', onChange);
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        clearTimeout(timer);
+        // Coupure différée : un défilement rapide ne relance pas la connexion.
+        if (entry.isIntersecting) setInView(true);
+        else timer = setTimeout(() => setInView(false), 3_000);
+      },
+      { rootMargin: '150px' },
+    );
+    io.observe(el);
+    return () => {
+      clearTimeout(timer);
+      io.disconnect();
+    };
+  }, [ref]);
+  return inView && pageVisible;
+}
+
+/** Image ou flux MJPEG (balise <img>), reconnecté après une erreur. */
+function MjpegImage({ url, name, onState }: { url: () => string; name: string; onState: (s: PlayerState, message?: string) => void }) {
+  const img = useRef<HTMLImageElement>(null);
+  const [attempt, setAttempt] = useState(0);
+  // Adresse figée entre deux essais : la renouveler (adresse signée) couperait le flux en cours.
+  const src = useMemo(() => `${url()}&_=${attempt}`, [attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const retry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    const el = img.current;
+    return () => {
+      clearTimeout(retry.current);
+      // Le navigateur garde le flux ouvert si l'image n'est pas vidée explicitement.
+      if (el) el.src = BLANK_IMAGE;
+    };
+  }, []);
+  return (
+    <img
+      ref={img}
+      src={src}
+      alt={`${name} en direct`}
+      onLoad={() => onState('playing')}
+      onError={() => {
+        onState('retrying', 'Image indisponible, nouvel essai…');
+        clearTimeout(retry.current);
+        retry.current = setTimeout(() => setAttempt((n) => n + 1), 5_000);
+      }}
+    />
+  );
+}
+
+type LiveProps = {
+  link: CameraLink | undefined;
+  name: string;
+  /** Empreinte des réglages de la caméra : le direct redémarre quand elle change. */
+  version?: string;
+  quality: 'sd' | 'hd';
+  /** Faux : direct suspendu (vue plein écran ouverte par-dessus…). */
+  active?: boolean;
+};
+
+/** Direct d'une caméra : vidéo (MP4 fragmenté) ou image MJPEG, avec l'état de la connexion. */
+export function CameraLive({ link, name, version = '', quality, active = true }: LiveProps) {
+  const box = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
+  const onScreen = useOnScreen(box);
+  const [state, setState] = useState<{ state: PlayerState; message?: string }>({ state: 'connecting' });
+  const url = link ? `${liveUrl(link, quality)}&v=${version}` : '';
+  // Adresse signée renouvelée régulièrement : relue à chaque connexion, sans couper le direct en cours.
+  const urlRef = useRef(url);
+  urlRef.current = url;
+  const run = Boolean(url && active && onScreen);
+  const kind = link?.kind;
+  const stream = `${link?.id}|${quality}|${version}`;
+
+  useEffect(() => {
+    if (!run || kind !== 'video' || !video.current) return;
+    setState({ state: 'connecting' });
+    const player = new LivePlayer(video.current, () => urlRef.current, (s, message) => setState({ state: s, message }));
+    player.start();
+    return () => player.stop();
+  }, [run, stream, kind, video]);
+
+  let overlay: string | null = null;
+  if (!link) overlay = 'Préparation…';
+  else if (!active || !onScreen) overlay = null;
+  else if (state.state === 'connecting') overlay = 'Connexion à la caméra…';
+  else if (state.state !== 'playing') overlay = state.message ?? 'Vidéo indisponible.';
+
+  return (
+    <div ref={box} className="cam-live">
+      {kind === 'image' ? (
+        run ? <MjpegImage key={stream} url={() => urlRef.current} name={name} onState={(s, message) => setState({ state: s, message })} /> : null
+      ) : (
+        <video ref={video} muted playsInline autoPlay disablePictureInPicture aria-label={`${name} en direct`} />
+      )}
+      {overlay ? (
+        <div className={`cam-overlay${state.state === 'error' ? ' cam-overlay--error' : ''}`}>
+          {state.state === 'error' ? <Icon name="alert" size={16} /> : null}
+          <span>{overlay}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Une caméra en grand (flux principal), avec passage en plein écran. */
+export function CameraModal({ link, camera, onClose, onEdit }: { link: CameraLink | undefined; camera: Camera; onClose: () => void; onEdit?: () => void }) {
+  const stage = useRef<HTMLDivElement>(null);
+  const fullscreen = () => {
+    const el = stage.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.().catch(() => {});
+  };
+  return (
+    <Modal title={camera.name} onClose={onClose} width={1280}>
+      <div ref={stage} className="cam-stage" onDoubleClick={fullscreen}>
+        <CameraLive link={link} name={camera.name} version={cameraVersion(camera)} quality="hd" />
+      </div>
+      <div className="cam-modal-actions">
+        {onEdit ? (
+          <button type="button" className="nb-btn nb-btn--sm" onClick={onEdit}>
+            <Icon name="settings" size={14} /> Réglages
+          </button>
+        ) : null}
+        <button type="button" className="nb-btn nb-btn--sm" onClick={fullscreen}>
+          <Icon name="maximize" size={14} /> Plein écran
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+type PanelProps = {
+  doc: Y.Doc | null;
+  /** Une seule caméra (bloc d'une page) ; sinon toutes. */
+  cameraId?: string;
+  compact?: boolean;
+  canConfigure?: boolean;
+};
+
+/** Grille des caméras en direct (vue « Caméras » et bloc d'une page). */
+export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = true }: PanelProps) {
+  const { cfg, hasServer, links, ffmpeg, error } = useCameras(doc);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Camera | 'new' | null>(null);
+  const cameras = cameraId ? cfg.cameras.filter((c) => c.id === cameraId) : cfg.cameras;
+  const open = openId ? cfg.cameras.find((c) => c.id === openId) ?? null : null;
+  const dialog =
+    editing && doc ? <CameraConfigDialog doc={doc} camera={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null;
+
+  if (!hasServer) {
+    return (
+      <div className="nb-notice">
+        <p>Les caméras passent par le serveur Notes, qui s’y connecte sur votre réseau local.</p>
+        <p className="nb-muted">Configurez l’adresse du serveur dans les réglages.</p>
+      </div>
+    );
+  }
+  if (!cfg.cameras.length) {
+    return (
+      <div className="nb-notice sh-empty cam-empty">
+        <Icon name="cctv" size={28} />
+        <p>
+          Ajoutez vos <b>caméras de surveillance</b> (Hikvision, Dahua, Reolink, Tapo, Ezviz… ou toute caméra avec un flux RTSP) pour les regarder en
+          direct ici et dans vos pages.
+        </p>
+        {canConfigure && doc ? (
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => setEditing('new')}>
+            <Icon name="plus" size={15} /> Ajouter une caméra
+          </button>
+        ) : null}
+        {dialog}
+      </div>
+    );
+  }
+  if (cameraId && !cameras.length) {
+    return <div className="nb-notice nb-muted">Cette caméra a été supprimée.</div>;
+  }
+
+  const needsFfmpeg = !ffmpeg && cameras.some((c) => c.brand !== 'image');
+  return (
+    <div className={`cam-panel${compact ? ' cam-panel--compact' : ''}`}>
+      {!cameraId && canConfigure && doc ? (
+        <div className="cam-toolbar">
+          <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditing('new')}>
+            <Icon name="plus" size={14} /> Ajouter une caméra
+          </button>
+        </div>
+      ) : null}
+      {needsFfmpeg ? (
+        <div className="nb-error cam-problem">
+          <Icon name="alert" size={15} /> ffmpeg n’est pas installé sur le serveur Notes : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur
+          Docker, ou installez ffmpeg).
+        </div>
+      ) : null}
+      {error ? (
+        <div className="nb-error cam-problem">
+          <Icon name="alert" size={15} /> {error}
+        </div>
+      ) : null}
+      <div className={`cam-grid${cameras.length === 1 ? ' cam-grid--single' : ''}`}>
+        {cameras.map((c) => (
+          <div key={c.id} className="cam-tile">
+            <button type="button" className="cam-tile-view" onClick={() => setOpenId(c.id)} aria-label={`Agrandir ${c.name}`}>
+              <CameraLive link={links.get(c.id)} name={c.name} version={cameraVersion(c)} quality="sd" active={!open} />
+            </button>
+            <div className="cam-tile-bar">
+              <span className="cam-live-dot" aria-hidden="true" />
+              <span className="cam-tile-name">{c.name}</span>
+              {canConfigure && doc ? (
+                <button type="button" className="nb-icon-btn cam-tile-edit" onClick={() => setEditing(c)} aria-label={`Réglages de ${c.name}`}>
+                  <Icon name="settings" size={15} />
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+      {open ? (
+        <CameraModal
+          link={links.get(open.id)}
+          camera={open}
+          onClose={() => setOpenId(null)}
+          onEdit={canConfigure && doc ? () => {
+            setOpenId(null);
+            setEditing(open);
+          } : undefined}
+        />
+      ) : null}
+      {dialog}
+    </div>
+  );
+}
+
+/** Vue « Caméras » (barre latérale). */
+export function CamerasView({ doc }: { doc: Y.Doc }) {
+  useEffect(() => {
+    document.title = 'Caméras – Notes';
+  }, []);
+  return (
+    <div className="nb-page hl-page cam-page">
+      <h1 className="nb-page-title-static">
+        <Icon name="cctv" size={34} /> Caméras
+      </h1>
+      <CamerasPanel doc={doc} />
+    </div>
+  );
+}

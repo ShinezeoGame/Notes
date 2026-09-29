@@ -840,3 +840,47 @@ select.nb-input { appearance: auto; }
 .nb-code-input { font-size: 24px; letter-spacing: 0.2em; font-variant-numeric: tabular-nums; max-width: 220px; text-align: center; }
 .nb-join-link { margin-top: 6px; font-size: 13px; }
 .nb-join-link summary { cursor: pointer; color: var(--text-muted); margin-bottom: 8px; }
+
+/* Caméras de surveillance */
+.cam-live { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
+.cam-live video, .cam-live img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.cam-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px;
+  color: #d0d0d0; font-size: 13px; text-align: center; background: rgba(0, 0, 0, 0.55); pointer-events: none;
+}
+.cam-overlay--error { color: #ff9c96; }
+.cam-toolbar { display: flex; justify-content: flex-end; margin: 8px 0 14px; }
+.cam-problem { margin: 0 0 14px; display: flex; gap: 6px; align-items: center; }
+.cam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+.cam-grid--single { grid-template-columns: 1fr; }
+.cam-panel--compact .cam-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.cam-panel .cam-grid--single { grid-template-columns: 1fr; }
+.cam-tile { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg-elevated); }
+.cam-tile-view { display: block; width: 100%; padding: 0; border: none; background: none; cursor: zoom-in; }
+.cam-tile-bar { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; min-height: 38px; font-size: 14px; color: var(--text); }
+.cam-tile-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cam-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5484d; flex: none; box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.2); }
+.cam-stage { background: #000; border-radius: 8px; overflow: hidden; }
+/* Vue agrandie : la vidéo tient dans la fenêtre, boutons compris. */
+.cam-stage .cam-live { width: min(100%, calc((100vh - 230px) * 16 / 9)); margin: 0 auto; }
+.cam-stage:fullscreen { display: flex; align-items: center; border-radius: 0; }
+.cam-stage:fullscreen .cam-live { width: 100%; height: 100%; aspect-ratio: auto; }
+.cam-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.cam-empty .nb-svg-icon { color: #e5484d; }
+.cam-form-row { display: flex; gap: 10px; align-items: flex-start; }
+.cam-form-host { flex: 1; }
+.cam-form-small { width: 96px; flex: none; }
+.cam-form-half { flex: 1; min-width: 0; }
+.cam-hint { font-size: 13px; margin: -4px 0 14px; }
+.cam-hint-inline { font-size: 12px; }
+.cam-preview { display: block; max-width: 100%; max-height: 260px; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border); }
+.sh-help ul { padding-left: 20px; line-height: 1.6; margin: 8px 0; }
+@media (max-width: 768px) {
+  .cam-grid, .cam-panel--compact .cam-grid { grid-template-columns: 1fr; }
+  .cam-form-row { flex-wrap: wrap; }
+  .cam-form-half, .cam-form-host { flex-basis: 100%; }
+}
+.nb-media-select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-size: 12px; padding: 2px 6px; max-width: 180px;
+}
+.cam-block-body .cam-toolbar { margin-top: 0; }

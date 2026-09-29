@@ -18,6 +18,7 @@ type Props = {
   onOpenDashboard: () => void;
   onOpenPdf: () => void;
   onOpenSmartHome: () => void;
+  onOpenCameras: () => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
   onShare: (pageId: string) => void;
@@ -233,6 +234,9 @@ export function Sidebar(props: Props) {
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenSmartHome}>
             <Icon name="bulb" size={16} /> Maison
+          </button>
+          <button type="button" className="nb-sidebar-link" onClick={props.onOpenCameras}>
+            <Icon name="cctv" size={16} /> Caméras
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenDashboard}>
             <Icon name="home" size={16} /> Homelab

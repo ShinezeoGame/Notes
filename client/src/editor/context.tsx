@@ -21,6 +21,8 @@ export type AppContextValue = {
   openDashboard?: () => void;
   /** Ouvre la vue Maison (propriétaire uniquement). */
   openSmartHome?: () => void;
+  /** Ouvre la vue Caméras (propriétaire uniquement). */
+  openCameras?: () => void;
   /** Vrai si au moins une application ou un appareil est configuré. */
   homelabConfigured?: boolean;
   /** Document de l'espace de travail (configuration du homelab, tailles des modules). */

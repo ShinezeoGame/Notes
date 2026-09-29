@@ -170,10 +170,18 @@ export function Editor({ handle, editable }: Props) {
       mediaItems.push({
         title: 'Maison',
         subtext: 'Lumières, prises, volets, chauffage et caméras (Home Assistant)',
-        aliases: ['maison', 'domotique', 'home assistant', 'lumière', 'lampe', 'ampoule', 'caméra', 'prise', 'volet', 'chauffage'],
+        aliases: ['maison', 'domotique', 'home assistant', 'lumière', 'lampe', 'ampoule', 'prise', 'volet', 'chauffage'],
         group: fr.slash_menu.image.group,
         icon: <SlashIcon name="bulb" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'smarthome' }),
+      });
+      mediaItems.push({
+        title: 'Caméra',
+        subtext: 'Direct d’une caméra de surveillance (ou de toutes)',
+        aliases: ['caméra', 'camera', 'caméras', 'surveillance', 'vidéosurveillance', 'videosurveillance', 'cctv', 'rtsp', 'flux vidéo', 'direct'],
+        group: fr.slash_menu.image.group,
+        icon: <SlashIcon name="cctv" />,
+        onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'camera' }),
       });
     }
     const layoutItems: DefaultReactSuggestionItem[] = [2, 3].map((n) => ({
