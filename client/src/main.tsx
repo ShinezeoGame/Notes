@@ -5,9 +5,11 @@ import './styles.css';
 import App from './App';
 import { startPwa } from './lib/pwa';
 import { styleSystemBars } from './lib/native';
+import { startIncoming } from './lib/incoming';
 
 startPwa();
 styleSystemBars();
+startIncoming();
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

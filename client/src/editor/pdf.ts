@@ -24,7 +24,18 @@ for (const proto of [Map.prototype, WeakMap.prototype] as unknown as MapWithUpse
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
+export { pdfjs };
 export type PdfDocument = Awaited<ReturnType<typeof pdfjs.getDocument>['promise']>;
+
+/** Ouvre un PDF à partir de son contenu (copié : pdf.js s'approprie le tampon qu'on lui donne). */
+export function loadPdfData(data: Uint8Array, password?: string): Promise<PdfDocument> {
+  return pdfjs.getDocument({ data: data.slice(), password }).promise;
+}
+
+/** Libère un document pdf.js (mémoire et tâche de fond). */
+export function closePdf(pdf: PdfDocument | null | undefined) {
+  void pdf?.loadingTask.destroy().catch(() => {});
+}
 
 export async function loadPdf(url: string): Promise<PdfDocument> {
   if (url.startsWith('data:')) {

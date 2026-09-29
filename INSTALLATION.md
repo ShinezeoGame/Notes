@@ -180,7 +180,13 @@ Notes s’installe comme une application depuis **Microsoft Edge**, **Google Chr
 1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
 2. Cliquez sur **Installer l’application** en bas de la barre latérale (ou **Réglages → Installer Notes sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
 
-Notes s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison** et **Homelab**). Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
+Notes s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Notes** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
+
+### Atelier PDF sur le téléphone
+
+L’atelier PDF (entrée **PDF** du menu) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Notes les PDF reçus (**Ouvrir avec Notes**, **Partager → Notes**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `notes-debug.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
+
+Pour scanner un document papier : **PDF** → **Scanner un document** (l’appareil photo s’ouvre), puis, dans la vue **Pages**, **Photo** pour ajouter les pages suivantes.
 
 ### Partager une page en modification en direct
 

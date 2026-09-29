@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppContext, type AppContextValue, type CalendarImportResult } from './editor/context';
 import { api, fileToDataUrl, ownerAuth, serverBase } from './lib/api';
 import { useDocHandle, useMediaQuery } from './lib/hooks';
@@ -25,6 +25,9 @@ import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
+
+// Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
+const PdfApp = lazy(() => import('./pdf/PdfApp'));
 
 export default function App() {
   const route = useRoute();
@@ -92,6 +95,7 @@ function OwnerApp() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [calReq, setCalReq] = useState<{ initial?: { source?: string; title?: string }; resolve: (r: CalendarImportResult | null) => void } | null>(null);
   const pageId = route.name === 'page' ? route.pageId : null;
+  const pdfId = route.name === 'pdf' ? route.pdfId : null;
 
   useEffect(() => {
     if (!serverBase()) return;
@@ -161,6 +165,7 @@ function OwnerApp() {
   );
 
   const homelabConfigured = useHomelabConfiguredFlag(wsHandle.handle?.doc ?? null);
+  const pdfName = usePdfName(wsHandle.handle?.doc ?? null, pdfId);
 
   const uploadFile = useCallback(async (file: File) => {
     if (serverBase()) return (await api.upload(file, ownerAuth())).url;
@@ -224,6 +229,10 @@ function OwnerApp() {
             navigate('#/maison');
             setSidebarOpen(false);
           }}
+          onOpenPdf={() => {
+            navigate('#/pdf');
+            setSidebarOpen(false);
+          }}
           onOpenSearch={() => setDialog({ type: 'search' })}
           onOpenSettings={() => setDialog({ type: 'settings' })}
           onShare={(id) => setDialog({ type: 'share', pageId: id })}
@@ -236,6 +245,7 @@ function OwnerApp() {
             isTrash={route.name === 'trash'}
             isDashboard={route.name === 'dashboard'}
             isSmartHome={route.name === 'smarthome'}
+            pdf={route.name === 'pdf' ? { name: pdfName } : null}
             status={status}
             showMenuButton={isMobile}
             onMenu={() => setSidebarOpen(true)}
@@ -259,6 +269,10 @@ function OwnerApp() {
               <DashboardView doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />
             ) : route.name === 'smarthome' ? (
               <SmartHomeView doc={store.doc} />
+            ) : route.name === 'pdf' ? (
+              <Suspense fallback={<div className="nb-center nb-loading">Chargement de l’atelier PDF…</div>}>
+                <PdfApp doc={store.doc} pdfId={pdfId} />
+              </Suspense>
             ) : pageId ? (
               <OwnerPage key={pageId} store={store} pageId={pageId} onOpenPage={openPage} />
             ) : (
@@ -300,6 +314,8 @@ function TopBar(props: {
   isTrash: boolean;
   isDashboard?: boolean;
   isSmartHome?: boolean;
+  /** Atelier PDF : nom du PDF ouvert (vide dans la bibliothèque). */
+  pdf?: { name: string } | null;
   status: ReturnType<typeof useDocStatus>;
   showMenuButton: boolean;
   onMenu: () => void;
@@ -338,6 +354,19 @@ function TopBar(props: {
           <span className="nb-crumb-current">
             <Icon name="home" size={15} /> Homelab
           </span>
+        ) : props.pdf ? (
+          props.pdf.name ? (
+            <>
+              <button type="button" onClick={() => navigate('#/pdf')}>
+                <Icon name="filePdf" size={15} /> PDF
+              </button>
+              <span className="nb-crumb-current">{props.pdf.name}</span>
+            </>
+          ) : (
+            <span className="nb-crumb-current">
+              <Icon name="filePdf" size={15} /> PDF
+            </span>
+          )
         ) : (
           <>
             {crumbs.map((c) => (
@@ -477,6 +506,26 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
       />
     </>
   );
+}
+
+/** Nom d'un PDF de l'atelier (fil d'Ariane). */
+function usePdfName(doc: import('yjs').Doc | null, id: string | null): string {
+  const [name, setName] = useState('');
+  useEffect(() => {
+    if (!doc || !id) {
+      setName('');
+      return;
+    }
+    const map = doc.getMap('pdfs');
+    const read = () => {
+      const entry = map.get(id) as { get?: (k: string) => unknown } | undefined;
+      setName(String(entry?.get?.('name') ?? ''));
+    };
+    map.observeDeep(read);
+    read();
+    return () => map.unobserveDeep(read);
+  }, [doc, id]);
+  return name;
 }
 
 function useHomelabConfiguredFlag(doc: import('yjs').Doc | null): boolean {

@@ -130,6 +130,14 @@ export async function saveDocUpdate(room, update) {
   await fsp.rename(tmp, file);
 }
 
+export async function removeDocFile(room) {
+  try {
+    await fsp.unlink(docFile(room));
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+}
+
 // ---------- Uploads ----------
 
 const SAFE_EXT = /^[a-z0-9]{1,8}$/i;
@@ -144,4 +152,30 @@ export function safeUploadName(originalName) {
   const ext = path.extname(originalName || '').slice(1).toLowerCase();
   const suffix = SAFE_EXT.test(ext) ? `.${ext}` : '';
   return `${Date.now().toString(36)}-${crypto.randomBytes(8).toString('hex')}${suffix}`;
+}
+
+const UPLOAD_NAME_RE = /^[a-z0-9]{1,16}-[a-f0-9]{16}(\.[a-z0-9]{1,8})?$/;
+
+/**
+ * Nom d'un fichier téléversé dans l'espace `wsId`, à partir de son adresse (…/uploads/<espace>/<nom>)
+ * ou de son chemin (uploads/<espace>/<nom>) ; null pour un fichier d'un autre espace ou un nom inattendu.
+ */
+export function uploadNameIn(wsId, ref) {
+  const m = /(?:^|\/)uploads\/([A-Za-z0-9_-]{6,80})\/([^/?#]+)$/.exec(String(ref || ''));
+  if (!m || m[1] !== wsId || !UPLOAD_NAME_RE.test(m[2])) return null;
+  return m[2];
+}
+
+/** Supprime des fichiers téléversés de l'espace ; renvoie le nombre de fichiers effacés. */
+export async function removeUploads(wsId, names) {
+  let removed = 0;
+  for (const name of new Set(names)) {
+    try {
+      await fsp.unlink(path.join(UPLOADS_DIR, wsId, name));
+      removed++;
+    } catch (err) {
+      if (err.code !== 'ENOENT') console.error(`[uploads] suppression impossible de ${name}:`, err);
+    }
+  }
+  return removed;
 }

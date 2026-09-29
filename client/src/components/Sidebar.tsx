@@ -16,6 +16,7 @@ type Props = {
   onNewPage: (parentId: string) => void;
   onOpenTrash: () => void;
   onOpenDashboard: () => void;
+  onOpenPdf: () => void;
   onOpenSmartHome: () => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
@@ -234,6 +235,9 @@ export function Sidebar(props: Props) {
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenDashboard}>
             <Icon name="home" size={16} /> Homelab
+          </button>
+          <button type="button" className="nb-sidebar-link" onClick={props.onOpenPdf}>
+            <Icon name="filePdf" size={16} /> PDF
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
             <Icon name="trash" size={16} /> Corbeille

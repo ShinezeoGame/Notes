@@ -17,11 +17,24 @@ import {
   isValidId,
   listShares,
   registrationClosed,
+  removeUploads,
   safeUploadName,
   uploadDirFor,
+  uploadNameIn,
   workspaceExists,
 } from './store.js';
-import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
+import {
+  authorizeRoom,
+  createPageInWorkspace,
+  deleteDoc,
+  flushAll,
+  getDoc,
+  pageInShare,
+  pdfRoom,
+  setupWSConnection,
+  shareTree,
+  wsRoom,
+} from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
 import { createAppUpdates } from './appUpdates.js';
 import { claimPairing, startPairing } from './pairing.js';
@@ -136,6 +149,21 @@ app.use(
     setHeaders: (res) => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'),
   }),
 );
+
+// Atelier PDF : suppression définitive d'un PDF (son document) et des fichiers qu'il était seul à utiliser
+// (le client, qui connaît les autres PDF de la bibliothèque, fournit cette liste).
+app.post('/api/pdf/delete', requireOwner, async (req, res) => {
+  const { id, files } = req.body || {};
+  if (!isValidId(id)) return res.status(400).json({ error: 'PDF invalide.' });
+  try {
+    await deleteDoc(pdfRoom(req.wsId, id));
+    const names = (Array.isArray(files) ? files : []).map((f) => uploadNameIn(req.wsId, f)).filter(Boolean);
+    res.json({ ok: true, removed: await removeUploads(req.wsId, names) });
+  } catch (err) {
+    console.error('[pdf] suppression impossible:', err);
+    res.status(500).json({ error: 'Suppression impossible.' });
+  }
+});
 
 app.post('/api/shares', requireOwner, (req, res) => {
   const { pageId, mode } = req.body || {};

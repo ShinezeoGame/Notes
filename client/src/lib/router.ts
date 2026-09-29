@@ -6,6 +6,7 @@ export type Route =
   | { name: 'trash' }
   | { name: 'dashboard' }
   | { name: 'smarthome' }
+  | { name: 'pdf'; pdfId: string | null }
   | { name: 'shared'; token: string; pageId: string | null }
   | { name: 'join'; wsId: string; key: string };
 
@@ -16,6 +17,7 @@ export function parseRoute(hash: string): Route {
   if (/^\/trash/.test(h)) return { name: 'trash' };
   if (/^\/dashboard/.test(h)) return { name: 'dashboard' };
   if (/^\/maison/.test(h)) return { name: 'smarthome' };
+  if ((m = /^\/pdf(?:\/([A-Za-z0-9_-]+))?/.exec(h))) return { name: 'pdf', pdfId: m[1] ?? null };
   if ((m = /^\/s\/([A-Za-z0-9_-]+)(?:\/p\/([A-Za-z0-9_-]+))?/.exec(h)))
     return { name: 'shared', token: m[1], pageId: m[2] ?? null };
   if ((m = /^\/join\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'join', wsId: m[1], key: m[2] };
@@ -32,6 +34,8 @@ export function routeToHash(route: Route): string {
       return '#/dashboard';
     case 'smarthome':
       return '#/maison';
+    case 'pdf':
+      return route.pdfId ? `#/pdf/${route.pdfId}` : '#/pdf';
     case 'shared':
       return route.pageId ? `#/s/${route.token}/p/${route.pageId}` : `#/s/${route.token}`;
     case 'join':

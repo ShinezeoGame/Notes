@@ -12,6 +12,8 @@ const SERVER = 'http://10.0.2.2:3000';
 const OUT = process.env.SMOKE_OUT || 'smoke-out';
 const DIST_V2 = process.env.DIST_V2;
 const DEVTOOLS_PORT = 9222;
+/** Petit PDF d'une page (« Recu par Android »). */
+const TINY_PDF = 'JVBERi0xLjcKJYGBgYEKCjEgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFsgNSAwIFIgXQovQ291bnQgMQo+PgplbmRvYmoKCjIgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDEgMCBSCj4+CmVuZG9iagoKNSAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDEgMCBSCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0hlbHZldGljYS03MDk4NDgwNzg5IDQgMCBSCj4+Ci9YT2JqZWN0IDw8Cj4+Ci9FeHRHU3RhdGUgPDwKPj4KPj4KL01lZGlhQm94IFsgMCAwIDMwMCAyMDAgXQovQW5ub3RzIFsgXQovQ29udGVudHMgWyA2IDAgUiBdCj4+CmVuZG9iagoKNiAwIG9iago8PAovRmlsdGVyIC9GbGF0ZURlY29kZQovTGVuZ3RoIDEwOQo+PgpzdHJlYW0KeJwdyjsKAlEMRuH+X0VqQUxibnIviIUwYmEjZAMioyhaKDLrnwen+zhfHBJMc78HNqf+PfT/5+26Dm7VKkdtpEx5hxrlGbKsMpvw5B/sinrxbRTlYJdQZRPv3EL96M1tT/lCrtAlLhgBnekYZAplbmRzdHJlYW0KZW5kb2JqCgo3IDAgb2JqCjw8Ci9GaWx0ZXIgL0ZsYXRlRGVjb2RlCi9UeXBlIC9PYmpTdG0KL04gMgovRmlyc3QgMTAKL0xlbmd0aCAyMjQKPj4Kc3RyZWFtCnic1VFNi8IwEL3nV8xx9zRjGtPtUgqubdnLwsIuCN5qGyQgidQo+O+dKQpe9O7hMZn33nyRDAgMmLmBslT4O8bh2LsRyrZpW6KciKxhWCJdc1wyCobmnDX9wW9Gzp4JzOUZUbZgjesFlkmpEX3yzq/1DUf2WvFwb/Ea6Xc/V2aJjwnRn+5TVAp/4lB3ycFb/alJWyp0MTNkya7fFS5H16X4usdN+/sYHl5YVUp+8f+8d4BtDEnh33GTplTImcKv7uBEAfx2u5NLvu8UNqGPgw9bwJUPi3DwN0I6XgBwin6QCmVuZHN0cmVhbQplbmRvYmoKCjggMCBvYmoKPDwKL1NpemUgOQovUm9vdCAyIDAgUgovSW5mbyAzIDAgUgovRmlsdGVyIC9GbGF0ZURlY29kZQovVHlwZSAvWFJlZgovTGVuZ3RoIDQ0Ci9XIFsgMSAyIDIgXQovSW5kZXggWyAwIDkgXQo+PgpzdHJlYW0KeJxjYGD4/5+RQYCBgZHBh4GBiYEdQjAyMtQBxRgdQcR3IMFsy8AAAHYmBGwKZW5kc3RyZWFtCmVuZG9iagoKc3RhcnR4cmVmCjgyOQolJUVPRg==';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const consoleLog = [];
@@ -262,6 +264,49 @@ try {
     await until(`version ${v2} après redémarrage`, async () => (await loadedVersion()) === v2, 120_000, 2000);
     await sleep(8000);
     await assertAlive('après le redémarrage');
+  });
+
+  // ---------- Atelier PDF : fichiers reçus, partage, enregistrement (plugin natif NotesFiles) ----------
+
+  /** Crée un PDF dans le cache d'exports de l'application ; renvoie son identifiant. */
+  const nativePdf = (name) =>
+    js(`(async () => {
+      const cap = window.Capacitor;
+      const { id } = await cap.nativePromise('NotesFiles', 'begin', { name: '${name}', mime: 'application/pdf' });
+      await cap.nativePromise('NotesFiles', 'append', { id, data: '${TINY_PDF}' });
+      return id;
+    })()`);
+
+  await step('Atelier PDF : « Ouvrir avec Notes » importe un PDF reçu d’une autre application', async () => {
+    const id = await nativePdf('recu.pdf');
+    // Adresse de notre propre FileProvider : l'application lit ce fichier comme un PDF envoyé par une autre.
+    const uri = `content://${PKG}.fileprovider/my_cache_images/exports/${id}/recu.pdf`;
+    adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', uri, '-t', 'application/pdf', '-n', `${PKG}/.MainActivity`);
+    await until('PDF importé et ouvert', () => js("/^#\\/pdf\\/[A-Za-z0-9_-]+$/.test(location.hash) && document.querySelectorAll('.pdfa-page').length === 1"), 90_000, 2000);
+    await until('page affichée', () => js("!!document.querySelector('.pdfa-page canvas.pdf-canvas:not(.pdf-canvas--loading)')"), 60_000, 2000);
+    const name = await js("document.querySelector('.nb-crumb-current')?.textContent ?? ''");
+    if (name !== 'recu') throw new Error(`nom du PDF importé : « ${name} »`);
+    await assertAlive('après l’import d’un PDF reçu');
+  });
+
+  await step('Atelier PDF : « Partager » ouvre le menu de partage d’Android', async () => {
+    const id = await nativePdf('partage.pdf');
+    await js(`window.Capacitor.nativePromise('NotesFiles', 'share', { id: '${id}', title: 'partage.pdf' }).then(() => true)`);
+    await until('menu de partage', () => /ChooserActivity|ResolverActivity/.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
+    await sleep(2000);
+    await assertAlive('après le partage');
+  });
+
+  await step('Atelier PDF : « Enregistrer » ouvre le sélecteur de fichiers ; Retour = annulé', async () => {
+    const id = await nativePdf('enregistre.pdf');
+    await js(`(window.__pdfSave = null, window.Capacitor.nativePromise('NotesFiles', 'save', { id: '${id}' }).then((r) => (window.__pdfSave = r), (e) => (window.__pdfSave = { error: String(e) })), true)`);
+    await until('sélecteur de fichiers', () => /documentsui/i.test(adb('shell', 'dumpsys', 'activity', 'activities')), 30_000, 1500);
+    await sleep(2000);
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
+    const result = await until('réponse de l’enregistrement', () => js('window.__pdfSave'), 30_000, 1000);
+    if (result.saved !== false) throw new Error('réponse inattendue : ' + JSON.stringify(result));
+    await assertAlive('après l’annulation de l’enregistrement');
   });
   ok = true;
 } catch (e) {

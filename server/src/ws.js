@@ -6,7 +6,7 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import { loadDocUpdate, saveDocUpdate, authorizeWorkspace, getShare } from './store.js';
+import { loadDocUpdate, saveDocUpdate, removeDocFile, authorizeWorkspace, getShare } from './store.js';
 
 const messageSync = 0;
 const messageAwareness = 1;
@@ -16,9 +16,12 @@ const UNLOAD_AFTER_IDLE = 90_000;
 
 const WS_ROOM_RE = /^ws_([A-Za-z0-9_-]{6,80})$/;
 const PG_ROOM_RE = /^pg_([A-Za-z0-9_-]{6,80})_([A-Za-z0-9_-]{6,80})$/;
+const PDF_ROOM_RE = /^pdf_([A-Za-z0-9_-]{6,80})_([A-Za-z0-9_-]{6,80})$/;
 
 export const wsRoom = (wsId) => `ws_${wsId}`;
 export const pgRoom = (wsId, pageId) => `pg_${wsId}_${pageId}`;
+/** Document d'un PDF de l'atelier PDF (pages, annotations, formulaire). */
+export const pdfRoom = (wsId, pdfId) => `pdf_${wsId}_${pdfId}`;
 
 /** room -> WSSharedDoc */
 export const docs = new Map();
@@ -81,11 +84,14 @@ class WSSharedDoc extends Y.Doc {
     clearTimeout(this.saveTimer);
     if (!this.dirty) return;
     this.dirty = false;
+    this.saving = saveDocUpdate(this.name, Y.encodeStateAsUpdate(this));
     try {
-      await saveDocUpdate(this.name, Y.encodeStateAsUpdate(this));
+      await this.saving;
     } catch (err) {
       this.dirty = true;
       console.error(`[ws] sauvegarde impossible de ${this.name}:`, err);
+    } finally {
+      this.saving = null;
     }
   }
 }
@@ -286,6 +292,12 @@ export async function authorizeRoom(room, { key, share }) {
     if (key && authorizeWorkspace(mWs[1], key)) return { ok: true, readOnly: false, wsId: mWs[1] };
     return { ok: false, reason: 'unauthorized' };
   }
+  const mPdf = PDF_ROOM_RE.exec(room);
+  if (mPdf) {
+    // Atelier PDF : réservé au propriétaire de l'espace, jamais accessible par un lien de partage.
+    if (key && authorizeWorkspace(mPdf[1], key)) return { ok: true, readOnly: false, wsId: mPdf[1] };
+    return { ok: false, reason: 'unauthorized' };
+  }
   const mPg = PG_ROOM_RE.exec(room);
   if (mPg) {
     const [, wsId, pageId] = mPg;
@@ -369,6 +381,21 @@ setInterval(() => {
     }
   }
 }, 30_000).unref();
+
+/** Supprime définitivement un document : connexions fermées, version en mémoire oubliée, fichier effacé. */
+export async function deleteDoc(room) {
+  const doc = docs.get(room);
+  if (doc) {
+    clearTimeout(doc.saveTimer);
+    doc.dirty = false;
+    for (const conn of Array.from(doc.conns.keys())) closeConn(doc, conn);
+    docs.delete(room);
+    // Une sauvegarde en cours recréerait le fichier après sa suppression.
+    await doc.saving?.catch(() => {});
+    doc.destroy();
+  }
+  await removeDocFile(room);
+}
 
 export async function flushAll() {
   await Promise.all(Array.from(docs.values()).map((d) => d.flush()));

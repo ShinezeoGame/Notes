@@ -7,8 +7,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Plugin propre à l'application : mises à jour sans réinstaller l'APK.
+        // Plugins propres à l'application : mises à jour sans réinstaller l'APK, fichiers de l'atelier PDF.
         registerPlugin(AppUpdatePlugin.class);
+        registerPlugin(NotesFilesPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

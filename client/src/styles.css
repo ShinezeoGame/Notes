@@ -447,6 +447,9 @@ input:focus-visible + .nb-checkbox { outline: 2px solid var(--accent); outline-o
 .nb-toasts { position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom)); transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 2000; pointer-events: none; }
 .nb-toast { background: #2c2c2c; color: var(--text-strong); padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow); font-size: 14px; max-width: 90vw; }
 .nb-toast--error { background: #4a2323; }
+.nb-toast:has(.nb-toast-action) { pointer-events: auto; display: flex; align-items: center; gap: 14px; }
+.nb-toast-action { background: none; border: none; color: #8ec1f5; font-weight: 600; font-size: 14px; cursor: pointer; padding: 4px 6px; margin: -4px -6px -4px auto; border-radius: 4px; }
+.nb-toast-action:hover { background: rgba(255, 255, 255, 0.08); }
 
 /* Mise à jour de l'application */
 .nb-update {

@@ -95,6 +95,8 @@ export const api = {
     request<{ ok: boolean; message: string }>('/api/home/test', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),
   fetchIcs: (url: string, auth: Auth) =>
     request<{ text: string }>('/api/ics/fetch', { method: 'POST', body: JSON.stringify({ url }), auth }),
+  deletePdf: (id: string, files: string[]) =>
+    request<{ ok: boolean; removed: number }>('/api/pdf/delete', { method: 'POST', body: JSON.stringify({ id, files }), auth: ownerAuth() }),
 };
 
 /** Convertit un fichier en data-URL (mode hors ligne, sans serveur). */

@@ -1,7 +1,7 @@
 {
   "name": "Notes",
   "short_name": "Notes",
-  "description": "Pages et notes, agenda, homelab et maison connectée, synchronisés avec votre serveur Notes.",
+  "description": "Pages et notes, agenda, homelab, maison connectée et atelier PDF, synchronisés avec votre serveur Notes.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -18,6 +18,8 @@
   ],
   "shortcuts": [
     { "name": "Maison connectée", "short_name": "Maison", "url": "./#/maison" },
-    { "name": "Homelab", "url": "./#/dashboard" }
-  ]
+    { "name": "Homelab", "url": "./#/dashboard" },
+    { "name": "Atelier PDF", "short_name": "PDF", "url": "./#/pdf" }
+  ],
+  "file_handlers": [{ "action": "./", "accept": { "application/pdf": [".pdf"] }, "launch_type": "single-client" }]
 }
