@@ -33,9 +33,40 @@ const crashLog = () => {
 /** L'application s'est fermée : inutile d'attendre davantage. */
 class Closed extends Error {}
 
-function assertAlive(when) {
+/** Processus de l'application ; plusieurs essais (une commande adb peut échouer ponctuellement). */
+async function alivePid() {
+  for (let i = 0; i < 3; i++) {
+    const p = pid();
+    if (p) return p;
+    await sleep(1000);
+  }
+  return '';
+}
+
+/** État du système au moment d'un échec : processus, arrêts décidés par Android, extrait du journal. */
+function diagnostics() {
+  const keep = (text, re, n) => text.split('\n').filter((l) => re.test(l)).slice(-n).join('\n');
+  const report = [
+    '--- processus ---',
+    keep(adb('shell', 'ps', '-A'), /shinezeo|webview|sandboxed/i, 20),
+    '--- événements système (application) ---',
+    keep(adb('logcat', '-d', '-b', 'events', '-t', '2000'), /shinezeo|am_anr|am_crash|am_kill|am_low_memory/i, 40),
+    '--- journal (extrait) ---',
+    keep(adb('logcat', '-d', '-t', '5000'), /shinezeo|AndroidRuntime|lowmemorykiller|lmkd|chromium|cr_|Capacitor|DEBUG|libc|ActivityManager|ActivityTaskManager|Fatal|SIGSEGV|SIGABRT|WebView/i, 200),
+  ].join('\n');
+  console.log(report);
+  try {
+    fs.mkdirSync(OUT, { recursive: true });
+    fs.writeFileSync(path.join(OUT, 'diagnostic.txt'), `${report}\n`);
+  } catch {
+    /* rapport facultatif */
+  }
+}
+
+async function assertAlive(when) {
   const crash = crashLog();
-  if (!pid() || crash) {
+  if (!(await alivePid()) || crash) {
+    diagnostics();
     throw new Closed(`l’application s’est fermée ${when}${crash ? `\n${crash.split('\n').slice(0, 40).join('\n')}` : ''}`);
   }
 }
@@ -139,7 +170,10 @@ async function connect() {
 /** Évalue du JavaScript dans l'application (reconnexion si le processus a changé). */
 async function js(expression, timeout = 30_000) {
   if (!client || client.closed) {
-    if (!pid()) throw new Closed('l’application s’est fermée');
+    if (!(await alivePid())) {
+      diagnostics();
+      throw new Closed('l’application s’est fermée');
+    }
     await connect();
   }
   return client.evaluate(expression, timeout);
@@ -164,7 +198,7 @@ try {
     adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
     await until('écran « Bienvenue dans Notes »', () => js("document.body?.innerText.includes('Bienvenue dans Notes')"), 120_000, 2000);
     await sleep(6000);
-    assertAlive('au premier lancement');
+    await assertAlive('au premier lancement');
   });
 
   await step('Liaison au serveur : l’application reste ouverte et affiche les pages', async () => {
@@ -185,7 +219,7 @@ try {
     await until('éditeur affiché', () => js("!!document.querySelector('.nb-editor .ProseMirror')"), 120_000, 2000);
     // Démarrage natif (1,5 s après le chargement) : vérification programmée, autorisations, nettoyage…
     await sleep(15_000);
-    assertAlive('après la liaison au serveur');
+    await assertAlive('après la liaison au serveur');
   });
 
   await step('Vérification des mises à jour programmée en arrière-plan', async () => {
@@ -206,7 +240,7 @@ try {
       60_000,
       2000,
     );
-    assertAlive('pendant la vérification en arrière-plan');
+    await assertAlive('pendant la vérification en arrière-plan');
   });
 
   await step('Toucher la notification : mise à jour téléchargée puis installée, sans nouvel APK', async () => {
@@ -216,7 +250,7 @@ try {
     // La nouvelle version confirme son démarrage (message « Notes a été mis à jour »).
     await until('démarrage confirmé', () => js("localStorage.getItem('notes.update.pending') === null"), 30_000);
     await sleep(5000);
-    assertAlive('pendant la mise à jour');
+    await assertAlive('pendant la mise à jour');
   });
 
   await step('Redémarrage : la nouvelle version est conservée', async () => {
@@ -227,12 +261,13 @@ try {
     adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
     await until(`version ${v2} après redémarrage`, async () => (await loadedVersion()) === v2, 120_000, 2000);
     await sleep(8000);
-    assertAlive('après le redémarrage');
+    await assertAlive('après le redémarrage');
   });
   ok = true;
 } catch (e) {
   report.push(`❌ ${current} : ${e.message}`);
   console.log(`❌ ${current} : ${e.message}`);
+  if (!(e instanceof Closed)) diagnostics();
 } finally {
   client?.close();
   fs.mkdirSync(OUT, { recursive: true });
