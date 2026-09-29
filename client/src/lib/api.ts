@@ -87,6 +87,7 @@ export const api = {
   homelabStatus: (force = false) => request<HomelabStatus>(`/api/homelab/status${force ? '?force=1' : ''}`, { auth: ownerAuth() }),
   homelabTest: (payload: { service?: Service; device?: Device }) =>
     request<ServiceStatus | DeviceStatus>('/api/homelab/test', { method: 'POST', body: JSON.stringify(payload), auth: ownerAuth() }),
+  pairStart: () => request<{ code: string; expiresAt: number }>('/api/pair/start', { method: 'POST', auth: ownerAuth() }),
   homeStates: () => request<HomeStates>('/api/home/states', { auth: ownerAuth() }),
   homeCall: (entity_id: string, service: string, data?: Record<string, unknown>) =>
     request<{ entities: HomeEntity[] }>('/api/home/call', { method: 'POST', body: JSON.stringify({ entity_id, service, data }), auth: ownerAuth() }),

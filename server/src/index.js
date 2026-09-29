@@ -24,6 +24,7 @@ import {
 import { authorizeRoom, createPageInWorkspace, flushAll, getDoc, pageInShare, setupWSConnection, shareTree, wsRoom } from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
 import { createAppUpdates } from './appUpdates.js';
+import { claimPairing, startPairing } from './pairing.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -84,11 +85,21 @@ app.post('/api/workspaces/claim', (req, res) => {
     const closed = !workspaceExists(wsId) && registrationClosed();
     return res.status(403).json({
       error: closed
-        ? 'Ce serveur n’accepte pas de nouvel espace de travail. Utilisez le lien « Lier un appareil » copié depuis les réglages d’un appareil déjà connecté.'
+        ? 'Ce serveur n’accepte pas de nouvel espace de travail. Reliez cet appareil avec un code à 6 chiffres, affiché dans les réglages d’un appareil déjà connecté.'
         : 'Cette clé ne correspond pas à cet espace de travail.',
     });
   }
   res.json({ ok: true, wsId });
+});
+
+// Liaison d'un nouvel appareil par code à 6 chiffres (voir pairing.js).
+app.post('/api/pair/start', requireOwner, (req, res) => {
+  res.json(startPairing(req.wsId, req.get('x-ws-key') || req.body?.key));
+});
+
+app.post('/api/pair/claim', (req, res) => {
+  const { status, body } = claimPairing(req.body?.code, req.ip || 'inconnue');
+  res.status(status).json(body);
 });
 
 const upload = multer({

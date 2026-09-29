@@ -20,6 +20,7 @@ import { startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { SmartHomeView } from './components/SmartHomeView';
+import { LinkWithCodeDialog } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
@@ -78,7 +79,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   );
 }
 
-type Dialog = null | { type: 'search' } | { type: 'settings' } | { type: 'share'; pageId: string } | { type: 'homelab' };
+type Dialog = null | { type: 'search' } | { type: 'settings' } | { type: 'share'; pageId: string } | { type: 'homelab' } | { type: 'link' };
 
 function OwnerApp() {
   const settings = useSettings();
@@ -244,10 +245,10 @@ function OwnerApp() {
           />
           {status === 'denied' ? (
             <div className="nb-banner nb-banner--error">
-              Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Ouvrez le lien « Lier un
-              autre appareil » copié depuis un appareil déjà connecté.
-              <button type="button" className="nb-btn nb-btn--sm" onClick={() => setDialog({ type: 'settings' })}>
-                Réglages
+              Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Reliez‑le avec le code à 6 chiffres
+              affiché dans les réglages d’un appareil déjà connecté.
+              <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => setDialog({ type: 'link' })}>
+                Saisir un code
               </button>
             </div>
           ) : null}
@@ -270,6 +271,7 @@ function OwnerApp() {
       {dialog?.type === 'search' ? <SearchDialog store={store} onClose={() => setDialog(null)} onOpen={openPage} /> : null}
       {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'link' ? <LinkWithCodeDialog onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'share' ? (
         <ShareDialog
           pageId={dialog.pageId}

@@ -160,16 +160,18 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
 ### Créer votre espace (une seule fois)
 
 1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Mes notes » indique que la synchronisation fonctionne.
-2. Ouvrez les **Réglages**, avec la roue dentée en haut à gauche, et copiez le lien **« Lier un autre appareil »**. Rangez‑le dans votre gestionnaire de mots de passe : c’est la clé de votre espace, ne le donnez à personne.
+2. Facultatif : dans les **Réglages** (roue dentée en haut à gauche), le lien caché sous **« Ou avec un lien »** est la clé de secours de votre espace. Rangez‑le dans votre gestionnaire de mots de passe et ne le donnez à personne.
 
 Avec `MAX_WORKSPACES=1`, plus personne ne peut créer d’espace sur votre serveur : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le tableau de bord homelab.
 
 ### Relier le téléphone et vos autres appareils
 
-- **Application Android** : installez `notes-debug.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **« Se connecter à mon serveur »** et collez le lien « Lier un autre appareil ».
-- **Navigateur** (téléphone, autre ordinateur) : ouvrez directement le lien « Lier un autre appareil », puis **« Lier cet appareil »**.
+Sur un appareil déjà relié : **Réglages → Afficher un code de liaison**. Un code à 6 chiffres s’affiche, valable 10 minutes et utilisable une seule fois. Puis, sur le nouvel appareil :
 
-Si un appareil affiche « Ce serveur n’accepte pas de nouvel espace de travail », c’est qu’il n’a pas encore été relié : utilisez le lien. Les pages créées hors ligne sur un appareil avant de le relier ne sont pas transférées.
+- **Application Android** : installez `notes-debug.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **« Se connecter à mon serveur »**, saisissez l’adresse du serveur et le code. Si l’application est déjà installée : **Réglages → Relier cet appareil avec un code**.
+- **Navigateur** (autre ordinateur, téléphone) : ouvrez l’adresse du serveur ; le bandeau rouge « Cet appareil n’est pas relié » propose **Saisir un code**.
+
+Les pages créées sur un appareil avant de le relier ne sont pas transférées. Après 5 codes faux, le serveur fait patienter une minute ; après 10, tous les codes en cours sont annulés.
 
 ### Partager une page en modification en direct
 

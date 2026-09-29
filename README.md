@@ -57,7 +57,7 @@ Détail :
 
 1. Onglet **Actions** du dépôt → dernier run → artefact `notes-apk`, **ou** onglet **Releases** : chaque branche publie une pré-release `apk-<branche>` (et `latest` pour la branche principale) contenant `notes-debug.apk`.
 2. Sur le téléphone, téléchargez `notes-debug.apk`, autorisez l’installation depuis des sources inconnues, installez.
-3. Au premier lancement, choisissez **Utiliser sur cet appareil** (hors ligne) ou **Se connecter à mon serveur** : collez l’adresse du serveur, ou le lien « Lier un appareil » copié depuis *Réglages* de l’application web pour retrouver exactement les mêmes pages.
+3. Au premier lancement, choisissez **Utiliser sur cet appareil** (hors ligne) ou **Se connecter à mon serveur** : saisissez l’adresse du serveur et le **code à 6 chiffres** affiché par un appareil déjà relié (*Réglages → Afficher un code de liaison*, valable 10 minutes) pour retrouver exactement les mêmes pages. Une application déjà installée se relie depuis *Réglages → Relier cet appareil avec un code*.
 
 ### Mises à jour de l’application
 

@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { getSettings, normalizeServerUrl, parseJoinLink, updateSettings } from '../lib/settings';
 import { clearLocalDocs } from '../lib/yjs';
 import { Icon } from '../icons/Icon';
+import { linkWithCode } from '../lib/pairing';
+import { PairingCodeInput } from './LinkDevice';
 
 export function Onboarding() {
   const [mode, setMode] = useState<'choose' | 'connect'>('choose');
   const [input, setInput] = useState('');
+  const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,6 +27,11 @@ export function Onboarding() {
     setBusy(true);
     setError('');
     try {
+      // Code affiché sur un appareil déjà relié : rejoint cet espace.
+      if (!join && code.length === 6) {
+        await linkWithCode(serverUrl, code);
+        return;
+      }
       const r = await fetch(`${serverUrl}/api/workspaces/claim`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -71,16 +79,22 @@ export function Onboarding() {
         ) : (
           <div className="nb-connect">
             <label className="nb-field">
-              <span>Adresse du serveur, ou lien « Lier un appareil » copié depuis les réglages d’un autre appareil</span>
+              <span>Adresse du serveur</span>
               <input
                 className="nb-input nb-input--lg"
                 placeholder="https://notes.mondomaine.fr"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && void connect()}
+                inputMode="url"
                 autoFocus
               />
             </label>
+            <div className="nb-field">
+              <span>Code à 6 chiffres, affiché dans les réglages d’un appareil déjà relié (« Afficher un code de liaison »)</span>
+              <PairingCodeInput value={code} onChange={setCode} onEnter={() => void connect()} />
+            </div>
+            <p className="nb-muted nb-pair-note">Premier appareil sur ce serveur ? Laissez le code vide. Un lien « Lier un appareil » peut aussi être collé dans l’adresse.</p>
             {error ? <div className="nb-error">{error}</div> : null}
             <div className="nb-row nb-gap nb-end">
               <button type="button" className="nb-btn" onClick={() => setMode('choose')} disabled={busy}>

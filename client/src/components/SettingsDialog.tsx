@@ -5,6 +5,7 @@ import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
 import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
+import { LinkWithCodeDialog, PairingCodePanel } from './LinkDevice';
 import {
   BUILD,
   applyUpdate,
@@ -99,6 +100,7 @@ export function SettingsDialog({ onClose }: Props) {
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const joinLink = settings.serverUrl ? `${settings.serverUrl}/#/join/${settings.workspaceId}/${settings.workspaceKey}` : null;
 
@@ -242,17 +244,30 @@ export function SettingsDialog({ onClose }: Props) {
         </div>
         {joinLink ? (
           <div className="nb-field">
-            <span>Lier un autre appareil (téléphone, ordinateur) : collez ce lien dans ses réglages</span>
-            <div className="nb-row nb-gap">
-              <input className="nb-input" readOnly value={joinLink} onFocus={(e) => e.currentTarget.select()} />
-              <button type="button" className="nb-btn" onClick={() => void copy(joinLink)}>
-                Copier
-              </button>
-            </div>
+            <span>Relier un autre appareil (téléphone, ordinateur) à cet espace</span>
+            <PairingCodePanel />
+            <details className="nb-join-link">
+              <summary>Ou avec un lien</summary>
+              <div className="nb-row nb-gap">
+                <input className="nb-input" readOnly value={joinLink} onFocus={(e) => e.currentTarget.select()} aria-label="Lien pour lier un autre appareil" />
+                <button type="button" className="nb-btn" onClick={() => void copy(joinLink)}>
+                  Copier
+                </button>
+              </div>
+            </details>
           </div>
         ) : (
           <p className="nb-muted">Configurez un serveur pour partager des pages et synchroniser plusieurs appareils.</p>
         )}
+        <div className="nb-field">
+          <span>Cet appareil n’affiche pas vos pages ? Reliez‑le à votre espace</span>
+          <div>
+            <button type="button" className="nb-btn" onClick={() => setLinkOpen(true)}>
+              <Icon name="link" size={15} /> Relier cet appareil avec un code
+            </button>
+          </div>
+        </div>
+        {linkOpen ? <LinkWithCodeDialog onClose={() => setLinkOpen(false)} /> : null}
       </section>
 
       <section className="nb-settings-section">
