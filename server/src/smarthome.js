@@ -5,6 +5,7 @@ import http from 'node:http';
 import https from 'node:https';
 import crypto from 'node:crypto';
 import { httpRequest } from './homelab.js';
+import { signingKey } from './store.js';
 
 /** Types d'appareils affichés, et services autorisés pour chacun (rien d'autre ne peut être déclenché). */
 const SERVICES = {
@@ -228,7 +229,7 @@ export async function callHome(cfg, { entity_id, service, data }) {
 
 // ---------- Caméras : adresses signées ----------
 
-const SECRET = crypto.randomBytes(32);
+const SECRET = signingKey('home-camera');
 const CAMERA_TTL = 30 * 60_000;
 
 function sign(wsId, entityId, exp) {

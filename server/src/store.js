@@ -13,8 +13,34 @@ export const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const WS_FILE = path.join(DATA_DIR, 'workspaces.json');
 const SHARES_FILE = path.join(DATA_DIR, 'shares.json');
 const INVITES_FILE = path.join(DATA_DIR, 'invites.json');
+const SIGNING_FILE = path.join(DATA_DIR, 'signing.key');
 
 for (const dir of [DATA_DIR, DOCS_DIR, UPLOADS_DIR]) fs.mkdirSync(dir, { recursive: true });
+
+/**
+ * Clé des adresses signées (caméras), gardée sur disque : les adresses déjà données restent valables quand le serveur
+ * redémarre (mise à jour automatique), au lieu d'être refusées jusqu'à leur renouvellement.
+ */
+const signingMaster = (() => {
+  try {
+    const key = fs.readFileSync(SIGNING_FILE);
+    if (key.length >= 32) return key;
+  } catch {
+    /* première fois */
+  }
+  const key = crypto.randomBytes(32);
+  try {
+    fs.writeFileSync(SIGNING_FILE, key, { mode: 0o600 });
+  } catch {
+    /* dossier en lecture seule : clé valable jusqu'au prochain démarrage */
+  }
+  return key;
+})();
+
+/** Clé de signature propre à un usage (dérivée de la clé gardée sur disque). */
+export function signingKey(purpose) {
+  return crypto.createHmac('sha256', signingMaster).update(purpose).digest();
+}
 
 function readJson(file, fallback) {
   try {

@@ -14,6 +14,7 @@ import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
+import { signingKey } from './store.js';
 
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
 
@@ -138,7 +139,7 @@ export function streamCandidates(cam, quality) {
 
 // ---------- Adresses signées ----------
 
-const SECRET = crypto.randomBytes(32);
+const SECRET = signingKey('camera-link');
 const LINK_TTL = 60 * 60_000;
 
 function sign(wsId, camId, exp) {

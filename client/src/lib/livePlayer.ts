@@ -3,6 +3,7 @@
 // à mesure et se reconnecte seul si le flux s'interrompt (caméra redémarrée, réseau coupé…). Application en arrière-plan :
 // le flux continue sans décodage inutile et le lecteur revient au direct au retour. Pendant une reconnexion, la dernière
 // image reste affichée.
+import { CAMERA_LINKS_EXPIRED } from './cameras';
 
 type MediaSourceClass = typeof MediaSource;
 
@@ -172,7 +173,9 @@ export class LivePlayer {
       } catch {
         /* pas de JSON */
       }
-      // 404 : caméra supprimée ; 415 : format illisible. (403 : adresse expirée, renouvelée d'ici le prochain essai.)
+      // 403 : adresse expirée ou refusée : nouvelles adresses demandées tout de suite, pour le prochain essai.
+      if (res.status === 403) window.dispatchEvent(new Event(CAMERA_LINKS_EXPIRED));
+      // 404 : caméra supprimée ; 415 : format illisible.
       return this.retry(session, message, [404, 415].includes(res.status));
     }
     const codec = res.headers.get('X-Camera-Codec') || 'avc1.42e01e';

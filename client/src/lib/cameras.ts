@@ -99,9 +99,12 @@ export function liveUrl(link: CameraLink, quality: 'sd' | 'hd'): string {
 
 const REFRESH = 20 * 60_000;
 
+/** Événement : le serveur a refusé une adresse du direct (expirée, ou clé du serveur changée) ; les renouveler. */
+export const CAMERA_LINKS_EXPIRED = 'melo:camera-links-expired';
+
 /**
- * Configuration et adresses du direct, renouvelées toutes les 20 minutes (elles expirent au bout d'une heure) et
- * dès qu'une caméra est ajoutée ou retirée.
+ * Configuration et adresses du direct, renouvelées toutes les 20 minutes (elles expirent au bout d'une heure), dès
+ * qu'une caméra est ajoutée ou retirée, et dès que le serveur en refuse une.
  */
 export function useCameras(doc: Y.Doc | null) {
   const cfg = useCamerasConfig(doc);
@@ -133,10 +136,19 @@ export function useCameras(doc: Y.Doc | null) {
     };
     void load();
     const timer = setInterval(() => void load(), REFRESH);
+    // Adresse refusée : nouvelles adresses tout de suite (une demande toutes les 10 s au plus).
+    let renewedAt = 0;
+    const onExpired = () => {
+      if (Date.now() - renewedAt < 10_000) return;
+      renewedAt = Date.now();
+      void load();
+    };
+    window.addEventListener(CAMERA_LINKS_EXPIRED, onExpired);
     return () => {
       alive = false;
       clearTimeout(retry);
       clearInterval(timer);
+      window.removeEventListener(CAMERA_LINKS_EXPIRED, onExpired);
     };
   }, [hasServer, ids]);
   const links = new Map((status?.cameras ?? []).map((c) => [c.id, c]));
