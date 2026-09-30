@@ -99,7 +99,7 @@ function startServer() {
   });
   child.stdout?.pipe(log);
   child.stderr?.pipe(log);
-  const entry = { child, ready: null, started: false };
+  const entry = { child, log, ready: null, started: false };
   entry.ready = new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('il ne répond pas')), 30_000);
     child.on('message', (m) => {
@@ -140,7 +140,12 @@ function stopServer() {
     }, 5000);
     entry.child.once('exit', () => {
       clearTimeout(timer);
-      resolve();
+      // Dernières lignes du journal du serveur écrites avant de quitter.
+      if (entry.log.writableFinished) resolve();
+      else {
+        entry.log.once('finish', resolve);
+        setTimeout(resolve, 1000);
+      }
     });
     entry.child.postMessage('shutdown');
   });

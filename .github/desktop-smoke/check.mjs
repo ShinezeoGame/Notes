@@ -19,6 +19,16 @@ fs.mkdirSync(OUT, { recursive: true });
 const report = [];
 let app;
 let win;
+
+/** Ferme la fenêtre comme un utilisateur (bouton ✕), puis attend la fin de Melo. */
+async function closeLikeUser() {
+  const proc = app.process();
+  const exited = proc.exitCode !== null ? Promise.resolve() : new Promise((resolve) => proc.once('exit', resolve));
+  await win.close().catch(() => {});
+  await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 20_000))]);
+  if (proc.exitCode === null) throw new Error('Melo ne s’est pas fermé après la fermeture de sa fenêtre');
+  app = null;
+}
 async function step(name, fn) {
   await fn();
   report.push(`✅ ${name}`);
@@ -55,16 +65,28 @@ try {
     // (Linux, essais locaux en administrateur : Chromium exige alors --no-sandbox.)
     const extra = process.platform === 'linux' && process.getuid?.() === 0 ? ['--no-sandbox'] : [];
     await new Promise((resolve) => execFile(EXE, [...extra, pdf], { env, timeout: 60_000 }, () => resolve()));
-    await win.waitForFunction(() => location.hash.startsWith('#/pdf'), null, { timeout: 30_000 });
-    await win.getByText('Recu Windows').first().waitFor({ timeout: 60_000 });
+    // Import terminé : l'éditeur du nouveau PDF s'ouvre (#/pdf/<identifiant>).
+    await win.waitForFunction(() => /^#\/pdf\/[A-Za-z0-9_-]+/.test(location.hash), null, { timeout: 90_000 });
     await win.screenshot({ path: path.join(OUT, '4-pdf.png') });
   });
 
-  await step('Fermeture : documents enregistrés par le serveur intégré', async () => {
-    await app.close();
-    app = null;
+  await step('Fermeture (bouton ✕) puis réouverture : accueil sans écran de bienvenue, PDF toujours là', async () => {
+    await closeLikeUser();
+    app = await electron.launch({ executablePath: EXE, args: [], env, timeout: 90_000 });
+    win = await app.firstWindow();
+    await win.locator('.nb-rail').waitFor({ timeout: 90_000 });
+    if (await win.getByText('Bienvenue dans Melo').count()) throw new Error('écran de bienvenue réaffiché');
+    await win.evaluate(() => {
+      location.hash = '#/pdf';
+    });
+    await win.locator('.pdf-card-name', { hasText: 'Recu Windows' }).waitFor({ timeout: 60_000 });
+    await win.screenshot({ path: path.join(OUT, '5-reouverture.png') });
+  });
+
+  await step('Fermeture : serveur intégré arrêté proprement, documents enregistrés', async () => {
+    await closeLikeUser();
     const log = fs.readFileSync(path.join(DATA, 'serveur.log'), 'utf8');
-    if (!log.includes('Arrêt : sauvegarde des documents')) throw new Error(`arrêt non signalé :\n${log.slice(-800)}`);
+    if (!log.includes('Documents enregistrés')) throw new Error(`arrêt non signalé :\n${log.slice(-800)}`);
   });
   ok = true;
 } catch (err) {

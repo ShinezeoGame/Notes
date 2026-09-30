@@ -551,7 +551,9 @@ async function shutdown() {
   console.log('Arrêt : sauvegarde des documents…');
   stopCameras();
   await flushAll();
-  process.exit(0);
+  console.log('Documents enregistrés.');
+  // Sortie vers un tube (Windows, application pour ordinateur) : écrite en différé, vidée avant de quitter.
+  process.stdout.write('', () => process.exit(0));
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
