@@ -182,6 +182,12 @@ Melo s’installe comme une application depuis **Microsoft Edge**, **Google Chro
 
 Melo s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Melo** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
 
+**Ancienne icône « Notes » ou simple raccourci vers le site ?** Un raccourci garde l’image du jour où il a été créé. Remplacez‑le :
+
+1. Clic droit sur l’ancienne icône de la barre des tâches → **Désépingler de la barre des tâches** (supprimez aussi le raccourci du bureau s’il y en a un).
+2. Si une application **Notes** figure dans le menu Démarrer : clic droit dessus → **Désinstaller**. Dans la fenêtre de confirmation, **ne cochez pas** « Effacer aussi les données » : sinon il faudra relier l’ordinateur à nouveau avec un code.
+3. Dans le navigateur, ouvrez l’adresse du serveur et appuyez sur **Ctrl+F5** : l’onglet doit afficher « Melo » et le nouveau logo. Installez ensuite Melo comme ci‑dessus (choisissez bien **Installer**, pas « Créer un raccourci »), puis clic droit sur son icône dans la barre des tâches → **Épingler à la barre des tâches**.
+
 ### Atelier PDF sur le téléphone
 
 L’atelier PDF (entrée **PDF** du menu) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Melo les PDF reçus (**Ouvrir avec Melo**, **Partager → Melo**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `notes-debug.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
