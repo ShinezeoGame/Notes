@@ -1,6 +1,8 @@
 // Lecture du direct d'une caméra : le serveur envoie en continu une vidéo MP4 fragmentée (voir server/src/cameras.js),
 // lue au fil de l'eau avec Media Source Extensions. Le lecteur reste au plus près du direct, libère la mémoire au fur et
-// à mesure et se reconnecte seul si le flux s'interrompt (caméra redémarrée, réseau coupé…).
+// à mesure et se reconnecte seul si le flux s'interrompt (caméra redémarrée, réseau coupé…). Application en arrière-plan :
+// le flux continue sans décodage inutile et le lecteur revient au direct au retour. Pendant une reconnexion, la dernière
+// image reste affichée.
 
 type MediaSourceClass = typeof MediaSource;
 
@@ -73,6 +75,7 @@ export class LivePlayer {
 
   start() {
     this.stopped = false;
+    document.addEventListener('visibilitychange', this.onVisibility);
     void this.run();
   }
 
@@ -80,12 +83,43 @@ export class LivePlayer {
     this.stopped = true;
     this.session++;
     clearTimeout(this.retryTimer);
+    document.removeEventListener('visibilitychange', this.onVisibility);
     this.abort?.abort();
     this.detach();
   }
 
+  /** Retour au premier plan : saut au direct (la vidéo a pu être mise en pause par le navigateur en arrière-plan). */
+  private readonly onVisibility = () => {
+    if (document.visibilityState !== 'visible' || this.stopped) return;
+    const v = this.video;
+    const b = v.buffered;
+    if (b.length) {
+      const start = b.start(b.length - 1);
+      const end = b.end(b.length - 1);
+      if (v.currentTime < start || end - v.currentTime > MAX_DELAY) v.currentTime = Math.max(start, end - 0.3);
+    }
+    if (v.paused) void v.play().catch(() => {});
+  };
+
+  /** Garde la dernière image à l'écran (affiche de la vidéo) plutôt qu'un cadre noir. */
+  private keepLastFrame() {
+    const v = this.video;
+    if (v.readyState < 2 || !v.videoWidth) return;
+    try {
+      const scale = Math.min(1, 1280 / v.videoWidth);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(v.videoWidth * scale);
+      canvas.height = Math.round(v.videoHeight * scale);
+      canvas.getContext('2d')?.drawImage(v, 0, 0, canvas.width, canvas.height);
+      v.poster = canvas.toDataURL('image/jpeg', 0.85);
+    } catch {
+      /* image indisponible : cadre vide */
+    }
+  }
+
   private detach() {
     const v = this.video;
+    this.keepLastFrame();
     v.removeAttribute('src');
     try {
       v.load();
@@ -169,9 +203,10 @@ export class LivePlayer {
         sb.appendBuffer(data as BufferSource);
       } catch (err) {
         if (err instanceof DOMException && err.name === 'QuotaExceededError') {
-          // Mémoire du lecteur pleine : on libère le passé et on réessaie.
+          // Mémoire du lecteur pleine : on libère le passé et on réessaie (en arrière-plan, tout sauf la dernière seconde).
           queue.unshift(data);
-          this.trim(sb, true);
+          const b = video.buffered;
+          this.trim(sb, true, document.visibilityState === 'hidden' && b.length ? b.end(b.length - 1) : video.currentTime);
         } else {
           this.retry(session, 'Lecture de la vidéo interrompue.');
         }
@@ -222,17 +257,23 @@ export class LivePlayer {
     if (!b.length) return;
     const start = b.start(b.length - 1);
     const end = b.end(b.length - 1);
+    if (document.visibilityState === 'hidden') {
+      // En arrière-plan : aucune image n'est affichée, on garde juste les dernières secondes (retour au direct au premier plan).
+      this.trim(sb, false, Math.max(v.currentTime, end));
+      return;
+    }
     if (v.currentTime < start || end - v.currentTime > MAX_DELAY) v.currentTime = Math.max(start, end - 0.3);
     if (v.paused) void v.play().catch(() => {});
     this.trim(sb);
   }
 
-  private trim(sb: SourceBuffer, force = false) {
+  /** Libère la vidéo déjà lue (avant `ref`, par défaut la position de lecture). */
+  private trim(sb: SourceBuffer, force = false, ref = this.video.currentTime) {
     const v = this.video;
     const b = v.buffered;
     if (sb.updating || !b.length) return;
     const from = b.start(0);
-    const to = v.currentTime - (force ? 1 : KEEP_BEHIND);
+    const to = ref - (force ? 1 : KEEP_BEHIND);
     if (to - from > (force ? 0 : 20)) {
       try {
         sb.remove(from, to);

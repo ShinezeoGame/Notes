@@ -2,7 +2,7 @@ import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blockno
 import type { BlockConfig } from '@blocknote/core';
 import { HomelabPanel } from '../../components/HomelabView';
 import { useAppCtx } from '../context';
-import { cardLayout, saveCardSize, useHomelabConfig } from '../../lib/homelab';
+import { cardLayout, cardOrder, saveCardOrder, saveCardSize, useHomelabConfig } from '../../lib/homelab';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
 
@@ -55,6 +55,8 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
           configured={ctx.homelabConfigured ?? false}
           layout={cardLayout(cfg)}
           onResize={doc && editor.isEditable ? (id, size) => saveCardSize(doc, id, size) : undefined}
+          order={cardOrder(cfg)}
+          onReorder={doc && editor.isEditable ? (ids) => saveCardOrder(doc, ids) : undefined}
         />
       </div>
     </div>

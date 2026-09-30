@@ -50,6 +50,8 @@ const NO_DRAG = [
   '[role="menuitem"]',
   '.dash-nodrag',
   '[data-nodrag]',
+  // Éléments réordonnables à l'intérieur du widget (appareils, caméras, raccourcis…) : ils se déplacent eux-mêmes.
+  '[data-sort-id]',
 ].join(', ');
 
 /** Appui sur la barre de défilement d'une zone du widget : elle fait défiler, le widget ne bouge pas. */
@@ -293,7 +295,8 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
       clearTimeout(timer);
       start = null;
     };
-    const editable = (t: Element) => t.closest('input, textarea, select, [contenteditable], .bn-container');
+    // Champs de saisie et éléments réordonnables du widget : l'appui long leur revient.
+    const editable = (t: Element) => t.closest('input, textarea, select, [contenteditable], .bn-container, [data-sort-id]');
     const down = (e: PointerEvent) => {
       const t = e.target as Element;
       if (e.pointerType === 'mouse' || !t.closest('.dash-item') || editable(t)) return;

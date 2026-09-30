@@ -200,12 +200,21 @@ function cleanData(data = {}) {
   return out;
 }
 
+/** Un appareil, ou plusieurs du même type (groupe : « tout allumer » en une seule commande). */
 export async function callHome(cfg, { entity_id, service, data }) {
-  const m = ENTITY_RE.exec(String(entity_id || ''));
-  if (!m) throw Object.assign(new Error('Appareil invalide.'), { status: 400 });
-  const domain = m[1];
+  const ids = Array.isArray(entity_id) ? [...new Set(entity_id.map(String))] : [String(entity_id || '')];
+  const domains = new Set();
+  for (const id of ids) {
+    const m = ENTITY_RE.exec(id);
+    if (!m) throw Object.assign(new Error('Appareil invalide.'), { status: 400 });
+    domains.add(m[1]);
+  }
+  if (!ids.length || ids.length > 200) throw Object.assign(new Error('Appareil invalide.'), { status: 400 });
+  if (domains.size !== 1) throw Object.assign(new Error('Appareils de types différents dans une même commande.'), { status: 400 });
+  const [domain] = domains;
   if (!SERVICES[domain]?.includes(service)) throw Object.assign(new Error('Commande non autorisée.'), { status: 400 });
-  const r = await ha(cfg, `/api/services/${domain}/${service}`, { method: 'POST', body: { ...cleanData(data), entity_id } });
+  const target = ids.length === 1 ? ids[0] : ids;
+  const r = await ha(cfg, `/api/services/${domain}/${service}`, { method: 'POST', body: { ...cleanData(data), entity_id: target } });
   let changed = [];
   try {
     const parsed = r.json();

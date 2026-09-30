@@ -1,7 +1,9 @@
-// Widget Raccourcis : liens vers des sites ou des pages de notes, en tuiles (icône du site) ou en liste.
+// Widget Raccourcis : liens vers des sites ou des pages de notes, en tuiles (icône du site) ou en liste. Un raccourci
+// glissé change de place parmi les autres.
 import { useState } from 'react';
 import { useAppCtx } from '../../editor/context';
 import { newId } from '../../lib/ids';
+import { reorderItems, useSortable } from '../../lib/sortable';
 import { useWorkspacePages } from '../../lib/workspace';
 import { Icon } from '../../icons/Icon';
 import { PageIcon } from '../../icons/pageIcon';
@@ -44,11 +46,17 @@ function SiteIcon({ url, label }: { url: string; label: string }) {
   return <img className="w-link-favicon" src={src} alt="" onError={() => setFailed(true)} loading="lazy" referrerPolicy="no-referrer" />;
 }
 
-export function LinksWidget({ widget, store, openSettings, editing }: WidgetProps) {
+export function LinksWidget({ widget, store, openSettings, editing, setConfig }: WidgetProps) {
   useWorkspacePages(store);
   const ctx = useAppCtx();
   const links = linksOf(widget.config.links);
   const list = str(widget.config.style) === 'list';
+  const { order, itemProps } = useSortable(
+    links.map((l) => l.id),
+    (ids) => setConfig({ links: reorderItems(links, ids) }),
+    !editing,
+  );
+  const byId = new Map(links.map((l) => [l.id, l]));
   if (!links.length) {
     return (
       <div className="w-empty">
@@ -61,12 +69,16 @@ export function LinksWidget({ widget, store, openSettings, editing }: WidgetProp
   }
   return (
     <div className={list ? 'w-links-list' : 'w-links'}>
-      {links.map((l) => {
+      {order.map((id) => {
+        const l = byId.get(id);
+        if (!l) return null;
+        const sort = itemProps(l.id);
+        const cls = `w-link${sort.className ? ` ${sort.className}` : ''}`;
         if (l.url.startsWith('page:')) {
           const page = store.get(l.url.slice(5));
           const label = l.label || page?.title || 'Page supprimée';
           return (
-            <button key={l.id} type="button" className="w-link" onClick={() => page && ctx.openPage(page.id)} title={label}>
+            <button key={l.id} {...sort} type="button" className={cls} onClick={() => page && ctx.openPage(page.id)} title={label}>
               <span className="w-link-icon">
                 <PageIcon icon={page?.icon ?? ''} size={list ? 18 : 24} />
               </span>
@@ -76,7 +88,7 @@ export function LinksWidget({ widget, store, openSettings, editing }: WidgetProp
         }
         const label = l.label || hostOf(l.url);
         return (
-          <a key={l.id} className="w-link" href={fullUrl(l.url)} target="_blank" rel="noopener noreferrer" title={`${label} (${hostOf(l.url)})`}>
+          <a key={l.id} {...sort} className={cls} href={fullUrl(l.url)} target="_blank" rel="noopener noreferrer" title={`${label} (${hostOf(l.url)})`} draggable={false}>
             <span className="w-link-icon">
               <SiteIcon url={l.url} label={label} />
             </span>

@@ -10,17 +10,32 @@ import {
   entityIcon,
   formatState,
   formatValue,
+  groupBrightness,
+  groupBrightnessCalls,
   groupByArea,
+  groupColorCalls,
+  groupCoverCalls,
+  groupHasCovers,
+  groupHasSwitch,
+  groupIcon,
+  groupLabel,
+  groupMembers,
+  groupSwitchCalls,
   hexToRgb,
   hvacLabel,
   isActive,
   isAlert,
+  isGroupActive,
+  isGroupId,
   isHomeConfigured,
+  isSwitchedOn,
   isToggleable,
   isUnavailable,
   kelvinToCss,
   lightColor,
   rgbToHex,
+  saveEntityOrder,
+  saveFavoritesOrder,
   supportsBrightness,
   supportsColor,
   supportsColorTemp,
@@ -29,16 +44,25 @@ import {
   updateHomeConfig,
   useHomeConfig,
   type CategoryKey,
+  type HomeCall,
   type HomeEntity,
+  type HomeGroup,
   type HomeStates,
 } from '../lib/smarthome';
+import { reorderSubset, useSortable, type SortItemProps } from '../lib/sortable';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { SmartHomeConfigDialog } from './SmartHomeConfigDialog';
+import { SmartHomeGroupDialog } from './SmartHomeGroupDialog';
 import { toast } from './Toast';
 
 type Run = (e: HomeEntity, service: string, data?: Record<string, unknown>, optimistic?: Partial<HomeEntity>) => Promise<boolean>;
+/** Commandes de groupe : plusieurs appareils à la fois (un appel par type d'appareil). */
+type RunMany = (calls: HomeCall[]) => Promise<boolean>;
 type EntityPatch = Partial<HomeEntity> & { id: string };
+
+/** Classe de l'élément racine, complétée de celle du glisser-déposer. */
+const withSort = (cls: string, sort?: SortItemProps) => (sort?.className ? `${cls} ${sort.className}` : cls);
 
 // ---------- États : interrogation régulière + commandes avec affichage immédiat ----------
 
@@ -107,7 +131,24 @@ function useHomeStates(enabled: boolean) {
     [patch, refresh],
   );
 
-  return { data, loading, error, refresh, run };
+  const runMany: RunMany = useCallback(
+    async (calls) => {
+      if (!calls.length) return true;
+      version.current++;
+      patch(calls.flatMap((c) => (c.optimistic ? c.ids.map((id) => ({ ...c.optimistic, id })) : [])));
+      const results = await Promise.allSettled(calls.map((c) => api.homeCall(c.ids, c.service, c.data)));
+      version.current++;
+      const changed = results.flatMap((r) => (r.status === 'fulfilled' ? r.value.entities : []));
+      if (changed.length) patch(changed);
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed) toast(failed.reason instanceof Error ? failed.reason.message : 'Commande impossible.', 'error');
+      setTimeout(() => void refresh(), 1200);
+      return !failed;
+    },
+    [patch, refresh],
+  );
+
+  return { data, loading, error, refresh, run, runMany };
 }
 
 /** Valeur de curseur envoyée après une courte pause (pas une commande par pixel). */
@@ -280,7 +321,7 @@ function CameraImage({ e, onOpen, large = false }: { e: HomeEntity; onOpen?: () 
 
 // ---------- Tuile d'un appareil ----------
 
-function EntityCard({ e, run, onOpen, onLive, compact }: { e: HomeEntity; run: Run; onOpen: () => void; onLive: () => void; compact: boolean }) {
+function EntityCard({ e, run, onOpen, onLive, compact, sort }: { e: HomeEntity; run: Run; onOpen: () => void; onLive: () => void; compact: boolean; sort?: SortItemProps }) {
   const active = isActive(e);
   const alert = isAlert(e);
   const off = isUnavailable(e);
@@ -309,7 +350,7 @@ function EntityCard({ e, run, onOpen, onLive, compact }: { e: HomeEntity; run: R
   }
 
   return (
-    <div className={cls} style={style} data-entity={e.id}>
+    <div {...sort} className={withSort(cls, sort)} style={style} data-entity={e.id}>
       <div className="sh-card-head">
         <button
           type="button"
@@ -355,6 +396,197 @@ function VacuumButtons({ e, run }: { e: HomeEntity; run: Run }) {
         <Icon name="home" size={14} /> Base
       </button>
     </div>
+  );
+}
+
+// ---------- Groupes ----------
+
+function GroupBrightness({ members, runMany }: { members: HomeEntity[]; runMany: RunMany }) {
+  const [value, setValue] = useSlider(groupBrightness(members) ?? 100, (v) => void runMany(groupBrightnessCalls(members, v)));
+  return <Slider value={value} min={1} max={100} onChange={setValue} label="Luminosité du groupe" />;
+}
+
+function GroupCoverButtons({ members, runMany }: { members: HomeEntity[]; runMany: RunMany }) {
+  return (
+    <div className="sh-buttons">
+      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'open'))} aria-label="Tout ouvrir" title="Tout ouvrir">
+        <Icon name="chevronUp" size={16} />
+      </button>
+      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'stop'))} aria-label="Tout arrêter" title="Tout arrêter">
+        <Icon name="stop" size={14} />
+      </button>
+      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'close'))} aria-label="Tout fermer" title="Tout fermer">
+        <Icon name="chevronDown" size={16} />
+      </button>
+    </div>
+  );
+}
+
+const anyOn = (members: HomeEntity[]) => members.some((e) => !isUnavailable(e) && isToggleable(e) && isSwitchedOn(e));
+
+/** Tuile d'un groupe : l'interrupteur allume tout (ou éteint tout dès qu'un appareil est allumé). */
+function GroupCard({ g, members, runMany, onOpen, compact, sort }: { g: HomeGroup; members: HomeEntity[]; runMany: RunMany; onOpen: () => void; compact: boolean; sort?: SortItemProps }) {
+  const available = members.some((e) => !isUnavailable(e));
+  const hasSwitch = groupHasSwitch(members);
+  const on = anyOn(members);
+  const toggle = () => void runMany(groupSwitchCalls(members, !on));
+  const color = members.map(lightColor).find(Boolean) ?? null;
+  let body: ReactNode = null;
+  if (!compact) {
+    if (members.some((e) => e.domain === 'light' && e.state === 'on' && supportsBrightness(e))) body = <GroupBrightness members={members} runMany={runMany} />;
+    else if (groupHasCovers(members)) body = <GroupCoverButtons members={members} runMany={runMany} />;
+  }
+  const cls = `sh-card sh-card--group${isGroupActive(members) ? ' sh-card--on' : ''}${available ? '' : ' sh-card--unavailable'}${color ? ' sh-card--colored' : ''}`;
+  return (
+    <div {...sort} className={withSort(cls, sort)} style={color ? ({ '--sh-glow': color } as CSSProperties) : undefined} data-group={g.id}>
+      <div className="sh-card-head">
+        <button
+          type="button"
+          className="sh-tile"
+          onClick={hasSwitch ? toggle : onOpen}
+          disabled={!available}
+          aria-label={hasSwitch ? `${on ? 'Tout éteindre' : 'Tout allumer'} : ${g.name}` : g.name}
+        >
+          <Icon name={groupIcon(g, members)} size={20} />
+          <span className="sh-group-badge" aria-hidden="true">
+            {members.length}
+          </span>
+        </button>
+        <button type="button" className="sh-card-title" onClick={onOpen}>
+          <span className="sh-name">{g.name}</span>
+          <span className="sh-state">{groupLabel(members)}</span>
+        </button>
+        {hasSwitch ? <Switch checked={on} onChange={toggle} disabled={!available} label={`${g.name} : tout allumer ou tout éteindre`} /> : null}
+      </div>
+      {body ? <div className="sh-card-body">{body}</div> : null}
+    </div>
+  );
+}
+
+function GroupDetail({
+  g,
+  members,
+  run,
+  runMany,
+  favorite,
+  onFavorite,
+  onEdit,
+  onDelete,
+  onOpenEntity,
+  onLive,
+  onClose,
+}: {
+  g: HomeGroup;
+  members: HomeEntity[];
+  run: Run;
+  runMany: RunMany;
+  favorite: boolean;
+  onFavorite?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onOpenEntity: (id: string) => void;
+  onLive: (id: string) => void;
+  onClose: () => void;
+}) {
+  const hasSwitch = groupHasSwitch(members);
+  const on = anyOn(members);
+  const lights = members.filter((e) => e.domain === 'light' && !isUnavailable(e));
+  const presets = LIGHT_PRESETS.filter((p) => (p.rgb ? lights.some(supportsColor) : lights.some((e) => supportsColorTemp(e) || supportsColor(e))));
+  const missing = g.members.length - members.length;
+  const rooms = [...new Set(members.map((e) => e.area).filter(Boolean))];
+  return (
+    <Modal
+      title={g.name}
+      onClose={onClose}
+      width={640}
+      footer={
+        <>
+          {onDelete ? (
+            <button type="button" className="nb-btn nb-btn--sm nb-btn--danger sh-footer-start" onClick={onDelete}>
+              <Icon name="trash" size={14} /> Supprimer
+            </button>
+          ) : null}
+          {onEdit ? (
+            <button type="button" className="nb-btn nb-btn--sm" onClick={onEdit}>
+              <Icon name="pencil" size={14} /> Modifier
+            </button>
+          ) : null}
+          {onFavorite ? (
+            <button type="button" className={`nb-btn nb-btn--sm${favorite ? ' sh-fav--on' : ''}`} onClick={onFavorite} aria-pressed={favorite}>
+              <Icon name="star" size={14} /> {favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            </button>
+          ) : null}
+        </>
+      }
+    >
+      <div className="sh-detail">
+        <div className="sh-detail-head">
+          <span className={`sh-tile sh-tile--static${isGroupActive(members) ? ' sh-tile--on' : ''}`}>
+            <Icon name={groupIcon(g, members)} size={22} />
+          </span>
+          <div className="sh-detail-title">
+            <div className="sh-state-strong">{groupLabel(members)}</div>
+            <div className="nb-muted">
+              {[`${members.length} appareil${members.length > 1 ? 's' : ''}`, rooms.join(', ')].filter(Boolean).join(' · ')}
+            </div>
+          </div>
+          {hasSwitch ? <Switch checked={on} onChange={() => void runMany(groupSwitchCalls(members, !on))} label={`${g.name} : tout allumer ou tout éteindre`} /> : null}
+        </div>
+        {hasSwitch ? (
+          <div className="sh-buttons">
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => void runMany(groupSwitchCalls(members, true))}>
+              <Icon name="bulb" size={14} /> Tout allumer
+            </button>
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => void runMany(groupSwitchCalls(members, false))}>
+              <Icon name="power" size={14} /> Tout éteindre
+            </button>
+          </div>
+        ) : null}
+        {lights.some(supportsBrightness) ? (
+          <div className="sh-field">
+            <span>Luminosité de toutes les lampes</span>
+            <GroupBrightness members={members} runMany={runMany} />
+          </div>
+        ) : null}
+        {presets.length ? (
+          <div className="sh-field">
+            <span>Couleur de toutes les lampes</span>
+            <div className="sh-swatches">
+              {presets.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="sh-swatch"
+                  title={p.label}
+                  aria-label={p.label}
+                  style={{ background: p.rgb ? `rgb(${p.rgb.join(',')})` : kelvinToCss(p.kelvin!) }}
+                  onClick={() => void runMany(groupColorCalls(members, p))}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {groupHasCovers(members) ? (
+          <div className="sh-field">
+            <span>Volets</span>
+            <GroupCoverButtons members={members} runMany={runMany} />
+          </div>
+        ) : null}
+        <div className="sh-field">
+          <span>Appareils du groupe</span>
+          <div className="sh-grid sh-grid--compact">
+            {members.map((e) => (
+              <EntityCard key={e.id} e={e} run={run} compact onOpen={() => onOpenEntity(e.id)} onLive={() => onLive(e.id)} />
+            ))}
+          </div>
+          {missing > 0 ? (
+            <p className="nb-muted">
+              {missing} appareil{missing > 1 ? 's' : ''} du groupe introuvable{missing > 1 ? 's' : ''} dans Home Assistant.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -502,7 +734,25 @@ function timeAgo(iso: string): string {
   return `le ${new Date(t).toLocaleDateString('fr-FR')}`;
 }
 
-function EntityDetail({ e, run, favorite, onFavorite, onHide, onLive, onClose }: { e: HomeEntity; run: Run; favorite: boolean; onFavorite: () => void; onHide: () => void; onLive: () => void; onClose: () => void }) {
+function EntityDetail({
+  e,
+  run,
+  favorite,
+  hidden,
+  onFavorite,
+  onHide,
+  onLive,
+  onClose,
+}: {
+  e: HomeEntity;
+  run: Run;
+  favorite: boolean;
+  hidden: boolean;
+  onFavorite: () => void;
+  onHide: () => void;
+  onLive: () => void;
+  onClose: () => void;
+}) {
   let controls: ReactNode = null;
   if (e.domain === 'light') controls = <LightControls e={e} run={run} />;
   else if (e.domain === 'climate') controls = <ClimateControls e={e} run={run} />;
@@ -530,8 +780,8 @@ function EntityDetail({ e, run, favorite, onFavorite, onHide, onLive, onClose }:
       width={460}
       footer={
         <>
-          <button type="button" className="nb-btn nb-btn--sm" onClick={onHide} title="Ne plus afficher cet appareil dans la liste">
-            <Icon name="eyeOff" size={14} /> Masquer
+          <button type="button" className="nb-btn nb-btn--sm" onClick={onHide} title={hidden ? 'Afficher de nouveau cet appareil dans la liste' : 'Ne plus afficher cet appareil dans la liste'}>
+            <Icon name={hidden ? 'eye' : 'eyeOff'} size={14} /> {hidden ? 'Réafficher' : 'Masquer'}
           </button>
           <button type="button" className={`nb-btn nb-btn--sm${favorite ? ' sh-fav--on' : ''}`} onClick={onFavorite} aria-pressed={favorite}>
             <Icon name="star" size={14} /> {favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
@@ -588,35 +838,71 @@ function CameraLive({ e, onClose }: { e: HomeEntity; onClose: () => void }) {
 
 type Filter = 'all' | 'favorites' | CategoryKey;
 
+/** Élément d'une grille : un appareil ou un groupe d'appareils. */
+type Item = { id: string; kind: 'entity'; e: HomeEntity } | { id: string; kind: 'group'; g: HomeGroup; members: HomeEntity[] };
+
+/** Grille d'appareils et de groupes, réordonnables par glisser-déposer quand `onReorder` est fourni. */
+function TileGrid({ items, compact, onReorder, render }: { items: Item[]; compact: boolean; onReorder?: (ids: string[]) => void; render: (item: Item, sort: SortItemProps) => ReactNode }) {
+  const ids = items.map((it) => it.id);
+  const { order, itemProps } = useSortable(ids, (next) => onReorder?.(next), Boolean(onReorder));
+  const byId = new Map(items.map((it) => [it.id, it]));
+  return (
+    <div className={`sh-grid${compact ? ' sh-grid--compact' : ''}`}>
+      {order.map((id) => {
+        const it = byId.get(id);
+        return it ? render(it, itemProps(id)) : null;
+      })}
+    </div>
+  );
+}
+
 export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, canConfigure = true }: { doc: Y.Doc | null; compact?: boolean; favoritesOnly?: boolean; canConfigure?: boolean }) {
   const cfg = useHomeConfig(doc);
   const hasServer = Boolean(serverBase());
   const configured = isHomeConfigured(cfg);
-  const { data, error, loading, run } = useHomeStates(hasServer && configured);
+  const { data, error, loading, run, runMany } = useHomeStates(hasServer && configured);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [editGroup, setEditGroup] = useState<HomeGroup | 'new' | null>(null);
   const [liveId, setLiveId] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const onConfigure = canConfigure && doc ? () => setConfigOpen(true) : undefined;
   const configDialog = configOpen && doc ? <SmartHomeConfigDialog doc={doc} entities={data?.entities} onClose={() => setConfigOpen(false)} /> : null;
 
-  const visible = useMemo(() => (data?.entities ?? []).filter((e) => !cfg.hidden.includes(e.id)), [data, cfg.hidden]);
-  const favorites = useMemo(() => cfg.favorites.map((id) => visible.find((e) => e.id === id)).filter((e): e is HomeEntity => Boolean(e)), [cfg.favorites, visible]);
+  const all = useMemo(() => data?.entities ?? [], [data]);
+  const byId = useMemo(() => new Map(all.map((e) => [e.id, e])), [all]);
+  const visible = useMemo(() => all.filter((e) => !cfg.hidden.includes(e.id)), [all, cfg.hidden]);
+  const groups = useMemo(() => cfg.groups.map((g): Item => ({ id: g.id, kind: 'group', g, members: groupMembers(g, byId) })), [cfg.groups, byId]);
+  const q = query.trim().toLowerCase();
+  const matches = (it: Item) =>
+    !q || (it.kind === 'group' ? it.g.name.toLowerCase().includes(q) : it.e.name.toLowerCase().includes(q) || it.e.area.toLowerCase().includes(q));
+  const favorites = useMemo(() => {
+    const visibleIds = new Set(visible.map((e) => e.id));
+    const groupsById = new Map(groups.map((it) => [it.id, it]));
+    return cfg.favorites
+      .map((id): Item | undefined => (isGroupId(id) ? groupsById.get(id) : visibleIds.has(id) ? { id, kind: 'entity', e: byId.get(id)! } : undefined))
+      .filter((it): it is Item => Boolean(it));
+  }, [cfg.favorites, groups, visible, byId]);
   const counts = useMemo(() => {
     const m = new Map<CategoryKey, number>();
     for (const e of visible) m.set(categoryOf(e.domain), (m.get(categoryOf(e.domain)) ?? 0) + 1);
     return m;
   }, [visible]);
   const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = favoritesOnly || filter === 'favorites' ? favorites : filter === 'all' ? visible : visible.filter((e) => categoryOf(e.domain) === filter);
+    let list = filter === 'all' || filter === 'favorites' ? visible : visible.filter((e) => categoryOf(e.domain) === filter);
     if (q) list = list.filter((e) => e.name.toLowerCase().includes(q) || e.area.toLowerCase().includes(q));
     return list;
-  }, [favoritesOnly, filter, favorites, visible, query]);
+  }, [filter, visible, q]);
+  // Groupes : dans « Tout », et dans une catégorie quand tous leurs appareils en font partie (lumières…).
+  const shownGroups = groups.filter(
+    (it) => it.kind === 'group' && matches(it) && (filter === 'all' || (filter !== 'favorites' && it.members.length > 0 && it.members.every((e) => categoryOf(e.domain) === filter))),
+  );
 
-  const detail = detailId ? visible.find((e) => e.id === detailId) ?? null : null;
-  const live = liveId ? visible.find((e) => e.id === liveId) ?? null : null;
+  const detail = detailId ? byId.get(detailId) ?? null : null;
+  const live = liveId ? byId.get(liveId) ?? null : null;
+  const group = groupId ? groups.find((it) => it.id === groupId) ?? null : null;
 
   if (!hasServer) {
     return (
@@ -644,14 +930,29 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
   }
 
   const problem = data?.error || error;
-  const showFavoritesSection = !favoritesOnly && filter === 'all' && !query.trim() && favorites.length > 0;
-  const renderGrid = (list: HomeEntity[]) => (
-    <div className={`sh-grid${compact ? ' sh-grid--compact' : ''}`}>
-      {list.map((e) => (
-        <EntityCard key={e.id} e={e} run={run} compact={compact} onOpen={() => setDetailId(e.id)} onLive={() => setLiveId(e.id)} />
-      ))}
-    </div>
-  );
+  const favoritesView = favoritesOnly || filter === 'favorites';
+  const favoritesShown = favorites.filter(matches);
+  const showFavoritesSection = !favoritesView && filter === 'all' && !q && favorites.length > 0;
+  const render = (it: Item, sort: SortItemProps) =>
+    it.kind === 'group' ? (
+      <GroupCard key={it.id} g={it.g} members={it.members} runMany={runMany} compact={compact} sort={sort} onOpen={() => setGroupId(it.id)} />
+    ) : (
+      <EntityCard key={it.id} e={it.e} run={run} compact={compact} sort={sort} onOpen={() => setDetailId(it.e.id)} onLive={() => setLiveId(it.e.id)} />
+    );
+  const entityItems = (list: HomeEntity[]) => list.map((e): Item => ({ id: e.id, kind: 'entity', e }));
+  const reorderFavorites = doc ? (ids: string[]) => saveFavoritesOrder(doc, ids) : undefined;
+  const reorderGroups = doc
+    ? (ids: string[]) =>
+        updateHomeConfig(doc, (c) => {
+          const next = reorderSubset(
+            c.groups.map((g) => g.id),
+            ids,
+          );
+          const byGroup = new Map(c.groups.map((g) => [g.id, g]));
+          return { ...c, groups: next.map((id) => byGroup.get(id)!) };
+        })
+    : undefined;
+  const reorderEntities = doc ? (ids: string[]) => saveEntityOrder(doc, all, ids) : undefined;
 
   return (
     <div className={`sh-panel${compact ? ' sh-panel--compact' : ''}`}>
@@ -675,6 +976,11 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
           <div className="sh-toolbar-right">
             <input className="nb-input nb-input--sm sh-search" placeholder="Rechercher…" value={query} onChange={(ev) => setQuery(ev.target.value)} aria-label="Rechercher un appareil" />
             {onConfigure ? (
+              <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditGroup('new')} title="Piloter plusieurs appareils ensemble (toutes les lumières d’une pièce…)">
+                <Icon name="plus" size={14} /> Nouveau groupe
+              </button>
+            ) : null}
+            {onConfigure ? (
               <button type="button" className="nb-btn nb-btn--sm" onClick={onConfigure}>
                 Configurer
               </button>
@@ -690,38 +996,48 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
       ) : null}
       {!data && loading ? <div className="hl-loading">Connexion à Home Assistant…</div> : null}
 
+      {!favoritesView && shownGroups.length ? (
+        <section className="sh-section">
+          <h2>
+            <Icon name="grid" size={13} /> Groupes
+          </h2>
+          <TileGrid items={shownGroups} compact={compact} onReorder={reorderGroups} render={render} />
+        </section>
+      ) : null}
       {showFavoritesSection ? (
         <section className="sh-section">
           <h2>
             <Icon name="star" size={13} /> Favoris
           </h2>
-          {renderGrid(favorites)}
+          <TileGrid items={favorites} compact={compact} onReorder={reorderFavorites} render={render} />
         </section>
       ) : null}
-      {favoritesOnly || filter === 'favorites'
-        ? shown.length
-          ? renderGrid(shown)
+      {favoritesView
+        ? favoritesShown.length
+          ? <TileGrid items={favoritesShown} compact={compact} onReorder={reorderFavorites} render={render} />
           : data
-            ? <p className="nb-muted">Aucun favori : ouvrez un appareil et touchez « Ajouter aux favoris ».</p>
+            ? <p className="nb-muted">Aucun favori : ouvrez un appareil ou un groupe et touchez « Ajouter aux favoris ».</p>
             : null
-        : groupByArea(shown).map(([area, list]) => (
+        : groupByArea(shown, cfg.order).map(([area, list]) => (
             <section key={area || '—'} className="sh-section">
               <h2>{area || 'Sans pièce'}</h2>
-              {renderGrid(list)}
+              <TileGrid items={entityItems(list)} compact={compact} onReorder={reorderEntities} render={render} />
             </section>
           ))}
-      {data && !problem && !shown.length && !favoritesOnly && filter !== 'favorites' ? <p className="nb-muted">Aucun appareil ne correspond.</p> : null}
+      {data && !problem && !shown.length && !shownGroups.length && !favoritesView ? <p className="nb-muted">Aucun appareil ne correspond.</p> : null}
 
       {detail ? (
         <EntityDetail
           e={detail}
           run={run}
           favorite={cfg.favorites.includes(detail.id)}
+          hidden={cfg.hidden.includes(detail.id)}
           onFavorite={() => doc && updateHomeConfig(doc, (c) => ({ ...c, favorites: toggleInList(c.favorites, detail.id) }))}
           onHide={() => {
-            if (doc) updateHomeConfig(doc, (c) => ({ ...c, hidden: toggleInList(c.hidden, detail.id), favorites: c.favorites.filter((f) => f !== detail.id) }));
+            const wasHidden = cfg.hidden.includes(detail.id);
+            if (doc) updateHomeConfig(doc, (c) => ({ ...c, hidden: toggleInList(c.hidden, detail.id), favorites: wasHidden ? c.favorites : c.favorites.filter((f) => f !== detail.id) }));
             setDetailId(null);
-            toast(`« ${detail.name} » est masqué (réaffichage : Configurer).`);
+            toast(wasHidden ? `« ${detail.name} » est de nouveau affiché.` : `« ${detail.name} » est masqué (réaffichage : Configurer).`);
           }}
           onLive={() => {
             setDetailId(null);
@@ -730,6 +1046,44 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
           onClose={() => setDetailId(null)}
         />
       ) : null}
+      {group && group.kind === 'group' ? (
+        <GroupDetail
+          g={group.g}
+          members={group.members}
+          run={run}
+          runMany={runMany}
+          favorite={cfg.favorites.includes(group.id)}
+          onFavorite={doc ? () => updateHomeConfig(doc, (c) => ({ ...c, favorites: toggleInList(c.favorites, group.id) })) : undefined}
+          onEdit={
+            doc && canConfigure
+              ? () => {
+                  setGroupId(null);
+                  setEditGroup(group.g);
+                }
+              : undefined
+          }
+          onDelete={
+            doc && canConfigure
+              ? () => {
+                  if (!confirm(`Supprimer le groupe « ${group.g.name} » ? Ses appareils ne sont pas modifiés.`)) return;
+                  updateHomeConfig(doc, (c) => ({ ...c, groups: c.groups.filter((x) => x.id !== group.id), favorites: c.favorites.filter((f) => f !== group.id) }));
+                  setGroupId(null);
+                  toast(`Groupe « ${group.g.name} » supprimé.`);
+                }
+              : undefined
+          }
+          onOpenEntity={(id) => {
+            setGroupId(null);
+            setDetailId(id);
+          }}
+          onLive={(id) => {
+            setGroupId(null);
+            setLiveId(id);
+          }}
+          onClose={() => setGroupId(null)}
+        />
+      ) : null}
+      {editGroup && doc ? <SmartHomeGroupDialog doc={doc} group={editGroup === 'new' ? null : editGroup} entities={all} onClose={() => setEditGroup(null)} /> : null}
       {live ? <CameraLive e={live} onClose={() => setLiveId(null)} /> : null}
       {configDialog}
     </div>

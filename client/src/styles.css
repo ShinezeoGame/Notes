@@ -830,6 +830,48 @@ select.nb-input { appearance: auto; }
 .sh-disconnect { margin-right: auto; }
 .sh-panel--compact .sh-card { padding: 8px 10px; gap: 8px; }
 .sh-panel--compact .sh-tile { width: 32px; height: 32px; }
+/* Groupes d'appareils : carte « empilée », nombre d'appareils sur l'icône */
+.sh-card--group { box-shadow: 3px 3px 0 -1px var(--bg-elevated), 3px 3px 0 0 var(--border-strong); }
+.sh-card--group.sh-card--colored.sh-card--on {
+  box-shadow: 3px 3px 0 -1px var(--bg-elevated), 3px 3px 0 0 var(--border-strong), 0 0 0 1px color-mix(in srgb, var(--sh-glow) 40%, transparent), 0 8px 26px -12px var(--sh-glow);
+}
+.sh-card--group .sh-tile { position: relative; }
+.sh-group-badge {
+  position: absolute; right: -6px; bottom: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--bg-elevated);
+  border: 1px solid var(--border-strong); color: var(--text); font-size: calc(10px * var(--ui-scale)); font-weight: 700; line-height: 16px; text-align: center;
+}
+.sh-footer-start, .sh-group-count { margin-right: auto; }
+.sh-group-count { align-self: center; font-size: calc(13px * var(--ui-scale)); }
+.sh-icon-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.sh-icon-choice {
+  min-width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); display: inline-flex;
+  align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 9px; font: inherit; font-size: calc(13px * var(--ui-scale));
+}
+.sh-icon-choice:hover { background: var(--bg-hover); color: var(--text-strong); }
+.sh-icon-choice--on, .sh-icon-choice--on:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.sh-pick-search { width: 100%; }
+.sh-pick { max-height: min(46vh, 420px); overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 0 8px 8px; margin-top: 8px; }
+.sh-pick-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: 0; z-index: 1; padding: 10px 6px 4px;
+  background: var(--bg-elevated);
+}
+.sh-pick-head h3 { margin: 0; font-size: calc(12px * var(--ui-scale)); text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+.sh-pick-all { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; font-size: calc(12px * var(--ui-scale)); padding: 2px 0; }
+.sh-pick-item { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; color: var(--text); }
+.sh-pick-item:hover { background: var(--bg-hover); }
+.sh-pick-item--on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sh-pick-item input { margin: 0; accent-color: var(--accent); }
+.sh-pick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-pick-state, .sh-pick-hidden { color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); white-space: nowrap; }
+
+/* Glisser-déposer à l'intérieur des modules (appareils, caméras, modules du homelab, raccourcis, tâches) */
+/* Pas de glisser natif (image fantôme d'un lien ou d'une image) : c'est l'élément entier qui se déplace. */
+.sort-item, .sort-item img, .sort-item a { -webkit-user-drag: none; }
+.sort-item--dragging { position: relative; z-index: 30; scale: 1.02; box-shadow: var(--shadow); pointer-events: none; }
+:root.sort-active, :root.sort-active * { cursor: grabbing !important; -webkit-user-select: none !important; user-select: none !important; }
+@media (pointer: coarse) {
+  .sort-item { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+}
 @media (max-width: 768px) {
   .sh-toolbar-right { width: 100%; }
   .sh-search { flex: 1; width: auto; }
@@ -856,6 +898,11 @@ select.nb-input { appearance: auto; }
   color: #d0d0d0; font-size: calc(13px * var(--ui-scale)); text-align: center; background: rgba(0, 0, 0, 0.55); pointer-events: none;
 }
 .cam-overlay--error { color: #ff9c96; }
+/* Reconnexion avec la dernière image affichée : simple mention dans un coin. */
+.cam-overlay--mini {
+  inset: auto auto 8px 8px; padding: 3px 10px; border-radius: 10px; font-size: calc(12px * var(--ui-scale)); color: var(--text);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+}
 .cam-toolbar { display: flex; justify-content: flex-end; margin: 8px 0 14px; }
 .cam-problem { margin: 0 0 14px; display: flex; gap: 6px; align-items: center; }
 .cam-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; }

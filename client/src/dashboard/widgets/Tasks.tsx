@@ -1,7 +1,9 @@
-// Widget Tâches : liste de choses à faire (cocher, modifier, supprimer), partagée entre les appareils. Chaque tâche est
-// une entrée à part du document de l'espace : deux appareils peuvent cocher ou ajouter en même temps.
+// Widget Tâches : liste de choses à faire (cocher, modifier, supprimer, glisser pour changer l'ordre), partagée entre
+// les appareils. Chaque tâche est une entrée à part du document de l'espace : deux appareils peuvent cocher ou ajouter
+// en même temps.
 import { useEffect, useMemo, useState } from 'react';
 import { newId } from '../../lib/ids';
+import { useSortable, type SortItemProps } from '../../lib/sortable';
 import { Icon } from '../../icons/Icon';
 import { taskMap } from '../model';
 import { bool, type SettingsProps, type WidgetProps } from '../types';
@@ -21,7 +23,7 @@ function readTasks(map: ReturnType<typeof taskMap>): Task[] {
   return list;
 }
 
-export function TasksWidget({ widget, doc }: WidgetProps) {
+export function TasksWidget({ widget, doc, editing }: WidgetProps) {
   const map = taskMap(doc, widget.id);
   const [version, setVersion] = useState(0);
   const [draft, setDraft] = useState('');
@@ -38,6 +40,19 @@ export function TasksWidget({ widget, doc }: WidgetProps) {
   const todo = tasks.filter((t) => !t.done).sort((a, b) => a.order - b.order);
   const done = tasks.filter((t) => t.done).sort((a, b) => b.doneAt - a.doneAt);
   const save = (t: Task) => map.set(t.id, JSON.stringify({ text: t.text, done: t.done, order: t.order, doneAt: t.doneAt }));
+  // Tâches à faire : glisser une tâche la déplace dans la liste.
+  const sortable = useSortable(
+    todo.map((t) => t.id),
+    (ids) =>
+      doc.transact(() => {
+        ids.forEach((id, i) => {
+          const t = todo.find((x) => x.id === id);
+          if (t && t.order !== i + 1) save({ ...t, order: i + 1 });
+        });
+      }),
+    !editing && editId === null,
+  );
+  const todoById = new Map(todo.map((t) => [t.id, t]));
 
   const add = () => {
     const text = draft.trim();
@@ -47,8 +62,8 @@ export function TasksWidget({ widget, doc }: WidgetProps) {
     setDraft('');
   };
 
-  const row = (t: Task) => (
-    <li key={t.id} className={`w-task${t.done ? ' w-task--done' : ''}`}>
+  const row = (t: Task, sort?: SortItemProps) => (
+    <li key={t.id} {...sort} className={`w-task${t.done ? ' w-task--done' : ''}${sort?.className ? ` ${sort.className}` : ''}`}>
       <button
         type="button"
         className="w-task-check"
@@ -103,8 +118,11 @@ export function TasksWidget({ widget, doc }: WidgetProps) {
         <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ajouter une tâche…" aria-label="Nouvelle tâche" enterKeyHint="done" />
       </form>
       <ul className="w-task-list">
-        {todo.map(row)}
-        {!hideDone ? done.map(row) : null}
+        {sortable.order.map((id) => {
+          const t = todoById.get(id);
+          return t ? row(t, sortable.itemProps(id)) : null;
+        })}
+        {!hideDone ? done.map((t) => row(t)) : null}
       </ul>
       {!tasks.length ? <p className="w-muted w-tasks-empty">Rien à faire pour l’instant.</p> : null}
       {done.length ? (

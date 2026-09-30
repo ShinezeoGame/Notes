@@ -27,6 +27,7 @@ import {
   type ServiceStatus,
   type StatValue,
 } from '../lib/homelab';
+import { sortByOrder, useSortable, type SortItemProps } from '../lib/sortable';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 
@@ -40,6 +41,9 @@ type PanelProps = {
   /** Fourni quand les modules peuvent être redimensionnés depuis ce panneau. */
   onResize?: (id: string, size: CardSize) => void;
   onResetLayout?: () => void;
+  /** Ordre choisi des modules (identifiants) ; `onReorder` le modifie par glisser-déposer. */
+  order?: string[];
+  onReorder?: (ids: string[]) => void;
   /** Change quand la configuration change : le panneau se réactualise aussitôt. */
   refreshKey?: string;
 };
@@ -212,7 +216,7 @@ export function DeviceCard({ d, compact: compactView, fit }: { d: DeviceStatus; 
 }
 
 /** Panneau autonome : interroge le serveur et affiche appareils + applications. */
-export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure, configured, layout, onResize, onResetLayout, refreshKey }: PanelProps) {
+export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure, configured, layout, onResize, onResetLayout, order = [], onReorder, refreshKey }: PanelProps) {
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState<HomelabStatus | null>(null);
   const [error, setError] = useState('');
@@ -261,16 +265,17 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
     return () => clearTimeout(t);
   }, [refreshKey, refresh]);
 
+  const devices = useMemo(() => sortByOrder(status?.devices ?? [], order, (d) => d.id), [status, order]);
   const grouped = useMemo(() => {
     const groups = new Map<string, ServiceStatus[]>();
-    for (const s of status?.services ?? []) {
+    for (const s of sortByOrder(status?.services ?? [], order, (x) => x.id)) {
       const cat = s.category || 'Autres';
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(s);
     }
-    const order = (c: string) => (CATEGORIES.indexOf(c) === -1 ? 99 : CATEGORIES.indexOf(c));
-    return Array.from(groups.entries()).sort(([a], [b]) => order(a) - order(b));
-  }, [status]);
+    const rank = (c: string) => (CATEGORIES.indexOf(c) === -1 ? 99 : CATEGORIES.indexOf(c));
+    return Array.from(groups.entries()).sort(([a], [b]) => rank(a) - rank(b));
+  }, [status, order]);
 
   if (!hasServer) {
     return (
@@ -337,7 +342,7 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
       </div>
       {error ? <div className="nb-error">{error}</div> : null}
       {!status && loading ? <div className="hl-loading">Interrogation de vos appareils et applications…</div> : null}
-      {status?.devices.length ? (
+      {devices.length ? (
         <section className="hl-section">
           {!compact ? <h2>Appareils</h2> : null}
           <CardGrid
@@ -345,7 +350,8 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
             compact={compact}
             minWidth={compact ? 240 : 300}
             editing={editing}
-            items={status.devices.map((d) => ({
+            onReorder={onReorder}
+            items={devices.map((d) => ({
               id: d.id,
               size: layout?.[d.id] ?? AUTO_SIZE,
               render: (fit: CardFit) => <DeviceCard d={d} compact={compact} fit={fit} />,
@@ -362,6 +368,7 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
             compact={compact}
             minWidth={compact ? 170 : 230}
             editing={editing}
+            onReorder={onReorder}
             items={list.map((s) => ({
               id: s.id,
               size: layout?.[s.id] ?? AUTO_SIZE,
@@ -412,6 +419,7 @@ function CardGrid({
   minWidth,
   editing,
   onResize,
+  onReorder,
 }: {
   className: string;
   items: GridItem[];
@@ -420,8 +428,16 @@ function CardGrid({
   minWidth: number;
   editing: boolean;
   onResize?: (id: string, size: CardSize) => void;
+  onReorder?: (ids: string[]) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Glisser un module (hors poignées de taille) le déplace parmi les autres.
+  const { order, itemProps } = useSortable(
+    items.map((it) => it.id),
+    (ids) => onReorder?.(ids),
+    Boolean(onReorder),
+  );
+  const byId = new Map(items.map((it) => [it.id, it]));
   // La grille déborde de l'espacement à droite : chaque cellule porte son espacement.
   const gridWidth = useElementWidth(ref);
   const gap = compact ? 6 : 10;
@@ -442,7 +458,10 @@ function CardGrid({
   return (
     <div className={className} ref={ref} style={{ '--hl-gap': `${gap}px` } as CSSProperties}>
       {gridWidth > 0
-        ? items.map((it) => <CardCell key={it.id} item={it} geo={geo} editing={editing && Boolean(onResize)} onResize={onResize} />)
+        ? order.map((id) => {
+            const it = byId.get(id);
+            return it ? <CardCell key={it.id} item={it} geo={geo} editing={editing && Boolean(onResize)} onResize={onResize} sort={itemProps(id)} /> : null;
+          })
         : null}
     </div>
   );
@@ -452,7 +471,7 @@ function sizeLabel(pct: number | undefined, height: number | undefined): string 
   return `${pct === undefined ? 'auto' : `${pct} %`} × ${height === undefined ? 'auto' : `${height} px`}`;
 }
 
-function CardCell({ item, geo, editing, onResize }: { item: GridItem; geo: Geometry; editing: boolean; onResize?: (id: string, size: CardSize) => void }) {
+function CardCell({ item, geo, editing, onResize, sort }: { item: GridItem; geo: Geometry; editing: boolean; onResize?: (id: string, size: CardSize) => void; sort?: SortItemProps }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [natural, setNatural] = useState(0);
   const [live, setLive] = useState<Live | null>(null);
@@ -529,7 +548,8 @@ function CardCell({ item, geo, editing, onResize }: { item: GridItem; geo: Geome
   const pct = item.size.w === undefined && live?.span === undefined ? undefined : Math.round((span / COLS) * 100);
   return (
     <div
-      className={`hl-cell${editing ? ' hl-cell--editing' : ''}${live ? ' hl-cell--resizing' : ''}`}
+      {...sort}
+      className={`hl-cell${editing ? ' hl-cell--editing' : ''}${live ? ' hl-cell--resizing' : ''}${sort?.className ? ` ${sort.className}` : ''}`}
       style={{ gridColumn: `span ${span}`, gridRow: `span ${rows}` }}
       data-card-id={item.id}
     >

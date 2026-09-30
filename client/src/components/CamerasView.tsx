@@ -1,21 +1,41 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type * as Y from 'yjs';
-import { cameraVersion, liveUrl, useCameras, type Camera, type CameraLink } from '../lib/cameras';
+import { cameraVersion, liveUrl, updateCamerasConfig, useCameras, type Camera, type CameraLink } from '../lib/cameras';
 import { LivePlayer, type PlayerState } from '../lib/livePlayer';
+import { isNative } from '../lib/settings';
+import { reorderItems, useSortable } from '../lib/sortable';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { CameraConfigDialog } from './CameraConfigDialog';
 
 const BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
 
-/** Vrai quand l'élément est (presque) à l'écran et l'application au premier plan : sinon le direct est coupé. */
+const PHONE = isNative() || Boolean(window.matchMedia?.('(pointer: coarse)').matches);
+/**
+ * Application en arrière-plan (fenêtre réduite ou cachée par une autre, autre onglet, autre application) : le direct
+ * continue ce temps-là, et l'image est là tout de suite au retour. Au-delà, il est coupé pour ménager le réseau, la
+ * batterie et le serveur (la dernière image reste affichée jusqu'à la reprise).
+ */
+const HIDDEN_KEEP_MS = PHONE ? 60_000 : 30 * 60_000;
+/** Caméra sortie de l'écran en faisant défiler la page : le direct continue encore ce temps-là. */
+const OFFSCREEN_KEEP_MS = 30_000;
+
+/** Vrai quand l'élément est (presque) à l'écran et l'application au premier plan, ou ne l'est plus depuis peu. */
 function useOnScreen(ref: RefObject<HTMLElement | null>): boolean {
   const [inView, setInView] = useState(true);
   const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible');
   useEffect(() => {
-    const onChange = () => setPageVisible(document.visibilityState === 'visible');
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onChange = () => {
+      clearTimeout(timer);
+      if (document.visibilityState === 'visible') setPageVisible(true);
+      else timer = setTimeout(() => setPageVisible(false), HIDDEN_KEEP_MS);
+    };
     document.addEventListener('visibilitychange', onChange);
-    return () => document.removeEventListener('visibilitychange', onChange);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onChange);
+    };
   }, []);
   useEffect(() => {
     const el = ref.current;
@@ -24,9 +44,9 @@ function useOnScreen(ref: RefObject<HTMLElement | null>): boolean {
     const io = new IntersectionObserver(
       ([entry]) => {
         clearTimeout(timer);
-        // Coupure différée : un défilement rapide ne relance pas la connexion.
+        // Coupure différée : un aller-retour en faisant défiler la page ne relance pas la connexion.
         if (entry.isIntersecting) setInView(true);
-        else timer = setTimeout(() => setInView(false), 3_000);
+        else timer = setTimeout(() => setInView(false), OFFSCREEN_KEEP_MS);
       },
       { rootMargin: '150px' },
     );
@@ -85,6 +105,8 @@ export function CameraLive({ link, name, version = '', quality, active = true }:
   const video = useRef<HTMLVideoElement>(null);
   const onScreen = useOnScreen(box);
   const [state, setState] = useState<{ state: PlayerState; message?: string }>({ state: 'connecting' });
+  // Une image a déjà été affichée pour ce flux : pendant une reconnexion, elle reste visible avec une simple mention.
+  const [shown, setShown] = useState('');
   const url = link ? `${liveUrl(link, quality)}&v=${version}` : '';
   // Adresse signée renouvelée régulièrement : relue à chaque connexion, sans couper le direct en cours.
   const urlRef = useRef(url);
@@ -96,7 +118,10 @@ export function CameraLive({ link, name, version = '', quality, active = true }:
   useEffect(() => {
     if (!run || kind !== 'video' || !video.current) return;
     setState({ state: 'connecting' });
-    const player = new LivePlayer(video.current, () => urlRef.current, (s, message) => setState({ state: s, message }));
+    const player = new LivePlayer(video.current, () => urlRef.current, (s, message) => {
+      setState({ state: s, message });
+      if (s === 'playing') setShown(stream);
+    });
     player.start();
     return () => player.stop();
   }, [run, stream, kind, video]);
@@ -104,18 +129,30 @@ export function CameraLive({ link, name, version = '', quality, active = true }:
   let overlay: string | null = null;
   if (!link) overlay = 'Préparation…';
   else if (!active || !onScreen) overlay = null;
-  else if (state.state === 'connecting') overlay = 'Connexion à la caméra…';
+  else if (state.state === 'connecting') overlay = shown === stream ? 'Reconnexion…' : 'Connexion à la caméra…';
   else if (state.state !== 'playing') overlay = state.message ?? 'Vidéo indisponible.';
+  // Dernière image affichée : petite mention dans un coin plutôt qu'un voile sur toute l'image.
+  const mini = shown === stream && state.state !== 'error';
 
   return (
     <div ref={box} className="cam-live">
       {kind === 'image' ? (
-        run ? <MjpegImage key={stream} url={() => urlRef.current} name={name} onState={(s, message) => setState({ state: s, message })} /> : null
+        run ? (
+          <MjpegImage
+            key={stream}
+            url={() => urlRef.current}
+            name={name}
+            onState={(s, message) => {
+              setState({ state: s, message });
+              if (s === 'playing') setShown(stream);
+            }}
+          />
+        ) : null
       ) : (
         <video ref={video} muted playsInline autoPlay disablePictureInPicture aria-label={`${name} en direct`} />
       )}
       {overlay ? (
-        <div className={`cam-overlay${state.state === 'error' ? ' cam-overlay--error' : ''}`}>
+        <div className={`cam-overlay${state.state === 'error' ? ' cam-overlay--error' : ''}${mini ? ' cam-overlay--mini' : ''}`}>
           {state.state === 'error' ? <Icon name="alert" size={16} /> : null}
           <span>{overlay}</span>
         </div>
@@ -166,6 +203,13 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Camera | 'new' | null>(null);
   const cameras = cameraId ? cfg.cameras.filter((c) => c.id === cameraId) : cfg.cameras;
+  // Glisser-déposer : ordre des caméras, le même partout (vue Caméras, widget, blocs des pages).
+  const { order, itemProps } = useSortable(
+    cameras.map((c) => c.id),
+    (ids) => doc && updateCamerasConfig(doc, (c) => ({ ...c, cameras: reorderItems(c.cameras, ids) })),
+    Boolean(doc && !cameraId),
+  );
+  const byId = new Map(cameras.map((c) => [c.id, c]));
   const open = openId ? cfg.cameras.find((c) => c.id === openId) ?? null : null;
   const dialog =
     editing && doc ? <CameraConfigDialog doc={doc} camera={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null;
@@ -221,22 +265,28 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
         </div>
       ) : null}
       <div className={`cam-grid${cameras.length === 1 ? ' cam-grid--single' : ''}`}>
-        {cameras.map((c) => (
-          <div key={c.id} className="cam-tile">
-            <button type="button" className="cam-tile-view" onClick={() => setOpenId(c.id)} aria-label={`Agrandir ${c.name}`}>
-              <CameraLive link={links.get(c.id)} name={c.name} version={cameraVersion(c)} quality="sd" active={!open} />
-            </button>
-            <div className="cam-tile-bar">
-              <span className="cam-live-dot" aria-hidden="true" />
-              <span className="cam-tile-name">{c.name}</span>
-              {canConfigure && doc ? (
-                <button type="button" className="nb-icon-btn cam-tile-edit" onClick={() => setEditing(c)} aria-label={`Réglages de ${c.name}`}>
-                  <Icon name="settings" size={15} />
+        {order
+          .map((id) => byId.get(id))
+          .filter((c): c is Camera => Boolean(c))
+          .map((c) => {
+            const sort = itemProps(c.id);
+            return (
+              <div key={c.id} {...sort} className={`cam-tile${sort.className ? ` ${sort.className}` : ''}`}>
+                <button type="button" className="cam-tile-view" onClick={() => setOpenId(c.id)} aria-label={`Agrandir ${c.name}`}>
+                  <CameraLive link={links.get(c.id)} name={c.name} version={cameraVersion(c)} quality="sd" active={!open} />
                 </button>
-              ) : null}
-            </div>
-          </div>
-        ))}
+                <div className="cam-tile-bar">
+                  <span className="cam-live-dot" aria-hidden="true" />
+                  <span className="cam-tile-name">{c.name}</span>
+                  {canConfigure && doc ? (
+                    <button type="button" className="nb-icon-btn cam-tile-edit" onClick={() => setEditing(c)} aria-label={`Réglages de ${c.name}`}>
+                      <Icon name="settings" size={15} />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
       </div>
       {open ? (
         <CameraModal

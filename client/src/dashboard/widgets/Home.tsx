@@ -3,7 +3,7 @@ import { CamerasPanel } from '../../components/CamerasView';
 import { SmartHomePanel } from '../../components/SmartHomeView';
 import { HomelabPanel } from '../../components/HomelabView';
 import { useCamerasConfig } from '../../lib/cameras';
-import { cardLayout, configStatusKey, saveCardSize, useHomelabConfig } from '../../lib/homelab';
+import { cardLayout, cardOrder, configStatusKey, saveCardOrder, saveCardSize, useHomelabConfig } from '../../lib/homelab';
 import { navigate } from '../../lib/router';
 import { bool, str, type SettingsProps, type WidgetProps } from '../types';
 
@@ -60,6 +60,8 @@ export function HomelabWidget({ doc }: WidgetProps) {
         refreshSeconds={cfg.refreshSeconds}
         layout={cardLayout(cfg)}
         onResize={(id, size) => saveCardSize(doc, id, size)}
+        order={cardOrder(cfg)}
+        onReorder={(ids) => saveCardOrder(doc, ids)}
         onConfigure={() => navigate('#/homelab')}
         refreshKey={configStatusKey(cfg)}
       />

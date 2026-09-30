@@ -29,7 +29,7 @@ import { CamerasView } from './components/CamerasView';
 import { LinkWithCodeDialog } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { Dashboard } from './dashboard/Dashboard';
-import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
+import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { MeloLogo } from './components/Logo';
@@ -679,6 +679,8 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
         layout={cardLayout(cfg)}
         onResize={(id, size) => saveCardSize(doc, id, size)}
         onResetLayout={() => resetCardSizes(doc)}
+        order={cardOrder(cfg)}
+        onReorder={(ids) => saveCardOrder(doc, ids)}
         refreshKey={configStatusKey(cfg)}
       />
     </div>

@@ -108,7 +108,8 @@ export function useCameras(doc: Y.Doc | null) {
   const hasServer = Boolean(serverBase());
   const [status, setStatus] = useState<CamerasStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ids = cfg.cameras.map((c) => c.id).join(',');
+  // Triés : réordonner les caméras ne redemande pas leurs adresses au serveur.
+  const ids = cfg.cameras.map((c) => c.id).sort().join(',');
   useEffect(() => {
     if (!hasServer || !ids) {
       setStatus(null);

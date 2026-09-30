@@ -90,7 +90,8 @@ export const api = {
     request<ServiceStatus | DeviceStatus>('/api/homelab/test', { method: 'POST', body: JSON.stringify(payload), auth: ownerAuth() }),
   pairStart: () => request<{ code: string; expiresAt: number }>('/api/pair/start', { method: 'POST', auth: ownerAuth() }),
   homeStates: () => request<HomeStates>('/api/home/states', { auth: ownerAuth() }),
-  homeCall: (entity_id: string, service: string, data?: Record<string, unknown>) =>
+  /** Un appareil, ou plusieurs du même type (commande de groupe). */
+  homeCall: (entity_id: string | string[], service: string, data?: Record<string, unknown>) =>
     request<{ entities: HomeEntity[] }>('/api/home/call', { method: 'POST', body: JSON.stringify({ entity_id, service, data }), auth: ownerAuth() }),
   homeTest: (cfg: { url: string; token: string; insecure: boolean }) =>
     request<{ ok: boolean; message: string }>('/api/home/test', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),

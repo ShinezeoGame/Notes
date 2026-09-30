@@ -2,7 +2,9 @@
 // affichés et pilotés via le serveur Melo, qui détient l'adresse et le jeton de Home Assistant.
 import { useEffect, useState } from 'react';
 import type * as Y from 'yjs';
-import type { IconName } from '../icons/registry';
+import { isIconName, type IconName } from '../icons/registry';
+import { newId } from './ids';
+import { reorderSubset } from './sortable';
 
 export type HomeEntity = {
   id: string;
@@ -22,21 +24,48 @@ export type HomeEntity = {
 
 export type HomeStates = { configured: boolean; entities: HomeEntity[]; error?: string; fetchedAt: number };
 
+/** Appareils pilotés ensemble (lumières d'une pièce, prises du bureau…). */
+export type HomeGroup = {
+  /** « group:… » (jamais confondu avec un appareil, dont l'identifiant contient un point). */
+  id: string;
+  name: string;
+  /** Icône choisie ; vide : d'après les appareils du groupe. */
+  icon: string;
+  members: string[];
+};
+
 export type HomeConfig = {
   url: string;
   token: string;
   insecure: boolean;
-  /** Appareils épinglés en tête de liste. */
+  /** Appareils et groupes épinglés en tête de liste, dans cet ordre. */
   favorites: string[];
   /** Appareils masqués de la liste. */
   hidden: string[];
+  groups: HomeGroup[];
+  /** Ordre choisi des appareils (glisser-déposer) ; ceux qui n'y figurent pas suivent, dans l'ordre par défaut. */
+  order: string[];
 };
 
 // ---------- Configuration (document Yjs de l'espace, comme le homelab) ----------
 
-const EMPTY_CONFIG: HomeConfig = { url: '', token: '', insecure: false, favorites: [], hidden: [] };
+const EMPTY_CONFIG: HomeConfig = { url: '', token: '', insecure: false, favorites: [], hidden: [], groups: [], order: [] };
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+
+function readGroups(v: unknown): HomeGroup[] {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  const out: HomeGroup[] = [];
+  for (const raw of v) {
+    if (!raw || typeof raw !== 'object') continue;
+    const g = raw as Record<string, unknown>;
+    if (typeof g.id !== 'string' || !isGroupId(g.id) || seen.has(g.id)) continue;
+    seen.add(g.id);
+    out.push({ id: g.id, name: typeof g.name === 'string' ? g.name : '', icon: typeof g.icon === 'string' ? g.icon : '', members: strings(g.members) });
+  }
+  return out;
+}
 
 export function readHomeConfig(doc: Y.Doc): HomeConfig {
   try {
@@ -47,6 +76,8 @@ export function readHomeConfig(doc: Y.Doc): HomeConfig {
       insecure: Boolean(raw.insecure),
       favorites: strings(raw.favorites),
       hidden: strings(raw.hidden),
+      groups: readGroups(raw.groups),
+      order: strings(raw.order),
     };
   } catch {
     return { ...EMPTY_CONFIG };
@@ -365,15 +396,172 @@ export function toggleCommand(e: HomeEntity): { service: string; data?: Record<s
   return { service: on ? 'turn_off' : 'turn_on', optimistic: { state: on ? 'off' : 'on' } };
 }
 
-/** Regroupe par pièce (ordre alphabétique, appareils sans pièce à la fin). */
-export function groupByArea(list: HomeEntity[]): [string, HomeEntity[]][] {
+/**
+ * Regroupe par pièce (ordre alphabétique, appareils sans pièce à la fin). Dans une pièce : l'ordre choisi par
+ * glisser-déposer, puis par type d'appareil et par nom.
+ */
+export function groupByArea(list: HomeEntity[], order: readonly string[] = []): [string, HomeEntity[]][] {
   const groups = new Map<string, HomeEntity[]>();
   for (const e of list) {
     const key = e.area || '';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(e);
   }
-  const order = (e: HomeEntity) => CATEGORIES.findIndex((c) => c.key === categoryOf(e.domain));
-  for (const items of groups.values()) items.sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name, 'fr'));
+  const rank = new Map(order.map((id, i) => [id, i]));
+  const kind = (e: HomeEntity) => CATEGORIES.findIndex((c) => c.key === categoryOf(e.domain));
+  const compare = (a: HomeEntity, b: HomeEntity) => {
+    const ra = rank.get(a.id) ?? Infinity;
+    const rb = rank.get(b.id) ?? Infinity;
+    if (ra !== rb) return ra - rb;
+    return kind(a) - kind(b) || a.name.localeCompare(b.name, 'fr');
+  };
+  for (const items of groups.values()) items.sort(compare);
   return Array.from(groups.entries()).sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'fr')));
+}
+
+/** Enregistre l'ordre d'appareils affichés ensemble (une pièce, les résultats d'une recherche…) après un glisser-déposer. */
+export function saveEntityOrder(doc: Y.Doc, all: HomeEntity[], shown: string[]) {
+  updateHomeConfig(doc, (c) => {
+    const full = groupByArea(all, c.order).flatMap(([, items]) => items.map((e) => e.id));
+    return { ...c, order: reorderSubset(full, shown) };
+  });
+}
+
+/** Nouvel ordre des favoris affichés (les favoris introuvables gardent leur place). */
+export function saveFavoritesOrder(doc: Y.Doc, shown: string[]) {
+  updateHomeConfig(doc, (c) => ({ ...c, favorites: reorderSubset(c.favorites, shown) }));
+}
+
+// ---------- Groupes ----------
+
+export const isGroupId = (id: string) => id.startsWith('group:');
+export const newGroupId = () => `group:${newId()}`;
+
+const isCover = (e: HomeEntity) => e.domain === 'cover' || e.domain === 'valve';
+/** Appareils qu'un groupe peut piloter : à interrupteur (lumières, prises, ventilateurs, chauffage…) ou volets et vannes. */
+export const isGroupable = (e: HomeEntity) => isToggleable(e) || isCover(e);
+export const isSwitchedOn = (e: HomeEntity) => (e.domain === 'climate' ? e.state !== 'off' : e.state === 'on');
+
+export function groupMembers(g: HomeGroup, byId: Map<string, HomeEntity>): HomeEntity[] {
+  return g.members.map((id) => byId.get(id)).filter((e): e is HomeEntity => Boolean(e));
+}
+
+/** Le groupe compte comme allumé (tuile colorée) dès qu'un de ses appareils l'est, ou qu'un volet est ouvert. */
+export function isGroupActive(members: HomeEntity[]): boolean {
+  return members.some((e) => !isUnavailable(e) && (isToggleable(e) ? isSwitchedOn(e) : isActive(e)));
+}
+
+export const groupHasSwitch = (members: HomeEntity[]) => members.some((e) => isToggleable(e));
+
+/** Luminosité moyenne des lampes allumées qui la règlent (null : aucune). */
+export function groupBrightness(members: HomeEntity[]): number | null {
+  const values = members.map(brightnessPct).filter((v): v is number => v !== null);
+  return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : null;
+}
+
+/** « 3 allumées sur 5 · 60 % », « Toutes éteintes », « Tous fermés »… */
+export function groupLabel(members: HomeEntity[]): string {
+  if (!members.length) return 'Aucun appareil';
+  const available = members.filter((e) => !isUnavailable(e));
+  if (!available.length) return 'Indisponible';
+  const parts: string[] = [];
+  const toggles = available.filter(isToggleable);
+  if (toggles.length) {
+    const on = toggles.filter(isSwitchedOn).length;
+    const f = toggles.every((e) => e.domain === 'light'); // « les lampes » : accord au féminin
+    const one = toggles.length === 1;
+    if (on === 0) parts.push(one ? (f ? 'Éteinte' : 'Éteint') : f ? 'Toutes éteintes' : 'Tous éteints');
+    else if (on === toggles.length) parts.push(one ? (f ? 'Allumée' : 'Allumé') : f ? 'Toutes allumées' : 'Tous allumés');
+    else parts.push(`${on} ${f ? 'allumée' : 'allumé'}${on > 1 ? 's' : ''} sur ${toggles.length}`);
+    const pct = groupBrightness(toggles);
+    if (pct !== null) parts.push(`${pct} %`);
+  }
+  const covers = available.filter(isCover);
+  if (covers.length) {
+    const open = covers.filter(isActive).length;
+    const one = covers.length === 1;
+    if (open === 0) parts.push(one ? 'Fermé' : 'Tous fermés');
+    else if (open === covers.length) parts.push(one ? 'Ouvert' : 'Tous ouverts');
+    else parts.push(`${open} ouvert${open > 1 ? 's' : ''} sur ${covers.length}`);
+  }
+  return parts.join(' · ');
+}
+
+/** Icône du groupe : celle choisie, sinon d'après ses appareils. */
+export function groupIcon(g: HomeGroup, members: HomeEntity[]): IconName {
+  if (g.icon && isIconName(g.icon)) return g.icon;
+  return autoGroupIcon(members);
+}
+
+export function autoGroupIcon(members: HomeEntity[]): IconName {
+  if (!members.length) return 'grid';
+  const icons = new Set(members.map(entityIcon));
+  return icons.size === 1 ? [...icons][0] : members.every((e) => e.domain === 'light') ? 'bulb' : 'grid';
+}
+
+/** Commande envoyée à plusieurs appareils du même type à la fois (le serveur la transmet en une seule fois). */
+export type HomeCall = { ids: string[]; service: string; data?: Record<string, unknown>; optimistic?: Partial<HomeEntity> };
+
+function byDomain(list: HomeEntity[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const e of list) {
+    if (!out.has(e.domain)) out.set(e.domain, []);
+    out.get(e.domain)!.push(e.id);
+  }
+  return out;
+}
+
+/** Tout allumer (on) ou tout éteindre : un appel par type d'appareil, le chauffage un par un (chacun son mode). */
+export function groupSwitchCalls(members: HomeEntity[], on: boolean): HomeCall[] {
+  const calls: HomeCall[] = [];
+  const toggles = members.filter((e) => !isUnavailable(e) && isToggleable(e));
+  for (const e of toggles.filter((x) => x.domain === 'climate')) {
+    const modes = Array.isArray(e.attrs.hvac_modes) ? (e.attrs.hvac_modes as string[]) : [];
+    const target = on ? (modes.find((m) => m !== 'off') ?? 'heat') : 'off';
+    if ((e.state !== 'off') !== on) calls.push({ ids: [e.id], service: 'set_hvac_mode', data: { hvac_mode: target }, optimistic: { state: target } });
+  }
+  for (const [, ids] of byDomain(toggles.filter((x) => x.domain !== 'climate'))) {
+    calls.push({ ids, service: on ? 'turn_on' : 'turn_off', optimistic: { state: on ? 'on' : 'off' } });
+  }
+  return calls;
+}
+
+export function groupBrightnessCalls(members: HomeEntity[], pct: number): HomeCall[] {
+  const ids = members.filter((e) => e.domain === 'light' && !isUnavailable(e) && supportsBrightness(e)).map((e) => e.id);
+  return ids.length ? [{ ids, service: 'turn_on', data: { brightness_pct: pct }, optimistic: { state: 'on', attrs: { brightness: Math.round((pct / 100) * 255) } } }] : [];
+}
+
+/** Même couleur pour toutes les lampes du groupe qui la gèrent (blancs : température de couleur quand elle existe). */
+export function groupColorCalls(members: HomeEntity[], preset: { rgb?: [number, number, number]; kelvin?: number }): HomeCall[] {
+  const lights = members.filter((e) => e.domain === 'light' && !isUnavailable(e));
+  if (preset.rgb) {
+    const ids = lights.filter(supportsColor).map((e) => e.id);
+    return ids.length ? [{ ids, service: 'turn_on', data: { rgb_color: preset.rgb }, optimistic: { state: 'on', attrs: { rgb_color: preset.rgb } } }] : [];
+  }
+  const calls: HomeCall[] = [];
+  const temp = lights.filter(supportsColorTemp).map((e) => e.id);
+  const colorOnly = lights.filter((e) => !supportsColorTemp(e) && supportsColor(e)).map((e) => e.id);
+  if (temp.length) calls.push({ ids: temp, service: 'turn_on', data: { color_temp_kelvin: preset.kelvin }, optimistic: { state: 'on', attrs: { color_temp_kelvin: preset.kelvin } } });
+  if (colorOnly.length) calls.push({ ids: colorOnly, service: 'turn_on', data: { rgb_color: [255, 214, 170] }, optimistic: { state: 'on', attrs: { rgb_color: [255, 214, 170] } } });
+  return calls;
+}
+
+/** Ouvrir, fermer ou arrêter tous les volets et vannes du groupe. */
+export function groupCoverCalls(members: HomeEntity[], action: 'open' | 'close' | 'stop'): HomeCall[] {
+  const feature = action === 'open' ? 'OPEN' : action === 'close' ? 'CLOSE' : 'STOP';
+  const covers = members.filter((e) => isCover(e) && !isUnavailable(e) && coverSupports(e, feature));
+  const optimistic = action === 'stop' ? undefined : { state: action === 'open' ? 'opening' : 'closing' };
+  return [...byDomain(covers)].map(([domain, ids]) => ({ ids, service: `${action}_${domain}`, optimistic }));
+}
+
+export const groupHasCovers = (members: HomeEntity[]) => members.some(isCover);
+export const groupHasLights = (members: HomeEntity[]) => members.some((e) => e.domain === 'light');
+
+/** Nom proposé d'après les appareils choisis (« Lumières · Salon »…). */
+export function suggestGroupName(members: HomeEntity[]): string {
+  if (!members.length) return '';
+  const cats = new Set(members.map((e) => categoryOf(e.domain)));
+  const areas = new Set(members.map((e) => e.area).filter(Boolean));
+  const cat = cats.size === 1 ? CATEGORIES.find((c) => c.key === [...cats][0])?.label ?? 'Appareils' : 'Appareils';
+  return areas.size === 1 && members.every((e) => e.area) ? `${cat} · ${[...areas][0]}` : cat;
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import type * as Y from 'yjs';
 import { newId } from './ids';
+import { reorderItems } from './sortable';
 import { isIconName, type IconName } from '../icons/registry';
 import { legacyEmojiIcon } from '../icons/legacy';
 
@@ -319,7 +320,17 @@ export function resetCardSizes(doc: Y.Doc) {
   saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(withoutSize), devices: cfg.devices.map(withoutSize) });
 }
 
-/** Empreinte de la configuration (hors tailles) : change quand il faut réinterroger le serveur. */
+/** Ordre des modules : appareils puis applications, tel que choisi par glisser-déposer. */
+export const cardOrder = (cfg: HomelabConfig): string[] => [...cfg.devices.map((d) => d.id), ...cfg.services.map((s) => s.id)];
+
+/** Nouvel ordre des modules affichés ensemble (les appareils, ou les applications d'une catégorie). */
+export function saveCardOrder(doc: Y.Doc, ids: string[]) {
+  const cfg = readHomelabConfig(doc);
+  saveHomelabConfig(doc, { ...cfg, services: reorderItems(cfg.services, ids), devices: reorderItems(cfg.devices, ids) });
+}
+
+/** Empreinte de la configuration (hors tailles et ordre) : change quand il faut réinterroger le serveur. */
 export function configStatusKey(cfg: HomelabConfig): string {
-  return JSON.stringify([cfg.services.map(withoutSize), cfg.devices.map(withoutSize)]);
+  const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
+  return JSON.stringify([[...cfg.services].sort(byId).map(withoutSize), [...cfg.devices].sort(byId).map(withoutSize)]);
 }
