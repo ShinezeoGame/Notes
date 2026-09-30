@@ -226,12 +226,12 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
             <b>Identifiant et mot de passe</b> : ceux de la caméra (ou de l’enregistreur), souvent « admin » et le mot de passe choisi à l’installation.
           </li>
           <li>
-            Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Notes doit être
+            Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Melo doit être
             sur le même réseau que la caméra.
           </li>
           <li>Les miniatures utilisent le flux secondaire de la caméra (plus léger) ; la vue agrandie, le flux principal. La vidéo est transmise sans le son.</li>
         </ul>
-        <p className="nb-muted">Les identifiants restent sur votre serveur Notes et vos appareils ; la vidéo passe par le serveur.</p>
+        <p className="nb-muted">Les identifiants restent sur votre serveur Melo et vos appareils ; la vidéo passe par le serveur.</p>
       </details>
     </Modal>
   );

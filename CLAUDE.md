@@ -1,6 +1,6 @@
-# Notes : repères pour Claude Code
+# Melo : repères pour Claude Code
 
-Application de notes façon Notion (web + Android) avec collaboration en direct. Code commenté en français ; textes
+Melo (anciennement « Notes », nom resté dans le dépôt, les identifiants et la section des pages) : application à tout faire (accueil en tableau de bord de widgets, notes, agenda, maison connectée…), web + Android, collaboration en direct. Code commenté en français ; textes
 de l'interface et messages de commit en français. Architecture : section « Architecture » du README.
 
 ## Style des réponses (caveman)

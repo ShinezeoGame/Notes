@@ -1,7 +1,7 @@
 {
-  "name": "Notes",
-  "short_name": "Notes",
-  "description": "Pages et notes, agenda, homelab, maison connectée et atelier PDF, synchronisés avec votre serveur Notes.",
+  "name": "Melo",
+  "short_name": "Melo",
+  "description": "L’application à tout faire : accueil personnalisable, notes, agenda, maison connectée, caméras, homelab et atelier PDF, synchronisés avec votre serveur Melo.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -11,9 +11,9 @@
   "dir": "ltr",
   "categories": ["productivity"],
   "icons": [
-    { "src": "icons/notes-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/notes-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/notes-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/melo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/melo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/melo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [

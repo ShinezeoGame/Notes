@@ -8,6 +8,7 @@ import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { useMediaQuery } from '../lib/hooks';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
+import { MeloLogo } from './Logo';
 
 export const SECTIONS: Record<SectionId, { label: string; icon: IconName; hash: string }> = {
   home: { label: 'Accueil', icon: 'dashboard', hash: '#/' },
@@ -25,7 +26,7 @@ export const STATUS_LABEL: Record<ConnStatus, string> = {
   connected: 'Synchronisé',
   disconnected: 'Déconnecté – nouvelle tentative…',
   denied: 'Accès refusé par le serveur',
-  outdated: 'Mise à jour de Notes nécessaire',
+  outdated: 'Mise à jour de Melo nécessaire',
 };
 
 /** Sections affichées sur la barre d'onglets du téléphone, avant « Plus ». */
@@ -123,7 +124,7 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
   return (
     <nav className={`nb-rail${collapsed ? ' nb-rail--collapsed' : ''}`} aria-label="Sections">
       <div className="nb-rail-head">
-        <span className="nb-workspace-avatar">N</span>
+        <MeloLogo size={22} className="nb-workspace-avatar" />
         <span className="nb-rail-name">Mon espace</span>
         <span className={`nb-status nb-status--${status}`} title={STATUS_LABEL[status]} />
       </div>

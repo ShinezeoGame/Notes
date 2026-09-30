@@ -621,7 +621,7 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>La maison connectée passe par le serveur Notes, qui dialogue avec Home Assistant sur votre réseau local.</p>
+        <p>La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.</p>
         <p className="nb-muted">Configurez l’adresse du serveur dans les réglages.</p>
       </div>
     );
@@ -739,7 +739,7 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
 /** Vue « Maison » (barre latérale). */
 export function SmartHomeView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = 'Maison – Notes';
+    document.title = 'Maison – Melo';
   }, []);
   return (
     <div className="nb-page hl-page sh-page">

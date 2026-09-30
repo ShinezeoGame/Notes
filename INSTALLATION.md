@@ -1,6 +1,6 @@
-# Installer Notes sur votre serveur et y accéder depuis partout
+# Installer Melo sur votre serveur et y accéder depuis partout
 
-Ce guide installe Notes sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, puis partage des pages en **modification en direct**.
+Ce guide installe Melo sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, puis partage des pages en **modification en direct**.
 
 **Prérequis** : un serveur Linux (ou un NAS avec Docker : Unraid, TrueNAS SCALE, Synology Container Manager, Proxmox LXC…) avec `git`, Docker et le plugin Docker Compose. Vérifiez :
 
@@ -123,7 +123,7 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
    tailscale version
    ```
 
-2. Publiez le port de Notes (3000, ou la valeur de `NOTES_PORT`) :
+2. Publiez le port de Melo (3000, ou la valeur de `NOTES_PORT`) :
 
    ```bash
    sudo tailscale funnel --bg 3000
@@ -173,14 +173,14 @@ Sur un appareil déjà relié : **Réglages → Afficher un code de liaison**. U
 
 Les pages créées sur un appareil avant de le relier ne sont pas transférées. Après 5 codes faux, le serveur fait patienter une minute ; après 10, tous les codes en cours sont annulés.
 
-### Installer Notes sur Windows (ou Mac, Linux)
+### Installer Melo sur Windows (ou Mac, Linux)
 
-Notes s’installe comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
+Melo s’installe comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
 
 1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
-2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Notes sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
+2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Melo sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
 
-Notes s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Notes** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
+Melo s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Melo** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
 
 ### Atelier PDF sur le téléphone
 
@@ -211,11 +211,11 @@ Appliquez avec `docker compose up -d`, puis listez `/mnt/media` dans les points 
 
 ### Maison connectée (Home Assistant)
 
-La section **Maison** pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Notes → **Maison** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Notes tourne dans son propre conteneur).
+La section **Maison** pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Melo → **Maison** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Melo tourne dans son propre conteneur).
 
 ### Caméras de surveillance
 
-La section **Caméras** se connecte directement à vos caméras IP et enregistreurs (flux RTSP, images ou flux MJPEG) : rien à installer, le lecteur vidéo (ffmpeg) est inclus dans l’image Docker de Notes. Les caméras doivent être joignables depuis le serveur (même réseau local) : donnez‑leur une adresse IP fixe dans votre box (réservation DHCP), puis ajoutez‑les dans Notes → **Caméras** → **Ajouter une caméra** et cliquez sur **Tester**. Sans Docker, installez ffmpeg sur le serveur (`sudo apt install ffmpeg`).
+La section **Caméras** se connecte directement à vos caméras IP et enregistreurs (flux RTSP, images ou flux MJPEG) : rien à installer, le lecteur vidéo (ffmpeg) est inclus dans l’image Docker de Melo. Les caméras doivent être joignables depuis le serveur (même réseau local) : donnez‑leur une adresse IP fixe dans votre box (réservation DHCP), puis ajoutez‑les dans Melo → **Caméras** → **Ajouter une caméra** et cliquez sur **Tester**. Sans Docker, installez ffmpeg sur le serveur (`sudo apt install ffmpeg`).
 
 ### Mise à jour automatique (recommandé)
 
@@ -245,4 +245,4 @@ tar czf ~/notes-$(date +%F).tar.gz data      # sauvegarder toutes les données
 
 Restaurer une sauvegarde : arrêtez (`docker compose down`), remplacez le dossier `data` par celui de l’archive, relancez (`docker compose up -d`).
 
-Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour de Notes disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.
+Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour de Melo disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.

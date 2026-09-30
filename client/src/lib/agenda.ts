@@ -82,7 +82,7 @@ export function removeCalendar(doc: Y.Doc, id: string) {
 export const isGoogleSource = (source: string) => source.startsWith('google:');
 
 /**
- * Relit un agenda. iCal : par le serveur Notes (sans intervention) ; Google : fenêtre de connexion au compte Google
+ * Relit un agenda. iCal : par le serveur Melo (sans intervention) ; Google : fenêtre de connexion au compte Google
  * (à lancer depuis un clic). Renvoie le nombre d'événements et les agendas Google illisibles.
  */
 export async function refreshCalendar(
@@ -99,7 +99,7 @@ export async function refreshCalendar(
     const token = await requestGoogleToken(clientId);
     ({ events, failed } = await fetchGoogleCalendarsEvents(token, parseGoogleSource(cal.source)));
   } else {
-    if (!fetchIcs) throw new Error('Un serveur Notes est nécessaire pour actualiser un agenda iCal.');
+    if (!fetchIcs) throw new Error('Un serveur Melo est nécessaire pour actualiser un agenda iCal.');
     events = parseIcs(await fetchIcs(cal.source)).events;
   }
   writeEvents(doc, cal.id, events);

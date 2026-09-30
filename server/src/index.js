@@ -357,7 +357,7 @@ app.post('/api/ics/fetch', requireEditor, async (req, res) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
   try {
-    const r = await fetch(parsed, { signal: controller.signal, redirect: 'follow', headers: { 'user-agent': 'Notes/1.0' } });
+    const r = await fetch(parsed, { signal: controller.signal, redirect: 'follow', headers: { 'user-agent': 'Melo/1.0' } });
     if (!r.ok) return res.status(502).json({ error: `Le serveur distant a répondu ${r.status}.` });
     const len = Number(r.headers.get('content-length') || 0);
     if (len > 10 * 1024 * 1024) return res.status(413).json({ error: 'Flux trop volumineux.' });
@@ -410,7 +410,7 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {
-  app.get('/', (_req, res) => res.type('text').send('Serveur Notes actif. Le client n’est pas construit (npm run build).'));
+  app.get('/', (_req, res) => res.type('text').send('Serveur Melo actif. Le client n’est pas construit (npm run build).'));
 }
 
 app.use((req, res) => res.status(404).json({ error: 'Introuvable.' }));
@@ -455,7 +455,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Notes : serveur démarré sur http://${HOST}:${PORT}`);
+  console.log(`Melo : serveur démarré sur http://${HOST}:${PORT}`);
 });
 
 async function shutdown() {

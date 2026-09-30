@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 
 /**
- * Vérification périodique (toutes les heures, avec réseau) de la version du client proposée par le serveur Notes :
+ * Vérification périodique (toutes les heures, avec réseau) de la version du client proposée par le serveur Melo :
  * une notification signale une nouvelle version, une seule fois par version.
  */
 public class UpdateCheckJob extends JobService {

@@ -21,6 +21,8 @@ export type Settings = {
   recentPages: string[];
   /** Colonne des pages masquée dans la section Notes, sur ordinateur. */
   pagesHidden: boolean;
+  /** Astuce de l'accueil (glisser, tirer un coin) déjà vue sur cet appareil. */
+  dashTipSeen: boolean;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -56,6 +58,7 @@ function defaults(): Settings {
     navCollapsed: false,
     recentPages: [],
     pagesHidden: false,
+    dashTipSeen: false,
   };
 }
 

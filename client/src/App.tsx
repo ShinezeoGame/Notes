@@ -32,6 +32,7 @@ import { Dashboard } from './dashboard/Dashboard';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
+import { MeloLogo } from './components/Logo';
 
 // Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
@@ -71,7 +72,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   return (
     <div className="nb-center">
       <div className="nb-card">
-        <div className="nb-logo">N</div>
+        <MeloLogo size={48} className="nb-logo" />
         <h1>Lier cet appareil</h1>
         <p className="nb-muted">
           Ce lien connecte cet appareil à un espace de travail existant. Les pages locales actuelles ne seront plus affichées ici.
@@ -339,7 +340,7 @@ function OwnerApp() {
           ) : null}
           {status === 'outdated' ? (
             <div className="nb-banner nb-banner--error">
-              Cette page utilise une nouveauté de Notes (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
+              Cette page utilise une nouveauté de Melo (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
               sur l’appareil en attendant.
               <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
                 Mettre à jour
@@ -393,7 +394,7 @@ function OwnerApp() {
 function NotesEmpty({ store, onCreate }: { store: WorkspaceStore; onCreate: () => void }) {
   useWorkspacePages(store);
   useEffect(() => {
-    document.title = 'Notes';
+    document.title = 'Notes – Melo';
   }, []);
   return (
     <div className="nb-center-pane">
@@ -554,7 +555,7 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
   const { handle, ready } = useDocHandle(pgRoom(settings.workspaceId, pageId), ownerAuth(), true);
 
   useEffect(() => {
-    document.title = page ? `${page.title || 'Sans titre'} – Notes` : 'Notes';
+    document.title = page ? `${page.title || 'Sans titre'} – Melo` : 'Melo';
   }, [page?.title, page]);
 
   // Les invités d'un lien de partage lisent la largeur dans le document de la page.
@@ -664,7 +665,7 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
   const cfg = useHomelabConfig(doc);
   const configured = cfg.services.length > 0 || cfg.devices.length > 0;
   useEffect(() => {
-    document.title = 'Homelab – Notes';
+    document.title = 'Homelab – Melo';
   }, []);
   return (
     <div className="nb-page hl-page">

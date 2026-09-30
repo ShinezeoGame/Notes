@@ -28,7 +28,7 @@ export default function PdfApp({ doc, pdfId }: { doc: Y.Doc; pdfId: string | nul
           <Icon name="filePdf" size={34} /> PDF
         </h1>
         <div className="nb-notice">
-          <p>L’atelier PDF garde vos fichiers sur votre serveur Notes.</p>
+          <p>L’atelier PDF garde vos fichiers sur votre serveur Melo.</p>
           <p className="nb-muted">Ajoutez l’adresse de votre serveur dans les réglages pour l’utiliser.</p>
         </div>
       </div>

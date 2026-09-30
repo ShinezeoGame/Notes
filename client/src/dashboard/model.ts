@@ -198,6 +198,11 @@ export function saveLayouts(doc: Y.Doc, layouts: Layouts) {
   writeData(doc, { ...data, layouts: clean });
 }
 
+/** Enregistre la disposition d'une taille d'écran après un déplacement ou un redimensionnement. */
+export function saveLayout(doc: Y.Doc, bp: Breakpoint, items: readonly GridItem[]) {
+  saveLayouts(doc, { ...current(doc).layouts, [bp]: [...items] });
+}
+
 /** Revient au tableau de bord de départ. */
 export function resetDashboard(doc: Y.Doc) {
   writeData(doc, defaultDashboard(doc));

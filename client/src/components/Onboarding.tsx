@@ -4,6 +4,7 @@ import { clearLocalDocs } from '../lib/yjs';
 import { Icon } from '../icons/Icon';
 import { linkWithCode } from '../lib/pairing';
 import { PairingCodeInput } from './LinkDevice';
+import { MeloLogo } from './Logo';
 
 export function Onboarding() {
   const [mode, setMode] = useState<'choose' | 'connect'>('choose');
@@ -56,9 +57,9 @@ export function Onboarding() {
   return (
     <div className="nb-center nb-onboarding">
       <div className="nb-card">
-        <div className="nb-logo">N</div>
-        <h1>Bienvenue dans Notes</h1>
-        <p className="nb-muted">Un espace sombre et sobre pour écrire, organiser des pages dans des pages, et collaborer en direct.</p>
+        <MeloLogo size={48} className="nb-logo" />
+        <h1>Bienvenue dans Melo</h1>
+        <p className="nb-muted">Votre accueil, vos notes, votre agenda et votre maison au même endroit, sur tous vos appareils.</p>
         {mode === 'choose' ? (
           <div className="nb-choices">
             <button type="button" className="nb-choice" onClick={offline}>

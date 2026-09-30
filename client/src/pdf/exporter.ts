@@ -365,8 +365,8 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
 
   const out = await L.PDFDocument.create();
   if (opts.title) out.setTitle(opts.title);
-  out.setCreator('Notes');
-  out.setProducer('Notes');
+  out.setCreator('Melo');
+  out.setProducer('Melo');
   const needsFont = refs.some((r) => state.annotsByPage.get(r.id)?.some((a) => a.type === 'text'));
   const ctx: DrawContext = { L, out, font: needsFont ? await out.embedFont(L.StandardFonts.Helvetica) : null, images: new Map() };
 

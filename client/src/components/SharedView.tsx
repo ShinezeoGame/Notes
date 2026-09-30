@@ -44,7 +44,7 @@ export function SharedView({ token, pageId }: Props) {
   const icon = meta.icon || pageInfo?.icon || '';
 
   useEffect(() => {
-    document.title = `${title || 'Sans titre'} – Notes (partagé)`;
+    document.title = `${title || 'Sans titre'} – Melo (partagé)`;
   }, [title]);
 
   const importCalendar = useCallback(
@@ -164,7 +164,7 @@ export function SharedView({ token, pageId }: Props) {
             </div>
           </header>
           {status === 'denied' ? <div className="nb-banner">Le serveur a refusé l’accès à cette page (lien révoqué ?).</div> : null}
-          {status === 'outdated' ? <div className="nb-banner">Rechargez la page : une version plus récente de Notes est nécessaire pour l’afficher.</div> : null}
+          {status === 'outdated' ? <div className="nb-banner">Rechargez la page : une version plus récente de Melo est nécessaire pour l’afficher.</div> : null}
           <div className="nb-content">
             <PageEditorPane
               handle={handle}

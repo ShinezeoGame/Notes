@@ -1,5 +1,5 @@
 #!/bin/sh
-# Programme la mise à jour automatique du serveur Notes : toutes les 15 minutes, le serveur récupère les
+# Programme la mise à jour automatique du serveur Melo : toutes les 15 minutes, le serveur récupère les
 # nouveautés du dépôt et se reconstruit s'il y en a (scripts/auto-update.sh).
 #
 #   sh scripts/install-auto-update.sh            installer (et vérifier une première fois)

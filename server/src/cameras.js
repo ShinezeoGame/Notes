@@ -1,4 +1,4 @@
-// Caméras de surveillance reliées directement au serveur Notes (sans Home Assistant) : flux vidéo RTSP des caméras
+// Caméras de surveillance reliées directement au serveur Melo (sans Home Assistant) : flux vidéo RTSP des caméras
 // IP et enregistreurs (Hikvision, Dahua, Reolink, Tapo…), ou images et flux MJPEG en http.
 //
 // Le serveur se connecte aux caméras sur le réseau local ; les navigateurs ne reçoivent que la vidéo, par des adresses
@@ -188,7 +188,7 @@ export function hasFfmpeg() {
   });
 }
 
-const NO_FFMPEG = 'ffmpeg n’est pas installé sur le serveur Notes (il est inclus dans l’image Docker ; sinon : sudo apt install ffmpeg).';
+const NO_FFMPEG = 'ffmpeg n’est pas installé sur le serveur Melo (il est inclus dans l’image Docker ; sinon : sudo apt install ffmpeg).';
 
 function inputArgs(input) {
   const args = [];
@@ -232,7 +232,7 @@ export function explainFfmpeg(stderr) {
     return 'Adresse de la caméra introuvable.';
   }
   if (/timed out|Operation timed out|No route to host|Network is unreachable|Host is unreachable/i.test(s)) {
-    return 'Caméra injoignable depuis le serveur Notes : vérifiez son adresse IP.';
+    return 'Caméra injoignable depuis le serveur Melo : vérifiez son adresse IP.';
   }
   if (/not on whitelist|Protocol not found/i.test(s)) return 'Type d’adresse non pris en charge (rtsp://, rtsps://, rtmp:// ou http(s)://).';
   if (/Stream map .* matches no streams|does not contain any stream|Invalid data found|Could not find codec parameters/i.test(s)) {
@@ -626,7 +626,7 @@ function hubFor(candidates, mode, quality) {
   const key = mode === 'copy' ? `copy\n${candidates.join('\n')}` : `${mode}\n${quality}\n${candidates.join('\n')}`;
   const existing = hubs.get(key);
   if (existing && !existing.closed) return existing;
-  if (hubs.size >= MAX_HUBS) throw httpError(503, 'Trop de flux vidéo ouverts en même temps sur le serveur Notes.');
+  if (hubs.size >= MAX_HUBS) throw httpError(503, 'Trop de flux vidéo ouverts en même temps sur le serveur Melo.');
   const hub = new Hub(key, candidates, mode, quality);
   hubs.set(key, hub);
   return hub;
@@ -708,7 +708,7 @@ function digestHeader(d, user, pass, target) {
 function requestOnce(target, headers, insecure) {
   return new Promise((resolve, reject) => {
     const lib = target.protocol === 'https:' ? https : http;
-    const req = lib.request(target, { headers: { 'user-agent': 'Notes-Cameras/1.0', ...headers }, rejectUnauthorized: !insecure, timeout: 10_000 }, resolve);
+    const req = lib.request(target, { headers: { 'user-agent': 'Melo-Cameras/1.0', ...headers }, rejectUnauthorized: !insecure, timeout: 10_000 }, resolve);
     req.on('timeout', () => req.destroy(new Error('Délai dépassé')));
     req.on('error', reject);
     req.end();
@@ -719,7 +719,7 @@ function explainHttp(err) {
   const msg = err?.message || '';
   if (/ECONNREFUSED/.test(msg)) return 'La caméra refuse la connexion à cette adresse (port ?).';
   if (/ENOTFOUND|EAI_AGAIN/.test(msg)) return 'Adresse de la caméra introuvable.';
-  return 'Caméra injoignable depuis le serveur Notes : vérifiez son adresse.';
+  return 'Caméra injoignable depuis le serveur Melo : vérifiez son adresse.';
 }
 
 /**

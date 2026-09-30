@@ -47,7 +47,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
   const incoming = useIncomingCount();
 
   useEffect(() => {
-    document.title = 'PDF – Notes';
+    document.title = 'PDF – Melo';
     purgeStale(library);
   }, [library]);
 

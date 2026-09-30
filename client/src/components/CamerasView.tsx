@@ -173,7 +173,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>Les caméras passent par le serveur Notes, qui s’y connecte sur votre réseau local.</p>
+        <p>Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.</p>
         <p className="nb-muted">Configurez l’adresse du serveur dans les réglages.</p>
       </div>
     );
@@ -211,7 +211,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
       ) : null}
       {needsFfmpeg ? (
         <div className="nb-error cam-problem">
-          <Icon name="alert" size={15} /> ffmpeg n’est pas installé sur le serveur Notes : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur
+          <Icon name="alert" size={15} /> ffmpeg n’est pas installé sur le serveur Melo : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur
           Docker, ou installez ffmpeg).
         </div>
       ) : null}
@@ -257,7 +257,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
 /** Vue « Caméras » (barre latérale). */
 export function CamerasView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = 'Caméras – Notes';
+    document.title = 'Caméras – Melo';
   }, []);
   return (
     <div className="nb-page hl-page cam-page">

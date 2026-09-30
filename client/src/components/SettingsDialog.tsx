@@ -26,7 +26,7 @@ function UpdatesSection() {
   const available = isUpdateAvailable(u);
   const busy = u.checking || u.progress !== null;
   let status: string;
-  if (!settings.serverUrl) status = 'Les mises à jour sont distribuées par votre serveur Notes : configurez-le ci-dessus.';
+  if (!settings.serverUrl) status = 'Les mises à jour sont distribuées par votre serveur Melo : configurez-le ci-dessus.';
   else if (u.checking) status = 'Recherche d’une mise à jour…';
   else if (!u.remote) status = 'Version du serveur inconnue (serveur injoignable ?).';
   else if (!available) status = 'L’application est à jour.';
@@ -71,13 +71,13 @@ function UpdatesSection() {
   );
 }
 
-/** Navigateur : installer Notes comme une application (menu Démarrer, barre des tâches, fenêtre à part). */
+/** Navigateur : installer Melo comme une application (menu Démarrer, barre des tâches, fenêtre à part). */
 function InstallBlock() {
   const { canInstall, installed } = useInstallState();
   if (isInstalledApp()) {
     return (
       <p className="nb-muted nb-install-note">
-        <Icon name="checkCircle" size={15} /> Application Notes installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.
+        <Icon name="checkCircle" size={15} /> Application Melo installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.
       </p>
     );
   }
@@ -85,7 +85,7 @@ function InstallBlock() {
     return (
       <div className="nb-install">
         <button type="button" className="nb-btn nb-btn--primary" onClick={() => void promptInstall()}>
-          <Icon name="download" size={15} /> Installer Notes sur cet ordinateur
+          <Icon name="download" size={15} /> Installer Melo sur cet ordinateur
         </button>
         <span className="nb-muted">Dans sa propre fenêtre, depuis le menu Démarrer ou la barre des tâches, même sans réseau.</span>
       </div>
@@ -94,14 +94,14 @@ function InstallBlock() {
   if (installed) {
     return (
       <p className="nb-muted nb-install-note">
-        <Icon name="checkCircle" size={15} /> Notes est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.
+        <Icon name="checkCircle" size={15} /> Melo est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.
       </p>
     );
   }
   return (
     <p className="nb-muted nb-install-note">
-      Installer Notes comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite
-      de la barre d’adresse (ou menu ⋯ → Applications → Installer Notes). Déjà installée ? Ouvrez-la depuis le menu Démarrer.
+      Installer Melo comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite
+      de la barre d’adresse (ou menu ⋯ → Applications → Installer Melo). Déjà installée ? Ouvrez-la depuis le menu Démarrer.
     </p>
   );
 }
@@ -338,7 +338,7 @@ export function SettingsDialog({ onClose }: Props) {
           Réinitialiser cet appareil
         </button>
       </section>
-      <p className="nb-muted nb-version">Notes · {getSettings().serverUrl ? 'mode synchronisé' : 'mode hors ligne'}</p>
+      <p className="nb-muted nb-version">Melo · {getSettings().serverUrl ? 'mode synchronisé' : 'mode hors ligne'}</p>
     </Modal>
   );
 }

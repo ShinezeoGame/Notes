@@ -1,11 +1,14 @@
-// Accueil : tableau de bord de widgets. « Modifier » passe en mode modification : glisser un widget pour le déplacer,
-// tirer son coin pour le redimensionner, ajouter depuis le catalogue, régler ou retirer chaque widget.
-import { Component, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { Responsive, useContainerWidth, type ResponsiveLayouts } from 'react-grid-layout';
+// Accueil : tableau de bord de widgets. À la souris, un widget se déplace en le glissant et se redimensionne en tirant
+// l'un de ses coins, sans mode particulier ; ses réglages et son retrait apparaissent au survol. Sur écran tactile, où
+// glisser fait défiler la page, un appui long sur un widget (ou « Modifier ») passe en mode modification : poignée pour
+// déplacer, coin pour redimensionner, réglages et retrait sur chaque widget.
+import { Component, useCallback, useEffect, useMemo, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { Responsive, getBreakpointFromWidth, useContainerWidth, type Layout, type ResponsiveLayouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import type * as Y from 'yjs';
 import { Modal } from '../components/Modal';
 import { useMediaQuery } from '../lib/hooks';
+import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import type { WorkspaceStore } from '../lib/workspace';
 import { Icon } from '../icons/Icon';
 import {
@@ -16,15 +19,58 @@ import {
   addWidget,
   removeWidget,
   resetDashboard,
-  saveLayouts,
+  saveLayout,
   updateWidget,
   useDashboard,
   type Breakpoint,
+  type GridItem,
   type Layouts,
   type Widget,
   type WidgetType,
 } from './model';
 import { WIDGETS, WIDGET_GROUPS } from './registry';
+
+/** Parties d'un widget qui gardent leur propre comportement : y appuyer ne déplace pas le widget. */
+const NO_DRAG = [
+  'input',
+  'textarea',
+  'select',
+  'button',
+  'a',
+  'label',
+  'audio',
+  'video[controls]',
+  '[contenteditable]',
+  '.bn-container',
+  '[role="button"]',
+  '[role="checkbox"]',
+  '[role="switch"]',
+  '[role="slider"]',
+  '[role="textbox"]',
+  '[role="menuitem"]',
+  '.dash-nodrag',
+  '[data-nodrag]',
+].join(', ');
+
+/** Appui sur la barre de défilement d'une zone du widget : elle fait défiler, le widget ne bouge pas. */
+function markScrollbarPress(e: ReactMouseEvent) {
+  const el = e.target;
+  if (!(el instanceof HTMLElement) || (el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth)) return;
+  const r = el.getBoundingClientRect();
+  if (e.clientX < r.left + el.clientLeft + el.clientWidth && e.clientY < r.top + el.clientTop + el.clientHeight) return;
+  el.setAttribute('data-nodrag', '');
+  setTimeout(() => el.removeAttribute('data-nodrag'), 0);
+}
+
+/** Après un déplacement, le clic du relâchement n'active rien dans le widget (lien, case à cocher…). */
+function swallowNextClick() {
+  const stop = (e: Event) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  window.addEventListener('click', stop, { capture: true, once: true });
+  setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 80);
+}
 
 /** Un widget en erreur n'empêche pas d'afficher les autres. */
 class WidgetBoundary extends Component<{ children: ReactNode }, { error: boolean }> {
@@ -41,14 +87,15 @@ type FrameProps = {
   widget: Widget;
   doc: Y.Doc;
   store: WorkspaceStore;
+  /** Mode modification (écran tactile). */
   editing: boolean;
-  /** Écran tactile : déplacement par la poignée seulement (le reste du widget laisse défiler la page). */
-  touch: boolean;
+  /** Souris : déplacement et redimensionnement directs, actions au survol. */
+  direct: boolean;
   onSettings: (id: string) => void;
   onRemove: (id: string) => void;
 };
 
-function WidgetFrame({ widget, doc, store, editing, touch, onSettings, onRemove }: FrameProps) {
+function WidgetFrame({ widget, doc, store, editing, direct, onSettings, onRemove }: FrameProps) {
   const def = WIDGETS[widget.type];
   const title = widget.title?.trim() || def.label;
   const showTitle = widget.showTitle ?? def.showTitle;
@@ -60,7 +107,12 @@ function WidgetFrame({ widget, doc, store, editing, touch, onSettings, onRemove 
   const openSettings = useCallback(() => onSettings(widget.id), [onSettings, widget.id]);
   const cls = ['dash-widget', `dash-widget--${widget.type}`, widget.transparent ? 'dash-widget--bare' : '', tint ? 'dash-widget--tinted' : ''].filter(Boolean).join(' ');
   return (
-    <section className={cls} style={tint ? ({ '--tint': tint } as CSSProperties) : undefined} aria-label={title}>
+    <section
+      className={cls}
+      style={tint ? ({ '--tint': tint } as CSSProperties) : undefined}
+      aria-label={title}
+      onMouseDownCapture={direct ? markScrollbarPress : undefined}
+    >
       {showTitle ? (
         <header className="dash-widget-head">
           <Icon name={def.icon} size={15} />
@@ -72,13 +124,21 @@ function WidgetFrame({ widget, doc, store, editing, touch, onSettings, onRemove 
           <def.Body widget={widget} doc={doc} store={store} editing={editing} setConfig={setConfig} openSettings={openSettings} />
         </WidgetBoundary>
       </div>
-      {!editing && def.Settings ? (
-        <button type="button" className="dash-quick nb-icon-btn nb-icon-btn--sm" onClick={openSettings} aria-label={`Réglages : ${title}`} title="Réglages">
-          <Icon name="settings" size={14} />
-        </button>
+      {direct ? (
+        <>
+          <div className="dash-grab" title="Glisser pour déplacer" aria-hidden="true" />
+          <div className="dash-quick">
+            <button type="button" className="dash-quick-btn" onClick={openSettings} aria-label={`Réglages : ${title}`} title="Réglages">
+              <Icon name="settings" size={14} />
+            </button>
+            <button type="button" className="dash-quick-btn dash-quick-btn--danger" onClick={() => onRemove(widget.id)} aria-label={`Retirer : ${title}`} title="Retirer">
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        </>
       ) : null}
       {editing ? (
-        <div className={`dash-edit${touch ? '' : ' dash-drag'}`}>
+        <div className="dash-edit">
           <div className="dash-edit-actions dash-nodrag">
             <button type="button" className="dash-edit-btn" onClick={openSettings} aria-label={`Réglages : ${title}`} title="Réglages">
               <Icon name="settings" size={16} />
@@ -88,13 +148,9 @@ function WidgetFrame({ widget, doc, store, editing, touch, onSettings, onRemove 
             </button>
           </div>
           <div className="dash-edit-center">
-            {touch ? (
-              <span className="dash-grip dash-drag" role="button" aria-label={`Déplacer : ${title}`}>
-                <Icon name="move" size={22} />
-              </span>
-            ) : (
-              <Icon name="move" size={20} />
-            )}
+            <span className="dash-grip dash-drag" role="button" aria-label={`Déplacer : ${title}`}>
+              <Icon name="move" size={22} />
+            </span>
             <span className="dash-edit-label">{title}</span>
           </div>
         </div>
@@ -199,15 +255,24 @@ type Props = {
 
 export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
   const data = useDashboard(doc, synced);
+  const settings = useSettings();
   const [editing, setEditing] = useState(false);
   const [catalog, setCatalog] = useState(false);
   const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [fresh, setFresh] = useState<string | null>(null);
   const touch = useMediaQuery('(pointer: coarse)');
+  const direct = !touch;
   const { width, containerRef, mounted } = useContainerWidth({ measureBeforeMount: true });
+  // Même calcul que la grille : la disposition modifiée est celle de cette taille d'écran.
+  const breakpoint = getBreakpointFromWidth(BREAKPOINTS, width) as Breakpoint;
 
   useEffect(() => {
-    document.title = 'Accueil – Notes';
+    document.title = 'Accueil – Melo';
   }, []);
+
+  useEffect(() => {
+    if (!touch) setEditing(false);
+  }, [touch]);
 
   useEffect(() => {
     if (!editing) return;
@@ -217,6 +282,53 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [editing, catalog, settingsId]);
+
+  // Écran tactile : un appui long sur un widget passe en mode modification, comme l'écran d'accueil d'un téléphone.
+  useEffect(() => {
+    const wrap = containerRef.current;
+    if (!touch || editing || !wrap) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let start: { x: number; y: number } | null = null;
+    const cancel = () => {
+      clearTimeout(timer);
+      start = null;
+    };
+    const editable = (t: Element) => t.closest('input, textarea, select, [contenteditable], .bn-container');
+    const down = (e: PointerEvent) => {
+      const t = e.target as Element;
+      if (e.pointerType === 'mouse' || !t.closest('.dash-item') || editable(t)) return;
+      start = { x: e.clientX, y: e.clientY };
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        start = null;
+        navigator.vibrate?.(12);
+        setEditing(true);
+      }, 500);
+    };
+    const move = (e: PointerEvent) => {
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
+    };
+    // Pas de menu (copier, ouvrir le lien…) à l'appui long sur un widget.
+    const menu = (e: Event) => {
+      const t = e.target as Element;
+      if (t.closest('.dash-item') && !editable(t)) e.preventDefault();
+    };
+    wrap.addEventListener('pointerdown', down);
+    wrap.addEventListener('pointermove', move);
+    wrap.addEventListener('contextmenu', menu);
+    window.addEventListener('pointerup', cancel);
+    window.addEventListener('pointercancel', cancel);
+    window.addEventListener('scroll', cancel, true);
+    return () => {
+      cancel();
+      wrap.removeEventListener('pointerdown', down);
+      wrap.removeEventListener('pointermove', move);
+      wrap.removeEventListener('contextmenu', menu);
+      window.removeEventListener('pointerup', cancel);
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('scroll', cancel, true);
+    };
+  }, [touch, editing, containerRef, mounted, data.widgets.length]);
 
   // Tailles minimales ajoutées à la disposition enregistrée (non enregistrées elles-mêmes).
   const layouts = useMemo(() => {
@@ -233,11 +345,20 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
     return out;
   }, [data]);
 
-  const onLayoutChange = useCallback(
-    (_layout: unknown, all: ResponsiveLayouts<Breakpoint>) => {
-      if (editing) saveLayouts(doc, all as Layouts);
+  // Enregistré seulement après un geste de l'utilisateur (pas quand la grille s'adapte à la largeur de l'écran).
+  const save = useCallback(
+    (layout: Layout) => {
+      saveLayout(doc, breakpoint, layout as readonly GridItem[]);
+      if (!getSettings().dashTipSeen) updateSettings({ dashTipSeen: true });
     },
-    [doc, editing],
+    [doc, breakpoint],
+  );
+  const onDragStop = useCallback(
+    (layout: Layout) => {
+      swallowNextClick();
+      save(layout);
+    },
+    [save],
   );
 
   const remove = useCallback(
@@ -256,24 +377,33 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
     const def = WIDGETS[type];
     const id = addWidget(doc, type, { ...def.defaults });
     setCatalog(false);
-    setEditing(true);
+    setFresh(id);
+    setTimeout(() => setFresh((f) => (f === id ? null : f)), 1800);
     if (def.setupFirst) setSettingsId(id);
     setTimeout(() => document.querySelector(`[data-widget="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
   };
 
-  const dragConfig = useMemo(() => ({ enabled: editing, handle: '.dash-drag', cancel: '.dash-nodrag', threshold: 4 }), [editing]);
-  const resizeConfig = useMemo(() => ({ enabled: editing, handles: touch ? (['se'] as const) : (['se', 'e', 's'] as const) }), [editing, touch]);
+  const dragConfig = useMemo(
+    () =>
+      direct
+        ? { enabled: true, cancel: NO_DRAG, threshold: 6 }
+        : { enabled: editing, handle: '.dash-drag', cancel: '.dash-nodrag', threshold: 4 },
+    [direct, editing],
+  );
+  const resizeConfig = useMemo(
+    () => ({ enabled: direct || editing, handles: direct ? (['se', 'sw', 'ne', 'nw'] as const) : (['se'] as const) }),
+    [direct, editing],
+  );
   const margin = useMemo(() => [gap, gap] as const, [gap]);
   const settingsWidget = settingsId ? data.widgets.find((w) => w.id === settingsId) : undefined;
 
+  const pageCls = ['dash-page', editing ? 'dash-page--editing' : '', direct ? 'dash-page--direct' : 'dash-page--touch'].filter(Boolean).join(' ');
   return (
-    <div className={`dash-page${editing ? ' dash-page--editing' : ''}`}>
+    <div className={pageCls}>
       <div className="dash-toolbar">
         {editing ? (
           <>
-            <span className="dash-toolbar-hint">
-              {touch ? 'Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.' : 'Glissez un widget pour le déplacer, tirez un bord ou le coin pour le redimensionner.'}
-            </span>
+            <span className="dash-toolbar-hint">Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.</span>
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => setCatalog(true)}>
               <Icon name="plus" size={15} /> Ajouter un widget
             </button>
@@ -286,12 +416,27 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
           </>
         ) : (
           <>
+            {direct && !settings.dashTipSeen && data.widgets.length > 0 ? (
+              <span className="dash-tip">
+                <Icon name="move" size={14} />
+                <span>Glissez un widget pour le déplacer, tirez un de ses coins pour le redimensionner.</span>
+                <button type="button" className="dash-tip-close" onClick={() => updateSettings({ dashTipSeen: true })} aria-label="Masquer l’astuce" title="Masquer">
+                  <Icon name="close" size={12} />
+                </button>
+              </span>
+            ) : null}
             <button type="button" className="dash-tool" onClick={onCustomize} title="Thème, couleurs et fond d’écran">
               <Icon name="palette" size={16} /> <span>Personnaliser</span>
             </button>
-            <button type="button" className="dash-tool" onClick={() => setEditing(true)} title="Déplacer, redimensionner, ajouter des widgets">
-              <Icon name="pencil" size={16} /> <span>Modifier</span>
-            </button>
+            {direct ? (
+              <button type="button" className="dash-tool" onClick={() => setCatalog(true)} title="Ajouter un widget à l’accueil">
+                <Icon name="plus" size={16} /> <span>Ajouter un widget</span>
+              </button>
+            ) : (
+              <button type="button" className="dash-tool" onClick={() => setEditing(true)} title="Déplacer, redimensionner, ajouter des widgets (ou appui long sur un widget)">
+                <Icon name="pencil" size={16} /> <span>Modifier</span>
+              </button>
+            )}
           </>
         )}
       </div>
@@ -317,11 +462,12 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
             containerPadding={[0, 0]}
             dragConfig={dragConfig}
             resizeConfig={resizeConfig}
-            onLayoutChange={onLayoutChange}
+            onDragStop={onDragStop}
+            onResizeStop={save}
           >
             {data.widgets.map((w) => (
-              <div key={w.id} data-widget={w.id} className="dash-item">
-                <WidgetFrame widget={w} doc={doc} store={store} editing={editing} touch={touch} onSettings={setSettingsId} onRemove={remove} />
+              <div key={w.id} data-widget={w.id} className={`dash-item${fresh === w.id ? ' dash-item--fresh' : ''}`}>
+                <WidgetFrame widget={w} doc={doc} store={store} editing={editing} direct={direct} onSettings={setSettingsId} onRemove={remove} />
               </div>
             ))}
           </Responsive>

@@ -38,7 +38,7 @@ import java.util.UUID;
  * à l'endroit choisi dans le sélecteur de fichiers d'Android ({@link #save}) ou envoyé à une autre application
  * ({@link #share}).
  *
- * <p>Import : les PDF et photos reçus d'autres applications (« Ouvrir avec Notes », « Partager ») sont copiés dans le
+ * <p>Import : les PDF et photos reçus d'autres applications (« Ouvrir avec Melo », « Partager ») sont copiés dans le
  * cache de l'application ; la page les lit ({@link #takeIncoming}) puis les libère ({@link #releaseIncoming}).
  *
  * <p>Comme pour {@link AppUpdatePlugin}, aucune exception ne doit sortir d'une méthode (elle fermerait l'application) :

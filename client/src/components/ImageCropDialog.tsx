@@ -95,7 +95,7 @@ export function ImageCropDialog({ src, initial, animated, onCancel, onDone }: Pr
   useEffect(() => {
     let alive = true;
     const img = new Image();
-    // Images du serveur Notes (autre origine dans l'application Android) : lecture autorisée par CORS.
+    // Images du serveur Melo (autre origine dans l'application Android) : lecture autorisée par CORS.
     if (!/^(blob|data):/.test(src)) img.crossOrigin = 'anonymous';
     img.onload = () => {
       if (!alive) return;

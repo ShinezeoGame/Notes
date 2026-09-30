@@ -10,7 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
-/** Notification « Mise à jour de Notes disponible » ; la toucher ouvre l'application et lance la mise à jour. */
+/** Notification « Mise à jour de Melo disponible » ; la toucher ouvre l'application et lance la mise à jour. */
 final class UpdateNotifier {
 
     static final String EXTRA_UPDATE = "com.shinezeo.notes.UPDATE";
@@ -33,7 +33,7 @@ final class UpdateNotifier {
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Mises à jour", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Nouvelle version de Notes disponible");
+            channel.setDescription("Nouvelle version de Melo disponible");
             nm.createNotificationChannel(channel);
             builder = new Notification.Builder(context, CHANNEL_ID);
         } else {
@@ -48,7 +48,7 @@ final class UpdateNotifier {
         builder
             .setSmallIcon(R.drawable.ic_stat_notes)
             .setColor(0xFF2383E2)
-            .setContentTitle("Mise à jour de Notes disponible")
+            .setContentTitle("Mise à jour de Melo disponible")
             .setContentText("Touchez pour installer la nouvelle version.")
             .setContentIntent(pending)
             .setAutoCancel(true);

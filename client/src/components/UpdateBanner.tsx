@@ -46,8 +46,8 @@ export function UpdateBanner() {
         {newApp
           ? 'Cette mise à jour demande une version plus récente de l’application Android.'
           : native
-            ? 'Une mise à jour de Notes est disponible.'
-            : 'Une nouvelle version de Notes est disponible.'}
+            ? 'Une mise à jour de Melo est disponible.'
+            : 'Une nouvelle version de Melo est disponible.'}
       </span>
       <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
         {newApp ? 'Télécharger l’APK' : native ? 'Mettre à jour' : 'Recharger'}

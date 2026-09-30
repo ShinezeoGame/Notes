@@ -199,6 +199,6 @@ jobs:
           } > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" $FILES $PRE \
             --target "$GITHUB_SHA" \
-            --title "Notes – APK Android ($TAG)" \
+            --title "Melo – APK Android ($TAG)" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             || gh release upload "$TAG" $FILES --clobber

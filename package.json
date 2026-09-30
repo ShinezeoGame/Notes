@@ -2,7 +2,7 @@
   "name": "notes",
   "version": "1.0.0",
   "private": true,
-  "description": "Application de prise de notes style Notion (web + Android) avec collaboration en direct",
+  "description": "Melo : application à tout faire (accueil personnalisable, notes, agenda, maison connectée), web et Android, synchronisée en direct",
   "type": "module",
   "workspaces": [
     "client",

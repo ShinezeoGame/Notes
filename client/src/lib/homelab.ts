@@ -113,7 +113,7 @@ export const SERVICE_TYPES: Record<ServiceType, { label: string; icon: IconName;
 };
 
 export const DEVICE_TYPES: Record<DeviceType, { label: string; icon: IconName; color: string; port?: number; https?: boolean; auth: 'none' | 'userpass-optional' | 'userpass' | 'pve-token' | 'token'; help: string }> = {
-  local: { label: 'Hôte de ce serveur Notes', icon: 'server', color: '#60a5fa', auth: 'none', help: 'Statistiques de la machine qui exécute le serveur Notes (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.' },
+  local: { label: 'Hôte de ce serveur Melo', icon: 'server', color: '#60a5fa', auth: 'none', help: 'Statistiques de la machine qui exécute le serveur Melo (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.' },
   glances: { label: 'Glances (API)', icon: 'chartBar', color: '#34d399', port: 61208, auth: 'userpass-optional', help: 'Fonctionne sur n’importe quel Linux/NAS : lancez Glances en mode web (glances -w) ou son image Docker, puis indiquez http://hote:61208.' },
   proxmox: { label: 'Proxmox VE', icon: 'cube', color: '#fb923c', port: 8006, https: true, auth: 'pve-token', help: 'Créez un jeton API (Datacenter → Permissions → API Tokens) avec le rôle PVEAuditor. Identifiant au format utilisateur@pam!nom-du-jeton.' },
   synology: { label: 'NAS Synology (DSM)', icon: 'hardDrive', color: '#94a3b8', port: 5000, auth: 'userpass', help: 'Compte DSM sans authentification à deux facteurs (idéalement un compte dédié en lecture seule).' },

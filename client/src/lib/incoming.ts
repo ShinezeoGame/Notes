@@ -1,4 +1,4 @@
-// Fichiers reçus d'autres applications : « Ouvrir avec Notes » et « Partager » sur Android, « Ouvrir avec » de
+// Fichiers reçus d'autres applications : « Ouvrir avec Melo » et « Partager » sur Android, « Ouvrir avec » de
 // Windows pour l'application installée sur l'ordinateur. Ils sont importés dans l'atelier PDF.
 import { useSyncExternalStore } from 'react';
 import { toast } from '../components/Toast';

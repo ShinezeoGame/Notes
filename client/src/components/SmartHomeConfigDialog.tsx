@@ -70,15 +70,15 @@ export function SmartHomeConfigDialog({ doc, entities, onClose }: { doc: Y.Doc; 
       }
     >
       <p className="nb-muted sh-intro">
-        Notes pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart
-        Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Notes : le jeton n’est jamais envoyé
+        Melo pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart
+        Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Melo : le jeton n’est jamais envoyé
         au navigateur.
       </p>
 
       <label className="nb-field">
-        <span>Adresse de Home Assistant, vue depuis le serveur Notes</span>
+        <span>Adresse de Home Assistant, vue depuis le serveur Melo</span>
         <input className="nb-input" placeholder="http://192.168.1.10:8123" value={url} onChange={(ev) => setUrl(ev.target.value)} />
-        <span className="nb-muted sh-hint">Même machine que Notes ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».</span>
+        <span className="nb-muted sh-hint">Même machine que Melo ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».</span>
       </label>
       <div className="nb-field">
         <span>Jeton d’accès longue durée</span>
@@ -117,7 +117,7 @@ export function SmartHomeConfigDialog({ doc, entities, onClose }: { doc: Y.Doc; 
         <ol>
           <li>Ouvrez Home Assistant dans un navigateur.</li>
           <li>Cliquez sur votre nom, en bas à gauche, puis sur l’onglet « Sécurité ».</li>
-          <li>Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Notes ».</li>
+          <li>Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Melo ».</li>
           <li>Copiez le jeton affiché (il ne sera plus montré ensuite) et collez‑le ci‑dessus.</li>
         </ol>
         <p className="nb-muted">

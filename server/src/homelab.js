@@ -23,7 +23,7 @@ export function httpRequest(url, { method = 'GET', headers = {}, body, insecure 
     if (!/^https?:$/.test(target.protocol)) return reject(new Error('Protocole non pris en charge'));
     const lib = target.protocol === 'https:' ? https : http;
     const payload = body == null ? null : typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body);
-    const reqHeaders = { 'user-agent': 'Notes-Homelab/1.0', accept: 'application/json, text/plain, */*', ...headers };
+    const reqHeaders = { 'user-agent': 'Melo-Homelab/1.0', accept: 'application/json, text/plain, */*', ...headers };
     if (payload != null && !reqHeaders['content-type'] && typeof body === 'object' && !Buffer.isBuffer(body)) reqHeaders['content-type'] = 'application/json';
     if (payload != null) reqHeaders['content-length'] = Buffer.byteLength(payload);
     const req = lib.request(
@@ -135,7 +135,7 @@ const integrations = {
     };
   },
   jellyfin: async (base, svc) => {
-    const opts = { headers: { Authorization: `MediaBrowser Token="${svc.apiKey}", Client="Notes", Device="Notes", DeviceId="notes-homelab", Version="1.0"`, 'X-Emby-Token': svc.apiKey }, insecure: svc.insecure };
+    const opts = { headers: { Authorization: `MediaBrowser Token="${svc.apiKey}", Client="Melo", Device="Melo", DeviceId="notes-homelab", Version="1.0"`, 'X-Emby-Token': svc.apiKey }, insecure: svc.insecure };
     const [sessions, counts, info] = await Promise.all([
       getJson(`${base}/Sessions?activeWithinSeconds=300`, opts),
       getJson(`${base}/Items/Counts`, opts).catch(() => ({})),

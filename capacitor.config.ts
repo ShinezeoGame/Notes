@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.shinezeo.notes',
-  appName: 'Notes',
+  appName: 'Melo',
   webDir: 'client/dist',
   backgroundColor: '#191919',
   android: {
@@ -15,7 +15,7 @@ const config: CapacitorConfig = {
     cleartext: true,
   },
   plugins: {
-    // Barre d'état et barre de navigation : icônes claires sur le fond sombre de Notes. L'application dessine
+    // Barre d'état et barre de navigation : icônes claires sur le fond sombre de Melo. L'application dessine
     // sous ces barres et laisse leur place grâce aux marges de sécurité (env(safe-area-inset-*) dans styles.css).
     SystemBars: { style: 'DARK' },
   },

@@ -1,5 +1,5 @@
 /*
- * Service worker de Notes (navigateur, application installée sur l'ordinateur) : l'application s'ouvre même sans
+ * Service worker de Melo (navigateur, application installée sur l'ordinateur) : l'application s'ouvre même sans
  * réseau et démarre plus vite. Modèle publié en « sw.js » à chaque construction (vite.config.ts), avec la version
  * et la liste des fichiers de cette construction. Les pages elles-mêmes sont gardées par l'application (IndexedDB) ;
  * l'API, les fichiers importés et la synchronisation passent toujours par le réseau.

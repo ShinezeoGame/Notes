@@ -275,7 +275,7 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>Le tableau de bord interroge vos applications depuis le serveur Notes (accès au réseau local, pas de problème de CORS).</p>
+        <p>Le tableau de bord interroge vos applications depuis le serveur Melo (accès au réseau local, pas de problème de CORS).</p>
         <p className="nb-muted">Configurez l’adresse du serveur dans les réglages, idéalement un serveur hébergé dans votre homelab.</p>
       </div>
     );
