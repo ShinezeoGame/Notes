@@ -184,7 +184,7 @@ Melo s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Déma
 
 ### Atelier PDF sur le téléphone
 
-L’atelier PDF (entrée **PDF** du menu) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Notes les PDF reçus (**Ouvrir avec Notes**, **Partager → Notes**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `notes-debug.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
+L’atelier PDF (entrée **PDF** du menu) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Melo les PDF reçus (**Ouvrir avec Melo**, **Partager → Melo**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `notes-debug.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
 
 Pour scanner un document papier : **PDF** → **Scanner un document** (l’appareil photo s’ouvre), puis, dans la vue **Pages**, **Photo** pour ajouter les pages suivantes.
 
