@@ -1,5 +1,6 @@
 // Panneau « Personnaliser » : thème de couleurs, couleur d'accent, fond d'écran, style des widgets, taille du texte,
-// sections de la navigation. Chaque changement s'affiche aussitôt ; il est enregistré dans l'espace (tous les appareils).
+// sections de la navigation. Chaque changement s'affiche aussitôt ; il est enregistré dans l'espace (tous les appareils),
+// ou sur cet appareil seulement quand « Appliquer à tous vos appareils » est décochée.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type * as Y from 'yjs';
@@ -9,13 +10,18 @@ import {
   DEFAULT_APPEARANCE,
   GRADIENTS,
   THEMES,
+  changeAppearance,
   normalizeAppearance,
-  updateAppearance,
+  readAppearance,
+  setDeviceAppearance,
+  useDeviceAppearance,
   type Appearance,
   type SectionId,
   type WallpaperKind,
 } from '../lib/appearance';
 import { prepareImage } from '../lib/images';
+import { serverBase } from '../lib/api';
+import { isDesktopLocal } from '../lib/desktop';
 import { SECTIONS, groupSections } from './AppNav';
 import { Icon } from '../icons/Icon';
 
@@ -57,7 +63,24 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
     timer.current = null;
     const next = pending.current;
     pending.current = null;
-    if (next) updateAppearance(doc, () => next);
+    if (next) changeAppearance(doc, () => next);
+  };
+
+  // Apparence propre à cet appareil (option « Appliquer à tous vos appareils » décochée).
+  const own = useDeviceAppearance();
+  // Sans serveur, ou sur l'espace de l'application Windows (joignable de ce seul ordinateur) : un seul appareil.
+  const synced = Boolean(serverBase()) && !isDesktopLocal();
+  const setEverywhere = (everywhere: boolean) => {
+    flush();
+    if (everywhere) {
+      // Retour à l'apparence commune : celle de l'espace remplace celle de cet appareil.
+      setDeviceAppearance(null);
+      setDraft(readAppearance(doc));
+      onPreview(null);
+    } else {
+      // Cet appareil part de l'apparence actuelle, puis la change sans toucher les autres.
+      setDeviceAppearance(draft);
+    }
   };
 
   // Fermeture : dernier changement enregistré, fin de l'essai.
@@ -131,6 +154,18 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
           </button>
         </header>
         <div className="ap-body">
+          {synced || own ? (
+            <section className="ap-section">
+              <label className="nb-check">
+                <input type="checkbox" checked={!own} onChange={(e) => setEverywhere(e.target.checked)} /> Appliquer à tous vos appareils
+              </label>
+              <p className="nb-muted ap-hint">
+                {own
+                  ? 'Cet appareil garde sa propre apparence : ses changements ne touchent pas vos autres appareils.'
+                  : 'Ordinateur, téléphone, application Windows : les changements s’appliquent partout.'}
+              </p>
+            </section>
+          ) : null}
           <section className="ap-section">
             <h3>Thème</h3>
             <div className="ap-themes">

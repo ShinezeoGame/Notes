@@ -87,7 +87,7 @@ Widgets : **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Mét
 
 ## Personnaliser
 
-Bouton **Personnaliser** (en bas de la barre des sections, ou **Plus** sur téléphone) : un panneau s’ouvre à côté de l’application, chaque réglage s’applique aussitôt et vaut pour tous les appareils reliés.
+Bouton **Personnaliser** (en bas de la barre des sections, ou **Plus** sur téléphone) : un panneau s’ouvre à côté de l’application, chaque réglage s’applique aussitôt et vaut pour tous les appareils reliés. Pour qu’un appareil garde sa propre apparence (un thème clair sur le téléphone, un fond d’écran sur l’ordinateur…), décochez **Appliquer à tous vos appareils** en haut du panneau, sur cet appareil : ses changements ne touchent plus les autres, et les leurs ne le touchent plus. Recochez la case pour reprendre l’apparence commune.
 
 - **Thème** (sombre, noir, bleu nuit, forêt, clair, crème, lavande) et **couleur d’accent** (boutons, liens, élément actif ; « + » pour une couleur libre).
 - **Fond d’écran** : dégradé, couleur ou image (envoyée depuis l’appareil ou par son adresse), avec **flou** et **voile** pour garder le texte lisible ; « Dans toute l’application » l’affiche aussi derrière les autres sections.

@@ -1,6 +1,7 @@
 // Apparence de l'application : thème de couleurs, couleur d'accent, fond d'écran, style des widgets, taille du texte,
 // sections de la navigation. Réglages de l'espace (document Yjs, map « appearance ») : identiques sur tous les appareils
-// reliés. Une copie locale permet d'afficher les bonnes couleurs dès le démarrage, avant la synchronisation.
+// reliés, sauf sur un appareil qui garde sa propre apparence (stockage local de l'appareil). Une copie locale permet
+// d'afficher les bonnes couleurs dès le démarrage, avant la synchronisation.
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import { styleSystemBars } from './native';
@@ -204,7 +205,7 @@ export function updateAppearance(doc: Y.Doc, change: (a: Appearance) => Partial<
   doc.getMap('appearance').set('config', JSON.stringify(normalizeAppearance({ ...current, ...change(current) })));
 }
 
-/** Réglages de l'espace, suivis en direct (et gardés sur l'appareil pour le prochain démarrage). */
+/** Apparence affichée sur cet appareil : la sienne s'il en a une, sinon celle de l'espace, suivie en direct. */
 export function useAppearance(doc: Y.Doc | null): Appearance {
   const [appearance, setAppearance] = useState<Appearance>(() => (doc ? readAppearance(doc) : cachedAppearance()));
   useEffect(() => {
@@ -215,7 +216,74 @@ export function useAppearance(doc: Y.Doc | null): Appearance {
     read();
     return () => map.unobserve(read);
   }, [doc]);
-  return appearance;
+  return useDeviceAppearance() ?? appearance;
+}
+
+// ---------- Apparence propre à cet appareil ----------
+// Option « Appliquer à tous vos appareils » décochée : l'appareil garde ses réglages dans son stockage local ; ses
+// changements ne touchent pas les autres appareils, et les leurs ne le touchent pas.
+
+const DEVICE_KEY = 'notes.appearance.device.v1';
+/** undefined : pas encore lu ; null : l'appareil suit l'apparence de l'espace. */
+let deviceLook: Appearance | null | undefined;
+const deviceListeners = new Set<() => void>();
+
+function readDeviceAppearance(): Appearance | null {
+  try {
+    const raw = localStorage.getItem(DEVICE_KEY);
+    return raw ? normalizeAppearance(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Apparence propre à cet appareil, ou null quand il suit celle de l'espace (commune à tous les appareils). */
+export function deviceAppearance(): Appearance | null {
+  if (deviceLook === undefined) deviceLook = readDeviceAppearance();
+  return deviceLook;
+}
+
+/** Donne à cet appareil sa propre apparence, ou (null) le remet sur celle de l'espace. */
+export function setDeviceAppearance(a: Appearance | null) {
+  deviceLook = a ? normalizeAppearance(a) : null;
+  try {
+    if (deviceLook) localStorage.setItem(DEVICE_KEY, JSON.stringify(deviceLook));
+    else localStorage.removeItem(DEVICE_KEY);
+  } catch {
+    // Stockage plein (image de fond envoyée sans serveur, très lourde) : le reste est gardé, sans l'image.
+    try {
+      if (deviceLook) localStorage.setItem(DEVICE_KEY, JSON.stringify({ ...deviceLook, wallpaper: { ...deviceLook.wallpaper, kind: 'none', value: '' } }));
+    } catch {
+      /* stockage indisponible */
+    }
+  }
+  deviceListeners.forEach((l) => l());
+}
+
+function subscribeDevice(listener: () => void) {
+  deviceListeners.add(listener);
+  // Melo ouvert dans un autre onglet du même navigateur (même appareil).
+  const onStorage = (e: StorageEvent) => {
+    if (e.key !== DEVICE_KEY) return;
+    deviceLook = readDeviceAppearance();
+    listener();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    deviceListeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
+export function useDeviceAppearance(): Appearance | null {
+  return useSyncExternalStore(subscribeDevice, deviceAppearance, deviceAppearance);
+}
+
+/** Change l'apparence affichée ici : celle de cet appareil s'il a la sienne, sinon celle de l'espace (tous les appareils). */
+export function changeAppearance(doc: Y.Doc, change: (a: Appearance) => Partial<Appearance>) {
+  const own = deviceAppearance();
+  if (own) setDeviceAppearance({ ...own, ...change(own) });
+  else updateAppearance(doc, change);
 }
 
 export function cachedAppearance(): Appearance {

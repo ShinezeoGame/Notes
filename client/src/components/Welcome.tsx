@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import type * as Y from 'yjs';
 import { canShareLinks } from '../lib/api';
-import { updateAppearance, type Appearance, type SectionId } from '../lib/appearance';
+import { changeAppearance, type Appearance, type SectionId } from '../lib/appearance';
 import { isDesktopLocal } from '../lib/desktop';
 import { isDefaultUserName, updateSettings, useSettings } from '../lib/settings';
 import { Icon } from '../icons/Icon';
@@ -122,7 +122,7 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
 
   const confirmSetup = () => {
     if (name.trim()) updateSettings({ userName: name.trim() });
-    updateAppearance(doc, () => ({ hidden }));
+    changeAppearance(doc, () => ({ hidden }));
     setStep(0);
   };
 
