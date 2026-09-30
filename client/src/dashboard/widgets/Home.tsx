@@ -62,6 +62,7 @@ export function HomelabWidget({ doc }: WidgetProps) {
         onResize={(id, size) => saveCardSize(doc, id, size)}
         order={cardOrder(cfg)}
         onReorder={(ids) => saveCardOrder(doc, ids)}
+        grouped={cfg.grouped}
         onConfigure={() => navigate('#/homelab')}
         refreshKey={configStatusKey(cfg)}
       />

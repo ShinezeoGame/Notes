@@ -2,7 +2,7 @@
 // intégré (lancé en arrière-plan, joignable de cet ordinateur seulement), ou le serveur Melo d'un proche ou le vôtre.
 // Le pont `window.meloDesktop` (preload.cjs) permet à l'application de passer de l'un à l'autre, lui transmet les PDF
 // ouverts avec Melo et les mises à jour téléchargées.
-const { app, BrowserWindow, Menu, ipcMain, shell, utilityProcess } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, session, shell, utilityProcess } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -10,7 +10,7 @@ const path = require('node:path');
 const PORT = 47821;
 const LOCAL = `http://127.0.0.1:${PORT}`;
 /** Fonctions offertes par le pont (voir client/src/lib/desktop.ts) : augmenter à chaque ajout. */
-const BRIDGE_API = 1;
+const BRIDGE_API = 2;
 /** Taille maximale d'un PDF ouvert avec Melo. */
 const MAX_OPEN_BYTES = 200 * 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
@@ -191,6 +191,9 @@ function createWindow() {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: true,
+      // Widget « Site web » : un site du réseau local en http (Jellyfin, routeur…) s'affiche aussi quand Melo vient
+      // d'un serveur en https (le navigateur le bloquerait).
+      allowRunningInsecureContent: true,
     },
   });
   if (config.maximized) win.maximize();
@@ -225,6 +228,32 @@ function createWindow() {
       e.preventDefault();
       wc.reload();
     }
+  });
+}
+
+/**
+ * Widget « Site web » et intégrations : les sites qui interdisent d'être affichés dans le cadre d'une autre page
+ * (en-têtes X-Frame-Options et Content-Security-Policy frame-ancestors : Google, YouTube…) s'affichent quand même dans
+ * la fenêtre de Melo. Seuls les cadres sont concernés, jamais les pages elles-mêmes.
+ */
+function allowAnyFrame() {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.resourceType !== 'subFrame' || !details.responseHeaders) return callback({});
+    const headers = {};
+    for (const [name, values] of Object.entries(details.responseHeaders)) {
+      const key = name.toLowerCase();
+      if (key === 'x-frame-options') continue;
+      headers[name] =
+        key === 'content-security-policy'
+          ? values.map((v) =>
+              v
+                .split(';')
+                .filter((d) => !/^\s*frame-ancestors\b/i.test(d))
+                .join(';'),
+            )
+          : values;
+    }
+    callback({ responseHeaders: headers });
   });
 }
 
@@ -366,6 +395,7 @@ const info = () => ({
   mode: config.server ? 'server' : 'local',
   localUrl: LOCAL,
   serverUrl: config.server,
+  embedsAnySite: true,
   update: updateReady ? { status: 'ready', version: updateReady } : null,
 });
 
@@ -446,6 +476,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     log('prêt ;', config.server ? `serveur ${config.server}` : 'espace de cet ordinateur');
     Menu.setApplicationMenu(buildMenu());
+    allowAnyFrame();
     openFiles(filesFromArgv(process.argv));
     createWindow();
     await openCurrent();

@@ -55,7 +55,15 @@ export type Device = {
   h?: number;
 };
 
-export type HomelabConfig = { services: Service[]; devices: Device[]; refreshSeconds: number };
+export type HomelabConfig = {
+  services: Service[];
+  devices: Device[];
+  refreshSeconds: number;
+  /** Vrai (par défaut) : modules rangés par rubrique (Appareils, Médias…) ; faux : une seule grille, ordre libre. */
+  grouped: boolean;
+  /** Ordre des modules dans la grille unique (identifiants des appareils et des applications mêlés). */
+  order: string[];
+};
 
 export type StatValue = { label: string; value: string | number; kind?: 'speed' | 'bytes' | 'warn-if-positive' };
 export type ServiceStatus = Pick<Service, 'id' | 'name' | 'type' | 'url' | 'icon' | 'category'> & {
@@ -121,7 +129,7 @@ export const DEVICE_TYPES: Record<DeviceType, { label: string; icon: IconName; c
   truenas: { label: 'TrueNAS', icon: 'hardDrive', color: '#22d3ee', port: 443, https: true, auth: 'token', help: 'Clé API créée dans Paramètres → API Keys.' },
 };
 
-const EMPTY: HomelabConfig = { services: [], devices: [], refreshSeconds: 30 };
+const EMPTY: HomelabConfig = { services: [], devices: [], refreshSeconds: 30, grouped: true, order: [] };
 
 export function readHomelabConfig(doc: Y.Doc): HomelabConfig {
   try {
@@ -132,6 +140,8 @@ export function readHomelabConfig(doc: Y.Doc): HomelabConfig {
       services: Array.isArray(parsed.services) ? parsed.services : [],
       devices: Array.isArray(parsed.devices) ? parsed.devices : [],
       refreshSeconds: Number(parsed.refreshSeconds) || 30,
+      grouped: parsed.grouped !== false,
+      order: Array.isArray(parsed.order) ? parsed.order.filter((id): id is string => typeof id === 'string') : [],
     };
   } catch {
     return EMPTY;
@@ -320,13 +330,46 @@ export function resetCardSizes(doc: Y.Doc) {
   saveHomelabConfig(doc, { ...cfg, services: cfg.services.map(withoutSize), devices: cfg.devices.map(withoutSize) });
 }
 
-/** Ordre des modules : appareils puis applications, tel que choisi par glisser-déposer. */
-export const cardOrder = (cfg: HomelabConfig): string[] => [...cfg.devices.map((d) => d.id), ...cfg.services.map((s) => s.id)];
+/** Rang d'une rubrique d'applications (ordre de CATEGORIES, les autres à la fin). */
+export function categoryRank(category: string): number {
+  const i = CATEGORIES.indexOf(category || 'Autres');
+  return i === -1 ? 99 : i;
+}
 
-/** Nouvel ordre des modules affichés ensemble (les appareils, ou les applications d'une catégorie). */
+/** Ordre affiché par rubriques : appareils, puis applications rubrique par rubrique. */
+function groupedOrder(cfg: HomelabConfig): string[] {
+  const services = cfg.services.map((s, i) => ({ s, i })).sort((a, b) => categoryRank(a.s.category) - categoryRank(b.s.category) || a.i - b.i);
+  return [...cfg.devices.map((d) => d.id), ...services.map(({ s }) => s.id)];
+}
+
+/**
+ * Ordre des modules, tel que choisi par glisser-déposer : appareils puis applications (rangement par rubrique), ou
+ * l'ordre de la grille unique (disposition libre ; les modules ajoutés depuis viennent à la fin).
+ */
+export function cardOrder(cfg: HomelabConfig): string[] {
+  const ids = [...cfg.devices.map((d) => d.id), ...cfg.services.map((s) => s.id)];
+  if (cfg.grouped || !cfg.order.length) return cfg.grouped ? ids : groupedOrder(cfg);
+  const known = new Set(ids);
+  const kept = cfg.order.filter((id) => known.has(id));
+  const placed = new Set(kept);
+  return [...kept, ...ids.filter((id) => !placed.has(id))];
+}
+
+/** Nouvel ordre des modules affichés ensemble (les appareils, les applications d'une rubrique, ou la grille unique). */
 export function saveCardOrder(doc: Y.Doc, ids: string[]) {
   const cfg = readHomelabConfig(doc);
+  if (!cfg.grouped) {
+    const placed = new Set(ids);
+    saveHomelabConfig(doc, { ...cfg, order: [...ids, ...cardOrder(cfg).filter((id) => !placed.has(id))] });
+    return;
+  }
   saveHomelabConfig(doc, { ...cfg, services: reorderItems(cfg.services, ids), devices: reorderItems(cfg.devices, ids) });
+}
+
+/** Rangement par rubrique, ou disposition libre (qui part de l'ordre affiché jusque-là). */
+export function setCardsGrouped(doc: Y.Doc, grouped: boolean) {
+  const cfg = readHomelabConfig(doc);
+  saveHomelabConfig(doc, { ...cfg, grouped, order: !grouped && !cfg.order.length ? groupedOrder(cfg) : cfg.order });
 }
 
 /** Empreinte de la configuration (hors tailles et ordre) : change quand il faut réinterroger le serveur. */

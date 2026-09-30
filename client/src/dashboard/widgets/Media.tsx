@@ -1,7 +1,11 @@
 // Widgets Image (photo envoyée ou adresse d'image) et Site web (page intégrée).
 import { useEffect, useRef, useState } from 'react';
 import { useAppCtx } from '../../editor/context';
+import { normalizeEmbedUrl } from '../../editor/embed';
+import { api, serverBase } from '../../lib/api';
+import { desktop } from '../../lib/desktop';
 import { isImageLink, prepareImage } from '../../lib/images';
+import { getSettings, isNative } from '../../lib/settings';
 import { Icon } from '../../icons/Icon';
 import { num, str, type SettingsProps, type WidgetProps } from '../types';
 
@@ -113,9 +117,42 @@ function webUrl(url: string): string {
   }
 }
 
+/**
+ * Affichage du site : « ok » (cadre), ou raison pour laquelle le cadre resterait vide : site qui interdit d'être
+ * affiché dans une autre page (« refused »), ou site en http dans Melo ouvert en https (« insecure »).
+ */
+type FrameState = 'checking' | 'ok' | 'refused' | 'insecure';
+
+function useFrameState(src: string, player: boolean): FrameState {
+  const [state, setState] = useState<FrameState>('checking');
+  useEffect(() => {
+    // Lecteur vidéo (YouTube, Vimeo…) fait pour être intégré ; application Windows : tous les sites s'affichent.
+    if (!src || player || desktop()?.embedsAnySite) return setState('ok');
+    // L'application Android autorise le http ; un navigateur le bloque dans une page https.
+    if (location.protocol === 'https:' && src.startsWith('http:') && !isNative()) return setState('insecure');
+    // Le serveur lit les en-têtes du site (réservé à son propriétaire).
+    if (!serverBase() || getSettings().guest) return setState('ok');
+    let alive = true;
+    setState('checking');
+    api
+      .frameCheck(src)
+      .then((r) => alive && setState(r.allowed === false ? 'refused' : 'ok'))
+      .catch(() => alive && setState('ok'));
+    return () => {
+      alive = false;
+    };
+  }, [src, player]);
+  return state;
+}
+
 export function WebWidget({ widget, openSettings, editing }: WidgetProps) {
   const url = webUrl(str(widget.config.url));
   const zoom = num(widget.config.zoom, 100) / 100;
+  // Lien d'une vidéo (YouTube, Vimeo, Dailymotion…) : son lecteur intégré.
+  const embed = url ? normalizeEmbedUrl(url) : null;
+  const player = Boolean(embed && embed.kind !== 'generic');
+  const src = player && embed ? embed.src : url;
+  const state = useFrameState(src, player);
   if (!url) {
     return (
       <div className="w-empty">
@@ -126,14 +163,40 @@ export function WebWidget({ widget, openSettings, editing }: WidgetProps) {
       </div>
     );
   }
+  if (state === 'checking') return <div className="w-web w-web--checking" />;
+  if (state !== 'ok') {
+    const host = new URL(url).host;
+    // Application Windows ancienne (pont sans embedsAnySite) : sa mise à jour affiche le site.
+    const elsewhere = desktop()
+      ? ' La nouvelle version de Melo pour Windows l’affiche ici.'
+      : isNative()
+        ? ''
+        : ' Il s’affiche dans l’application Melo pour Windows.';
+    return (
+      <div className="w-empty w-web-blocked">
+        <Icon name="globe" size={26} />
+        <b className="w-web-host">{host}</b>
+        <span className="w-muted">
+          {state === 'insecure'
+            ? `Ce site en http ne peut pas s’afficher dans Melo ouvert en https.${elsewhere}`
+            : `Ce site refuse de s’afficher dans une autre application.${elsewhere}`}
+        </span>
+        <button type="button" className="nb-btn nb-btn--sm" onClick={() => window.open(url, '_blank', 'noopener')} disabled={editing}>
+          <Icon name="externalLink" size={14} /> Ouvrir le site
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="w-web">
       <iframe
-        src={url}
+        src={src}
         title={widget.title || url}
         loading="lazy"
-        referrerPolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        referrerPolicy={player ? 'strict-origin-when-cross-origin' : 'no-referrer'}
+        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
         style={zoom !== 1 ? { width: `${100 / zoom}%`, height: `${100 / zoom}%`, transform: `scale(${zoom})`, transformOrigin: '0 0' } : undefined}
       />
     </div>
@@ -152,8 +215,9 @@ export function WebSettings({ config, set }: SettingsProps) {
         <input type="range" min={40} max={150} step={10} value={num(config.zoom, 100)} onChange={(e) => set({ zoom: Number(e.target.value) })} />
       </label>
       <p className="nb-muted w-settings-hint">
-        Certains sites (Google, Facebook, banques…) refusent de s’afficher dans une autre application : ils restent vides ici. Les tableaux de bord
-        de votre réseau (Grafana, Home Assistant, routeur…) s’affichent en général sans problème.
+        Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils
+        s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Melo propose alors de les
+        ouvrir. Dans l’application Melo pour Windows, tous les sites s’affichent.
       </p>
     </>
   );

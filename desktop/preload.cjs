@@ -25,6 +25,7 @@ if (info) {
     mode: info.mode,
     localUrl: info.localUrl,
     serverUrl: info.serverUrl,
+    embedsAnySite: info.embedsAnySite === true,
     useServer: (url, route) => ipcRenderer.invoke('melo:use-server', String(url), route ? String(route) : ''),
     useLocal: () => ipcRenderer.invoke('melo:use-local'),
     retry: () => ipcRenderer.invoke('melo:retry'),

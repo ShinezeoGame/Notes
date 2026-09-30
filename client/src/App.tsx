@@ -30,7 +30,7 @@ import { CamerasView } from './components/CamerasView';
 import { InviteView, JoinDialog, PairView } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { Dashboard } from './dashboard/Dashboard';
-import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, saveCardSize, useHomelabConfig } from './lib/homelab';
+import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, setCardsGrouped, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { MeloLogo } from './components/Logo';
@@ -310,7 +310,7 @@ function OwnerApp() {
   else if (route.name === 'notes') content = <NotesEmpty store={store} onCreate={() => createPage('')} />;
   else
     content = (
-      <Dashboard doc={store.doc} store={store} synced={synced} gap={look.gap} onCustomize={() => setDialog({ type: 'appearance' })} />
+      <Dashboard doc={store.doc} store={store} synced={synced} gap={look.gap} />
     );
 
   const nav = (
@@ -694,6 +694,8 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
         onResetLayout={() => resetCardSizes(doc)}
         order={cardOrder(cfg)}
         onReorder={(ids) => saveCardOrder(doc, ids)}
+        grouped={cfg.grouped}
+        onGroupedChange={(grouped) => setCardsGrouped(doc, grouped)}
         refreshKey={configStatusKey(cfg)}
       />
     </div>

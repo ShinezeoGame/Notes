@@ -253,10 +253,9 @@ type Props = {
   synced: boolean;
   /** Espace entre les widgets (px). */
   gap: number;
-  onCustomize: () => void;
 };
 
-export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
+export function Dashboard({ doc, store, synced, gap }: Props) {
   const data = useDashboard(doc, synced);
   const settings = useSettings();
   const [editing, setEditing] = useState(false);
@@ -404,46 +403,17 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
   const pageCls = ['dash-page', editing ? 'dash-page--editing' : '', direct ? 'dash-page--direct' : 'dash-page--touch'].filter(Boolean).join(' ');
   return (
     <div className={pageCls}>
-      <div className="dash-toolbar">
-        {editing ? (
-          <>
-            <span className="dash-toolbar-hint">Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.</span>
-            <button type="button" className="nb-btn nb-btn--sm" onClick={() => setCatalog(true)}>
-              <Icon name="plus" size={15} /> Ajouter un widget
-            </button>
-            <button type="button" className="nb-btn nb-btn--sm" onClick={onCustomize}>
-              <Icon name="palette" size={15} /> <span className="dash-hide-narrow">Personnaliser</span>
-            </button>
-            <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => setEditing(false)}>
-              <Icon name="check" size={15} /> Terminé
-            </button>
-          </>
-        ) : (
-          <>
-            {direct && !settings.dashTipSeen && data.widgets.length > 0 ? (
-              <span className="dash-tip">
-                <Icon name="move" size={14} />
-                <span>Glissez un widget pour le déplacer, tirez un de ses coins pour le redimensionner.</span>
-                <button type="button" className="dash-tip-close" onClick={() => updateSettings({ dashTipSeen: true })} aria-label="Masquer l’astuce" title="Masquer">
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            ) : null}
-            <button type="button" className="dash-tool" onClick={onCustomize} title="Thème, couleurs et fond d’écran">
-              <Icon name="palette" size={16} /> <span>Personnaliser</span>
-            </button>
-            {direct ? (
-              <button type="button" className="dash-tool" onClick={() => setCatalog(true)} title="Ajouter un widget à l’accueil">
-                <Icon name="plus" size={16} /> <span>Ajouter un widget</span>
-              </button>
-            ) : (
-              <button type="button" className="dash-tool" onClick={() => setEditing(true)} title="Déplacer, redimensionner, ajouter des widgets (ou appui long sur un widget)">
-                <Icon name="pencil" size={16} /> <span>Modifier</span>
-              </button>
-            )}
-          </>
-        )}
-      </div>
+      {editing ? (
+        <div className="dash-toolbar">
+          <span className="dash-toolbar-hint">Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.</span>
+          <button type="button" className="nb-btn nb-btn--sm" onClick={() => setCatalog(true)}>
+            <Icon name="plus" size={15} /> Ajouter un widget
+          </button>
+          <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => setEditing(false)}>
+            <Icon name="check" size={15} /> Terminé
+          </button>
+        </div>
+      ) : null}
 
       <div ref={containerRef} className="dash-grid-wrap">
         {data.widgets.length === 0 ? (
@@ -477,6 +447,39 @@ export function Dashboard({ doc, store, synced, gap, onCustomize }: Props) {
           </Responsive>
         ) : null}
       </div>
+
+      {!editing && data.widgets.length > 0 ? (
+        // Bouton discret en bas à droite (reste visible en faisant défiler) : ajouter un widget, ou sur écran tactile
+        // passer en mode modification.
+        <div className="dash-float">
+          {direct && !settings.dashTipSeen ? (
+            <span className="dash-tip">
+              <Icon name="move" size={14} />
+              <span>Glissez un widget pour le déplacer, tirez un de ses coins pour le redimensionner.</span>
+              <button type="button" className="dash-tip-close" onClick={() => updateSettings({ dashTipSeen: true })} aria-label="Masquer l’astuce" title="Masquer">
+                <Icon name="close" size={12} />
+              </button>
+            </span>
+          ) : null}
+          {direct ? (
+            <button type="button" className="dash-fab" onClick={() => setCatalog(true)} aria-label="Ajouter un widget" title="Ajouter un widget">
+              <Icon name="plus" size={18} />
+              <span className="dash-fab-label">Ajouter un widget</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="dash-fab"
+              onClick={() => setEditing(true)}
+              aria-label="Modifier l’accueil"
+              title="Déplacer, redimensionner, ajouter des widgets (ou appui long sur un widget)"
+            >
+              <Icon name="pencil" size={16} />
+              <span className="dash-fab-label">Modifier</span>
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {catalog ? (
         <Catalog

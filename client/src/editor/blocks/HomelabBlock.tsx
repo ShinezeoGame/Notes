@@ -57,6 +57,7 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
           onResize={doc && editor.isEditable ? (id, size) => saveCardSize(doc, id, size) : undefined}
           order={cardOrder(cfg)}
           onReorder={doc && editor.isEditable ? (ids) => saveCardOrder(doc, ids) : undefined}
+          grouped={cfg.grouped}
         />
       </div>
     </div>

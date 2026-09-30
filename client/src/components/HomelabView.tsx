@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { api, serverBase } from '../lib/api';
 import {
-  CATEGORIES,
+  categoryRank,
   formatBytes,
   formatStat,
   formatUptime,
@@ -44,6 +44,10 @@ type PanelProps = {
   /** Ordre choisi des modules (identifiants) ; `onReorder` le modifie par glisser-déposer. */
   order?: string[];
   onReorder?: (ids: string[]) => void;
+  /** Vrai (par défaut) : modules rangés par rubrique ; faux : une seule grille (appareils et applications mêlés). */
+  grouped?: boolean;
+  /** Fourni quand le rangement par rubrique peut être changé depuis ce panneau (mode Disposition). */
+  onGroupedChange?: (grouped: boolean) => void;
   /** Change quand la configuration change : le panneau se réactualise aussitôt. */
   refreshKey?: string;
 };
@@ -216,7 +220,20 @@ export function DeviceCard({ d, compact: compactView, fit }: { d: DeviceStatus; 
 }
 
 /** Panneau autonome : interroge le serveur et affiche appareils + applications. */
-export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure, configured, layout, onResize, onResetLayout, order = [], onReorder, refreshKey }: PanelProps) {
+export function HomelabPanel({
+  compact = false,
+  refreshSeconds = 30,
+  onConfigure,
+  configured,
+  layout,
+  onResize,
+  onResetLayout,
+  order = [],
+  onReorder,
+  grouped: byCategory = true,
+  onGroupedChange,
+  refreshKey,
+}: PanelProps) {
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState<HomelabStatus | null>(null);
   const [error, setError] = useState('');
@@ -273,8 +290,7 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(s);
     }
-    const rank = (c: string) => (CATEGORIES.indexOf(c) === -1 ? 99 : CATEGORIES.indexOf(c));
-    return Array.from(groups.entries()).sort(([a], [b]) => rank(a) - rank(b));
+    return Array.from(groups.entries()).sort(([a], [b]) => categoryRank(a) - categoryRank(b));
   }, [status, order]);
 
   if (!hasServer) {
@@ -305,8 +321,16 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
     <div className={`hl-panel${compact ? ' hl-panel--compact' : ''}${editing ? ' hl-panel--editing' : ''}`}>
       {editing ? (
         <div className="hl-edit-hint">
-          <Icon name="gripCorner" size={14} /> Tirez le bord droit, le bord inférieur ou le coin d’un module pour le redimensionner librement. Double-clic sur le
-          coin : taille automatique.
+          <Icon name="gripCorner" size={14} />
+          <span>
+            Glissez un module pour le déplacer ; tirez son bord droit, son bord inférieur ou son coin pour le redimensionner (double-clic sur le coin : taille
+            automatique).
+          </span>
+          {onGroupedChange ? (
+            <label className="nb-check hl-group-toggle">
+              <input type="checkbox" checked={byCategory} onChange={(e) => onGroupedChange(e.target.checked)} /> Ranger par catégorie
+            </label>
+          ) : null}
         </div>
       ) : null}
       <div className="hl-toolbar">
@@ -320,9 +344,9 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
               type="button"
               className={`nb-btn nb-btn--sm${editing ? ' nb-btn--primary' : ''}`}
               onClick={() => setEditing((v) => !v)}
-              title="Changer la taille des modules"
+              title="Déplacer et redimensionner les modules, ranger par catégorie ou librement"
             >
-              <Icon name={editing ? 'check' : 'resize'} size={14} /> {editing ? 'Terminer' : 'Redimensionner'}
+              <Icon name={editing ? 'check' : 'resize'} size={14} /> {editing ? 'Terminer' : 'Disposition'}
             </button>
           ) : null}
           {editing && onResetLayout ? (
@@ -342,7 +366,36 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
       </div>
       {error ? <div className="nb-error">{error}</div> : null}
       {!status && loading ? <div className="hl-loading">Interrogation de vos appareils et applications…</div> : null}
-      {devices.length ? (
+      {!byCategory ? (
+        <section className="hl-section">
+          <CardGrid
+            className="hl-grid hl-grid--free"
+            compact={compact}
+            minWidth={compact ? 170 : 230}
+            editing={editing}
+            onReorder={onReorder}
+            items={sortByOrder(
+              [
+                ...(status?.devices ?? []).map((d) => ({
+                  id: d.id,
+                  size: layout?.[d.id] ?? AUTO_SIZE,
+                  minWidth: compact ? 240 : 300,
+                  render: (fit: CardFit) => <DeviceCard d={d} compact={compact} fit={fit} />,
+                })),
+                ...(status?.services ?? []).map((sv) => ({
+                  id: sv.id,
+                  size: layout?.[sv.id] ?? AUTO_SIZE,
+                  render: (fit: CardFit) => <ServiceCard s={sv} compact={compact} fit={fit} editing={editing} />,
+                })),
+              ],
+              order,
+              (it) => it.id,
+            )}
+            onResize={onResize}
+          />
+        </section>
+      ) : null}
+      {byCategory && devices.length ? (
         <section className="hl-section">
           {!compact ? <h2>Appareils</h2> : null}
           <CardGrid
@@ -360,7 +413,7 @@ export function HomelabPanel({ compact = false, refreshSeconds = 30, onConfigure
           />
         </section>
       ) : null}
-      {grouped.map(([cat, list]) => (
+      {(byCategory ? grouped : []).map(([cat, list]) => (
         <section key={cat} className="hl-section">
           {!compact ? <h2>{cat}</h2> : null}
           <CardGrid
@@ -394,8 +447,9 @@ const SNAP_SPANS = [15, 20, 24, 30, 40, 48, 60, 72, 80, 90, 96, 120];
 /** En dessous de cette largeur (téléphone), un module par ligne. */
 const STACK_BELOW = 560;
 
-type GridItem = { id: string; size: CardSize; render: (fit: CardFit) => ReactNode };
-type Geometry = { colW: number; gap: number; stacked: boolean; autoSpan: number; minSpan: number };
+/** `minWidth` : largeur minimale propre au module en taille automatique (sinon celle de la grille). */
+type GridItem = { id: string; size: CardSize; minWidth?: number; render: (fit: CardFit) => ReactNode };
+type Geometry = { colW: number; gap: number; stacked: boolean; autoSpan: number; autoFor: (minWidth: number) => number; minSpan: number };
 type Live = { span?: number; h?: number };
 
 function useElementWidth(ref: React.RefObject<HTMLDivElement | null>): number {
@@ -444,14 +498,19 @@ function CardGrid({
   const geo = useMemo<Geometry>(() => {
     const colW = gridWidth / COLS;
     const stacked = gridWidth < STACK_BELOW;
-    const perRow = Math.max(1, Math.floor(gridWidth / (minWidth + gap)));
-    const divisor = [...DIVISORS].reverse().find((d) => d <= perRow) ?? 1;
     const minPx = compact ? 120 : 150;
+    // Taille automatique : autant de modules par rangée que la largeur minimale le permet (1/2, 1/3, 1/4…).
+    const autoFor = (min: number) => {
+      if (stacked) return COLS;
+      const perRow = Math.max(1, Math.floor(gridWidth / (min + gap)));
+      return COLS / ([...DIVISORS].reverse().find((d) => d <= perRow) ?? 1);
+    };
     return {
       colW,
       gap,
       stacked,
-      autoSpan: stacked ? COLS : COLS / divisor,
+      autoSpan: autoFor(minWidth),
+      autoFor,
       minSpan: colW > 0 ? Math.min(COLS, Math.ceil((minPx + gap) / colW)) : 1,
     };
   }, [gridWidth, gap, minWidth, compact]);
@@ -479,7 +538,7 @@ function CardCell({ item, geo, editing, onResize, sort }: { item: GridItem; geo:
   const drag = useRef<{ axis: 'x' | 'y' | 'xy'; x: number; y: number; span: number; h: number } | null>(null);
 
   const clampSpan = (n: number) => (geo.stacked ? COLS : Math.min(COLS, Math.max(geo.minSpan, Math.round(n))));
-  const storedSpan = item.size.w !== undefined ? (item.size.w / 100) * COLS : geo.autoSpan;
+  const storedSpan = item.size.w !== undefined ? (item.size.w / 100) * COLS : item.minWidth ? geo.autoFor(item.minWidth) : geo.autoSpan;
   const span = clampSpan(live?.span ?? storedSpan);
   const fixedH = live?.h ?? item.size.h;
   const width = Math.max(0, span * geo.colW - geo.gap);

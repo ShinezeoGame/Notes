@@ -50,6 +50,7 @@ import {
 } from './ws.js';
 import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab.js';
 import { createAppUpdates } from './appUpdates.js';
+import { checkFrame } from './frames.js';
 import { claimPairing, startPairing } from './pairing.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 import {
@@ -327,6 +328,13 @@ app.post('/api/homelab/test', requireOwner, requireHost, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message || 'Test impossible.' });
   }
+});
+
+// ---------- Widget « Site web » ----------
+// Le site accepte-t-il d'être affiché dans une page de Melo ? Sinon l'application propose de l'ouvrir (au lieu d'un
+// cadre vide). Réservé au propriétaire du serveur : la requête part du réseau du serveur.
+app.get('/api/frame-check', requireOwner, requireHost, async (req, res) => {
+  res.json(await checkFrame(req.query.url));
 });
 
 // ---------- Maison connectée (Home Assistant) ----------

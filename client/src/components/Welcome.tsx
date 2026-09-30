@@ -24,7 +24,8 @@ function slides(visible: (id: SectionId) => boolean, guest: boolean): Slide[] {
       text: (
         <>
           Des widgets (horloge, météo, tâches, agenda, raccourcis…) à placer où vous voulez : <b>glissez</b> un widget pour le déplacer, <b>tirez un coin</b>{' '}
-          pour l’agrandir. <b>Ajouter un widget</b>, en haut à droite, ouvre le catalogue. Sur téléphone : un appui long sur un widget.
+          pour l’agrandir. Le bouton <b>+</b>, en bas à droite, ouvre le catalogue. Sur téléphone : un appui long sur un widget, ou <b>Modifier</b> en bas à
+          droite.
         </>
       ),
     },

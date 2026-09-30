@@ -14,6 +14,8 @@ type DesktopBridge = {
   mode: 'local' | 'server';
   localUrl: string;
   serverUrl: string | null;
+  /** Niveau 2 : tout site s'affiche dans le widget « Site web » (en-têtes d'interdiction levés, http permis). */
+  embedsAnySite?: boolean;
   /** Ouvre un serveur Melo dans la fenêtre (et le retient), éventuellement à une adresse précise (#/invite/…). */
   useServer: (url: string, route?: string) => Promise<void>;
   /** Revient à l'espace de cet ordinateur. */

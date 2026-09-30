@@ -100,6 +100,8 @@ export const api = {
       body: JSON.stringify({ parentId, title }),
     }),
   getShare: (token: string) => request<ShareTree>(`/api/share/${encodeURIComponent(token)}`),
+  /** Le site accepte-t-il d'être affiché dans une page de Melo ? (null : le serveur ne l'a pas joint) */
+  frameCheck: (url: string) => request<{ allowed: boolean | null }>(`/api/frame-check?url=${encodeURIComponent(url)}`, { auth: ownerAuth() }),
   homelabStatus: (force = false) => request<HomelabStatus>(`/api/homelab/status${force ? '?force=1' : ''}`, { auth: ownerAuth() }),
   homelabTest: (payload: { service?: Service; device?: Device }) =>
     request<ServiceStatus | DeviceStatus>('/api/homelab/test', { method: 'POST', body: JSON.stringify(payload), auth: ownerAuth() }),
