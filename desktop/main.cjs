@@ -20,6 +20,20 @@ app.setAppUserModelId('com.shinezeo.melo');
 if (process.env.MELO_USER_DATA) app.setPath('userData', process.env.MELO_USER_DATA);
 const USER_DATA = app.getPath('userData');
 const CONFIG_FILE = path.join(USER_DATA, 'melo-ordinateur.json');
+const LOG_FILE = path.join(USER_DATA, 'melo.log');
+
+/** Journal de l'application (%APPDATA%\Melo\melo.log), pour comprendre un problème après coup. */
+function log(...parts) {
+  const line = `${new Date().toISOString()} ${parts.join(' ')}`;
+  console.log(line);
+  try {
+    fs.mkdirSync(USER_DATA, { recursive: true });
+    if (fs.existsSync(LOG_FILE) && fs.statSync(LOG_FILE).size > 1024 * 1024) fs.truncateSync(LOG_FILE, 0);
+    fs.appendFileSync(LOG_FILE, `${line}\n`);
+  } catch {
+    /* journal indisponible */
+  }
+}
 
 /** { server: adresse du serveur distant affiché (null : espace de cet ordinateur), bounds, maximized } */
 let config = readConfig();
@@ -82,7 +96,7 @@ function startServer() {
   } catch {
     /* premier lancement */
   }
-  const log = fs.createWriteStream(logFile, { flags: 'a' });
+  const serverLog = fs.createWriteStream(logFile, { flags: 'a' });
   const child = utilityProcess.fork(path.join(__dirname, 'server', 'src', 'index.js'), [], {
     serviceName: 'Serveur Melo',
     stdio: 'pipe',
@@ -97,9 +111,9 @@ function startServer() {
       MAX_WORKSPACES: '0',
     },
   });
-  child.stdout?.pipe(log);
-  child.stderr?.pipe(log);
-  const entry = { child, log, ready: null, started: false };
+  child.stdout?.pipe(serverLog);
+  child.stderr?.pipe(serverLog);
+  const entry = { child, serverLog, ready: null, started: false };
   entry.ready = new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('il ne répond pas')), 30_000);
     child.on('message', (m) => {
@@ -123,8 +137,12 @@ function startServer() {
       if (entry.started && !quitting && !config.server && restarts++ < 3) setTimeout(() => void startServer().catch(() => {}), 1500);
     });
   });
-  entry.ready.catch(() => {});
+  entry.ready.then(
+    () => log('serveur intégré prêt'),
+    (err) => log('serveur intégré :', err.message),
+  );
   server = entry;
+  log('démarrage du serveur intégré');
   return entry.ready;
 }
 
@@ -141,9 +159,9 @@ function stopServer() {
     entry.child.once('exit', () => {
       clearTimeout(timer);
       // Dernières lignes du journal du serveur écrites avant de quitter.
-      if (entry.log.writableFinished) resolve();
+      if (entry.serverLog.writableFinished) resolve();
       else {
-        entry.log.once('finish', resolve);
+        entry.serverLog.once('finish', resolve);
         setTimeout(resolve, 1000);
       }
     });
@@ -177,6 +195,7 @@ function createWindow() {
   });
   if (config.maximized) win.maximize();
   win.once('ready-to-show', () => win.show());
+  log('fenêtre créée');
   win.on('close', () => {
     config.maximized = win.isMaximized();
     if (!config.maximized && !win.isMinimized()) config.bounds = win.getBounds();
@@ -192,9 +211,15 @@ function createWindow() {
   wc.on('did-fail-load', (_e, code, description, url, isMainFrame) => {
     // -3 : chargement interrompu par un autre (changement de serveur).
     if (!isMainFrame || code === -3 || url.startsWith('file:')) return;
+    log('chargement impossible :', url, description);
     showProblem(config.server ? 'server' : 'local', description);
   });
-  wc.on('did-finish-load', flushFiles);
+  wc.on('did-finish-load', () => {
+    log('page chargée :', wc.getURL());
+    flushFiles();
+  });
+  wc.on('render-process-gone', (_e, details) => log('page arrêtée :', details.reason, String(details.exitCode)));
+  win.on('unresponsive', () => log('la fenêtre ne répond plus'));
   wc.on('before-input-event', (e, input) => {
     if (input.type === 'keyDown' && input.key === 'F5') {
       e.preventDefault();
@@ -399,11 +424,14 @@ function buildMenu() {
   ]);
 }
 
+log(`Melo ${app.getVersion()} : lancement (${process.argv.slice(1).join(' ') || 'sans argument'})`);
 if (!app.requestSingleInstanceLock()) {
   // Melo est déjà ouvert : cette deuxième instance lui passe ses fichiers (voir « second-instance ») et s'arrête.
+  log('déjà ouvert : fichiers transmis à la fenêtre existante');
   app.quit();
 } else {
   app.on('second-instance', (_e, argv) => {
+    log('deuxième lancement reçu');
     if (win) {
       if (win.isMinimized()) win.restore();
       win.focus();
@@ -416,6 +444,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
+    log('prêt ;', config.server ? `serveur ${config.server}` : 'espace de cet ordinateur');
     Menu.setApplicationMenu(buildMenu());
     openFiles(filesFromArgv(process.argv));
     createWindow();
@@ -428,11 +457,15 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', (e) => {
     if (quitting) return;
     quitting = true;
+    log('fermeture');
     // Melo rouvert pendant sa fermeture : la nouvelle fenêtre s'ouvre (et attend que le port se libère).
     app.releaseSingleInstanceLock();
     if (!server) return;
     // Laisse au serveur intégré le temps d'enregistrer les documents.
     e.preventDefault();
-    void stopServer().finally(() => app.quit());
+    void stopServer().finally(() => {
+      log('serveur intégré arrêté');
+      app.quit();
+    });
   });
 }

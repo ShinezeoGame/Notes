@@ -3,7 +3,7 @@
 // fermeture propre. Captures d'écran, rapport et journal du serveur dans smoke-out/.
 // Usage : node check.mjs <chemin de Melo.exe>
 import { _electron as electron } from 'playwright-core';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,7 +20,26 @@ const report = [];
 let app;
 let win;
 
-/** Ferme la fenêtre comme un utilisateur (bouton ✕), puis attend la fin de Melo. */
+/** Processus Melo encore présents (Windows : tous ceux de l'exécutable, y compris les processus enfants). */
+function meloProcesses() {
+  if (process.platform !== 'win32') return [];
+  try {
+    const out = execFileSync('tasklist', ['/FI', `IMAGENAME eq ${path.basename(EXE)}`, '/FO', 'CSV', '/NH'], { encoding: 'utf8' });
+    return out.split(/\r?\n/).filter((l) => l.startsWith('"'));
+  } catch {
+    return [];
+  }
+}
+
+const readText = (file) => {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return '(absent)';
+  }
+};
+
+/** Ferme la fenêtre comme un utilisateur (bouton ✕), puis attend la fin de Melo et de ses processus. */
 async function closeLikeUser() {
   const proc = app.process();
   const exited = proc.exitCode !== null ? Promise.resolve() : new Promise((resolve) => proc.once('exit', resolve));
@@ -28,6 +47,14 @@ async function closeLikeUser() {
   await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 20_000))]);
   if (proc.exitCode === null) throw new Error('Melo ne s’est pas fermé après la fermeture de sa fenêtre');
   app = null;
+  const t = Date.now();
+  let left = meloProcesses();
+  while (left.length && Date.now() - t < 20_000) {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    left = meloProcesses();
+  }
+  report.push(`   fermé ; processus restants après ${Date.now() - t} ms : ${left.length}`);
+  console.log(report.at(-1));
 }
 async function step(name, fn) {
   await fn();
@@ -93,12 +120,18 @@ try {
   console.error('❌', err);
   report.push(`❌ ${String(err?.message ?? err).slice(0, 500)}`);
   await win?.screenshot({ path: path.join(OUT, 'echec.png') }).catch(() => {});
+  // Diagnostic dans le journal du workflow (les artefacts ne sont pas toujours lisibles).
+  console.log('--- processus Melo :\n' + (meloProcesses().join('\n') || '(aucun)'));
+  console.log('--- melo.log :\n' + readText(path.join(DATA, 'melo.log')));
+  console.log('--- serveur.log :\n' + readText(path.join(DATA, 'serveur.log')));
 } finally {
   await app?.close().catch(() => {});
-  try {
-    fs.copyFileSync(path.join(DATA, 'serveur.log'), path.join(OUT, 'serveur.log'));
-  } catch {
-    /* serveur jamais lancé */
+  for (const name of ['serveur.log', 'melo.log']) {
+    try {
+      fs.copyFileSync(path.join(DATA, name), path.join(OUT, name));
+    } catch {
+      /* jamais lancé */
+    }
   }
   fs.writeFileSync(path.join(OUT, 'rapport.txt'), `${report.join('\n')}\n`);
 }
