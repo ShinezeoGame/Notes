@@ -1,9 +1,27 @@
-import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
-import { formatPairingCode, linkWithCode } from '../lib/pairing';
-import { isStandaloneWeb, normalizeServerUrl, useSettings } from '../lib/settings';
+// Rejoindre un espace et le partager : relier un autre appareil (QR code, lien ou code à 6 chiffres), inviter une
+// personne (son propre espace sur ce serveur), et les pages ouvertes par ces liens (#/pair/…, #/invite/…).
+import { useEffect, useState, type ReactNode } from 'react';
+import { api, canShareLinks, serverBase, type GuestInfo, type InviteInfo } from '../lib/api';
+import { desktop, isDesktopLocal } from '../lib/desktop';
+import {
+  acceptInvite,
+  asPairingCode,
+  claimServer,
+  formatPairingCode,
+  inviteInfo,
+  joinWithKey,
+  linkWithCode,
+  pairLink,
+  parseMeloLink,
+  type MeloLink,
+} from '../lib/pairing';
+import { navigate } from '../lib/router';
+import { getSettings, isDefaultUserName, isNative, isStandaloneWeb, normalizeServerUrl, updateSettings, useSettings } from '../lib/settings';
 import { Icon } from '../icons/Icon';
+import { MeloLogo } from './Logo';
 import { Modal } from './Modal';
+import { QrCode } from './QrCode';
+import { toast } from './Toast';
 
 /** Champ de saisie d'un code à 6 chiffres (« 482 913 »), clavier numérique sur téléphone. */
 export function PairingCodeInput({ value, onChange, onEnter, autoFocus }: { value: string; onChange: (v: string) => void; onEnter?: () => void; autoFocus?: boolean }) {
@@ -22,25 +40,99 @@ export function PairingCodeInput({ value, onChange, onEnter, autoFocus }: { valu
   );
 }
 
-/** Appareil déjà relié : affiche un code valable 10 minutes pour relier un autre appareil. */
-export function PairingCodePanel() {
+export async function copyText(text: string, message = 'Lien copié : collez-le dans un message.') {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(message);
+  } catch {
+    toast('Copie impossible : sélectionnez le lien puis copiez-le.', 'error');
+  }
+}
+
+const canShareSheet = () => typeof (navigator as Navigator & { share?: unknown }).share === 'function';
+
+/** Feuille de partage du système (WhatsApp, SMS, e-mail…) quand elle existe, sinon copie du lien. */
+export async function sendLink(url: string, title: string, text: string) {
+  if (canShareSheet()) {
+    try {
+      await navigator.share({ title, text, url });
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+    }
+  }
+  await copyText(url);
+}
+
+/** Lien à transmettre : QR code, adresse, Copier, Envoyer… */
+export function LinkCard({ url, title, text, children }: { url: string; title: string; text: string; children?: ReactNode }) {
+  return (
+    <div className="nb-linkcard">
+      <QrCode text={url} />
+      <div className="nb-linkcard-body">
+        {children}
+        <input className="nb-input nb-linkcard-url" readOnly value={url} onFocus={(e) => e.currentTarget.select()} aria-label="Lien" />
+        <div className="nb-row nb-gap nb-wrap">
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => void copyText(url)}>
+            <Icon name="copy" size={15} /> Copier le lien
+          </button>
+          {canShareSheet() ? (
+            <button type="button" className="nb-btn" onClick={() => void sendLink(url, title, text)}>
+              <Icon name="share" size={15} /> Envoyer…
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function useCountdown(expiresAt: number | null): number {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!expiresAt) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [expiresAt]);
+  return expiresAt ? Math.max(0, Math.round((expiresAt - now) / 1000)) : 0;
+}
+
+/**
+ * Relier un autre appareil de la même personne : un code valable 10 minutes, présenté en QR code (appareil photo du
+ * téléphone), en lien et en chiffres (application Melo).
+ */
+export function DevicesPanel({ onJoin }: { onJoin: () => void }) {
+  const settings = useSettings();
   const [pairing, setPairing] = useState<{ code: string; expiresAt: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [now, setNow] = useState(Date.now());
+  const left = useCountdown(pairing?.expiresAt ?? null);
+  const server = serverBase();
 
-  useEffect(() => {
-    if (!pairing) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [pairing]);
+  if (!canShareLinks() || !server) {
+    return (
+      <div className="nb-devices">
+        <p className="nb-muted">
+          {isDesktopLocal()
+            ? 'Melo fonctionne seul sur cet ordinateur.'
+            : 'Melo fonctionne seul sur cet appareil.'}{' '}
+          Pour le retrouver sur votre téléphone, synchroniser plusieurs appareils ou partager des pages, rejoignez un serveur Melo : le vôtre, ou
+          celui d’une personne qui vous invite.
+        </p>
+        <div>
+          <button type="button" className="nb-btn nb-btn--primary" onClick={onJoin}>
+            <Icon name="link" size={15} /> Rejoindre un serveur (lien ou code)
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const create = async () => {
     setBusy(true);
     setError('');
     try {
       setPairing(await api.pairStart());
-      setNow(Date.now());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Code indisponible.');
     } finally {
@@ -48,90 +140,452 @@ export function PairingCodePanel() {
     }
   };
 
-  const left = pairing ? Math.max(0, Math.round((pairing.expiresAt - now) / 1000)) : 0;
-  if (!pairing || left === 0) {
-    return (
-      <div className="nb-pair">
-        <button type="button" className="nb-btn nb-btn--primary" onClick={() => void create()} disabled={busy}>
-          <Icon name="smartphone" size={15} /> {pairing ? 'Afficher un nouveau code' : 'Afficher un code de liaison'}
-        </button>
-        {pairing ? <span className="nb-muted">Le code précédent a expiré.</span> : null}
-        {error ? <div className="nb-error">{error}</div> : null}
-      </div>
-    );
-  }
   return (
-    <div className="nb-pair nb-pair--shown">
-      <div className="nb-pair-code" aria-label={`Code de liaison ${pairing.code.split('').join(' ')}`}>
-        {formatPairingCode(pairing.code)}
-      </div>
-      <div className="nb-muted">
-        Valable encore {Math.floor(left / 60)} min {String(left % 60).padStart(2, '0')} s, une seule fois. Sur le nouvel appareil : <b>Réglages → Relier cet
-        appareil avec un code</b> (ou, au premier lancement de l’application : <b>Se connecter à mon serveur</b>).
+    <div className="nb-devices">
+      {settings.guest && settings.hostName ? (
+        <p className="nb-muted">
+          <Icon name="cloud" size={14} /> Votre espace est sur le serveur Melo de <b>{settings.hostName}</b>.
+        </p>
+      ) : null}
+      {pairing && left > 0 ? (
+        <LinkCard url={pairLink(server, pairing.code)} title="Relier un appareil à Melo" text="Ouvrez ce lien pour retrouver mon espace Melo sur cet appareil :">
+          <p className="nb-linkcard-help">
+            <b>Téléphone :</b> scannez ce QR code avec l’appareil photo. <b>Application Melo :</b> « J’ai une invitation ou un code », puis collez le lien
+            (ou l’adresse <span className="nb-mono">{server}</span> et le code <b className="nb-mono">{formatPairingCode(pairing.code)}</b>).
+          </p>
+          <p className="nb-muted nb-small">
+            Valable encore {Math.floor(left / 60)} min {String(left % 60).padStart(2, '0')} s, une seule fois : ne l’envoyez qu’à vous-même.
+          </p>
+        </LinkCard>
+      ) : (
+        <div className="nb-pair">
+          <p className="nb-muted">Retrouvez les mêmes pages, le même accueil et les mêmes réglages sur votre téléphone ou un autre ordinateur.</p>
+          <div>
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => void create()} disabled={busy}>
+              <Icon name="smartphone" size={15} /> {pairing ? 'Afficher un nouveau code' : 'Relier un autre appareil'}
+            </button>
+          </div>
+          {pairing ? <span className="nb-muted nb-small">Le code précédent a expiré.</span> : null}
+        </div>
+      )}
+      {error ? <div className="nb-error">{error}</div> : null}
+      <div className="nb-devices-join">
+        <span className="nb-muted">Cet appareil n’affiche pas vos pages ?</span>
+        <button type="button" className="nb-btn nb-btn--sm" onClick={onJoin}>
+          Saisir un lien ou un code
+        </button>
       </div>
     </div>
   );
 }
 
-/**
- * Nouvel appareil : saisie de l'adresse du serveur (application) et du code affiché sur un appareil déjà relié.
- * `server` : adresse déjà saisie ailleurs (réglages), à défaut celle enregistrée.
- */
-export function LinkWithCodeDialog({ server: initialServer, onClose }: { server?: string | null; onClose: () => void }) {
+const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' });
+
+/** Inviter une personne : un lien (7 jours, une seule personne) qui lui donne son propre espace sur ce serveur. */
+export function InvitePanel() {
   const settings = useSettings();
-  const web = isStandaloneWeb();
-  const [server, setServer] = useState(web ? location.origin : (initialServer || settings.serverUrl || ''));
-  const [code, setCode] = useState('');
+  const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
+  const [list, setList] = useState<{ invites: InviteInfo[]; guests: GuestInfo[] } | null>(null);
+  const [fresh, setFresh] = useState<InviteInfo | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const serverUrl = web ? location.origin : normalizeServerUrl(server);
 
-  const submit = async () => {
-    if (!serverUrl) {
-      setError('Adresse du serveur invalide. Exemple : https://notes.mondomaine.fr');
-      return;
+  const load = async () => {
+    try {
+      setList(await api.listInvites());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invitations indisponibles.');
     }
+  };
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const create = async () => {
     setBusy(true);
     setError('');
     try {
-      await linkWithCode(serverUrl, code);
+      const inv = await api.createInvite(name.trim());
+      if (name.trim() && isDefaultUserName(getSettings().userName)) updateSettings({ userName: name.trim() });
+      setFresh(inv);
+      await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Liaison impossible.');
+      setError(err instanceof Error ? err.message : 'Invitation impossible.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancel = async (token: string) => {
+    await api.deleteInvite(token).catch((err: Error) => setError(err.message));
+    if (fresh?.token === token) setFresh(null);
+    await load();
+  };
+
+  const remove = async (guest: GuestInfo) => {
+    const who = guest.name || 'cette personne';
+    if (!confirm(`Retirer ${who} ? Son espace (pages, fichiers) sera supprimé de votre serveur ; ses appareils ne se synchroniseront plus.`)) return;
+    await api.removeGuest(guest.wsId).catch((err: Error) => setError(err.message));
+    toast(`${guest.name || 'La personne'} n’a plus accès à votre serveur.`);
+    await load();
+  };
+
+  const pending = (list?.invites ?? []).filter((i) => i.token !== fresh?.token);
+  return (
+    <div className="nb-invite">
+      <p className="nb-muted">
+        Donnez à un proche son propre espace Melo sur votre serveur : ses pages restent à lui, il les retrouve sur tous ses appareils, et vous
+        pouvez vous partager des pages. Il n’a pas accès à votre maison, vos caméras ni votre homelab.
+      </p>
+      {fresh ? (
+        <LinkCard url={fresh.url} title="Invitation à Melo" text={`${fresh.name || 'Je'} t’invite à utiliser Melo :`}>
+          <p className="nb-linkcard-help">
+            Envoyez ce lien à la personne invitée (message, e-mail), ou faites-lui scanner le QR code : elle crée son espace en un clic. Valable 7 jours,
+            pour une seule personne.
+          </p>
+        </LinkCard>
+      ) : (
+        <div className="nb-invite-new">
+          <label className="nb-field">
+            <span>Votre prénom, affiché dans l’invitation</span>
+            <input className="nb-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Ex. : Camille" />
+          </label>
+          <div>
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => void create()} disabled={busy}>
+              <Icon name="users" size={15} /> Créer une invitation
+            </button>
+          </div>
+        </div>
+      )}
+      {fresh ? (
+        <div>
+          <button type="button" className="nb-btn nb-btn--sm" onClick={() => setFresh(null)}>
+            Inviter une autre personne
+          </button>
+        </div>
+      ) : null}
+      {error ? <div className="nb-error">{error}</div> : null}
+      {pending.length ? (
+        <div className="nb-invite-list">
+          <h4>Invitations en attente</h4>
+          {pending.map((i) => (
+            <div key={i.token} className="nb-invite-row">
+              <Icon name="mail" size={15} />
+              <span>
+                Créée le {DATE.format(i.createdAt)}, valable jusqu’au {DATE.format(i.expiresAt)}
+              </span>
+              <button type="button" className="nb-btn nb-btn--sm" onClick={() => void copyText(i.url)}>
+                Copier
+              </button>
+              <button type="button" className="nb-btn nb-btn--sm" onClick={() => void cancel(i.token)}>
+                Annuler
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {list?.guests.length ? (
+        <div className="nb-invite-list">
+          <h4>Personnes invitées</h4>
+          {list.guests.map((g) => (
+            <div key={g.wsId} className="nb-invite-row">
+              <Icon name="user" size={15} />
+              <span>
+                {g.name || 'Sans nom'} <span className="nb-muted">· depuis le {DATE.format(g.createdAt)}</span>
+              </span>
+              <button type="button" className="nb-btn nb-btn--sm nb-btn--danger" onClick={() => void remove(g)}>
+                Retirer
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Serveur sur lequel un code seul s'applique : celui de la page (navigateur), sinon aucun. */
+function codeServer(): string | null {
+  return isStandaloneWeb() && !isDesktopLocal() ? normalizeServerUrl(location.origin + location.pathname) : null;
+}
+
+/** Adresse (#/…) à ouvrir sur le serveur du lien pour qu'il s'en occupe : invitation, liaison, ou page d'accueil. */
+function serverRoute(link: MeloLink, code: string): string {
+  if (link.kind === 'invite') return `#/invite/${link.token}`;
+  if (link.kind === 'pair') return `#/pair/${link.code}`;
+  if (link.kind === 'join') return `#/join/${link.wsId}/${link.key}`;
+  return code.length === 6 ? `#/pair/${code}` : '';
+}
+
+/**
+ * Formulaire unique pour rejoindre un espace : lien d'invitation ou de liaison collé, adresse d'un serveur (et code),
+ * ou code seul (navigateur). Écran de bienvenue et réglages.
+ */
+export function JoinForm({
+  onCancel,
+  cancelLabel = 'Annuler',
+  autoFocus = true,
+  initialInput = '',
+}: {
+  onCancel?: () => void;
+  cancelLabel?: string;
+  autoFocus?: boolean;
+  /** Adresse proposée d'avance (serveur déjà connu, ou serveur par défaut de l'application Android). */
+  initialInput?: string;
+}) {
+  const settings = useSettings();
+  const [input, setInput] = useState(initialInput);
+  const [code, setCode] = useState('');
+  const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
+  const [invite, setInvite] = useState<{ token: string; host: string } | { token: string; error: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const here = codeServer();
+  const onlyCode = asPairingCode(input);
+  const link = parseMeloLink(input);
+  const server = link?.server ?? (onlyCode ? here : null);
+  const pairCode = link?.kind === 'pair' ? link.code : (onlyCode ?? code);
+  // Lien d'un autre serveur que celui de la page : ouvert tel quel (navigateur) ou dans la fenêtre (ordinateur), qui s'en
+  // occupe. L'application Android, elle, se relie directement à n'importe quel serveur.
+  const elsewhere = Boolean(link && link.kind !== 'share' && link.server !== here && (here || desktop()));
+
+  // Lien d'invitation : nom de la personne qui invite (et invitation encore valable ?).
+  const inviteToken = link?.kind === 'invite' && !elsewhere ? link.token : null;
+  useEffect(() => {
+    if (!inviteToken || !link) return;
+    let alive = true;
+    inviteInfo(link.server, inviteToken).then(
+      (info) => alive && setInvite({ token: inviteToken, host: info.name }),
+      (err: Error) => alive && setInvite({ token: inviteToken, error: err.message }),
+    );
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteToken]);
+  const inviteState = invite && inviteToken === invite.token ? invite : null;
+  const inviteHost = inviteState && 'host' in inviteState ? inviteState : null;
+
+  let hint = '';
+  let action = '';
+  if (onlyCode && !server) hint = 'Collez plutôt le lien complet, ou saisissez l’adresse du serveur avant le code.';
+  else if (onlyCode) action = 'Relier cet appareil';
+  else if (link?.kind === 'invite') {
+    if (elsewhere) action = 'Ouvrir l’invitation';
+    else if (inviteState && 'error' in inviteState) hint = inviteState.error;
+    else if (inviteHost) action = 'Créer mon espace';
+  } else if (link?.kind === 'pair' || link?.kind === 'join') action = 'Relier cet appareil';
+  else if (link?.kind === 'share') action = 'Ouvrir la page partagée';
+  else if (link?.kind === 'server') action = code.length === 6 ? 'Relier cet appareil' : 'Se connecter';
+  else if (input.trim()) hint = 'Lien ou adresse non reconnus. Exemple : https://melo.mondomaine.fr';
+
+  const submit = async () => {
+    if (!action || busy || !server) return;
+    setBusy(true);
+    setError('');
+    try {
+      if (link?.kind === 'share') {
+        if (link.server === here) location.href = link.url;
+        else window.open(link.url, '_blank', 'noopener');
+        setBusy(false);
+        return;
+      }
+      if (link && elsewhere) {
+        const route = serverRoute(link, code);
+        const app = desktop();
+        if (app) await app.useServer(link.server, route);
+        else location.href = `${link.server}/${route}`;
+        return;
+      }
+      if (link?.kind === 'invite') await acceptInvite(link.server, link.token, name, inviteHost?.host ?? '');
+      else if (link?.kind === 'join') await joinWithKey(link.server, link.wsId, link.key);
+      else if (pairCode.length === 6) await linkWithCode(server, pairCode);
+      else await claimServer(server);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connexion impossible.');
       setBusy(false);
     }
   };
 
   return (
-    <Modal
-      title="Relier cet appareil"
-      onClose={onClose}
-      width={460}
-      footer={
-        <>
-          <button type="button" className="nb-btn" onClick={onClose} disabled={busy}>
+    <div className="nb-join">
+      <label className="nb-field">
+        <span>Lien reçu, adresse du serveur ou code</span>
+        <input
+          className="nb-input nb-input--lg"
+          placeholder="https://… ou 123 456"
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setError('');
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && void submit()}
+          inputMode="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoFocus={autoFocus}
+        />
+      </label>
+      {!input.trim() ? (
+        <p className="nb-muted nb-small">
+          Collez le lien d’invitation ou de liaison que l’on vous a envoyé. Pour relier un de vos appareils : sur un appareil déjà relié, <b>Réglages → Relier un
+          autre appareil</b>.
+        </p>
+      ) : null}
+      {link?.kind === 'server' ? (
+        <div className="nb-field">
+          <span>Code à 6 chiffres (Réglages d’un appareil déjà relié → Relier un autre appareil). Premier appareil sur ce serveur : laissez vide.</span>
+          <PairingCodeInput value={code} onChange={setCode} onEnter={() => void submit()} />
+        </div>
+      ) : null}
+      {inviteHost ? (
+        <div className="nb-join-invite">
+          <p>
+            <Icon name="sparkles" size={15} /> {inviteHost.host ? <b>{inviteHost.host}</b> : 'Quelqu’un'} vous invite : vous aurez votre propre espace Melo, privé, sur
+            son serveur.
+          </p>
+          <label className="nb-field">
+            <span>Votre prénom (affiché quand vous modifiez une page à plusieurs)</span>
+            <input className="nb-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Ex. : Camille" />
+          </label>
+        </div>
+      ) : null}
+      {!elsewhere && (link?.kind === 'pair' || link?.kind === 'join' || (link?.kind === 'server' && code.length === 6) || (onlyCode && server)) ? (
+        <p className="nb-muted nb-small">Cet appareil affichera l’espace de l’appareil qui a donné ce code. Les pages créées ici avant ne seront plus affichées.</p>
+      ) : null}
+      {link?.kind === 'share' ? <p className="nb-muted nb-small">C’est le lien d’une page partagée : elle s’ouvre directement, sans créer d’espace.</p> : null}
+      {hint ? <div className="nb-muted nb-small nb-join-hint">{hint}</div> : null}
+      {error ? <div className="nb-error">{error}</div> : null}
+      <div className="nb-row nb-gap nb-end">
+        {onCancel ? (
+          <button type="button" className="nb-btn" onClick={onCancel} disabled={busy}>
+            {cancelLabel}
+          </button>
+        ) : null}
+        <button type="button" className="nb-btn nb-btn--primary" onClick={() => void submit()} disabled={busy || !action}>
+          {busy ? 'Un instant…' : action || 'Continuer'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** `server` : adresse déjà connue (saisie dans les réglages) ; à défaut, celle de l'application Android. */
+export function JoinDialog({ onClose, server }: { onClose: () => void; server?: string | null }) {
+  const initial = server ?? (isNative() ? getSettings().serverUrl : null) ?? '';
+  return (
+    <Modal title="Rejoindre un espace" onClose={onClose} width={500}>
+      <JoinForm onCancel={onClose} initialInput={initial} />
+    </Modal>
+  );
+}
+
+/** Adresse #/pair/<code> ouverte dans un navigateur : relier cet appareil à l'espace qui a affiché le code. */
+export function PairView({ code }: { code: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const server = normalizeServerUrl(location.origin + location.pathname) ?? location.origin;
+  const link = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await linkWithCode(server, code);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Liaison impossible.');
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="nb-center">
+      <div className="nb-card">
+        <MeloLogo size={48} className="nb-logo" />
+        <h1>Relier cet appareil</h1>
+        <p className="nb-muted">
+          Cet appareil va afficher les mêmes pages, le même accueil et les mêmes réglages que l’appareil qui a donné ce lien (code{' '}
+          <b className="nb-mono">{formatPairingCode(code)}</b>). Les pages créées ici avant ne seront plus affichées.
+        </p>
+        {error ? <div className="nb-error">{error}</div> : null}
+        <div className="nb-row nb-gap nb-end">
+          <button type="button" className="nb-btn" onClick={() => navigate('#/')} disabled={busy}>
             Annuler
           </button>
-          <button type="button" className="nb-btn nb-btn--primary" onClick={() => void submit()} disabled={busy || code.length !== 6 || !serverUrl}>
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => void link()} disabled={busy}>
             {busy ? 'Liaison…' : 'Relier cet appareil'}
           </button>
-        </>
-      }
-    >
-      <p className="nb-muted nb-pair-intro">
-        Sur un appareil déjà relié, ouvrez <b>Réglages</b> et touchez <b>Afficher un code de liaison</b>, puis saisissez ce code ici.
-      </p>
-      {web ? null : (
-        <label className="nb-field">
-          <span>Adresse du serveur</span>
-          <input className="nb-input" placeholder="https://notes.mondomaine.fr" value={server} onChange={(e) => setServer(e.target.value)} inputMode="url" />
-        </label>
-      )}
-      <div className="nb-field">
-        <span>Code à 6 chiffres</span>
-        <PairingCodeInput value={code} onChange={setCode} onEnter={() => code.length === 6 && void submit()} autoFocus />
+        </div>
       </div>
-      {error ? <div className="nb-error">{error}</div> : null}
-      <p className="nb-muted nb-pair-note">Les pages créées sur cet appareil avant la liaison ne seront plus affichées ici.</p>
-    </Modal>
+    </div>
+  );
+}
+
+/** Adresse #/invite/<jeton> ouverte dans un navigateur : créer son propre espace sur ce serveur. */
+export function InviteView({ token }: { token: string }) {
+  const settings = useSettings();
+  const server = normalizeServerUrl(location.origin + location.pathname) ?? location.origin;
+  const [info, setInfo] = useState<{ name: string } | null>(null);
+  const [error, setError] = useState('');
+  const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    inviteInfo(server, token).then(setInfo, (err: Error) => setError(err.message));
+  }, [server, token]);
+
+  const accept = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await acceptInvite(server, token, name, info?.name ?? '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Création impossible.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="nb-center nb-onboarding">
+      <div className="nb-card">
+        <MeloLogo size={48} className="nb-logo" />
+        <h1>Bienvenue dans Melo</h1>
+        {!info && !error ? <p className="nb-muted">Vérification de l’invitation…</p> : null}
+        {info ? (
+          <>
+            <p className="nb-lead">
+              {info.name ? <b>{info.name}</b> : 'Quelqu’un'} vous invite à utiliser Melo : votre accueil, vos notes, votre agenda et des outils pour vos PDF, sur tous
+              vos appareils.
+            </p>
+            <p className="nb-muted">
+              Vous aurez votre propre espace, privé, sur le serveur de {info.name || 'cette personne'} : vous pourrez vous partager des pages quand vous le
+              voudrez.
+            </p>
+            <label className="nb-field">
+              <span>Votre prénom (affiché quand vous modifiez une page à plusieurs)</span>
+              <input
+                className="nb-input nb-input--lg"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void accept()}
+                maxLength={40}
+                placeholder="Ex. : Camille"
+                autoFocus
+              />
+            </label>
+          </>
+        ) : null}
+        {error ? <div className="nb-error">{error}</div> : null}
+        <div className="nb-row nb-gap nb-end">
+          {error && !info ? (
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/')}>
+              Ouvrir Melo
+            </button>
+          ) : (
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => void accept()} disabled={busy || !info}>
+              {busy ? 'Création…' : 'Créer mon espace'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

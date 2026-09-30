@@ -1,4 +1,5 @@
 import { getSettings } from './settings';
+import { isDesktopLocal } from './desktop';
 import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from './homelab';
 import type { HomeEntity, HomeStates } from './smarthome';
 import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
@@ -16,12 +17,22 @@ export type ShareInfo = { token: string; wsId: string; pageId: string; mode: Sha
 export type SharedPage = { id: string; title: string; icon: string; parentId: string; order: number };
 export type ShareTree = { token: string; wsId: string; pageId: string; mode: ShareMode; pages: SharedPage[] };
 export type UploadResult = { url: string; name: string; size: number; type: string };
+export type InviteInfo = { token: string; name: string; createdAt: number; expiresAt: number; url: string };
+export type GuestInfo = { wsId: string; name: string; createdAt: number };
 
 export type Auth = { key: string } | { share: string };
 
 export function serverBase(): string | null {
   const s = getSettings().serverUrl;
   return s ? s.replace(/\/$/, '') : null;
+}
+
+/**
+ * Liens de partage, liaison d'autres appareils et invitations possibles : un serveur joignable par les autres.
+ * L'espace de l'application pour ordinateur (serveur intégré) ne l'est que depuis cet ordinateur.
+ */
+export function canShareLinks(): boolean {
+  return Boolean(serverBase()) && !isDesktopLocal();
 }
 
 export function wsBase(): string | null {
@@ -67,7 +78,11 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
 export const api = {
   health: () => request<{ ok: boolean }>('/api/health'),
   claim: (wsId: string, key: string) =>
-    request<{ ok: boolean }>('/api/workspaces/claim', { method: 'POST', body: JSON.stringify({ wsId, key }) }),
+    request<{ ok: boolean; guest?: boolean }>('/api/workspaces/claim', { method: 'POST', body: JSON.stringify({ wsId, key }) }),
+  createInvite: (name: string) => request<InviteInfo>('/api/invites', { method: 'POST', body: JSON.stringify({ name }), auth: ownerAuth() }),
+  listInvites: () => request<{ invites: InviteInfo[]; guests: GuestInfo[] }>('/api/invites', { auth: ownerAuth() }),
+  deleteInvite: (token: string) => request<{ ok: boolean }>(`/api/invites/${encodeURIComponent(token)}`, { method: 'DELETE', auth: ownerAuth() }),
+  removeGuest: (wsId: string) => request<{ ok: boolean }>(`/api/guests/${encodeURIComponent(wsId)}`, { method: 'DELETE', auth: ownerAuth() }),
   upload: (file: File, auth: Auth) => {
     const fd = new FormData();
     fd.append('file', file, file.name);

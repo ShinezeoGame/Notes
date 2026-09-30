@@ -1093,12 +1093,12 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
 /** Vue « Maison » (barre latérale). */
 export function SmartHomeView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = 'Maison – Melo';
+    document.title = 'Objets connectés – Melo';
   }, []);
   return (
     <div className="nb-page hl-page sh-page">
       <h1 className="nb-page-title-static">
-        <Icon name="bulb" size={34} /> Maison
+        <Icon name="bulb" size={34} /> Objets connectés
       </h1>
       <SmartHomePanel doc={doc} />
     </div>

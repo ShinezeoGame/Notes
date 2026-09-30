@@ -8,7 +8,6 @@ import {
   ACCENTS,
   DEFAULT_APPEARANCE,
   GRADIENTS,
-  SECTION_IDS,
   THEMES,
   normalizeAppearance,
   updateAppearance,
@@ -17,7 +16,7 @@ import {
   type WallpaperKind,
 } from '../lib/appearance';
 import { prepareImage } from '../lib/images';
-import { SECTIONS } from './AppNav';
+import { SECTIONS, groupSections } from './AppNav';
 import { Icon } from '../icons/Icon';
 
 type Props = {
@@ -108,11 +107,14 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
     setWallpaper({ kind: k, value });
   };
 
+  /** Échange une section avec la précédente ou la suivante de son groupe. */
   const moveSection = (id: SectionId, delta: number) => {
+    const same = draft.sections.filter((s) => SECTIONS[s].group === SECTIONS[id].group);
+    const other = same[same.indexOf(id) + delta];
+    if (!other) return;
     const list = [...draft.sections];
     const i = list.indexOf(id);
-    const j = i + delta;
-    if (j < 0 || j >= list.length) return;
+    const j = list.indexOf(other);
     [list[i], list[j]] = [list[j], list[i]];
     change({ sections: list });
   };
@@ -262,39 +264,49 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
 
           <section className="ap-section">
             <h3>Sections</h3>
-            <p className="nb-muted ap-hint">Ordre et sections affichées dans la navigation.</p>
+            <p className="nb-muted ap-hint">Sections affichées dans la navigation, et leur ordre dans chaque groupe.</p>
             <div className="ap-sections">
-              {draft.sections.map((id, i) => {
-                const hidden = draft.hidden.includes(id);
-                return (
-                  <div key={id} className={`ap-section-row${hidden ? ' ap-section-row--off' : ''}`}>
-                    <Icon name={SECTIONS[id].icon} size={17} />
-                    <span>{SECTIONS[id].label}</span>
-                    <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => moveSection(id, -1)} disabled={i === 0} aria-label={`Monter ${SECTIONS[id].label}`}>
-                      <Icon name="arrowUp" size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="nb-icon-btn nb-icon-btn--sm"
-                      onClick={() => moveSection(id, 1)}
-                      disabled={i === SECTION_IDS.length - 1}
-                      aria-label={`Descendre ${SECTIONS[id].label}`}
-                    >
-                      <Icon name="arrowDown" size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="nb-icon-btn nb-icon-btn--sm"
-                      disabled={id === 'home'}
-                      onClick={() => change({ hidden: hidden ? draft.hidden.filter((h) => h !== id) : [...draft.hidden, id] })}
-                      aria-label={hidden ? `Afficher ${SECTIONS[id].label}` : `Masquer ${SECTIONS[id].label}`}
-                      title={id === 'home' ? 'L’accueil reste toujours affiché' : hidden ? 'Afficher' : 'Masquer'}
-                    >
-                      <Icon name={hidden ? 'eyeOff' : 'eye'} size={15} />
-                    </button>
-                  </div>
-                );
-              })}
+              {groupSections(draft.sections).map((g) => (
+                <div key={g.id} className="ap-section-group" role="group" aria-label={g.label || 'Accueil'}>
+                  {g.label ? <div className="ap-section-group-label">{g.label}</div> : null}
+                  {g.ids.map((id, i) => {
+                    const hidden = draft.hidden.includes(id);
+                    const s = SECTIONS[id];
+                    return (
+                      <div key={id} className={`ap-section-row${hidden ? ' ap-section-row--off' : ''}`}>
+                        <Icon name={s.icon} size={17} />
+                        <span title={s.hint}>{s.label}</span>
+                        {g.ids.length > 1 ? (
+                          <>
+                            <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => moveSection(id, -1)} disabled={i === 0} aria-label={`Monter ${s.label}`}>
+                              <Icon name="arrowUp" size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="nb-icon-btn nb-icon-btn--sm"
+                              onClick={() => moveSection(id, 1)}
+                              disabled={i === g.ids.length - 1}
+                              aria-label={`Descendre ${s.label}`}
+                            >
+                              <Icon name="arrowDown" size={14} />
+                            </button>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="nb-icon-btn nb-icon-btn--sm"
+                          disabled={id === 'home'}
+                          onClick={() => change({ hidden: hidden ? draft.hidden.filter((h) => h !== id) : [...draft.hidden, id] })}
+                          aria-label={hidden ? `Afficher ${s.label}` : `Masquer ${s.label}`}
+                          title={id === 'home' ? 'L’accueil reste toujours affiché' : hidden ? 'Afficher' : 'Masquer'}
+                        >
+                          <Icon name={hidden ? 'eyeOff' : 'eye'} size={15} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </section>
 

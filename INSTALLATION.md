@@ -1,6 +1,8 @@
 # Installer Melo sur votre serveur et y accéder depuis partout
 
-Ce guide installe Melo sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, puis partage des pages en **modification en direct**.
+Ce guide installe Melo sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, invite vos proches et partage des pages en **modification en direct**.
+
+> Pas de serveur ? L’application Windows (`Melo-Windows.exe`, voir le [README](README.md#télécharger-melo)) fonctionne seule sur l’ordinateur, avec son propre serveur intégré : ce guide n’est utile que pour synchroniser plusieurs appareils et partager.
 
 **Prérequis** : un serveur Linux (ou un NAS avec Docker : Unraid, TrueNAS SCALE, Synology Container Manager, Proxmox LXC…) avec `git`, Docker et le plugin Docker Compose. Vérifiez :
 
@@ -159,23 +161,35 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
 
 ### Créer votre espace (une seule fois)
 
-1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Mes notes » indique que la synchronisation fonctionne.
-2. Facultatif : dans les **Réglages** (roue dentée en haut à gauche), le lien caché sous **« Ou avec un lien »** est la clé de secours de votre espace. Rangez‑le dans votre gestionnaire de mots de passe et ne le donnez à personne.
+1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Melo », en haut à gauche, indique que la synchronisation fonctionne.
+2. Facultatif : **Réglages → Réglages avancés → Lien permanent pour relier vos propres appareils** est la clé de secours de votre espace. Rangez‑le dans votre gestionnaire de mots de passe et ne le donnez à personne.
 
-Avec `MAX_WORKSPACES=1`, plus personne ne peut créer d’espace sur votre serveur : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le homelab.
+Avec `MAX_WORKSPACES=1`, personne d’autre ne peut créer d’espace sur votre serveur sans une invitation de votre part : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le homelab.
 
 ### Relier le téléphone et vos autres appareils
 
-Sur un appareil déjà relié : **Réglages → Afficher un code de liaison**. Un code à 6 chiffres s’affiche, valable 10 minutes et utilisable une seule fois. Puis, sur le nouvel appareil :
+Sur un appareil déjà relié : **Réglages → Vos appareils → Relier un autre appareil**. Un **QR code**, un **lien** et un **code à 6 chiffres** s’affichent, valables 10 minutes et utilisables une seule fois. Puis, sur le nouvel appareil :
 
-- **Application Android** : installez `notes-debug.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **« Se connecter à mon serveur »**, saisissez l’adresse du serveur et le code. Si l’application est déjà installée : **Réglages → Relier cet appareil avec un code**.
-- **Navigateur** (autre ordinateur, téléphone) : ouvrez l’adresse du serveur ; le bandeau rouge « Cet appareil n’est pas relié » propose **Saisir un code**.
+- **Téléphone, navigateur** : scannez le QR code avec l’appareil photo, puis **Relier cet appareil**.
+- **Application Android** : installez `Melo-Android.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **J’ai une invitation ou un code**, collez le lien (ou saisissez l’adresse du serveur, puis le code). Si l’application est déjà installée : **Réglages → Saisir un lien ou un code**.
+- **Application Windows** : au premier lancement, **J’ai une invitation ou un code** (ou, plus tard, **Réglages → Rejoindre un serveur**), puis collez le lien.
+- **Navigateur d’un autre ordinateur** : ouvrez le lien ; ou ouvrez l’adresse du serveur, le bandeau rouge « Cet appareil n’est pas relié » propose **Saisir un code**.
 
 Les pages créées sur un appareil avant de le relier ne sont pas transférées. Après 5 codes faux, le serveur fait patienter une minute ; après 10, tous les codes en cours sont annulés.
 
+### Inviter une personne (son propre espace sur votre serveur)
+
+1. **Réglages → Inviter une personne** : indiquez votre prénom (il s’affiche dans l’invitation), puis **Créer une invitation**.
+2. Envoyez le lien (**Copier le lien**, ou **Envoyer…**) ou faites scanner le QR code. Il est valable 7 jours, pour une seule personne.
+3. La personne ouvre le lien (navigateur, ou application Windows / Android : **J’ai une invitation ou un code**), indique son prénom et touche **Créer mon espace**. Elle a son propre espace, privé, synchronisé sur tous ses appareils ; vous pouvez vous partager des pages.
+
+Une personne invitée n’a accès ni à votre maison, ni à vos caméras, ni à votre homelab, et ne peut pas inviter à son tour. Ses pages sont enregistrées sur votre serveur (et dans vos sauvegardes). La même rubrique liste les invitations en attente (**Annuler**) et les personnes invitées (**Retirer** : son espace et ses fichiers sont supprimés du serveur, ses appareils ne se synchronisent plus).
+
 ### Installer Melo sur Windows (ou Mac, Linux)
 
-Melo s’installe comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
+**Application Windows** : installez `Melo-Windows.exe` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest) (si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires** → **Exécuter quand même**). Au premier lancement, **J’ai une invitation ou un code**, puis collez le lien affiché par **Réglages → Relier un autre appareil** sur un appareil déjà relié : la fenêtre affiche alors votre serveur, et les PDF s’ouvrent avec Melo depuis l’Explorateur.
+
+**Depuis le navigateur** : Melo s’installe aussi comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
 
 1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
 2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Melo sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
@@ -190,15 +204,15 @@ Melo s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Déma
 
 ### Atelier PDF sur le téléphone
 
-L’atelier PDF (entrée **PDF** du menu) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Melo les PDF reçus (**Ouvrir avec Melo**, **Partager → Melo**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `notes-debug.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
+L’atelier PDF (entrée **Atelier PDF** du groupe Outils) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Melo les PDF reçus (**Ouvrir avec Melo**, **Partager → Melo**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `Melo-Android.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
 
-Pour scanner un document papier : **PDF** → **Scanner un document** (l’appareil photo s’ouvre), puis, dans la vue **Pages**, **Photo** pour ajouter les pages suivantes.
+Pour scanner un document papier : **Atelier PDF** → **Scanner un document** (l’appareil photo s’ouvre), puis, dans la vue **Pages**, **Photo** pour ajouter les pages suivantes.
 
 ### Partager une page en modification en direct
 
-1. Ouvrez la page, cliquez sur **Partager** (en haut à droite) → **Lien de modification** (ou **Lien en lecture seule**). Le lien est copié.
+1. Ouvrez la page, cliquez sur **Partager** (en haut à droite), choisissez **Peut modifier** (ou **Peut seulement lire**), puis **Copier le lien** (ou **Envoyer…**).
 2. Envoyez‑le (SMS, WhatsApp, e‑mail…). La personne l’ouvre dans n’importe quel navigateur, **sans compte** : elle voit la page et ses sous‑pages, choisit son nom en haut de l’écran, et vos curseurs et modifications apparaissent instantanément chez chacun.
-3. Le même bouton **Partager** liste les liens actifs : **Révoquer** coupe l’accès immédiatement.
+3. Le même bouton **Partager** liste les liens actifs : **Désactiver** coupe l’accès immédiatement.
 
 Un lien donne accès à la page **et à toutes ses sous‑pages** : partagez une page dédiée plutôt que la racine de vos notes.
 
@@ -217,7 +231,7 @@ Appliquez avec `docker compose up -d`, puis listez `/mnt/media` dans les points 
 
 ### Maison connectée (Home Assistant)
 
-La section **Maison** pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Melo → **Maison** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Melo tourne dans son propre conteneur).
+La section **Objets connectés** (groupe Maison) pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Melo → **Objets connectés** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Melo tourne dans son propre conteneur).
 
 ### Caméras de surveillance
 

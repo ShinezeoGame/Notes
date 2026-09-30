@@ -47,7 +47,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
   const incoming = useIncomingCount();
 
   useEffect(() => {
-    document.title = 'PDF – Melo';
+    document.title = 'Atelier PDF – Melo';
     purgeStale(library);
   }, [library]);
 
@@ -169,7 +169,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
       }}
     >
       <h1 className="nb-page-title-static">
-        <Icon name="filePdf" size={34} /> PDF
+        <Icon name="filePdf" size={34} /> Atelier PDF
       </h1>
       <p className="nb-muted pdf-lib-intro">
         Importez un PDF pour réorganiser ses pages, l’annoter, le signer ou remplir ses formulaires, puis exportez-le. L’original n’est jamais modifié.

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { newId, newKey, randomColor } from './ids';
+import { isDesktopLocal } from './desktop';
 
 export type Settings = {
   /** URL du serveur de synchronisation (null = mode hors ligne, appareil seul). */
@@ -23,6 +24,12 @@ export type Settings = {
   pagesHidden: boolean;
   /** Astuce de l'accueil (glisser, tirer un coin) déjà vue sur cet appareil. */
   dashTipSeen: boolean;
+  /** Premier lancement pas encore terminé : prénom, sections, présentation de Melo. */
+  firstRun: boolean;
+  /** Espace créé par une invitation sur le serveur de quelqu'un d'autre (sans maison, caméras ni homelab). */
+  guest: boolean;
+  /** Nom de la personne qui a invité (serveur utilisé). */
+  hostName: string;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -52,13 +59,17 @@ function defaults(): Settings {
     userColor: randomColor(),
     googleClientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || '',
     updateNotifications: true,
-    onboarded: isStandaloneWeb(),
+    // Application pour ordinateur : écran de bienvenue au premier lancement, comme sur Android.
+    onboarded: isStandaloneWeb() && !isDesktopLocal(),
     lastPageId: null,
     expanded: {},
     navCollapsed: false,
     recentPages: [],
     pagesHidden: false,
     dashTipSeen: false,
+    firstRun: false,
+    guest: false,
+    hostName: '',
   };
 }
 
@@ -100,7 +111,12 @@ export function updateSettings(patch: Partial<Settings>) {
 
 export function resetWorkspace() {
   const d = defaults();
-  updateSettings({ workspaceId: d.workspaceId, workspaceKey: d.workspaceKey, lastPageId: null, expanded: {} });
+  updateSettings({ workspaceId: d.workspaceId, workspaceKey: d.workspaceKey, lastPageId: null, expanded: {}, guest: false, hostName: '' });
+}
+
+/** Nom affiché encore choisi au hasard (« Utilisateur 1234 ») : à remplacer par le vrai prénom. */
+export function isDefaultUserName(name: string): boolean {
+  return /^Utilisateur \d{4}$/.test(name);
 }
 
 export function subscribeSettings(fn: () => void) {

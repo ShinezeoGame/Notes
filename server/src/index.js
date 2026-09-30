@@ -11,12 +11,22 @@ import { WebSocketServer } from 'ws';
 import {
   UPLOADS_DIR,
   authorizeWorkspace,
+  claimInvite,
+  cleanName,
+  createInvite,
   createShare,
+  deleteInvite,
   deleteShare,
   getShare,
+  inviteInfo,
+  isGuest,
   isValidId,
+  listGuests,
+  listInvites,
   listShares,
   registrationClosed,
+  removeAllUploads,
+  removeGuest,
   removeUploads,
   safeUploadName,
   uploadDirFor,
@@ -27,6 +37,7 @@ import {
   authorizeRoom,
   createPageInWorkspace,
   deleteDoc,
+  deleteWorkspaceDocs,
   flushAll,
   getDoc,
   isPageRoom,
@@ -84,6 +95,29 @@ function requireOwner(req, res, next) {
   next();
 }
 
+/**
+ * Après requireOwner : réservé aux espaces du propriétaire du serveur. Un espace créé par une invitation (une autre
+ * personne) n'accède pas au réseau du serveur (maison, caméras, homelab) et n'invite personne à son tour.
+ */
+function requireHost(req, res, next) {
+  if (isGuest(req.wsId)) return res.status(403).json({ error: 'Réservé au propriétaire de ce serveur Melo.' });
+  next();
+}
+
+/** Limite d'essais par adresse (codes, invitations) : `max` par minute. */
+function rateLimiter(max) {
+  const attempts = new Map(); // adresse IP -> { count, resetAt }
+  return (req) => {
+    const now = Date.now();
+    for (const [ip, a] of attempts) if (a.resetAt <= now) attempts.delete(ip);
+    const ip = req.ip || 'inconnue';
+    const a = attempts.get(ip) ?? { count: 0, resetAt: now + 60_000 };
+    a.count++;
+    attempts.set(ip, a);
+    return a.count <= max;
+  };
+}
+
 /** Propriétaire, ou invité disposant d'un lien en mode modification. */
 async function requireEditor(req, res, next) {
   const wsId = ownerAuth(req);
@@ -112,11 +146,57 @@ app.post('/api/workspaces/claim', (req, res) => {
     const closed = !workspaceExists(wsId) && registrationClosed();
     return res.status(403).json({
       error: closed
-        ? 'Ce serveur n’accepte pas de nouvel espace de travail. Reliez cet appareil avec un code à 6 chiffres, affiché dans les réglages d’un appareil déjà connecté.'
+        ? 'Ce serveur n’accepte pas de nouvel espace. Pour retrouver vos pages, reliez cet appareil avec le code affiché dans les réglages d’un appareil déjà relié ; pour avoir votre propre espace, demandez une invitation au propriétaire du serveur.'
         : 'Cette clé ne correspond pas à cet espace de travail.',
     });
   }
-  res.json({ ok: true, wsId });
+  res.json({ ok: true, wsId, guest: isGuest(wsId) });
+});
+
+// ---------- Invitations (voir store.js) ----------
+
+const inviteJson = (req, inv) => ({ token: inv.token, name: inv.name, createdAt: inv.createdAt, expiresAt: inv.expiresAt, url: `${publicBase(req)}/#/invite/${inv.token}` });
+
+app.post('/api/invites', requireOwner, requireHost, (req, res) => {
+  const inv = createInvite(req.wsId, req.body?.name);
+  if (!inv) return res.status(429).json({ error: 'Trop d’invitations en attente : annulez-en une avant d’en créer une nouvelle.' });
+  res.json(inviteJson(req, inv));
+});
+
+app.get('/api/invites', requireOwner, requireHost, (req, res) => {
+  res.json({ invites: listInvites(req.wsId).map((i) => inviteJson(req, i)), guests: listGuests(req.wsId) });
+});
+
+app.delete('/api/invites/:token', requireOwner, requireHost, (req, res) => {
+  if (!deleteInvite(req.wsId, req.params.token)) return res.status(404).json({ error: 'Invitation introuvable.' });
+  res.json({ ok: true });
+});
+
+// Retirer une personne invitée : son accès, ses pages et ses fichiers sont supprimés du serveur.
+app.delete('/api/guests/:wsId', requireOwner, requireHost, async (req, res) => {
+  const wsId = req.params.wsId;
+  if (!isValidId(wsId) || !removeGuest(req.wsId, wsId)) return res.status(404).json({ error: 'Personne introuvable.' });
+  try {
+    await deleteWorkspaceDocs(wsId);
+    await removeAllUploads(wsId);
+  } catch (err) {
+    console.error('[invitations] suppression incomplète de', wsId, err);
+  }
+  res.json({ ok: true });
+});
+
+app.get('/api/invite/:token', (req, res) => {
+  const info = inviteInfo(req.params.token);
+  if (!info) return res.status(404).json({ error: 'Cette invitation n’est plus valable : elle a déjà servi, a été annulée ou a expiré. Demandez-en une nouvelle.' });
+  res.json(info);
+});
+
+const inviteAttempts = rateLimiter(10);
+app.post('/api/invite/:token/claim', (req, res) => {
+  if (!inviteAttempts(req)) return res.status(429).json({ error: 'Trop d’essais : patientez une minute avant de réessayer.' });
+  const { wsId, key, name } = req.body || {};
+  const { status, body } = claimInvite(req.params.token, wsId, key, cleanName(name));
+  res.status(status).json(body);
 });
 
 // Liaison d'un nouvel appareil par code à 6 chiffres (voir pairing.js).
@@ -227,7 +307,7 @@ async function readHomelabConfig(wsId) {
   return parseConfig(doc.getMap('homelab').get('config') || '');
 }
 
-app.get('/api/homelab/status', requireOwner, async (req, res) => {
+app.get('/api/homelab/status', requireOwner, requireHost, async (req, res) => {
   try {
     const config = await readHomelabConfig(req.wsId);
     const data = await homelabStatus(req.wsId, config, { force: req.query.force === '1' });
@@ -238,7 +318,7 @@ app.get('/api/homelab/status', requireOwner, async (req, res) => {
   }
 });
 
-app.post('/api/homelab/test', requireOwner, async (req, res) => {
+app.post('/api/homelab/test', requireOwner, requireHost, async (req, res) => {
   const { service, device } = req.body || {};
   try {
     if (service && typeof service === 'object') return res.json(await checkService({ id: 'test', ...service }));
@@ -257,7 +337,7 @@ async function readHomeConfig(wsId) {
   return parseHomeConfig(doc.getMap('smarthome').get('config') || '');
 }
 
-app.get('/api/home/states', requireOwner, async (req, res) => {
+app.get('/api/home/states', requireOwner, requireHost, async (req, res) => {
   const cfg = await readHomeConfig(req.wsId);
   if (!isHomeConfigured(cfg)) return res.json({ configured: false, entities: [], fetchedAt: Date.now() });
   try {
@@ -273,7 +353,7 @@ app.get('/api/home/states', requireOwner, async (req, res) => {
   }
 });
 
-app.post('/api/home/call', requireOwner, async (req, res) => {
+app.post('/api/home/call', requireOwner, requireHost, async (req, res) => {
   const cfg = await readHomeConfig(req.wsId);
   if (!isHomeConfigured(cfg)) return res.status(400).json({ error: 'Home Assistant n’est pas configuré.' });
   try {
@@ -283,7 +363,7 @@ app.post('/api/home/call', requireOwner, async (req, res) => {
   }
 });
 
-app.post('/api/home/test', requireOwner, async (req, res) => {
+app.post('/api/home/test', requireOwner, requireHost, async (req, res) => {
   res.json(await testHome(parseHomeConfig(req.body || {})));
 });
 
@@ -308,7 +388,7 @@ async function readCamerasConfig(wsId) {
   return parseCamerasConfig(doc.getMap('cameras').get('config') || '');
 }
 
-app.get('/api/cameras', requireOwner, async (req, res) => {
+app.get('/api/cameras', requireOwner, requireHost, async (req, res) => {
   const cameras = await readCamerasConfig(req.wsId);
   res.json({
     ffmpeg: await hasFfmpeg(),
@@ -316,7 +396,7 @@ app.get('/api/cameras', requireOwner, async (req, res) => {
   });
 });
 
-app.post('/api/cameras/test', requireOwner, async (req, res) => {
+app.post('/api/cameras/test', requireOwner, requireHost, async (req, res) => {
   res.json(await testCamera(parseCamera(req.body?.camera)));
 });
 
@@ -454,8 +534,17 @@ server.on('upgrade', (req, socket, head) => {
   });
 });
 
+// `process.parentPort` : serveur lancé par l'application Melo pour ordinateur (desktop/main.cjs), prévenue quand il
+// est prêt et qui demande son arrêt ; absent quand le serveur tourne seul.
+server.on('error', (err) => {
+  console.error(`Melo : démarrage impossible (${err.code === 'EADDRINUSE' ? `port ${PORT} déjà utilisé` : err.message}).`);
+  process.parentPort?.postMessage({ type: 'error', code: err.code || 'ERROR' });
+  process.exit(1);
+});
+
 server.listen(PORT, HOST, () => {
   console.log(`Melo : serveur démarré sur http://${HOST}:${PORT}`);
+  process.parentPort?.postMessage({ type: 'ready' });
 });
 
 async function shutdown() {
@@ -466,3 +555,4 @@ async function shutdown() {
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+process.parentPort?.on('message', (e) => e.data === 'shutdown' && void shutdown());

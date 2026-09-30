@@ -16,7 +16,7 @@ import { filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from '@blockno
 import { withCollaboration } from '@blocknote/core/yjs';
 import { fr } from '@blocknote/core/locales';
 import type { DocHandle } from '../lib/yjs';
-import { useSettings } from '../lib/settings';
+import { getSettings, useSettings } from '../lib/settings';
 import { schema } from './schema';
 import { useAppCtx } from './context';
 import { Icon } from '../icons/Icon';
@@ -163,7 +163,8 @@ export function Editor({ handle, editable }: Props) {
         },
       },
     ];
-    if (ctx.mode === 'owner') {
+    // Modules reliés au réseau du serveur : ni pour les invités d'un lien, ni pour un espace créé par une invitation.
+    if (ctx.mode === 'owner' && !getSettings().guest) {
       mediaItems.push({
         title: 'Homelab',
         subtext: 'Intégrer le tableau de bord de vos applications et appareils',

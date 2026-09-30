@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Melo</title>
+    <!-- Page affichée par l'application pour ordinateur quand le serveur est injoignable (couleurs du thème sombre). -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #191919;
+        color: #d4d4d4;
+        font: 15px/1.55 'Segoe UI', system-ui, sans-serif;
+      }
+      .card {
+        max-width: 440px;
+        margin: 24px;
+        padding: 32px;
+        background: #252525;
+        border: 1px solid #2f2f2f;
+        border-radius: 16px;
+      }
+      h1 {
+        margin: 16px 0 8px;
+        font-size: 24px;
+        color: #fff;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      .muted {
+        color: #9b9b9b;
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+      button {
+        font: inherit;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid #3f3f3f;
+        background: #2c2c2c;
+        color: #fff;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #2383e2;
+        border-color: #2383e2;
+      }
+      button:disabled {
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="build/icon.png" width="56" height="56" alt="" />
+      <h1 id="title">Serveur injoignable</h1>
+      <p id="message"></p>
+      <p class="muted" id="detail"></p>
+      <div class="actions">
+        <button class="primary" id="retry">Réessayer</button>
+        <button id="local">Utiliser l’espace de cet ordinateur</button>
+      </div>
+    </div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const kind = q.get('kind');
+      let host = '';
+      try {
+        host = new URL(q.get('server') || '').host;
+      } catch {}
+      if (kind === 'local') {
+        document.getElementById('title').textContent = 'Melo n’a pas pu démarrer';
+        document.getElementById('message').textContent =
+          'Le serveur intégré à Melo ne démarre pas. Réessayez ; si le problème continue, redémarrez l’ordinateur puis rouvrez Melo.';
+        document.getElementById('local').hidden = true;
+      } else {
+        document.getElementById('message').textContent =
+          `Melo n’arrive pas à joindre le serveur ${host || ''}. Vérifiez la connexion Internet, puis réessayez.`;
+      }
+      document.getElementById('detail').textContent = q.get('detail') || '';
+      const run = (button, action) => {
+        button.addEventListener('click', () => {
+          button.disabled = true;
+          Promise.resolve(action()).finally(() => (button.disabled = false));
+        });
+      };
+      run(document.getElementById('retry'), () => window.meloDesktop?.retry());
+      run(document.getElementById('local'), () => window.meloDesktop?.useLocal());
+    </script>
+  </body>
+</html>

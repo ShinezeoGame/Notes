@@ -11,7 +11,9 @@ export type Route =
   | { name: 'cameras' }
   | { name: 'pdf'; pdfId: string | null }
   | { name: 'shared'; token: string; pageId: string | null }
-  | { name: 'join'; wsId: string; key: string };
+  | { name: 'join'; wsId: string; key: string }
+  | { name: 'pair'; code: string }
+  | { name: 'invite'; token: string };
 
 export function parseRoute(hash: string): Route {
   const h = hash.replace(/^#/, '');
@@ -28,6 +30,8 @@ export function parseRoute(hash: string): Route {
   if ((m = /^\/s\/([A-Za-z0-9_-]+)(?:\/p\/([A-Za-z0-9_-]+))?/.exec(h)))
     return { name: 'shared', token: m[1], pageId: m[2] ?? null };
   if ((m = /^\/join\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'join', wsId: m[1], key: m[2] };
+  if ((m = /^\/pair\/(\d{6})/.exec(h))) return { name: 'pair', code: m[1] };
+  if ((m = /^\/invite\/([A-Za-z0-9_-]{20,64})/.exec(h))) return { name: 'invite', token: m[1] };
   return { name: 'home' };
 }
 
@@ -53,6 +57,10 @@ export function routeToHash(route: Route): string {
       return route.pageId ? `#/s/${route.token}/p/${route.pageId}` : `#/s/${route.token}`;
     case 'join':
       return `#/join/${route.wsId}/${route.key}`;
+    case 'pair':
+      return `#/pair/${route.code}`;
+    case 'invite':
+      return `#/invite/${route.token}`;
     default:
       return '#/';
   }

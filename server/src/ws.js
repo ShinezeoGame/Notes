@@ -1,12 +1,13 @@
 // Serveur de synchronisation Yjs (protocole compatible y-websocket) avec contrôle d'accès,
 // mode lecture seule, persistance sur disque et miroir des titres de pages vers l'arborescence.
 import crypto from 'node:crypto';
+import fsp from 'node:fs/promises';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import { loadDocUpdate, saveDocUpdate, removeDocFile, authorizeWorkspace, getShare } from './store.js';
+import { DOCS_DIR, loadDocUpdate, saveDocUpdate, removeDocFile, authorizeWorkspace, getShare } from './store.js';
 
 const messageSync = 0;
 const messageAwareness = 1;
@@ -406,6 +407,27 @@ export async function deleteDoc(room) {
     doc.destroy();
   }
   await removeDocFile(room);
+}
+
+/** Espace auquel appartient un document (même lecture des noms que le contrôle d'accès), sinon null. */
+function roomWorkspace(room) {
+  return (WS_ROOM_RE.exec(room) ?? PDF_ROOM_RE.exec(room) ?? PG_ROOM_RE.exec(room))?.[1] ?? null;
+}
+
+/** Supprime tous les documents d'un espace (arborescence, pages, PDF) ; renvoie leur nombre. */
+export async function deleteWorkspaceDocs(wsId) {
+  const rooms = new Set(docs.keys());
+  for (const file of await fsp.readdir(DOCS_DIR).catch(() => [])) {
+    if (!file.endsWith('.bin')) continue;
+    try {
+      rooms.add(decodeURIComponent(file.slice(0, -4)));
+    } catch {
+      /* nom inattendu */
+    }
+  }
+  const mine = [...rooms].filter((room) => roomWorkspace(room) === wsId);
+  for (const room of mine) await deleteDoc(room);
+  return mine.length;
 }
 
 export async function flushAll() {

@@ -1,0 +1,81 @@
+{
+  "name": "melo-desktop",
+  "productName": "Melo",
+  "version": "1.0.0",
+  "description": "Melo pour ordinateur : accueil, notes, agenda, maison connectée et atelier PDF",
+  "author": "ShinezeoGame",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "prepare-app": "node scripts/prepare.mjs",
+    "start": "node scripts/prepare.mjs && electron .",
+    "dist": "node scripts/prepare.mjs && electron-builder --win nsis --publish never"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "electron-updater": "^6.8.9",
+    "express": "^5.2.1",
+    "lib0": "^1.0.0-rc.22",
+    "multer": "^2.4.0",
+    "ws": "^8.22.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.shinezeo.melo",
+    "productName": "Melo",
+    "copyright": "Melo",
+    "asar": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "offline.html",
+      "build/icon.png",
+      "server/**/*",
+      "client/dist/**/*",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "Melo-Windows.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Melo",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Melo-Windows.${ext}"
+    },
+    "fileAssociations": [
+      {
+        "ext": "pdf",
+        "name": "Document PDF",
+        "description": "Document PDF",
+        "role": "Viewer"
+      }
+    ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://github.com/ShinezeoGame/Notes/releases/download/latest"
+    }
+  }
+}

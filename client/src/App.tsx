@@ -8,10 +8,11 @@ import { WorkspaceStore, useWorkspacePages } from './lib/workspace';
 import { clearLocalDocs, pgRoom, useDocStatus, useDocSynced, wsRoom } from './lib/yjs';
 import { applyAppearance, useAppearance, type Appearance, type SectionId } from './lib/appearance';
 import { AgendaView } from './components/AgendaView';
-import { AppNav, SECTIONS, STATUS_LABEL } from './components/AppNav';
+import { AppNav, SECTIONS, statusLabel } from './components/AppNav';
 import { AppearancePanel } from './components/AppearancePanel';
 import { CalendarImportDialog } from './components/CalendarImportDialog';
 import { Onboarding } from './components/Onboarding';
+import { WelcomeDialog } from './components/Welcome';
 import { PageEditorPane } from './components/PageEditorPane';
 import { PagesPanel } from './components/PagesPanel';
 import { SearchDialog } from './components/SearchDialog';
@@ -26,7 +27,7 @@ import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
 import { SmartHomeView } from './components/SmartHomeView';
 import { CamerasView } from './components/CamerasView';
-import { LinkWithCodeDialog } from './components/LinkDevice';
+import { InviteView, JoinDialog, PairView } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
 import { Dashboard } from './dashboard/Dashboard';
 import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, saveCardSize, useHomelabConfig } from './lib/homelab';
@@ -43,6 +44,8 @@ export default function App() {
   let content;
   if (route.name === 'shared') content = <SharedView key={route.token} token={route.token} pageId={route.pageId} />;
   else if (route.name === 'join') content = <JoinView wsId={route.wsId} keyValue={route.key} />;
+  else if (route.name === 'pair') content = <PairView code={route.code} />;
+  else if (route.name === 'invite') content = <InviteView token={route.token} />;
   else if (!settings.onboarded) content = <Onboarding />;
   else content = <OwnerApp />;
   useEffect(() => startUpdateChecks(), []);
@@ -90,6 +93,9 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   );
 }
 
+/** Sections reliées au réseau du serveur, absentes d'un espace créé par une invitation. */
+const HOST_SECTIONS: SectionId[] = ['smarthome', 'cameras', 'homelab'];
+
 type Dialog =
   | null
   | { type: 'search' }
@@ -97,7 +103,8 @@ type Dialog =
   | { type: 'share'; pageId: string }
   | { type: 'homelab' }
   | { type: 'link' }
-  | { type: 'appearance' };
+  | { type: 'appearance' }
+  | { type: 'tour' };
 
 /** Section de la navigation à laquelle appartient une adresse. */
 function sectionOf(route: Route): SectionId {
@@ -161,9 +168,13 @@ function OwnerApp() {
 
   useEffect(() => {
     if (!serverBase()) return;
-    api.claim(settings.workspaceId, settings.workspaceKey).catch((err: { status?: number; message: string }) => {
-      if (err.status === 403) toast(err.message, 'error');
-    });
+    api.claim(settings.workspaceId, settings.workspaceKey).then(
+      // Espace créé par une invitation (sans maison, caméras ni homelab) : retenu pour les prochains démarrages.
+      (r) => typeof r.guest === 'boolean' && r.guest !== getSettings().guest && updateSettings({ guest: r.guest }),
+      (err: { status?: number; message: string }) => {
+        if (err.status === 403) toast(err.message, 'error');
+      },
+    );
   }, [settings.workspaceId, settings.workspaceKey, settings.serverUrl]);
 
   useEffect(() => {
@@ -306,7 +317,7 @@ function OwnerApp() {
     <AppNav
       active={section}
       sections={look.sections}
-      hidden={look.hidden}
+      hidden={settings.guest ? [...look.hidden, ...HOST_SECTIONS] : look.hidden}
       status={status}
       mobile={isMobile}
       onNavigate={goSection}
@@ -362,9 +373,11 @@ function OwnerApp() {
       </div>
 
       {dialog?.type === 'search' ? <SearchDialog store={store} onClose={() => setDialog(null)} onOpen={openPage} /> : null}
-      {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} onTour={() => setDialog({ type: 'tour' })} /> : null}
       {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
-      {dialog?.type === 'link' ? <LinkWithCodeDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'link' ? <JoinDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'tour' ? <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly onClose={() => setDialog(null)} /> : null}
+      {settings.firstRun && !dialog ? <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly={false} onClose={() => undefined} /> : null}
       {dialog?.type === 'appearance' ? (
         <AppearancePanel doc={store.doc} appearance={appearance} onPreview={setPreview} onClose={() => setDialog(null)} />
       ) : null}
@@ -373,7 +386,7 @@ function OwnerApp() {
           pageId={dialog.pageId}
           pageTitle={store.get(dialog.pageId)?.title ?? ''}
           onClose={() => setDialog(null)}
-          onOpenSettings={() => setDialog({ type: 'settings' })}
+          onJoin={() => setDialog({ type: 'link' })}
         />
       ) : null}
       {calReq ? (
@@ -497,7 +510,7 @@ function TopBar(props: {
       ) : null}
       <nav className="nb-crumbs">{title}</nav>
       <div className="nb-topbar-right">
-        <span className={`nb-status nb-status--${props.status} nb-only-mobile`} title={STATUS_LABEL[props.status]} />
+        <span className={`nb-status nb-status--${props.status} nb-only-mobile`} title={statusLabel(props.status)} />
         {page ? (
           <>
             <button type="button" className="nb-btn nb-btn--sm" onClick={props.onShare}>

@@ -30,3 +30,9 @@ android/capacitor-cordova-android-plugins/build/
 
 # Carte du code pour Claude Code (graphify, voir CLAUDE.md), reconstruite dans chaque session
 graphify-out/
+
+# Application pour ordinateur : copies du serveur et du client (desktop/scripts/prepare.mjs), installateur construit
+desktop/node_modules/
+desktop/server/
+desktop/client/
+desktop/dist/

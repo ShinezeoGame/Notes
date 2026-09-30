@@ -1,0 +1,326 @@
+# Applications Melo : APK Android (testé sur un émulateur Android 14) et installateur Windows (testé sur Windows :
+# installation silencieuse, lancement, PDF ouvert avec Melo, désinstallation), publiés ensemble dans une Release GitHub
+# (« latest » pour la branche principale).
+name: Applications (Android, Windows)
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      apk_run_id:
+        description: "Tester seulement l'APK d'une exécution précédente (identifiant de l'exécution, visible dans son adresse), sans construire ni publier"
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: apps-${{ github.ref }}-${{ inputs.apk_run_id || 'build' }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Construire l'APK
+    if: ${{ !inputs.apk_run_id }}
+    runs-on: ubuntu-latest
+    env:
+      HAS_RELEASE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire le client web
+        run: npm run build
+        env:
+          # Variables de dépôt optionnelles (Settings → Secrets and variables → Actions → Variables)
+          VITE_DEFAULT_SERVER_URL: ${{ vars.DEFAULT_SERVER_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+
+      - name: Copier le client dans le projet Android
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Préparer le SDK Android (préinstallé sur ubuntu-latest)
+        run: |
+          SDKM="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort | tail -1)"
+          echo "sdkmanager: $SDKM"
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" "platform-tools" "platforms;android-36" "build-tools;36.0.0" >/dev/null
+
+      - name: Construire l'APK (debug, installable directement)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../notes-debug.apk
+
+      - name: Construire l'APK release signé (si un keystore est configuré)
+        if: env.HAS_RELEASE_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          cp app/build/outputs/apk/release/app-release.apk ../notes-release.apk
+
+      - name: Publier l'APK comme artefact du workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: notes-apk
+          path: |
+            notes-debug.apk
+            notes-release.apk
+          if-no-files-found: error
+
+  # L'APK est essayé sur un vrai système Android avant d'être publié : une application qui se ferme au lancement
+  # ne doit jamais arriver sur un téléphone.
+  smoke:
+    name: Tester l'APK sur un émulateur Android 14
+    needs: apk
+    if: ${{ !cancelled() && (needs.apk.result == 'success' || inputs.apk_run_id) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire le client (serveur de test) et une nouvelle version pour tester la mise à jour
+        run: |
+          npm run build
+          cp -r client/dist "$RUNNER_TEMP/client-v1"
+          printf '\n// Version de test : mise à jour sur l’émulateur\n' >> client/src/main.tsx
+          npm run build
+          cp -r client/dist "$RUNNER_TEMP/client-v2"
+          git checkout -- client/src/main.tsx
+          rm -rf client/dist
+          cp -r "$RUNNER_TEMP/client-v1" client/dist
+
+      - name: Récupérer l'APK construit
+        if: ${{ !inputs.apk_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+          path: apk
+
+      - name: Récupérer l'APK de l'exécution demandée
+        if: ${{ inputs.apk_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+          path: apk
+          run-id: ${{ inputs.apk_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Activer KVM (émulateur accéléré)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: "Émulateur : lancement, liaison au serveur, notification et mise à jour"
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          script: bash .github/android-smoke/run.sh apk/notes-debug.apk "$RUNNER_TEMP/client-v2"
+
+      - name: Journaux du test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-emulateur
+          path: smoke-out
+          if-no-files-found: ignore
+
+  # Application Windows (desktop/) : construite puis essayée sur Windows comme le ferait un utilisateur.
+  windows:
+    name: Construire et tester l'application Windows
+    if: ${{ !inputs.apk_run_id }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            desktop/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire le client web
+        run: npm run build
+
+      # Version croissante (date et heure) : l'application installée reconnaît les versions plus récentes.
+      - name: Numéro de version
+        run: echo "MELO_VERSION=1.$(date -u +%y%m%d).$((10#$(date -u +%H%M)))" >> "$GITHUB_ENV"
+
+      - name: Construire l'installateur (Melo-Windows.exe)
+        working-directory: desktop
+        run: |
+          npm ci
+          node scripts/prepare.mjs
+          npx electron-builder --win nsis --publish never -c.extraMetadata.version="$MELO_VERSION"
+          ls -la dist
+
+      - name: Installer Melo sans fenêtre, comme un utilisateur
+        shell: pwsh
+        run: |
+          Start-Process -FilePath desktop\dist\Melo-Windows.exe -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Melo.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw "Melo.exe introuvable après l'installation" }
+          "MELO_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Installé : $($exe.FullName)"
+
+      - name: "Tester l'application installée : lancement, accueil, PDF ouvert avec Melo"
+        run: |
+          mkdir -p "$RUNNER_TEMP/smoke"
+          cp .github/desktop-smoke/check.mjs "$RUNNER_TEMP/smoke/"
+          cd "$RUNNER_TEMP/smoke"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright-core@1.63.0
+          SMOKE_OUT="$GITHUB_WORKSPACE/smoke-windows" node check.mjs "$MELO_EXE"
+
+      - name: Désinstaller
+        shell: pwsh
+        run: |
+          $dir = Split-Path $env:MELO_EXE
+          $uninstaller = Get-ChildItem $dir -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if (-not $uninstaller) { throw "Programme de désinstallation introuvable" }
+          Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait
+          # Le programme de désinstallation se relance depuis un dossier temporaire : attente de la fin.
+          for ($i = 0; $i -lt 60 -and (Test-Path $env:MELO_EXE); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $env:MELO_EXE) { throw "Melo.exe toujours présent après la désinstallation" }
+
+      - name: Journaux du test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-windows
+          path: smoke-windows
+          if-no-files-found: ignore
+
+      - name: Publier l'installateur comme artefact du workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: melo-windows
+          path: |
+            desktop/dist/Melo-Windows.exe
+            desktop/dist/Melo-Windows.exe.blockmap
+            desktop/dist/latest.yml
+          if-no-files-found: error
+
+  release:
+    name: Publier les applications
+    needs: [apk, smoke, windows]
+    # L'APK testé est publié même si l'application Windows a échoué : la précédente est alors gardée.
+    if: ${{ !cancelled() && github.event_name != 'pull_request' && !inputs.apk_run_id && needs.apk.result == 'success' && needs.smoke.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: notes-apk
+
+      - name: Récupérer l'application Windows
+        if: ${{ needs.windows.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: melo-windows
+          path: windows
+
+      - name: Publier dans une Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WINDOWS_OK: ${{ needs.windows.result == 'success' }}
+        run: |
+          set -e
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"; PRE=""
+          elif [[ "$GITHUB_REF_NAME" == "${{ github.event.repository.default_branch }}" ]]; then
+            TAG="latest"; PRE="--prerelease"
+          else
+            SAFE="$(echo "$GITHUB_REF_NAME" | sed 's#[^A-Za-z0-9._-]#-#g')"
+            TAG="apk-$SAFE"; PRE="--prerelease"
+          fi
+          cp notes-debug.apk Melo-Android.apk
+          FILES="Melo-Android.apk"
+          if [ -f notes-release.apk ]; then cp notes-release.apk Melo-Android-signe.apk; FILES="$FILES Melo-Android-signe.apk"; fi
+          # Application Windows : celle de cette construction, sinon celle déjà publiée.
+          WINDOWS_NOTE=""
+          if [ "$WINDOWS_OK" != "true" ]; then
+            mkdir -p windows
+            gh release download "$TAG" -D windows -p 'Melo-Windows.exe' -p 'Melo-Windows.exe.blockmap' -p 'latest.yml' 2>/dev/null || true
+            WINDOWS_NOTE="(Application Windows : la construction de ce commit a échoué, la version précédente est gardée.)"
+          fi
+          for f in windows/Melo-Windows.exe windows/Melo-Windows.exe.blockmap windows/latest.yml; do
+            if [ -f "$f" ]; then FILES="$FILES $f"; fi
+          done
+          if [[ "$TAG" != v* ]]; then
+            gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          fi
+          {
+            echo "Applications Melo construites automatiquement depuis la branche \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA). $WINDOWS_NOTE"
+            echo
+            echo "## Ordinateur Windows : Melo-Windows.exe"
+            echo
+            echo "1. Téléchargez **Melo-Windows.exe** (en bas de cette page, rubrique *Assets*). Si le navigateur hésite, choisissez **Conserver**."
+            echo "2. Ouvrez le fichier. Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur **Informations complémentaires**, puis **Exécuter quand même** : l'application n'est simplement pas signée par un éditeur payant."
+            echo "3. Melo s'installe tout seul, sans droits d'administrateur, puis s'ouvre. Il se retrouve ensuite sur le bureau et dans le menu Démarrer."
+            echo "4. Au premier lancement : **Commencer** pour utiliser Melo seul sur cet ordinateur, ou **J'ai une invitation ou un code** pour rejoindre le serveur Melo d'un proche."
+            echo
+            echo "Nouvelle version : installez-la par-dessus l'ancienne, vos pages sont gardées."
+            echo
+            echo "## Téléphone Android : Melo-Android.apk"
+            echo
+            echo "1. Sur le téléphone, téléchargez **Melo-Android.apk**."
+            echo "2. Ouvrez-le ; autorisez l'installation d'applications de cette source si le téléphone le demande, puis **Installer**."
+            echo "3. Au premier lancement : **Commencer**, ou **J'ai une invitation ou un code**."
+            echo
+            echo "*Melo-Android-signe.apk* n'apparaît que si une clé de signature est configurée dans les secrets du dépôt."
+          } > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" $FILES $PRE \
+            --target "$GITHUB_SHA" \
+            --title "Melo – applications Windows et Android ($TAG)" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            || gh release upload "$TAG" $FILES --clobber

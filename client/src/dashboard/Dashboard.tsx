@@ -173,7 +173,8 @@ function Catalog({ onAdd, onClose, onReset }: { onAdd: (type: WidgetType) => voi
         </button>
       }
     >
-      {WIDGET_GROUPS.map((group) => (
+      {/* Espace créé par une invitation : pas de maison, de caméras ni de homelab sur le serveur d'un autre. */}
+      {WIDGET_GROUPS.filter((group) => !(group === 'Maison' && getSettings().guest)).map((group) => (
         <section key={group} className="dash-catalog-group">
           <h3>{group}</h3>
           <div className="dash-catalog">

@@ -25,7 +25,7 @@ export default function PdfApp({ doc, pdfId }: { doc: Y.Doc; pdfId: string | nul
     return (
       <div className="nb-page">
         <h1 className="nb-page-title-static">
-          <Icon name="filePdf" size={34} /> PDF
+          <Icon name="filePdf" size={34} /> Atelier PDF
         </h1>
         <div className="nb-notice">
           <p>L’atelier PDF garde vos fichiers sur votre serveur Melo.</p>

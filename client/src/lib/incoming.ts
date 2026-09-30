@@ -1,8 +1,10 @@
 // Fichiers reçus d'autres applications : « Ouvrir avec Melo » et « Partager » sur Android, « Ouvrir avec » de
-// Windows pour l'application installée sur l'ordinateur. Ils sont importés dans l'atelier PDF.
+// Windows pour l'application installée depuis le navigateur ou l'application Melo pour ordinateur. Ils sont importés
+// dans l'atelier PDF.
 import { useSyncExternalStore } from 'react';
 import { toast } from '../components/Toast';
 import { callNative, hasNativePlugin, onNative } from './native';
+import { desktop } from './desktop';
 import { navigate } from './router';
 
 const NATIVE = 'NotesFiles';
@@ -70,6 +72,8 @@ async function pullNative() {
 type LaunchParams = { files?: { getFile: () => Promise<File> }[] };
 
 export function startIncoming() {
+  // Application pour ordinateur : PDF ouverts avec Melo (« Ouvrir avec », double-clic si Melo est l'application par défaut).
+  desktop()?.onOpenFiles((files) => receive(files.map((f) => new File([f.data], f.name, { type: f.type || 'application/pdf' }))));
   if (hasNativePlugin(NATIVE)) {
     onNative(NATIVE, 'incoming', () => void pullNative());
     void pullNative();

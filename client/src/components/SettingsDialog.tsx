@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from './Modal';
-import { getSettings, isNative, isStandaloneWeb, normalizeServerUrl, parseJoinLink, resetWorkspace, updateSettings, useSettings } from '../lib/settings';
+import { getSettings, isDefaultUserName, isNative, isStandaloneWeb, normalizeServerUrl, parseJoinLink, resetWorkspace, updateSettings, useSettings } from '../lib/settings';
+import { canShareLinks } from '../lib/api';
+import { desktop, isDesktopLocal, type DesktopUpdate } from '../lib/desktop';
 import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
 import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
-import { LinkWithCodeDialog, PairingCodePanel } from './LinkDevice';
+import { DevicesPanel, InvitePanel, JoinDialog } from './LinkDevice';
 import {
+  APK_PAGE,
   BUILD,
   applyUpdate,
   checkForUpdate,
@@ -18,11 +21,46 @@ import {
   useUpdateState,
 } from '../lib/updates';
 
+/** Application pour ordinateur sur son propre espace : sa version vient de l'installateur, pas d'un serveur. */
+function DesktopUpdates() {
+  const app = desktop()!;
+  const [update, setUpdate] = useState<DesktopUpdate | null>(null);
+  useEffect(() => app.onUpdate(setUpdate), [app]);
+  return (
+    <section className="nb-settings-section">
+      <h3>Application et mises à jour</h3>
+      <p className="nb-muted nb-update-version">
+        Application Melo pour ordinateur, version {app.version} (Melo {BUILD.id} du {formatBuildDate(BUILD.builtAt)})
+      </p>
+      {update?.status === 'ready' ? (
+        <div className="nb-row nb-gap nb-update-actions">
+          <span className="nb-update-status nb-update-status--new">
+            <Icon name="sparkles" size={16} /> Version {update.version} prête.
+          </span>
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => app.installUpdate()}>
+            Redémarrer pour l’installer
+          </button>
+        </div>
+      ) : (
+        <p className="nb-muted">
+          Melo cherche lui-même ses nouvelles versions (si le dépôt GitHub de Melo est public). Sinon, téléchargez la dernière version et installez-la par-dessus
+          celle-ci : vos pages restent.{' '}
+          <a href={APK_PAGE} target="_blank" rel="noreferrer">
+            Page de téléchargement
+          </a>
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** Version installée, version du serveur, recherche et installation des mises à jour. */
 function UpdatesSection() {
   const settings = useSettings();
   const u = useUpdateState();
   const native = isNative();
+  const app = desktop();
+  if (isDesktopLocal()) return <DesktopUpdates />;
   const available = isUpdateAvailable(u);
   const busy = u.checking || u.progress !== null;
   let status: string;
@@ -66,7 +104,13 @@ function UpdatesSection() {
           Me prévenir par une notification quand une mise à jour est disponible
         </label>
       ) : null}
-      {!native && isStandaloneWeb() ? <InstallBlock /> : null}
+      {app ? (
+        <p className="nb-muted nb-install-note">
+          <Icon name="laptop" size={15} /> Application Melo pour ordinateur, version {app.version}.
+        </p>
+      ) : !native && isStandaloneWeb() ? (
+        <InstallBlock />
+      ) : null}
     </section>
   );
 }
@@ -106,7 +150,7 @@ function InstallBlock() {
   );
 }
 
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; onTour: () => void };
 
 type TestResult = { ok: boolean; text: string; pairable?: boolean };
 
@@ -131,16 +175,17 @@ async function testServer(url: string, wsId: string, key: string): Promise<TestR
   }
 }
 
-export function SettingsDialog({ onClose }: Props) {
+export function SettingsDialog({ onClose, onTour }: Props) {
   const settings = useSettings();
-  const [name, setName] = useState(settings.userName);
+  const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
   const [color, setColor] = useState(settings.userColor);
   const [server, setServer] = useState(settings.serverUrl ?? '');
   const [googleId, setGoogleId] = useState(settings.googleClientId);
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const app = desktop();
 
   const joinLink = settings.serverUrl ? `${settings.serverUrl}/#/join/${settings.workspaceId}/${settings.workspaceKey}` : null;
 
@@ -199,7 +244,7 @@ export function SettingsDialog({ onClose }: Props) {
     if (!confirm('Réinitialiser cet appareil ? Les données locales seront effacées et un nouvel espace vide sera créé. Les données déjà synchronisées sur le serveur ne sont pas supprimées.')) return;
     await clearLocalDocs();
     resetWorkspace();
-    updateSettings({ onboarded: !isNative() });
+    updateSettings({ onboarded: !isNative() && !isDesktopLocal() });
     location.reload();
   };
 
@@ -220,13 +265,13 @@ export function SettingsDialog({ onClose }: Props) {
       }
     >
       <section className="nb-settings-section">
-        <h3>Profil collaboratif</h3>
+        <h3>Vous</h3>
         <label className="nb-field">
-          <span>Nom affiché aux autres participants</span>
-          <input className="nb-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
+          <span>Votre prénom, affiché aux personnes qui modifient une page avec vous</span>
+          <input className="nb-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder={settings.userName} />
         </label>
         <div className="nb-field">
-          <span>Couleur du curseur</span>
+          <span>Votre couleur (curseur dans les pages partagées)</span>
           <div className="nb-colors">
             {USER_COLORS.map((c) => (
               <button
@@ -243,7 +288,39 @@ export function SettingsDialog({ onClose }: Props) {
       </section>
 
       <section className="nb-settings-section">
-        <h3>Synchronisation & partage</h3>
+        <h3>Vos appareils</h3>
+        <DevicesPanel onJoin={() => setJoinOpen(true)} />
+        {app?.mode === 'server' ? (
+          <div className="nb-devices-join">
+            <span className="nb-muted">Cette fenêtre affiche le serveur {app.serverUrl ? <span className="nb-mono">{new URL(app.serverUrl).host}</span> : null}.</span>
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => void app.useLocal()}>
+              <Icon name="laptop" size={14} /> Revenir à l’espace de cet ordinateur
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {canShareLinks() && !settings.guest ? (
+        <section className="nb-settings-section">
+          <h3>Inviter une personne</h3>
+          <InvitePanel />
+        </section>
+      ) : null}
+
+      <UpdatesSection />
+
+      <section className="nb-settings-section">
+        <h3>Découvrir Melo</h3>
+        <p className="nb-muted">Les sections, l’accueil et les gestes utiles, en quelques écrans.</p>
+        <div>
+          <button type="button" className="nb-btn" onClick={onTour}>
+            <Icon name="sparkles" size={15} /> Revoir la présentation
+          </button>
+        </div>
+      </section>
+
+      <details className="nb-settings-section nb-settings-advanced">
+        <summary>Réglages avancés</summary>
         <label className="nb-field">
           <span>Adresse du serveur (laisser vide pour rester hors ligne)</span>
           <div className="nb-row nb-gap">
@@ -265,7 +342,7 @@ export function SettingsDialog({ onClose }: Props) {
               <Icon name={testResult.ok ? 'checkCircle' : 'xCircle'} size={15} /> {testResult.text}
               {testResult.pairable ? (
                 <div className="nb-test-action">
-                  <button type="button" className="nb-btn nb-btn--primary" onClick={() => setLinkOpen(true)}>
+                  <button type="button" className="nb-btn nb-btn--primary" onClick={() => setJoinOpen(true)}>
                     Saisir un code
                   </button>
                 </div>
@@ -291,54 +368,37 @@ export function SettingsDialog({ onClose }: Props) {
             </button>
           </div>
         </div>
-        {joinLink ? (
+        {joinLink && canShareLinks() ? (
           <div className="nb-field">
-            <span>Relier un autre appareil (téléphone, ordinateur) à cet espace</span>
-            <PairingCodePanel />
-            <details className="nb-join-link">
-              <summary>Ou avec un lien</summary>
-              <div className="nb-row nb-gap">
-                <input className="nb-input" readOnly value={joinLink} onFocus={(e) => e.currentTarget.select()} aria-label="Lien pour lier un autre appareil" />
-                <button type="button" className="nb-btn" onClick={() => void copy(joinLink)}>
-                  Copier
-                </button>
-              </div>
-            </details>
+            <span>Lien permanent pour relier vos propres appareils (contient la clé : ne le partagez pas)</span>
+            <div className="nb-row nb-gap">
+              <input className="nb-input" readOnly value={joinLink} onFocus={(e) => e.currentTarget.select()} aria-label="Lien pour lier un autre appareil" />
+              <button type="button" className="nb-btn" onClick={() => void copy(joinLink)}>
+                Copier
+              </button>
+            </div>
           </div>
-        ) : (
-          <p className="nb-muted">Configurez un serveur pour partager des pages et synchroniser plusieurs appareils.</p>
-        )}
-        <div className="nb-field">
-          <span>Cet appareil n’affiche pas vos pages ? Reliez‑le à votre espace</span>
+        ) : null}
+        <label className="nb-field">
+          <span>Google Agenda : ID client OAuth, pour importer directement depuis votre compte Google (facultatif)</span>
+          <input className="nb-input" placeholder="xxxxxxxx.apps.googleusercontent.com" value={googleId} onChange={(e) => setGoogleId(e.target.value)} />
+        </label>
+        <p className="nb-muted">Sans ID client, vous pouvez toujours importer un fichier .ics ou l’adresse secrète iCal de votre agenda Google.</p>
+        <div className="nb-field nb-settings-danger">
+          <span>Zone sensible</span>
           <div>
-            <button type="button" className="nb-btn" onClick={() => setLinkOpen(true)}>
-              <Icon name="link" size={15} /> Relier cet appareil avec un code
+            <button type="button" className="nb-btn nb-btn--danger" onClick={() => void reset()}>
+              Réinitialiser cet appareil
             </button>
           </div>
         </div>
-        {linkOpen ? <LinkWithCodeDialog server={parseJoinLink(server)?.serverUrl ?? normalizeServerUrl(server)} onClose={() => setLinkOpen(false)} /> : null}
-      </section>
-
-      <section className="nb-settings-section">
-        <h3>Google Agenda (optionnel)</h3>
-        <label className="nb-field">
-          <span>ID client OAuth Google – pour importer directement depuis votre compte Google</span>
-          <input className="nb-input" placeholder="xxxxxxxx.apps.googleusercontent.com" value={googleId} onChange={(e) => setGoogleId(e.target.value)} />
-        </label>
-        <p className="nb-muted">
-          Sans ID client, vous pouvez toujours importer un fichier .ics ou l’adresse secrète iCal de votre agenda Google.
-        </p>
-      </section>
-
-      <UpdatesSection />
-
-      <section className="nb-settings-section nb-settings-danger">
-        <h3>Zone sensible</h3>
-        <button type="button" className="nb-btn nb-btn--danger" onClick={() => void reset()}>
-          Réinitialiser cet appareil
-        </button>
-      </section>
-      <p className="nb-muted nb-version">Melo · {getSettings().serverUrl ? 'mode synchronisé' : 'mode hors ligne'}</p>
+      </details>
+      <p className="nb-muted nb-version">
+        Melo · {getSettings().serverUrl ? (isDesktopLocal() ? 'espace de cet ordinateur' : 'mode synchronisé') : 'mode hors ligne'}
+      </p>
+      {joinOpen ? (
+        <JoinDialog server={testResult?.pairable ? (parseJoinLink(server)?.serverUrl ?? normalizeServerUrl(server)) : undefined} onClose={() => setJoinOpen(false)} />
+      ) : null}
     </Modal>
   );
 }

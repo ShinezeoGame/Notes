@@ -39,13 +39,19 @@ est déjà connu, le lire directement. Après de grosses modifications du code, 
 - Vérifier le client : `npm run build` (TypeScript puis construction). Le serveur (`server/`, JavaScript) n'a pas
   d'étape de construction.
 - La branche `claude/notion-like-notes-app-yyrdi7` part en production : le serveur de l'utilisateur s'y met à jour
-  tout seul (`scripts/auto-update.sh`) et chaque envoi reconstruit l'APK (`.github/workflows/android.yml` :
-  construction, test sur émulateur Android 14, publication dans la release `latest`).
+  tout seul (`scripts/auto-update.sh`) et chaque envoi reconstruit les applications (`.github/workflows/apps.yml` :
+  APK testé sur émulateur Android 14, installateur Windows testé sur Windows, publication dans la release `latest`).
 - La version de l'application est une empreinte des sources du client (`client/vite.config.ts`) : modifier le client
   propose une mise à jour aux utilisateurs ; modifier autre chose (serveur, documentation, CLAUDE.md) non.
 - Nouveau type de bloc dans l'éditeur : augmenter `DOC_SCHEMA` (`client/src/lib/yjs.ts`) et `MIN_PAGE_SCHEMA`
   (`server/src/ws.js`), sinon une ancienne version de l'application effacerait ces blocs en synchronisant.
 - Nouvelle fonction native Android utilisée par le client : augmenter `MIN_NATIVE_API` (`client/vite.config.ts`).
+- Application Windows (`desktop/`, Electron) : elle embarque une copie du serveur et du client
+  (`desktop/scripts/prepare.mjs`) ; ses dépendances reprennent celles de `server/package.json` aux mêmes versions
+  (vérifié par prepare.mjs : nouvelle dépendance du serveur → l'ajouter aussi dans `desktop/package.json`). Nouvelle
+  fonction du pont `window.meloDesktop` : augmenter `BRIDGE_API` (`desktop/main.cjs`), compléter
+  `client/src/lib/desktop.ts`, et tester sa présence côté client (une ancienne application peut afficher un client
+  plus récent, celui d'un serveur distant).
 - Accueil : widgets déclarés dans `client/src/dashboard/registry.tsx` (un fichier par widget dans `widgets/`),
   disposition dans `dashboard/model.ts` ; thèmes, fond d'écran et sections dans `client/src/lib/appearance.ts`
   (couleurs en variables CSS : pas de couleur fixe dans `styles.css`).

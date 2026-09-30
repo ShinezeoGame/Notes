@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test de l'APK sur un émulateur Android (lancé par .github/workflows/android.yml) :
+# Test de l'APK sur un émulateur Android (lancé par .github/workflows/apps.yml) :
 # installation, liaison à un serveur Melo, vérification des mises à jour en arrière-plan,
 # notification et mise à jour sans réinstaller. Échoue si l'application se ferme.
 # Usage : run.sh <apk> <dossier du client « nouvelle version »>
