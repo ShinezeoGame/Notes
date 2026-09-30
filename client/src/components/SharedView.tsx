@@ -7,7 +7,7 @@ import { updateSettings, useSettings } from '../lib/settings';
 import { pgRoom, useDocStatus } from '../lib/yjs';
 import { CalendarImportDialog } from './CalendarImportDialog';
 import { PageEditorPane } from './PageEditorPane';
-import { STATUS_LABEL } from './Sidebar';
+import { STATUS_LABEL } from './AppNav';
 import { toast } from './Toast';
 
 type Props = { token: string; pageId: string | null };

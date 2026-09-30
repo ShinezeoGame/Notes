@@ -5,6 +5,7 @@ import { useAppCtx } from '../context';
 import { dayKey, formatDay, formatTimeRange, parseEventsJson, parseIcs, type CalEvent } from '../../lib/ics';
 import { fetchGoogleCalendarsEvents, parseGoogleSource, requestGoogleToken } from '../../lib/google';
 import { getSettings } from '../../lib/settings';
+import { addCalendar, useAgenda } from '../../lib/agenda';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
 
@@ -90,6 +91,16 @@ function CalendarView({ block, editor }: Props) {
     }
   };
 
+  // Section Agenda de l'espace : ce bloc peut y être ajouté (propriétaire seulement).
+  const agendaDoc = ctx.mode === 'owner' ? (ctx.workspaceDoc ?? null) : null;
+  const agenda = useAgenda(agendaDoc);
+  const inAgenda = Boolean(source) && agenda.calendars.some((c) => c.source === source);
+  const addToAgenda = () => {
+    if (!agendaDoc) return;
+    addCalendar(agendaDoc, { title: title || 'Agenda', events, source });
+    ctx.notify('Agenda ajouté à la section Agenda (et au widget de l’accueil).');
+  };
+
   const configure = async () => {
     const res = await ctx.importCalendar({ source, title });
     if (res) apply(res);
@@ -170,6 +181,11 @@ function CalendarView({ block, editor }: Props) {
           {editable ? (
             <button type="button" onClick={() => void configure()}>
               Modifier
+            </button>
+          ) : null}
+          {agendaDoc && editable && !inAgenda ? (
+            <button type="button" onClick={addToAgenda} title="Afficher aussi cet agenda dans la section Agenda et sur l’accueil">
+              Ajouter à l’Agenda
             </button>
           ) : null}
         </span>

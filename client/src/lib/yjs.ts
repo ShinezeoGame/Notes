@@ -137,6 +137,21 @@ export function useDocStatus(handle: DocHandle | null): ConnStatus {
   return useSyncExternalStore(subscribe, get, get);
 }
 
+/** Vrai une fois le document synchronisé avec le serveur (toujours vrai sans serveur). */
+export function useDocSynced(handle: DocHandle | null): boolean {
+  const subscribe = useCallback(
+    (fn: () => void) => {
+      const provider = handle?.provider;
+      if (!provider) return () => {};
+      provider.on('sync', fn);
+      return () => provider.off('sync', fn);
+    },
+    [handle],
+  );
+  const get = useCallback(() => Boolean(handle) && (!handle!.provider || handle!.provider.synced), [handle]);
+  return useSyncExternalStore(subscribe, get, get);
+}
+
 /** Supprime toutes les données locales (IndexedDB) de l'application. */
 export async function clearLocalDocs(): Promise<void> {
   for (const h of handles.values()) {

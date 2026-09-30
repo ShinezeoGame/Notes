@@ -15,6 +15,12 @@ export type Settings = {
   onboarded: boolean;
   lastPageId: string | null;
   expanded: Record<string, boolean>;
+  /** Barre des sections repliée (icônes seules), sur ordinateur. */
+  navCollapsed: boolean;
+  /** Pages ouvertes récemment sur cet appareil (la plus récente en premier). */
+  recentPages: string[];
+  /** Colonne des pages masquée dans la section Notes, sur ordinateur. */
+  pagesHidden: boolean;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -47,6 +53,9 @@ function defaults(): Settings {
     onboarded: isStandaloneWeb(),
     lastPageId: null,
     expanded: {},
+    navCollapsed: false,
+    recentPages: [],
+    pagesHidden: false,
   };
 }
 

@@ -162,7 +162,7 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
 1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Mes notes » indique que la synchronisation fonctionne.
 2. Facultatif : dans les **Réglages** (roue dentée en haut à gauche), le lien caché sous **« Ou avec un lien »** est la clé de secours de votre espace. Rangez‑le dans votre gestionnaire de mots de passe et ne le donnez à personne.
 
-Avec `MAX_WORKSPACES=1`, plus personne ne peut créer d’espace sur votre serveur : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le tableau de bord homelab.
+Avec `MAX_WORKSPACES=1`, plus personne ne peut créer d’espace sur votre serveur : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le homelab.
 
 ### Relier le téléphone et vos autres appareils
 
@@ -178,7 +178,7 @@ Les pages créées sur un appareil avant de le relier ne sont pas transférées.
 Notes s’installe comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
 
 1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
-2. Cliquez sur **Installer l’application** en bas de la barre latérale (ou **Réglages → Installer Notes sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
+2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Notes sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
 
 Notes s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Notes** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
 
@@ -196,7 +196,7 @@ Pour scanner un document papier : **PDF** → **Scanner un document** (l’appar
 
 Un lien donne accès à la page **et à toutes ses sous‑pages** : partagez une page dédiée plutôt que la racine de vos notes.
 
-### Tableau de bord homelab
+### Homelab
 
 Le serveur tournant dans votre homelab, la section **Homelab** peut interroger vos applications avec leurs adresses locales (`http://192.168.1.10:8989`…). Pour afficher l’occupation de vos disques dans la carte « Hôte de ce serveur », montez‑les en lecture seule dans un fichier `docker-compose.override.yml` à côté de `docker-compose.yml` (plutôt que de modifier ce dernier, ce qui bloquerait la mise à jour automatique) :
 

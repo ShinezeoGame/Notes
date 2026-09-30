@@ -46,3 +46,6 @@ est déjà connu, le lire directement. Après de grosses modifications du code, 
 - Nouveau type de bloc dans l'éditeur : augmenter `DOC_SCHEMA` (`client/src/lib/yjs.ts`) et `MIN_PAGE_SCHEMA`
   (`server/src/ws.js`), sinon une ancienne version de l'application effacerait ces blocs en synchronisant.
 - Nouvelle fonction native Android utilisée par le client : augmenter `MIN_NATIVE_API` (`client/vite.config.ts`).
+- Accueil : widgets déclarés dans `client/src/dashboard/registry.tsx` (un fichier par widget dans `widgets/`),
+  disposition dans `dashboard/model.ts` ; thèmes, fond d'écran et sections dans `client/src/lib/appearance.ts`
+  (couleurs en variables CSS : pas de couleur fixe dans `styles.css`).

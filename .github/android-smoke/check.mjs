@@ -206,7 +206,7 @@ try {
     await assertAlive('au premier lancement');
   });
 
-  await step('Liaison au serveur : l’application reste ouverte et affiche les pages', async () => {
+  await step('Liaison au serveur : l’application reste ouverte, affiche l’accueil puis les pages', async () => {
     await js(`(async () => {
       const KEY = 'notes.settings.v1';
       const s = JSON.parse(localStorage.getItem(KEY));
@@ -221,7 +221,12 @@ try {
       return true;
     })()`);
     await sleep(2000);
-    await until('éditeur affiché', () => js("!!document.querySelector('.nb-editor .ProseMirror')"), 120_000, 2000);
+    await until('accueil affiché', () => js("!!document.querySelector('.dash-grid .dash-widget')"), 120_000, 2000);
+    // Section Notes (liste des pages sur téléphone), puis la page de bienvenue dans l'éditeur.
+    await js("location.hash = '#/notes'; true");
+    await until('liste des pages', () => js("!!document.querySelector('.nb-tree-row')"), 60_000, 1000);
+    await js("document.querySelector('.nb-tree-row').click(); true");
+    await until('éditeur affiché', () => js("!!document.querySelector('.nb-editor .ProseMirror')"), 60_000, 2000);
     // Démarrage natif (1,5 s après le chargement) : vérification programmée, autorisations, nettoyage…
     await sleep(15_000);
     await assertAlive('après la liaison au serveur');

@@ -219,8 +219,12 @@ function watchDragEnd(view: EditorView, onLost: () => void) {
   const root = view.root;
   let blockDrag = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  // Pendant le glisser, la barre de mise en forme (ouverte par la sélection du bloc) est masquée : elle couvrirait
+  // les blocs voisins et intercepterait le dépôt.
+  const dragging = (on: boolean) => document.body.classList.toggle('nb-block-dragging', on);
   const onDragStart = (e: Event) => {
     blockDrag = e.target instanceof Element && !!e.target.closest('.bn-side-menu');
+    dragging(blockDrag);
   };
   const onDrop = () => {
     if (!blockDrag) return;
@@ -228,6 +232,7 @@ function watchDragEnd(view: EditorView, onLost: () => void) {
     timer = setTimeout(() => {
       timer = undefined;
       blockDrag = false;
+      dragging(false);
       root.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
       onLost();
     }, 150);
@@ -235,6 +240,7 @@ function watchDragEnd(view: EditorView, onLost: () => void) {
   const onDragEnd = (e: Event) => {
     if (!e.isTrusted) return;
     blockDrag = false;
+    dragging(false);
     clearTimeout(timer);
     timer = undefined;
   };
@@ -244,6 +250,7 @@ function watchDragEnd(view: EditorView, onLost: () => void) {
   return {
     destroy() {
       clearTimeout(timer);
+      dragging(false);
       root.removeEventListener('dragstart', onDragStart, true);
       root.removeEventListener('drop', onDrop, true);
       root.removeEventListener('dragend', onDragEnd, true);

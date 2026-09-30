@@ -2,9 +2,11 @@ import { useSyncExternalStore } from 'react';
 
 export type Route =
   | { name: 'home' }
+  | { name: 'notes' }
   | { name: 'page'; pageId: string }
   | { name: 'trash' }
-  | { name: 'dashboard' }
+  | { name: 'agenda' }
+  | { name: 'homelab' }
   | { name: 'smarthome' }
   | { name: 'cameras' }
   | { name: 'pdf'; pdfId: string | null }
@@ -16,7 +18,10 @@ export function parseRoute(hash: string): Route {
   let m: RegExpExecArray | null;
   if ((m = /^\/p\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'page', pageId: m[1] };
   if (/^\/trash/.test(h)) return { name: 'trash' };
-  if (/^\/dashboard/.test(h)) return { name: 'dashboard' };
+  if (/^\/notes/.test(h)) return { name: 'notes' };
+  if (/^\/agenda/.test(h)) return { name: 'agenda' };
+  // « #/dashboard » : ancienne adresse du homelab.
+  if (/^\/(homelab|dashboard)/.test(h)) return { name: 'homelab' };
   if (/^\/maison/.test(h)) return { name: 'smarthome' };
   if (/^\/cameras/.test(h)) return { name: 'cameras' };
   if ((m = /^\/pdf(?:\/([A-Za-z0-9_-]+))?/.exec(h))) return { name: 'pdf', pdfId: m[1] ?? null };
@@ -32,8 +37,12 @@ export function routeToHash(route: Route): string {
       return `#/p/${route.pageId}`;
     case 'trash':
       return '#/trash';
-    case 'dashboard':
-      return '#/dashboard';
+    case 'notes':
+      return '#/notes';
+    case 'agenda':
+      return '#/agenda';
+    case 'homelab':
+      return '#/homelab';
     case 'smarthome':
       return '#/maison';
     case 'cameras':
@@ -49,10 +58,12 @@ export function routeToHash(route: Route): string {
   }
 }
 
-export function navigate(route: Route | string) {
+/** Change d'adresse ; `replace` : sans nouvelle entrée dans l'historique (redirection). */
+export function navigate(route: Route | string, opts: { replace?: boolean } = {}) {
   const hash = typeof route === 'string' ? route : routeToHash(route);
   if (location.hash === hash) return;
-  location.hash = hash;
+  if (opts.replace) location.replace(hash);
+  else location.hash = hash;
 }
 
 let cached = parseRoute(location.hash);

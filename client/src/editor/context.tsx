@@ -17,7 +17,7 @@ export type AppContextValue = {
   fetchIcs: ((url: string) => Promise<string>) | null;
   importCalendar: (initial?: { source?: string; title?: string }) => Promise<CalendarImportResult | null>;
   notify: (message: string, kind?: 'info' | 'error') => void;
-  /** Ouvre la vue Tableau de bord (propriétaire uniquement). */
+  /** Ouvre la section Homelab (propriétaire uniquement). */
   openDashboard?: () => void;
   /** Ouvre la vue Maison (propriétaire uniquement). */
   openSmartHome?: () => void;

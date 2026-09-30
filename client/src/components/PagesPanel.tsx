@@ -1,26 +1,19 @@
+// Section Notes : arborescence des pages (colonne à gauche de la page ouverte sur ordinateur, écran à part sur téléphone).
 import { useEffect, useState } from 'react';
 import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { useWorkspacePages, type PageMeta, type WorkspaceStore } from '../lib/workspace';
-import type { ConnStatus } from '../lib/yjs';
-import { promptInstall, useInstallState } from '../lib/pwa';
 import { Icon } from '../icons/Icon';
 import { PageIcon } from '../icons/pageIcon';
 
 type Props = {
   store: WorkspaceStore;
   currentPageId: string | null;
-  status: ConnStatus;
-  open: boolean;
-  onClose: () => void;
+  /** Écran entier (téléphone) plutôt que colonne. */
+  full?: boolean;
   onOpenPage: (id: string) => void;
   onNewPage: (parentId: string) => void;
   onOpenTrash: () => void;
-  onOpenDashboard: () => void;
-  onOpenPdf: () => void;
-  onOpenSmartHome: () => void;
-  onOpenCameras: () => void;
   onOpenSearch: () => void;
-  onOpenSettings: () => void;
   onShare: (pageId: string) => void;
   onDelete: (pageId: string) => void;
 };
@@ -28,22 +21,10 @@ type Props = {
 type DropHint = { id: string; pos: 'before' | 'after' | 'inside' } | null;
 type Menu = { pageId: string; x: number; y: number } | null;
 
-export const STATUS_LABEL: Record<ConnStatus, string> = {
-  offline: 'Hors ligne (appareil seul)',
-  connecting: 'Connexion au serveur…',
-  connected: 'Synchronisé',
-  disconnected: 'Déconnecté – nouvelle tentative…',
-  denied: 'Accès refusé par le serveur',
-  outdated: 'Mise à jour de Notes nécessaire',
-};
-
-export function Sidebar(props: Props) {
-  const { store, currentPageId, status, open, onClose } = props;
+export function PagesPanel(props: Props) {
+  const { store, currentPageId, full = false } = props;
   useWorkspacePages(store);
   const settings = useSettings();
-  const install = useInstallState();
-  // Proposition d'installation seulement sur ordinateur (le téléphone a son application Android).
-  const desktop = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<DropHint>(null);
   const [menu, setMenu] = useState<Menu>(null);
@@ -119,10 +100,7 @@ export function Sidebar(props: Props) {
             setDragId(null);
             setDropHint(null);
           }}
-          onClick={() => {
-            props.onOpenPage(page.id);
-            onClose();
-          }}
+          onClick={() => props.onOpenPage(page.id)}
           onContextMenu={(e) => {
             e.preventDefault();
             setMenu({ pageId: page.id, x: e.clientX, y: e.clientY });
@@ -185,28 +163,19 @@ export function Sidebar(props: Props) {
 
   return (
     <>
-      {open ? <div className="nb-sidebar-backdrop" onClick={onClose} /> : null}
-      <aside className={`nb-sidebar${open ? ' nb-sidebar--open' : ''}`}>
-        <div className="nb-sidebar-head">
-          <div className="nb-workspace">
-            <span className="nb-workspace-avatar">N</span>
-            <span className="nb-workspace-name">Mes notes</span>
-            <span className={`nb-status nb-status--${status}`} title={STATUS_LABEL[status]} />
-          </div>
+      <aside className={`nb-pages${full ? ' nb-pages--full' : ''}`} aria-label="Pages">
+        <div className="nb-pages-head">
+          <h2>Notes</h2>
           <div className="nb-sidebar-tools">
-            <button type="button" className="nb-icon-btn" title="Rechercher (Ctrl+K)" aria-label="Rechercher" onClick={props.onOpenSearch}>
+            <button type="button" className="nb-icon-btn" title="Rechercher (Ctrl+K)" aria-label="Rechercher une page" onClick={props.onOpenSearch}>
               <Icon name="search" size={17} />
             </button>
-            <button type="button" className="nb-icon-btn" title="Réglages" aria-label="Réglages" onClick={props.onOpenSettings}>
-              <Icon name="settings" size={17} />
-            </button>
-            <button type="button" className="nb-icon-btn nb-only-mobile" title="Fermer" aria-label="Fermer" onClick={onClose}>
-              <Icon name="close" size={17} />
+            <button type="button" className="nb-icon-btn" title="Nouvelle page" aria-label="Nouvelle page" onClick={() => props.onNewPage('')}>
+              <Icon name="plus" size={18} />
             </button>
           </div>
         </div>
 
-        <div className="nb-sidebar-section">Pages</div>
         <nav className="nb-tree">
           {roots.length === 0 ? <div className="nb-tree-empty">Aucune page pour l’instant.</div> : roots.map((p) => renderNode(p, 0))}
           <div
@@ -232,26 +201,9 @@ export function Sidebar(props: Props) {
           <button type="button" className="nb-sidebar-link" onClick={() => props.onNewPage('')}>
             <Icon name="plus" size={16} /> Nouvelle page
           </button>
-          <button type="button" className="nb-sidebar-link" onClick={props.onOpenSmartHome}>
-            <Icon name="bulb" size={16} /> Maison
-          </button>
-          <button type="button" className="nb-sidebar-link" onClick={props.onOpenCameras}>
-            <Icon name="cctv" size={16} /> Caméras
-          </button>
-          <button type="button" className="nb-sidebar-link" onClick={props.onOpenDashboard}>
-            <Icon name="home" size={16} /> Homelab
-          </button>
-          <button type="button" className="nb-sidebar-link" onClick={props.onOpenPdf}>
-            <Icon name="filePdf" size={16} /> PDF
-          </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
             <Icon name="trash" size={16} /> Corbeille
           </button>
-          {install.canInstall && desktop ? (
-            <button type="button" className="nb-sidebar-link nb-sidebar-install" onClick={() => void promptInstall()}>
-              <Icon name="download" size={16} /> Installer l’application
-            </button>
-          ) : null}
         </div>
       </aside>
 

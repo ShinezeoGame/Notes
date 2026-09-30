@@ -24,6 +24,7 @@ import type { IconName } from '../icons/registry';
 import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
 import { columnsDropCursor, insertColumns } from './columns';
 import { yjsSelectionGuard } from './yjsSelectionGuard';
+import { useThemeBase } from '../lib/appearance';
 
 type Props = { handle: DocHandle; editable: boolean };
 
@@ -46,6 +47,7 @@ export function Editor({ handle, editable }: Props) {
   const ctx = useAppCtx();
   const settings = useSettings();
 
+  const themeBase = useThemeBase();
   const editor = useCreateBlockNote(
     withCollaboration({
       schema,
@@ -199,7 +201,7 @@ export function Editor({ handle, editable }: Props) {
   };
 
   return (
-    <BlockNoteView editor={editor} theme="dark" editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
+    <BlockNoteView editor={editor} theme={themeBase} editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
       <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
       <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
       <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />

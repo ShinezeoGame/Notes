@@ -2,20 +2,25 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import { AppContext, type AppContextValue, type CalendarImportResult } from './editor/context';
 import { api, fileToDataUrl, ownerAuth, serverBase } from './lib/api';
 import { useDocHandle, useMediaQuery } from './lib/hooks';
-import { navigate, useRoute } from './lib/router';
+import { navigate, useRoute, type Route } from './lib/router';
 import { getSettings, isNative, updateSettings, useSettings } from './lib/settings';
 import { WorkspaceStore, useWorkspacePages } from './lib/workspace';
-import { clearLocalDocs, pgRoom, useDocStatus, wsRoom } from './lib/yjs';
+import { clearLocalDocs, pgRoom, useDocStatus, useDocSynced, wsRoom } from './lib/yjs';
+import { applyAppearance, useAppearance, type Appearance, type SectionId } from './lib/appearance';
+import { AgendaView } from './components/AgendaView';
+import { AppNav, SECTIONS, STATUS_LABEL } from './components/AppNav';
+import { AppearancePanel } from './components/AppearancePanel';
 import { CalendarImportDialog } from './components/CalendarImportDialog';
 import { Onboarding } from './components/Onboarding';
 import { PageEditorPane } from './components/PageEditorPane';
+import { PagesPanel } from './components/PagesPanel';
 import { SearchDialog } from './components/SearchDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { SharedView } from './components/SharedView';
-import { Sidebar, STATUS_LABEL } from './components/Sidebar';
 import { ToastHost, toast } from './components/Toast';
 import { UpdateBanner } from './components/UpdateBanner';
+import { Wallpaper } from './components/Wallpaper';
 import { applyUpdate, startUpdateChecks } from './lib/updates';
 import { TrashView } from './components/TrashView';
 import { HomelabPanel } from './components/HomelabView';
@@ -23,6 +28,7 @@ import { SmartHomeView } from './components/SmartHomeView';
 import { CamerasView } from './components/CamerasView';
 import { LinkWithCodeDialog } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
+import { Dashboard } from './dashboard/Dashboard';
 import { cardLayout, configStatusKey, resetCardSizes, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
@@ -83,7 +89,53 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   );
 }
 
-type Dialog = null | { type: 'search' } | { type: 'settings' } | { type: 'share'; pageId: string } | { type: 'homelab' } | { type: 'link' };
+type Dialog =
+  | null
+  | { type: 'search' }
+  | { type: 'settings' }
+  | { type: 'share'; pageId: string }
+  | { type: 'homelab' }
+  | { type: 'link' }
+  | { type: 'appearance' };
+
+/** Section de la navigation à laquelle appartient une adresse. */
+function sectionOf(route: Route): SectionId {
+  switch (route.name) {
+    case 'notes':
+    case 'page':
+    case 'trash':
+      return 'notes';
+    case 'agenda':
+    case 'homelab':
+    case 'smarthome':
+    case 'cameras':
+    case 'pdf':
+      return route.name;
+    default:
+      return 'home';
+  }
+}
+
+/** Téléphone : un champ de saisie a le focus (clavier affiché), la barre d'onglets est masquée. */
+function useTyping(enabled: boolean): boolean {
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    const check = () => {
+      const el = document.activeElement as HTMLElement | null;
+      const field = el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+      setTyping(Boolean(field && !/^(checkbox|radio|range|button|color|file)$/.test((el as HTMLInputElement).type ?? '')));
+    };
+    const later = () => setTimeout(check, 0);
+    document.addEventListener('focusin', check);
+    document.addEventListener('focusout', later);
+    return () => {
+      document.removeEventListener('focusin', check);
+      document.removeEventListener('focusout', later);
+    };
+  }, [enabled]);
+  return enabled && typing;
+}
 
 function OwnerApp() {
   const settings = useSettings();
@@ -91,12 +143,20 @@ function OwnerApp() {
   const wsHandle = useDocHandle(wsRoom(settings.workspaceId), ownerAuth(), true);
   const store = useMemo(() => (wsHandle.handle ? new WorkspaceStore(wsHandle.handle.doc) : null), [wsHandle.handle]);
   const status = useDocStatus(wsHandle.handle);
+  const synced = useDocSynced(wsHandle.handle);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const typing = useTyping(isMobile);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [calReq, setCalReq] = useState<{ initial?: { source?: string; title?: string }; resolve: (r: CalendarImportResult | null) => void } | null>(null);
   const pageId = route.name === 'page' ? route.pageId : null;
   const pdfId = route.name === 'pdf' ? route.pdfId : null;
+  const section = sectionOf(route);
+
+  // Apparence de l'espace (ou réglages en cours d'essai dans « Personnaliser »).
+  const appearance = useAppearance(wsHandle.ready ? (store?.doc ?? null) : null);
+  const [preview, setPreview] = useState<Appearance | null>(null);
+  const look = preview ?? appearance;
+  useEffect(() => applyAppearance(look), [look]);
 
   useEffect(() => {
     if (!serverBase()) return;
@@ -116,25 +176,23 @@ function OwnerApp() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Section Notes : page de bienvenue dans un espace encore vide ; sur ordinateur, la dernière page ouverte (ou la
+  // première) s'affiche à côté de la liste.
   useEffect(() => {
-    if (!store || !wsHandle.ready || route.name !== 'home') return;
+    if (!store || !wsHandle.ready || route.name !== 'notes') return;
     const last = getSettings().lastPageId;
-    if (last && store.get(last) && store.isVisible(last)) {
-      navigate({ name: 'page', pageId: last });
-      return;
+    let target = last && store.get(last) && store.isVisible(last) ? last : store.roots()[0]?.id;
+    if (!target && synced && !store.getSnapshot().length) {
+      target = store.createPage('', 'Bienvenue');
+      store.update(target, { icon: encodePageIcon('sparkles', 'yellow') });
     }
-    const roots = store.roots();
-    if (roots.length) {
-      navigate({ name: 'page', pageId: roots[0].id });
-      return;
-    }
-    const id = store.createPage('', 'Bienvenue');
-    store.update(id, { icon: encodePageIcon('sparkles', 'yellow') });
-    navigate({ name: 'page', pageId: id });
-  }, [store, wsHandle.ready, route.name]);
+    if (target && !isMobile) navigate({ name: 'page', pageId: target }, { replace: true });
+  }, [store, wsHandle.ready, route.name, isMobile, synced]);
 
   useEffect(() => {
-    if (pageId) updateSettings({ lastPageId: pageId });
+    if (!pageId) return;
+    const recent = [pageId, ...getSettings().recentPages.filter((id) => id !== pageId)].slice(0, 20);
+    updateSettings({ lastPageId: pageId, recentPages: recent });
   }, [pageId]);
 
   const openPage = useCallback((id: string) => navigate({ name: 'page', pageId: id }), []);
@@ -142,9 +200,7 @@ function OwnerApp() {
   const createPage = useCallback(
     (parentId: string) => {
       if (!store) return;
-      const id = store.createPage(parentId, '');
-      openPage(id);
-      setSidebarOpen(false);
+      openPage(store.createPage(parentId, ''));
     },
     [store, openPage],
   );
@@ -153,7 +209,7 @@ function OwnerApp() {
     (id: string) => {
       if (!store) return;
       store.softDelete(id);
-      if (pageId && (pageId === id || store.ancestors(pageId).some((a) => a.id === id))) navigate('#/');
+      if (pageId && (pageId === id || store.ancestors(pageId).some((a) => a.id === id))) navigate('#/notes');
       toast('Page déplacée dans la corbeille.');
     },
     [store, pageId],
@@ -191,7 +247,7 @@ function OwnerApp() {
       fetchIcs: serverBase() ? (url) => api.fetchIcs(url, ownerAuth()).then((r) => r.text) : null,
       importCalendar,
       notify: toast,
-      openDashboard: () => navigate('#/dashboard'),
+      openDashboard: () => navigate('#/homelab'),
       openSmartHome: () => navigate('#/maison'),
       openCameras: () => navigate('#/cameras'),
       homelabConfigured,
@@ -205,61 +261,82 @@ function OwnerApp() {
     return <div className="nb-center nb-loading">Chargement de votre espace…</div>;
   }
 
+  const goSection = (id: SectionId) => navigate(SECTIONS[id].hash);
+  const wallpaper = look.wallpaper.kind !== 'none' && (section === 'home' || look.wallpaper.everywhere);
+  const pagesColumn = section === 'notes' && !isMobile && !settings.pagesHidden;
+  // Téléphone : liste des pages en plein écran (section Notes) ; accueil sans barre du haut.
+  const mobileList = isMobile && route.name === 'notes';
+  const showTopBar = section !== 'home' && !mobileList;
+  const pagesPanel = (full: boolean) => (
+    <PagesPanel
+      store={store}
+      currentPageId={pageId}
+      full={full}
+      onOpenPage={openPage}
+      onNewPage={createPage}
+      onOpenTrash={() => navigate('#/trash')}
+      onOpenSearch={() => setDialog({ type: 'search' })}
+      onShare={(id) => setDialog({ type: 'share', pageId: id })}
+      onDelete={deletePage}
+    />
+  );
+
+  let content;
+  if (route.name === 'trash') content = <TrashView store={store} onOpenPage={openPage} />;
+  else if (route.name === 'agenda') content = <AgendaView doc={store.doc} />;
+  else if (route.name === 'homelab') content = <HomelabSection doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />;
+  else if (route.name === 'smarthome') content = <SmartHomeView doc={store.doc} />;
+  else if (route.name === 'cameras') content = <CamerasView doc={store.doc} />;
+  else if (route.name === 'pdf')
+    content = (
+      <Suspense fallback={<div className="nb-center nb-loading">Chargement de l’atelier PDF…</div>}>
+        <PdfApp doc={store.doc} pdfId={pdfId} />
+      </Suspense>
+    );
+  else if (pageId) content = <OwnerPage key={pageId} store={store} pageId={pageId} onOpenPage={openPage} />;
+  else if (mobileList) content = pagesPanel(true);
+  else if (route.name === 'notes') content = <NotesEmpty store={store} onCreate={() => createPage('')} />;
+  else
+    content = (
+      <Dashboard doc={store.doc} store={store} synced={synced} gap={look.gap} onCustomize={() => setDialog({ type: 'appearance' })} />
+    );
+
+  const nav = (
+    <AppNav
+      active={section}
+      sections={look.sections}
+      hidden={look.hidden}
+      status={status}
+      mobile={isMobile}
+      onNavigate={goSection}
+      onSearch={() => setDialog({ type: 'search' })}
+      onSettings={() => setDialog({ type: 'settings' })}
+      onCustomize={() => setDialog({ type: 'appearance' })}
+    />
+  );
+
   return (
     <AppContext.Provider value={ctx}>
-      <div className="nb-app">
-        <Sidebar
-          store={store}
-          currentPageId={pageId}
-          status={status}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onOpenPage={(id) => {
-            openPage(id);
-            setSidebarOpen(false);
-          }}
-          onNewPage={createPage}
-          onOpenTrash={() => {
-            navigate('#/trash');
-            setSidebarOpen(false);
-          }}
-          onOpenDashboard={() => {
-            navigate('#/dashboard');
-            setSidebarOpen(false);
-          }}
-          onOpenSmartHome={() => {
-            navigate('#/maison');
-            setSidebarOpen(false);
-          }}
-          onOpenCameras={() => {
-            navigate('#/cameras');
-            setSidebarOpen(false);
-          }}
-          onOpenPdf={() => {
-            navigate('#/pdf');
-            setSidebarOpen(false);
-          }}
-          onOpenSearch={() => setDialog({ type: 'search' })}
-          onOpenSettings={() => setDialog({ type: 'settings' })}
-          onShare={(id) => setDialog({ type: 'share', pageId: id })}
-          onDelete={deletePage}
-        />
+      <div className={`nb-app nb-app--${section}${wallpaper ? ' nb-app--wallpaper' : ''}${isMobile ? ' nb-app--mobile' : ''}`}>
+        {wallpaper ? <Wallpaper appearance={look} /> : null}
+        {!isMobile ? nav : null}
+        {pagesColumn ? pagesPanel(false) : null}
         <main className="nb-main">
-          <TopBar
-            store={store}
-            pageId={pageId}
-            isTrash={route.name === 'trash'}
-            isDashboard={route.name === 'dashboard'}
-            isSmartHome={route.name === 'smarthome'}
-            isCameras={route.name === 'cameras'}
-            pdf={route.name === 'pdf' ? { name: pdfName } : null}
-            status={status}
-            showMenuButton={isMobile}
-            onMenu={() => setSidebarOpen(true)}
-            onShare={() => pageId && setDialog({ type: 'share', pageId })}
-            onDelete={() => pageId && deletePage(pageId)}
-            onOpenPage={openPage}
-          />
+          {showTopBar ? (
+            <TopBar
+              store={store}
+              route={route}
+              section={section}
+              pdfName={pdfName}
+              status={status}
+              mobile={isMobile}
+              pagesHidden={settings.pagesHidden}
+              onTogglePages={() => updateSettings({ pagesHidden: !getSettings().pagesHidden })}
+              onShare={() => pageId && setDialog({ type: 'share', pageId })}
+              onDelete={() => pageId && deletePage(pageId)}
+              onOpenPage={openPage}
+            />
+          ) : null}
           {status === 'outdated' ? (
             <div className="nb-banner nb-banner--error">
               Cette page utilise une nouveauté de Notes (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
@@ -278,32 +355,18 @@ function OwnerApp() {
               </button>
             </div>
           ) : null}
-          <div className="nb-content">
-            {route.name === 'trash' ? (
-              <TrashView store={store} onOpenPage={openPage} />
-            ) : route.name === 'dashboard' ? (
-              <DashboardView doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />
-            ) : route.name === 'smarthome' ? (
-              <SmartHomeView doc={store.doc} />
-            ) : route.name === 'cameras' ? (
-              <CamerasView doc={store.doc} />
-            ) : route.name === 'pdf' ? (
-              <Suspense fallback={<div className="nb-center nb-loading">Chargement de l’atelier PDF…</div>}>
-                <PdfApp doc={store.doc} pdfId={pdfId} />
-              </Suspense>
-            ) : pageId ? (
-              <OwnerPage key={pageId} store={store} pageId={pageId} onOpenPage={openPage} />
-            ) : (
-              <div className="nb-center nb-loading">Ouverture…</div>
-            )}
-          </div>
+          <div className="nb-content">{content}</div>
         </main>
+        {isMobile && !typing ? nav : null}
       </div>
 
       {dialog?.type === 'search' ? <SearchDialog store={store} onClose={() => setDialog(null)} onOpen={openPage} /> : null}
       {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'link' ? <LinkWithCodeDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.type === 'appearance' ? (
+        <AppearancePanel doc={store.doc} appearance={appearance} onPreview={setPreview} onClose={() => setDialog(null)} />
+      ) : null}
       {dialog?.type === 'share' ? (
         <ShareDialog
           pageId={dialog.pageId}
@@ -326,25 +389,42 @@ function OwnerApp() {
   );
 }
 
+/** Section Notes sans page ouverte (aucune page encore, ou liste masquée). */
+function NotesEmpty({ store, onCreate }: { store: WorkspaceStore; onCreate: () => void }) {
+  useWorkspacePages(store);
+  useEffect(() => {
+    document.title = 'Notes';
+  }, []);
+  return (
+    <div className="nb-center-pane">
+      <div className="nb-notice sh-empty">
+        <Icon name="note" size={28} />
+        <p>{store.roots().length ? 'Choisissez une page dans la liste.' : 'Aucune page pour l’instant : créez votre première page de notes.'}</p>
+        <button type="button" className="nb-btn nb-btn--primary" onClick={onCreate}>
+          <Icon name="plus" size={15} /> Nouvelle page
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TopBar(props: {
   store: WorkspaceStore;
-  pageId: string | null;
-  isTrash: boolean;
-  isDashboard?: boolean;
-  isSmartHome?: boolean;
-  isCameras?: boolean;
-  /** Atelier PDF : nom du PDF ouvert (vide dans la bibliothèque). */
-  pdf?: { name: string } | null;
+  route: Route;
+  section: SectionId;
+  pdfName: string;
   status: ReturnType<typeof useDocStatus>;
-  showMenuButton: boolean;
-  onMenu: () => void;
+  mobile: boolean;
+  pagesHidden: boolean;
+  onTogglePages: () => void;
   onShare: () => void;
   onDelete: () => void;
   onOpenPage: (id: string) => void;
 }) {
-  const { store, pageId } = props;
+  const { store, route, section } = props;
   useWorkspacePages(store);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pageId = route.name === 'page' ? route.pageId : null;
   const page = pageId ? store.get(pageId) : undefined;
   const crumbs = pageId ? store.ancestors(pageId) : [];
 
@@ -355,58 +435,66 @@ function TopBar(props: {
     return () => window.removeEventListener('mousedown', close);
   }, [menuOpen]);
 
+  const back = () => {
+    const parent = crumbs[crumbs.length - 1];
+    if (parent) props.onOpenPage(parent.id);
+    else navigate('#/notes');
+  };
+
+  let title;
+  if (route.name === 'trash') title = <span className="nb-crumb-current">Corbeille</span>;
+  else if (route.name === 'pdf' && props.pdfName)
+    title = (
+      <>
+        <button type="button" onClick={() => navigate('#/pdf')}>
+          <Icon name="filePdf" size={15} /> PDF
+        </button>
+        <span className="nb-crumb-current">{props.pdfName}</span>
+      </>
+    );
+  else if (section !== 'notes')
+    title = (
+      <span className="nb-crumb-current">
+        <Icon name={SECTIONS[section].icon} size={15} /> {SECTIONS[section].label}
+      </span>
+    );
+  else
+    title = (
+      <>
+        {(props.mobile ? crumbs.slice(-1) : crumbs).map((c) => (
+          <button key={c.id} type="button" onClick={() => props.onOpenPage(c.id)}>
+            <PageIcon icon={c.icon} size={15} fallback={null} />
+            {c.title || 'Sans titre'}
+          </button>
+        ))}
+        {page ? (
+          <span className="nb-crumb-current">
+            <PageIcon icon={page.icon} size={15} fallback={null} />
+            {page.title || 'Sans titre'}
+          </span>
+        ) : null}
+      </>
+    );
+
   return (
     <header className="nb-topbar">
-      {props.showMenuButton ? (
-        <button type="button" className="nb-icon-btn" onClick={props.onMenu} aria-label="Menu">
+      {section === 'notes' && props.mobile ? (
+        <button type="button" className="nb-icon-btn" onClick={back} aria-label="Retour">
+          <Icon name="chevronLeft" size={20} />
+        </button>
+      ) : null}
+      {section === 'notes' && !props.mobile ? (
+        <button
+          type="button"
+          className="nb-icon-btn"
+          onClick={props.onTogglePages}
+          aria-label={props.pagesHidden ? 'Afficher la liste des pages' : 'Masquer la liste des pages'}
+          title={props.pagesHidden ? 'Afficher la liste des pages' : 'Masquer la liste des pages'}
+        >
           <Icon name="menu" size={18} />
         </button>
       ) : null}
-      <nav className="nb-crumbs">
-        {props.isTrash ? (
-          <span className="nb-crumb-current">Corbeille</span>
-        ) : props.isSmartHome ? (
-          <span className="nb-crumb-current">
-            <Icon name="bulb" size={15} /> Maison
-          </span>
-        ) : props.isCameras ? (
-          <span className="nb-crumb-current">
-            <Icon name="cctv" size={15} /> Caméras
-          </span>
-        ) : props.isDashboard ? (
-          <span className="nb-crumb-current">
-            <Icon name="home" size={15} /> Homelab
-          </span>
-        ) : props.pdf ? (
-          props.pdf.name ? (
-            <>
-              <button type="button" onClick={() => navigate('#/pdf')}>
-                <Icon name="filePdf" size={15} /> PDF
-              </button>
-              <span className="nb-crumb-current">{props.pdf.name}</span>
-            </>
-          ) : (
-            <span className="nb-crumb-current">
-              <Icon name="filePdf" size={15} /> PDF
-            </span>
-          )
-        ) : (
-          <>
-            {crumbs.map((c) => (
-              <button key={c.id} type="button" onClick={() => props.onOpenPage(c.id)}>
-                <PageIcon icon={c.icon} size={15} fallback={null} />
-                {c.title || 'Sans titre'}
-              </button>
-            ))}
-            {page ? (
-              <span className="nb-crumb-current">
-                <PageIcon icon={page.icon} size={15} fallback={null} />
-                {page.title || 'Sans titre'}
-              </span>
-            ) : null}
-          </>
-        )}
-      </nav>
+      <nav className="nb-crumbs">{title}</nav>
       <div className="nb-topbar-right">
         <span className={`nb-status nb-status--${props.status} nb-only-mobile`} title={STATUS_LABEL[props.status]} />
         {page ? (
@@ -482,8 +570,8 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
         <div className="nb-card">
           <h1>Page introuvable</h1>
           <p className="nb-muted">Cette page n’existe pas ou a été supprimée définitivement.</p>
-          <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/')}>
-            Retour à l’accueil
+          <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/notes')}>
+            Retour aux notes
           </button>
         </div>
       </div>
@@ -571,7 +659,8 @@ function useHomelabConfiguredFlag(doc: import('yjs').Doc | null): boolean {
   return flag;
 }
 
-function DashboardView({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigure: () => void }) {
+/** Section Homelab : état des serveurs et applications. */
+function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigure: () => void }) {
   const cfg = useHomelabConfig(doc);
   const configured = cfg.services.length > 0 || cfg.devices.length > 0;
   useEffect(() => {
@@ -580,7 +669,7 @@ function DashboardView({ doc, onConfigure }: { doc: import('yjs').Doc; onConfigu
   return (
     <div className="nb-page hl-page">
       <h1 className="nb-page-title-static">
-        <Icon name="home" size={34} /> Homelab
+        <Icon name="server" size={34} /> Homelab
       </h1>
       <HomelabPanel
         refreshSeconds={cfg.refreshSeconds}
