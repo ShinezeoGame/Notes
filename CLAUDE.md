@@ -1,7 +1,7 @@
 # Melo : repères pour Claude Code
 
 Melo (anciennement « Notes », nom resté dans le dépôt, les identifiants et la section des pages) : application à tout faire (accueil en tableau de bord de widgets, notes, agenda, maison connectée…), web + Android, collaboration en direct. Code commenté en français ; textes
-de l'interface et messages de commit en français. Architecture : section « Architecture » du README.
+de l'interface et messages de commit en français. Architecture : section « Architecture » de `docs/DEVELOPPEMENT.md`.
 
 ## Style des réponses (caveman)
 
@@ -52,6 +52,9 @@ est déjà connu, le lire directement. Après de grosses modifications du code, 
   fonction du pont `window.meloDesktop` : augmenter `BRIDGE_API` (`desktop/main.cjs`), compléter
   `client/src/lib/desktop.ts`, et tester sa présence côté client (une ancienne application peut afficher un client
   plus récent, celui d'un serveur distant).
+- Documentation : le README est une page de présentation courte, illustrée (captures dans `docs/captures/`) ; le
+  détail va dans `docs/GUIDE.md` (mode d'emploi), `docs/DEVELOPPEMENT.md` (construction, architecture) et
+  `INSTALLATION.md` (serveur).
 - Accueil : widgets déclarés dans `client/src/dashboard/registry.tsx` (un fichier par widget dans `widgets/`),
   disposition dans `dashboard/model.ts` ; thèmes, fond d'écran et sections dans `client/src/lib/appearance.ts`
   (couleurs en variables CSS : pas de couleur fixe dans `styles.css`).
