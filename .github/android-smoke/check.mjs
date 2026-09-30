@@ -35,14 +35,28 @@ const crashLog = () => {
 /** L'application s'est fermée : inutile d'attendre davantage. */
 class Closed extends Error {}
 
+/** Dernier processus connu de l'application (pour retrouver pourquoi Android l'a arrêtée). */
+let lastPid = '';
+
 /** Processus de l'application ; plusieurs essais (une commande adb peut échouer ponctuellement). */
 async function alivePid() {
   for (let i = 0; i < 3; i++) {
     const p = pid();
-    if (p) return p;
+    if (p) return (lastPid = p);
     await sleep(1000);
   }
   return '';
+}
+
+/**
+ * Arrêt décidé par Android pour une cause extérieure à l'application : sur l'émulateur, Google Play Services
+ * redémarre parfois, et Android arrête alors les applications qui utilisent l'un de ses services (polices de la
+ * WebView) : « am_kill … depends on provider … in dying proc … ».
+ */
+function externalKill(p) {
+  if (!p) return '';
+  const events = adb('logcat', '-d', '-b', 'events', '-t', '2000');
+  return events.split('\n').find((l) => l.includes('am_kill') && l.includes(`,${p},${PKG},`) && l.includes('in dying proc')) ?? '';
 }
 
 /** État du système au moment d'un échec : processus, arrêts décidés par Android, extrait du journal. */
@@ -65,8 +79,22 @@ function diagnostics() {
   }
 }
 
-async function assertAlive(when) {
+async function assertAlive(when, relaunched = false) {
   const crash = crashLog();
+  if (!crash && !relaunched && !(await alivePid())) {
+    const kill = externalKill(lastPid);
+    if (kill) {
+      // Rien à voir avec Melo : relancée, puis vérifiée de nouveau (une fois).
+      const note = `   ⚠️ arrêtée par Android ${when}, cause extérieure (${kill.replace(/^.*am_kill\s*:\s*/, '')}) : relancée`;
+      report.push(note);
+      console.log(note);
+      client?.close();
+      client = null;
+      adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
+      await sleep(8000);
+      return assertAlive(when, true);
+    }
+  }
   if (!(await alivePid()) || crash) {
     diagnostics();
     throw new Closed(`l’application s’est fermée ${when}${crash ? `\n${crash.split('\n').slice(0, 40).join('\n')}` : ''}`);
