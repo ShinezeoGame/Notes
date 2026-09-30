@@ -20,6 +20,7 @@ import {
   type WallpaperKind,
 } from '../lib/appearance';
 import { prepareImage } from '../lib/images';
+import { ImageCropDialog, renderCropArea, type CropState } from './ImageCropDialog';
 import { serverBase } from '../lib/api';
 import { isDesktopLocal } from '../lib/desktop';
 import { SECTIONS, groupSections } from './AppNav';
@@ -54,7 +55,6 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
   const pending = useRef<Appearance | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [imageUrl, setImageUrl] = useState(appearance.wallpaper.kind === 'image' && !appearance.wallpaper.value.startsWith('data:') ? appearance.wallpaper.value : '');
 
@@ -93,8 +93,14 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
     [],
   );
 
+  // Image de fond en cours de recadrage.
+  const [crop, setCrop] = useState<{ src: string; file?: File; initial: CropState | null } | null>(null);
+  const cropping = useRef(false);
+  cropping.current = Boolean(crop);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    // Échap dans la fenêtre de recadrage : ferme seulement celle-ci.
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !cropping.current && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -109,18 +115,34 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
   };
   const setWallpaper = (patch: Partial<Appearance['wallpaper']>) => change({ wallpaper: { ...draft.wallpaper, ...patch } });
 
-  const upload = async (file: File | undefined) => {
+  // Image de fond : recadrée au format de cet écran avant utilisation ; l'image d'origine est gardée pour recadrer
+  // de nouveau.
+  const screenAspect = window.innerWidth / Math.max(1, window.innerHeight);
+  const upload = (file: File | undefined) => {
     if (!file) return;
-    setUploading(true);
     setError('');
-    try {
-      const url = await ctx.uploadFile(await prepareImage(file, 3200, 2400, true));
-      setWallpaper({ kind: 'image', value: url });
-    } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
-    } finally {
-      setUploading(false);
+    if (!file.type.startsWith('image/')) {
+      setError('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).');
+      return;
     }
+    setCrop({ src: URL.createObjectURL(file), file, initial: null });
+  };
+  const recrop = () => {
+    const { source, value } = draft.wallpaper;
+    if (source) setCrop({ src: source.src, initial: { cx: source.cx, cy: source.cy, zoom: source.zoom } });
+    else if (value) setCrop({ src: value, initial: null });
+  };
+  const closeCrop = () => {
+    if (crop?.file) URL.revokeObjectURL(crop.src);
+    setCrop(null);
+  };
+  const finishCrop = async (img: HTMLImageElement, c: CropState | null) => {
+    if (!crop) return;
+    let original = crop.src;
+    if (crop.file) original = await ctx.uploadFile(await prepareImage(crop.file, 3200, 2400, true));
+    const value = c ? await ctx.uploadFile(await renderCropArea(img, c, screenAspect, 3200, 3200)) : original;
+    setWallpaper({ kind: 'image', value, source: c ? { src: original, ...c } : null });
+    closeCrop();
   };
 
   const kind = draft.wallpaper.kind;
@@ -253,10 +275,26 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
             ) : null}
             {kind === 'image' ? (
               <div className="ap-image">
-                <button type="button" className="nb-btn nb-btn--sm" onClick={() => fileInput.current?.click()} disabled={uploading}>
-                  <Icon name="upload" size={14} /> {uploading ? 'Envoi…' : 'Envoyer une image'}
-                </button>
-                <input ref={fileInput} type="file" accept="image/*" hidden onChange={(e) => void upload(e.target.files?.[0])} />
+                <div className="nb-row nb-gap">
+                  <button type="button" className="nb-btn nb-btn--sm" onClick={() => fileInput.current?.click()}>
+                    <Icon name="upload" size={14} /> Envoyer une image
+                  </button>
+                  {draft.wallpaper.value ? (
+                    <button type="button" className="nb-btn nb-btn--sm" onClick={recrop}>
+                      <Icon name="crop" size={14} /> Recadrer
+                    </button>
+                  ) : null}
+                </div>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    upload(e.target.files?.[0]);
+                    e.target.value = '';
+                  }}
+                />
                 <div className="nb-row nb-gap">
                   <input
                     className="nb-input"
@@ -265,7 +303,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                     placeholder="… ou adresse d’une image (https://…)"
                     inputMode="url"
                   />
-                  <button type="button" className="nb-btn nb-btn--sm" disabled={!/^https?:\/\/\S+$/i.test(imageUrl.trim())} onClick={() => setWallpaper({ value: imageUrl.trim() })}>
+                  <button type="button" className="nb-btn nb-btn--sm" disabled={!/^https?:\/\/\S+$/i.test(imageUrl.trim())} onClick={() => setWallpaper({ value: imageUrl.trim(), source: null })}>
                     Utiliser
                   </button>
                 </div>
@@ -345,6 +383,17 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
             </div>
           </section>
 
+          {crop ? (
+            <ImageCropDialog
+              src={crop.src}
+              initial={crop.initial}
+              aspect={screenAspect}
+              title="Recadrer le fond d’écran"
+              animated={crop.file?.type === 'image/gif'}
+              onCancel={closeCrop}
+              onDone={finishCrop}
+            />
+          ) : null}
           <button
             type="button"
             className="nb-btn nb-btn--sm ap-reset"

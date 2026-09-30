@@ -41,12 +41,16 @@ type CoverProps = {
   height: number;
   editable: boolean;
   onChange: (cover: string, y?: number) => void;
+  /** Image choisie sur l'appareil : recadrée avant utilisation. */
+  onFile?: (file: File) => void;
+  /** Recadrer l'image actuelle. */
+  onCrop?: () => void;
   /** Nouvelle hauteur (px) ; 0 = revenir à la hauteur automatique. */
   onHeightChange: (height: number) => void;
 };
 
 /** Bannière en haut de la page : image (repositionnable) ou dégradé ; changer, repositionner, retirer, hauteur. */
-export function PageCover({ cover, coverY, height, editable, onChange, onHeightChange }: CoverProps) {
+export function PageCover({ cover, coverY, height, editable, onChange, onFile, onCrop, onHeightChange }: CoverProps) {
   const [picker, setPicker] = useState(false);
   const [pos, setPos] = useState<number | null>(null); // position en cours de réglage
   const [dragging, setDragging] = useState(false);
@@ -205,9 +209,16 @@ export function PageCover({ cover, coverY, height, editable, onChange, onHeightC
                 Changer la bannière
               </button>
               {gradient ? null : (
-                <button type="button" onClick={() => setPos(coverY)}>
-                  Repositionner
-                </button>
+                <>
+                  {onCrop ? (
+                    <button type="button" onClick={onCrop}>
+                      Recadrer
+                    </button>
+                  ) : null}
+                  <button type="button" onClick={() => setPos(coverY)}>
+                    Repositionner
+                  </button>
+                </>
               )}
               <button type="button" onClick={() => onChange('')}>
                 Retirer
@@ -216,15 +227,36 @@ export function PageCover({ cover, coverY, height, editable, onChange, onHeightC
           )}
         </div>
       ) : null}
-      {picker ? <CoverPicker value={cover} className="nb-coverpicker--cover" onPick={(v) => onChange(v, 50)} onClose={() => setPicker(false)} /> : null}
+      {picker ? (
+        <CoverPicker
+          value={cover}
+          className="nb-coverpicker--cover"
+          onPick={(v) => onChange(v, 50)}
+          onFile={
+            onFile &&
+            ((file) => {
+              setPicker(false);
+              onFile(file);
+            })
+          }
+          onClose={() => setPicker(false)}
+        />
+      ) : null}
     </div>
   );
 }
 
-type PickerProps = { value: string; className?: string; onPick: (cover: string) => void; onClose: () => void };
+type PickerProps = {
+  value: string;
+  className?: string;
+  onPick: (cover: string) => void;
+  /** Image choisie sur l'appareil : confiée à l'appelant (recadrage), sinon envoyée telle quelle. */
+  onFile?: (file: File) => void;
+  onClose: () => void;
+};
 
 /** Choix de la bannière : image importée (fichier, glisser-déposer, collage), lien d'image ou dégradé. */
-export function CoverPicker({ value, className, onPick, onClose }: PickerProps) {
+export function CoverPicker({ value, className, onPick, onFile, onClose }: PickerProps) {
   const app = useAppCtx();
   const ref = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -246,6 +278,10 @@ export function CoverPicker({ value, className, onPick, onClose }: PickerProps) 
   }, [onClose]);
 
   const upload = async (file: File) => {
+    if (onFile) {
+      onFile(file);
+      return;
+    }
     setBusy(true);
     setError('');
     try {

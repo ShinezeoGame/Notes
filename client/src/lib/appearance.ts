@@ -106,6 +106,8 @@ export type Wallpaper = {
   dim: number;
   /** Faux : seulement sur l'accueil ; vrai : derrière toute l'application. */
   everywhere: boolean;
+  /** Image recadrée : image d'origine et recadrage, pour recadrer de nouveau à partir de l'original. */
+  source: { src: string; cx: number; cy: number; zoom: number } | null;
 };
 
 export const GRADIENTS: { id: string; label: string; css: string }[] = [
@@ -142,7 +144,7 @@ export type Appearance = {
 export const DEFAULT_APPEARANCE: Appearance = {
   theme: 'dark',
   accent: '#2383e2',
-  wallpaper: { kind: 'none', value: '', blur: 0, dim: 20, everywhere: false },
+  wallpaper: { kind: 'none', value: '', blur: 0, dim: 20, everywhere: false, source: null },
   widgetOpacity: 88,
   widgetBlur: 14,
   radius: 14,
@@ -157,6 +159,14 @@ const clamp = (v: unknown, min: number, max: number, fallback: number) => {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 };
 const isColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+
+/** Image d'origine d'un fond d'écran recadré (adresse et recadrage), ou null. */
+function cropSource(raw: unknown): Wallpaper['source'] {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  if (typeof r.src !== 'string' || r.src.length > 6_000_000 || !/^(https?:\/\/|data:image\/|\/)/.test(r.src)) return null;
+  const n = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+  return { src: r.src, cx: n(r.cx, 0.5), cy: n(r.cy, 0.5), zoom: n(r.zoom, 1) };
+}
 
 /** Réglages lus (valeurs manquantes ou invalides remplacées par celles par défaut). */
 export function normalizeAppearance(raw: unknown): Appearance {
@@ -178,6 +188,7 @@ export function normalizeAppearance(raw: unknown): Appearance {
       blur: clamp(w.blur, 0, 30, d.wallpaper.blur),
       dim: clamp(w.dim, 0, 90, d.wallpaper.dim),
       everywhere: Boolean(w.everywhere),
+      source: kind === 'image' ? cropSource(w.source) : null,
     },
     widgetOpacity: clamp(r.widgetOpacity, 0, 100, d.widgetOpacity),
     widgetBlur: clamp(r.widgetBlur, 0, 40, d.widgetBlur),
@@ -370,8 +381,9 @@ export function applyAppearance(a: Appearance) {
   }
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', p.bg);
   try {
-    // Copie locale pour les couleurs du démarrage : sans une image de fond volumineuse (adresse data:).
-    const light = a.wallpaper.value.length > 20_000 ? { ...a, wallpaper: { ...a.wallpaper, value: '' } } : a;
+    // Copie locale pour les couleurs du démarrage : sans une image de fond volumineuse (adresse data:) ni son original.
+    const w = a.wallpaper;
+    const light = { ...a, wallpaper: { ...w, value: w.value.length > 20_000 ? '' : w.value, source: null } };
     localStorage.setItem(CACHE_KEY, JSON.stringify(light));
   } catch {
     /* stockage indisponible */

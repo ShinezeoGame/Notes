@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../icons/Icon';
 
@@ -10,14 +10,25 @@ type Props = {
   width?: number;
 };
 
+/** Fenêtres ouvertes, la plus récente en dernier : Échap ne ferme que celle du dessus (recadrage ouvert depuis des réglages…). */
+const openModals: object[] = [];
+
 export function Modal({ title, onClose, children, footer, width = 540 }: Props) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
+    const me = {};
+    openModals.push(me);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && openModals[openModals.length - 1] === me) closeRef.current();
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      const i = openModals.indexOf(me);
+      if (i >= 0) openModals.splice(i, 1);
+    };
+  }, []);
 
   return createPortal(
     <div

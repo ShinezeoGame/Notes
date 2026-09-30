@@ -17,6 +17,8 @@ export type WidgetProps = {
 };
 
 export type SettingsProps = {
+  /** Identifiant du widget réglé. */
+  widgetId: string;
   config: Record<string, unknown>;
   set: (patch: Record<string, unknown>) => void;
   doc: Y.Doc;

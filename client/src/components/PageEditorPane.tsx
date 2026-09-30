@@ -5,7 +5,7 @@ import type { DocHandle } from '../lib/yjs';
 import { ICON_SIZE_RANGE, usePageMeta } from '../lib/hooks';
 import { prepareImage } from '../lib/images';
 import { IconPicker } from './IconPicker';
-import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
+import { ImageCropDialog, parseCropSource, renderCrop, renderCropArea, type CropState } from './ImageCropDialog';
 import { CoverPicker, PageCover, isValidCover } from './PageCover';
 import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
@@ -39,6 +39,8 @@ export function PageEditorPane(props: Props) {
     if (!doc) return;
     doc.transact(() => {
       const m = doc.getMap('meta');
+      // Autre bannière : l'image d'origine d'un recadrage précédent ne la concerne plus.
+      if (m.get('cover') !== value && m.get('coverSource')) m.set('coverSource', '');
       m.set('cover', value);
       m.set('coverY', y);
     });
@@ -70,7 +72,7 @@ export function PageEditorPane(props: Props) {
       setCropReq({ src: URL.createObjectURL(file), file, initial: null });
       return;
     }
-    const source = parseIconSource(meta.iconSource);
+    const source = parseCropSource(meta.iconSource);
     if (source) setCropReq({ src: source.src, initial: { cx: source.cx, cy: source.cy, zoom: source.zoom } });
     else if (src) setCropReq({ src, initial: null });
   };
@@ -89,6 +91,49 @@ export function PageEditorPane(props: Props) {
     props.onIconChange(iconUrl);
     handle?.doc.getMap('meta').set('iconSource', crop ? JSON.stringify({ src: original, ...crop }) : '');
     closeCrop();
+  };
+
+  // Bannière en image : recadrée au format de la bannière avant utilisation ; l'image d'origine est gardée.
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [coverCrop, setCoverCrop] = useState<{ src: string; file?: File; initial: CropState | null; aspect: number } | null>(null);
+  /** Format de la bannière (affichée, ou qui le sera) : largeur de la page sur la hauteur de la bannière. */
+  const coverAspect = () => {
+    const width = pageRef.current?.parentElement?.clientWidth || window.innerWidth;
+    const height = meta.coverHeight || Math.min(300, Math.max(160, window.innerHeight * 0.3));
+    return Math.max(1, width / height);
+  };
+  const requestCoverCrop = (file?: File) => {
+    setCoverPickerOpen(false);
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+        return;
+      }
+      setCoverCrop({ src: URL.createObjectURL(file), file, initial: null, aspect: coverAspect() });
+      return;
+    }
+    const source = parseCropSource(meta.coverSource);
+    if (source) setCoverCrop({ src: source.src, initial: { cx: source.cx, cy: source.cy, zoom: source.zoom }, aspect: coverAspect() });
+    else if (cover && !cover.startsWith('gradient:')) setCoverCrop({ src: cover, initial: null, aspect: coverAspect() });
+  };
+  const closeCoverCrop = () => {
+    if (coverCrop?.file) URL.revokeObjectURL(coverCrop.src);
+    setCoverCrop(null);
+  };
+  const finishCoverCrop = async (img: HTMLImageElement, crop: CropState | null) => {
+    const doc = handle?.doc;
+    if (!coverCrop || !doc) return;
+    let original = coverCrop.src;
+    // Image d'origine (réduite à 3200 px), gardée pour recadrer de nouveau ; GIF tel quel.
+    if (coverCrop.file) original = await app.uploadFile(await prepareImage(coverCrop.file, 3200, 2400, true));
+    const url = crop ? await app.uploadFile(await renderCropArea(img, crop, coverCrop.aspect, 2400, 1600)) : original;
+    doc.transact(() => {
+      const m = doc.getMap('meta');
+      m.set('cover', url);
+      m.set('coverY', 50);
+      m.set('coverSource', crop ? JSON.stringify({ src: original, ...crop }) : '');
+    });
+    closeCoverCrop();
   };
 
   useEffect(() => {
@@ -112,10 +157,12 @@ export function PageEditorPane(props: Props) {
           height={meta.coverHeight}
           editable={editable}
           onChange={setCover}
+          onFile={requestCoverCrop}
+          onCrop={() => requestCoverCrop()}
           onHeightChange={(h) => setMetaNumber('coverHeight', h)}
         />
       ) : null}
-      <div className={`nb-page${props.narrow ? ' nb-page--narrow' : ''}${cover ? ' nb-page--cover' : ''}`}>
+      <div ref={pageRef} className={`nb-page${props.narrow ? ' nb-page--narrow' : ''}${cover ? ' nb-page--cover' : ''}`}>
         <div className="nb-page-head" style={{ '--nb-icon-size': `${iconSize}px` } as React.CSSProperties}>
           <div className={`nb-page-icon-wrap${icon ? '' : ' nb-page-icon-wrap--empty'}`}>
             {icon ? (
@@ -143,7 +190,20 @@ export function PageEditorPane(props: Props) {
                 )}
               </div>
             ) : null}
-            {coverPickerOpen && !cover ? <CoverPicker value="" onPick={(v) => setCover(v)} onClose={() => setCoverPickerOpen(false)} /> : null}
+            {coverPickerOpen && !cover ? (
+              <CoverPicker value="" onPick={(v) => setCover(v)} onFile={requestCoverCrop} onClose={() => setCoverPickerOpen(false)} />
+            ) : null}
+            {coverCrop ? (
+              <ImageCropDialog
+                src={coverCrop.src}
+                initial={coverCrop.initial}
+                aspect={coverCrop.aspect}
+                title="Recadrer la bannière"
+                animated={coverCrop.file?.type === 'image/gif'}
+                onCancel={closeCoverCrop}
+                onDone={finishCoverCrop}
+              />
+            ) : null}
             {pickerOpen ? (
               <IconPicker
                 value={icon}
@@ -219,17 +279,4 @@ export function PageEditorPane(props: Props) {
       </div>
     </>
   );
-}
-
-/** Image d'origine et recadrage de l'icône, enregistrés dans le document de la page. */
-function parseIconSource(raw: string): ({ src: string } & CropState) | null {
-  if (!raw) return null;
-  try {
-    const v = JSON.parse(raw) as Partial<{ src: string } & CropState>;
-    if (typeof v.src !== 'string' || !/^(https?:\/\/|data:image\/)/.test(v.src)) return null;
-    const num = (n: unknown, d: number) => (typeof n === 'number' && Number.isFinite(n) ? n : d);
-    return { src: v.src, cx: num(v.cx, 0.5), cy: num(v.cy, 0.5), zoom: num(v.zoom, 1) };
-  } catch {
-    return null;
-  }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BlockNoteView } from '@blocknote/mantine';
 import {
   FormattingToolbar,
@@ -22,6 +22,7 @@ import { useAppCtx } from './context';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
+import { ImageCropButton, ImageCropContext, NoteImageCrop, type ImageCropRequest } from './ImageCrop';
 import { columnsDropCursor, insertColumns } from './columns';
 import { yjsSelectionGuard } from './yjsSelectionGuard';
 import { useThemeBase } from '../lib/appearance';
@@ -46,6 +47,8 @@ function isPdfFile(props: Record<string, unknown>): boolean {
 export function Editor({ handle, editable }: Props) {
   const ctx = useAppCtx();
   const settings = useSettings();
+  // Image de la page en cours de recadrage (bouton « Recadrer » de la barre de mise en forme).
+  const [imageCrop, setImageCrop] = useState<ImageCropRequest | null>(null);
 
   const themeBase = useThemeBase();
   const editor = useCreateBlockNote(
@@ -202,17 +205,20 @@ export function Editor({ handle, editable }: Props) {
   };
 
   return (
-    <BlockNoteView editor={editor} theme={themeBase} editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
-      <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
-      <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
-      <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />
-    </BlockNoteView>
+    <ImageCropContext.Provider value={setImageCrop}>
+      <BlockNoteView editor={editor} theme={themeBase} editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
+        <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
+        <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
+        <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />
+      </BlockNoteView>
+      {imageCrop ? <NoteImageCrop editor={editor} req={imageCrop} upload={ctx.uploadFile} onClose={() => setImageCrop(null)} /> : null}
+    </ImageCropContext.Provider>
   );
 }
 
-/** Barre de mise en forme par défaut, complétée par la taille du texte et la largeur des images. */
+/** Barre de mise en forme par défaut, complétée par la taille du texte, la largeur et le recadrage des images. */
 function NotesFormattingToolbar() {
   const items = getFormattingToolbarItems();
-  items.splice(1, 0, <TextSizeSelect key="nbTextSizeSelect" />, <MediaWidthSelect key="nbMediaWidthSelect" />);
+  items.splice(1, 0, <TextSizeSelect key="nbTextSizeSelect" />, <MediaWidthSelect key="nbMediaWidthSelect" />, <ImageCropButton key="nbImageCropButton" />);
   return <FormattingToolbar>{items}</FormattingToolbar>;
 }

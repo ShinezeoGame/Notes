@@ -26,6 +26,7 @@ import {
 import { toast } from './Toast';
 import { useAppCtx } from '../editor/context';
 import { prepareImage } from '../lib/images';
+import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 
@@ -266,19 +267,29 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
   const [url, setUrl] = useState(isImageIcon(value) ? value : '');
   const app = useAppCtx();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  // Logo personnel : réduit à 256 px, transparence conservée.
-  const upload = async (file: File) => {
-    setBusy(true);
-    try {
-      const src = await app.uploadFile(await prepareImage(file, 256, 256, false));
-      setUrl(src);
-      onChange(src);
-    } catch (err) {
-      toast(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.', 'error');
-    } finally {
-      setBusy(false);
+  // Logo personnel : recadré (carré) avant utilisation, en PNG de 256 px (transparence conservée).
+  const [crop, setCrop] = useState<{ src: string; file?: File } | null>(null);
+  const upload = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+      return;
     }
+    setCrop({ src: URL.createObjectURL(file), file });
+  };
+  const closeCrop = () => {
+    if (crop?.file) URL.revokeObjectURL(crop.src);
+    setCrop(null);
+  };
+  const finishCrop = async (img: HTMLImageElement, c: CropState | null) => {
+    if (!crop) return;
+    const src = c
+      ? await app.uploadFile(new File([await renderCrop(img, c)], 'icone.png', { type: 'image/png' }))
+      : crop.file
+        ? await app.uploadFile(await prepareImage(crop.file, 256, 256, false))
+        : crop.src;
+    setUrl(src);
+    onChange(src);
+    closeCrop();
   };
   return (
     <div className="nb-field hl-span2">
@@ -314,9 +325,14 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
             onChange(e.target.value.trim());
           }}
         />
-        <button type="button" className="nb-btn" onClick={() => fileRef.current?.click()} disabled={busy}>
-          <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
+        <button type="button" className="nb-btn" onClick={() => fileRef.current?.click()}>
+          <Icon name="upload" size={15} /> Importer une image
         </button>
+        {isImageIcon(value) ? (
+          <button type="button" className="nb-btn" onClick={() => setCrop({ src: value })}>
+            <Icon name="crop" size={15} /> Recadrer
+          </button>
+        ) : null}
         <input
           ref={fileRef}
           type="file"
@@ -330,6 +346,9 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
           }}
         />
       </div>
+      {crop ? (
+        <ImageCropDialog src={crop.src} animated={crop.file?.type === 'image/gif'} onCancel={closeCrop} onDone={finishCrop} />
+      ) : null}
     </div>
   );
 }

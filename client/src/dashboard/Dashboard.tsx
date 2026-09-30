@@ -229,7 +229,7 @@ function SettingsDialog({ widget, doc, store, onClose, onRemove }: { widget: Wid
     >
       {def.Settings ? (
         <div className="dash-settings-specific">
-          <def.Settings config={config} set={set} doc={doc} store={store} />
+          <def.Settings widgetId={widget.id} config={config} set={set} doc={doc} store={store} />
         </div>
       ) : null}
       <label className="nb-field">

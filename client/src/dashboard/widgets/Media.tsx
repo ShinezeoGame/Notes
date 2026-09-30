@@ -5,6 +5,7 @@ import { normalizeEmbedUrl } from '../../editor/embed';
 import { api, serverBase } from '../../lib/api';
 import { desktop } from '../../lib/desktop';
 import { isImageLink, prepareImage } from '../../lib/images';
+import { ImageCropDialog, parseCropSource, renderCropArea, type CropState } from '../../components/ImageCropDialog';
 import { getSettings, isNative } from '../../lib/settings';
 import { Icon } from '../../icons/Icon';
 import { num, str, type SettingsProps, type WidgetProps } from '../types';
@@ -44,23 +45,44 @@ export function ImageWidget({ widget, openSettings, editing }: WidgetProps) {
   );
 }
 
-export function ImageSettings({ config, set }: SettingsProps) {
+export function ImageSettings({ widgetId, config, set }: SettingsProps) {
   const ctx = useAppCtx();
   const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [draft, setDraft] = useState(str(config.url).startsWith('data:') ? '' : str(config.url));
-  const upload = async (file: File | undefined) => {
+  // Image recadrée au format du widget avant utilisation ; l'image d'origine est gardée pour recadrer de nouveau.
+  const [crop, setCrop] = useState<{ src: string; file?: File; initial: CropState | null; aspect: number } | null>(null);
+  const widgetAspect = () => {
+    const body = document.querySelector<HTMLElement>(`[data-widget="${widgetId}"] .dash-widget-body`);
+    return body && body.clientHeight > 0 ? body.clientWidth / body.clientHeight : 4 / 3;
+  };
+  const upload = (file: File | undefined) => {
     if (!file) return;
-    setBusy(true);
     setError('');
-    try {
-      set({ url: await ctx.uploadFile(await prepareImage(file, 2000, 2000, false)) });
-    } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
-    } finally {
-      setBusy(false);
+    if (!file.type.startsWith('image/')) {
+      setError('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).');
+      return;
     }
+    setCrop({ src: URL.createObjectURL(file), file, initial: null, aspect: widgetAspect() });
+  };
+  const recrop = () => {
+    const source = parseCropSource(config.source);
+    if (source) setCrop({ src: source.src, initial: { cx: source.cx, cy: source.cy, zoom: source.zoom }, aspect: widgetAspect() });
+    else if (str(config.url)) setCrop({ src: str(config.url), initial: null, aspect: widgetAspect() });
+  };
+  const closeCrop = () => {
+    if (crop?.file) URL.revokeObjectURL(crop.src);
+    setCrop(null);
+  };
+  const finishCrop = async (img: HTMLImageElement, c: CropState | null) => {
+    if (!crop) return;
+    let original = crop.src;
+    if (crop.file) original = await ctx.uploadFile(await prepareImage(crop.file, 2000, 2000, false));
+    // Transparence gardée (logo…) : PNG ; photo : JPEG.
+    const transparent = crop.file ? crop.file.type !== 'image/jpeg' : /\.(png|webp|gif|svg)(\?|$)/i.test(crop.src);
+    const url = c ? await ctx.uploadFile(await renderCropArea(img, c, crop.aspect, 2000, 2000, transparent)) : original;
+    set({ url, source: c ? { src: original, ...c } : null });
+    closeCrop();
   };
   return (
     <>
@@ -68,11 +90,25 @@ export function ImageSettings({ config, set }: SettingsProps) {
       <div className="nb-field">
         <span>Image</span>
         <div className="nb-row nb-gap">
-          <button type="button" className="nb-btn" onClick={() => input.current?.click()} disabled={busy}>
-            <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Envoyer une image'}
+          <button type="button" className="nb-btn" onClick={() => input.current?.click()}>
+            <Icon name="upload" size={15} /> Envoyer une image
           </button>
+          {str(config.url) ? (
+            <button type="button" className="nb-btn" onClick={recrop}>
+              <Icon name="crop" size={15} /> Recadrer
+            </button>
+          ) : null}
         </div>
-        <input ref={input} type="file" accept="image/*" hidden onChange={(e) => void upload(e.target.files?.[0])} />
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            upload(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
         <div className="nb-row nb-gap">
           <input className="nb-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="… ou adresse d’une image (https://…)" inputMode="url" />
           <button
@@ -81,7 +117,7 @@ export function ImageSettings({ config, set }: SettingsProps) {
             disabled={!draft.trim()}
             onClick={() => {
               if (!isImageLink(draft.trim()) && !/^https?:\/\//i.test(draft.trim())) setError('Adresse d’image invalide.');
-              else set({ url: draft.trim() });
+              else set({ url: draft.trim(), source: null });
             }}
           >
             Utiliser
@@ -89,6 +125,17 @@ export function ImageSettings({ config, set }: SettingsProps) {
         </div>
         {error ? <div className="nb-error">{error}</div> : null}
       </div>
+      {crop ? (
+        <ImageCropDialog
+          src={crop.src}
+          initial={crop.initial}
+          aspect={crop.aspect}
+          title="Recadrer l’image"
+          animated={crop.file?.type === 'image/gif'}
+          onCancel={closeCrop}
+          onDone={finishCrop}
+        />
+      ) : null}
       <label className="nb-field">
         <span>Cadrage</span>
         <select className="nb-input" value={str(config.fit, 'cover')} onChange={(e) => set({ fit: e.target.value })}>

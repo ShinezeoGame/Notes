@@ -44,6 +44,8 @@ export type PageDocMeta = {
   coverY: number;
   /** Image d'origine et recadrage de l'icône (JSON), pour la recadrer à nouveau. */
   iconSource: string;
+  /** Image d'origine et recadrage de la bannière (JSON), pour la recadrer de nouveau. */
+  coverSource: string;
   /** Taille de l'icône en haut de la page (px) ; 0 = taille par défaut. */
   iconSize: number;
   /** Hauteur de la bannière (px) ; 0 = hauteur automatique. */
@@ -53,7 +55,7 @@ export type PageDocMeta = {
 /** Observe la carte `meta` (titre, icône, largeur, bannière) d'un document de page. */
 export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
   const read = (): PageDocMeta => {
-    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50, iconSource: '', iconSize: 0, coverHeight: 0 };
+    if (!doc) return { title: '', icon: '', narrow: false, cover: '', coverY: 50, iconSource: '', coverSource: '', iconSize: 0, coverHeight: 0 };
     const m = doc.getMap('meta');
     const y = Number(m.get('coverY'));
     return {
@@ -63,6 +65,7 @@ export function usePageMeta(doc: Y.Doc | null): PageDocMeta {
       cover: String(m.get('cover') ?? ''),
       coverY: Number.isFinite(y) && m.has('coverY') ? Math.min(100, Math.max(0, y)) : 50,
       iconSource: String(m.get('iconSource') ?? ''),
+      coverSource: String(m.get('coverSource') ?? ''),
       iconSize: sizeIn(m.get('iconSize'), ICON_SIZE_RANGE),
       coverHeight: sizeIn(m.get('coverHeight'), COVER_HEIGHT_RANGE),
     };
