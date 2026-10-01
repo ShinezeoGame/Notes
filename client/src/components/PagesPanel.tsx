@@ -4,6 +4,7 @@ import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { useWorkspacePages, type PageMeta, type WorkspaceStore } from '../lib/workspace';
 import { Icon } from '../icons/Icon';
 import { PageIcon } from '../icons/pageIcon';
+import { t } from '../lib/i18n';
 
 type Props = {
   store: WorkspaceStore;
@@ -113,19 +114,19 @@ export function PagesPanel(props: Props) {
               e.stopPropagation();
               toggleExpanded(page.id);
             }}
-            aria-label={expanded ? 'Replier' : 'Déplier'}
+            aria-label={expanded ? t('Replier') : t('Déplier')}
           >
             <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size={14} />
           </button>
           <span className="nb-tree-icon">
             <PageIcon icon={page.icon} size={16} />
           </span>
-          <span className="nb-tree-title">{page.title || 'Sans titre'}</span>
+          <span className="nb-tree-title">{page.title || t('Sans titre')}</span>
           <span className="nb-tree-actions">
             <button
               type="button"
               className="nb-icon-btn nb-icon-btn--sm"
-              title="Options"
+              title={t('Options')}
               onClick={(e) => {
                 e.stopPropagation();
                 const r = e.currentTarget.getBoundingClientRect();
@@ -138,7 +139,7 @@ export function PagesPanel(props: Props) {
             <button
               type="button"
               className="nb-icon-btn nb-icon-btn--sm"
-              title="Ajouter une sous-page"
+              title={t('Ajouter une sous-page')}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpanded(page.id, true);
@@ -152,7 +153,7 @@ export function PagesPanel(props: Props) {
         {expanded && children.length ? children.map((c) => renderNode(c, depth + 1)) : null}
         {expanded && !children.length ? (
           <div className="nb-tree-empty" style={{ paddingLeft: 30 + depth * 14 }}>
-            Aucune sous-page
+            {t('Aucune sous-page')}
           </div>
         ) : null}
       </div>
@@ -163,21 +164,33 @@ export function PagesPanel(props: Props) {
 
   return (
     <>
-      <aside className={`nb-pages${full ? ' nb-pages--full' : ''}`} aria-label="Pages">
+      <aside className={`nb-pages${full ? ' nb-pages--full' : ''}`} aria-label={t('Pages')}>
         <div className="nb-pages-head">
-          <h2>Notes</h2>
+          <h2>{t('Notes')}</h2>
           <div className="nb-sidebar-tools">
-            <button type="button" className="nb-icon-btn" title="Rechercher (Ctrl+K)" aria-label="Rechercher une page" onClick={props.onOpenSearch}>
+            <button
+              type="button"
+              className="nb-icon-btn"
+              title={t('Rechercher (Ctrl+K)')}
+              aria-label={t('Rechercher une page')}
+              onClick={props.onOpenSearch}
+            >
               <Icon name="search" size={17} />
             </button>
-            <button type="button" className="nb-icon-btn" title="Nouvelle page" aria-label="Nouvelle page" onClick={() => props.onNewPage('')}>
+            <button
+              type="button"
+              className="nb-icon-btn"
+              title={t('Nouvelle page')}
+              aria-label={t('Nouvelle page')}
+              onClick={() => props.onNewPage('')}
+            >
               <Icon name="plus" size={18} />
             </button>
           </div>
         </div>
 
         <nav className="nb-tree">
-          {roots.length === 0 ? <div className="nb-tree-empty">Aucune page pour l’instant.</div> : roots.map((p) => renderNode(p, 0))}
+          {roots.length === 0 ? <div className="nb-tree-empty">{t('Aucune page pour l’instant.')}</div> : roots.map((p) => renderNode(p, 0))}
           <div
             className={`nb-tree-rootdrop${dragId ? ' nb-tree-rootdrop--visible' : ''}${dropHint?.id === '__root__' ? ' nb-tree-rootdrop--over' : ''}`}
             onDragOver={(e) => {
@@ -193,16 +206,16 @@ export function PagesPanel(props: Props) {
               setDropHint(null);
             }}
           >
-            Déposer ici pour placer à la racine
+            {t('Déposer ici pour placer à la racine')}
           </div>
         </nav>
 
         <div className="nb-sidebar-foot">
           <button type="button" className="nb-sidebar-link" onClick={() => props.onNewPage('')}>
-            <Icon name="plus" size={16} /> Nouvelle page
+            <Icon name="plus" size={16} /> {t('Nouvelle page')}
           </button>
           <button type="button" className="nb-sidebar-link" onClick={props.onOpenTrash}>
-            <Icon name="trash" size={16} /> Corbeille
+            <Icon name="trash" size={16} /> {t('Corbeille')}
           </button>
         </div>
       </aside>
@@ -213,18 +226,44 @@ export function PagesPanel(props: Props) {
           style={{ left: Math.min(menu.x, window.innerWidth - 220), top: Math.min(menu.y, window.innerHeight - 200) }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <button type="button" onClick={() => { props.onNewPage(menu.pageId); toggleExpanded(menu.pageId, true); setMenu(null); }}>
-            <Icon name="plus" size={16} /> Ajouter une sous-page
+          <button
+            type="button"
+            onClick={() => {
+              props.onNewPage(menu.pageId);
+              toggleExpanded(menu.pageId, true);
+              setMenu(null);
+            }}
+          >
+            <Icon name="plus" size={16} /> {t('Ajouter une sous-page')}
           </button>
-          <button type="button" onClick={() => { props.onShare(menu.pageId); setMenu(null); }}>
-            <Icon name="share" size={16} /> Partager
+          <button
+            type="button"
+            onClick={() => {
+              props.onShare(menu.pageId);
+              setMenu(null);
+            }}
+          >
+            <Icon name="share" size={16} /> {t('Partager')}
           </button>
-          <button type="button" onClick={() => { navigator.clipboard?.writeText(`${location.origin}${location.pathname}#/p/${menu.pageId}`); setMenu(null); }}>
-            <Icon name="copy" size={16} /> Copier le lien interne
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(`${location.origin}${location.pathname}#/p/${menu.pageId}`);
+              setMenu(null);
+            }}
+          >
+            <Icon name="copy" size={16} /> {t('Copier le lien interne')}
           </button>
           <div className="nb-menu-sep" />
-          <button type="button" className="nb-menu-danger" onClick={() => { props.onDelete(menu.pageId); setMenu(null); }}>
-            <Icon name="trash" size={16} /> Supprimer
+          <button
+            type="button"
+            className="nb-menu-danger"
+            onClick={() => {
+              props.onDelete(menu.pageId);
+              setMenu(null);
+            }}
+          >
+            <Icon name="trash" size={16} /> {t('Supprimer')}
           </button>
         </div>
       ) : null}

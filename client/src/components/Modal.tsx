@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../icons/Icon';
+import { t } from '../lib/i18n';
 
 type Props = {
   title: string;
@@ -40,7 +41,7 @@ export function Modal({ title, onClose, children, footer, width = 540 }: Props) 
       <div className="nb-modal" role="dialog" aria-modal="true" aria-label={title} style={{ maxWidth: width }}>
         <div className="nb-modal-head">
           <h2>{title}</h2>
-          <button type="button" className="nb-icon-btn" onClick={onClose} aria-label="Fermer">
+          <button type="button" className="nb-icon-btn" onClick={onClose} aria-label={t('Fermer')}>
             <Icon name="close" size={18} />
           </button>
         </div>

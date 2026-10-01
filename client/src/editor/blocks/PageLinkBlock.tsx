@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { useAppCtx } from '../context';
 import { PageIcon } from '../../icons/pageIcon';
+import { t } from '../../lib/i18n';
 
 function PageLinkView({ pageId }: { pageId: string }) {
   const ctx = useAppCtx();
@@ -19,12 +20,12 @@ function PageLinkView({ pageId }: { pageId: string }) {
           ctx.openPage(pageId);
         }
       }}
-      title={missing ? 'Cette page n’existe plus' : 'Ouvrir la page'}
+      title={missing ? t('Cette page n’existe plus') : t('Ouvrir la page')}
     >
       <span className="nb-pagelink-icon">
         <PageIcon icon={page?.icon} size={18} />
       </span>
-      <span className="nb-pagelink-title">{missing ? 'Page introuvable' : page.title || 'Sans titre'}</span>
+      <span className="nb-pagelink-title">{missing ? t('Page introuvable') : page.title || t('Sans titre')}</span>
     </div>
   );
 }
@@ -37,6 +38,10 @@ export const PageLinkBlock = createReactBlockSpec(
   },
   {
     render: ({ block }) => <PageLinkView pageId={block.props.pageId} />,
-    toExternalHTML: ({ block }) => <a href={`#/p/${block.props.pageId}`}>Page {block.props.pageId}</a>,
+    toExternalHTML: ({ block }) => (
+      <a href={`#/p/${block.props.pageId}`}>
+        {t('Page')} {block.props.pageId}
+      </a>
+    ),
   },
 );

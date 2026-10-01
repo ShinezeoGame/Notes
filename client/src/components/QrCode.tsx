@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { encode } from 'uqr';
+import { t } from '../lib/i18n';
 
 /**
  * QR code d'un lien, à scanner avec l'appareil photo d'un téléphone. Toujours noir sur blanc, quel que soit le thème :
  * les codes inversés ne sont pas lus par tous les téléphones.
  */
-export function QrCode({ text, size = 168, label = 'QR code du lien' }: { text: string; size?: number; label?: string }) {
+export function QrCode({ text, size = 168, label = t('QR code du lien') }: { text: string; size?: number; label?: string }) {
   const { n, d } = useMemo(() => {
     const { data } = encode(text, { ecc: 'M', border: 2 });
     let path = '';

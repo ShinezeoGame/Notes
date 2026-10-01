@@ -19,6 +19,7 @@ import { Icon } from '../icons/Icon';
 import { TEXT_SIZES, applyBlockTextSize, blockTextSize, supportsTextSize } from './styles/TextSize';
 import { WIDTH_PRESETS, normalizeWidth } from './resize';
 import { columnOf, columnShare, setColumnShare } from './columns';
+import { t } from '../lib/i18n';
 
 type AnyEditor = BlockNoteEditor<any, any, any>;
 type LooseBlock = { id: string; type: string; props: Record<string, unknown>; content?: unknown };
@@ -75,7 +76,7 @@ function BlockSizeItem() {
       <Components.Generic.Menu.Root position="right" sub portalElement={portal}>
         <Components.Generic.Menu.Trigger sub>
           <Components.Generic.Menu.Item className="bn-menu-item" subTrigger>
-            Taille du texte
+            {t('Taille du texte')}
           </Components.Generic.Menu.Item>
         </Components.Generic.Menu.Trigger>
         <Components.Generic.Menu.Dropdown sub className="bn-menu-dropdown nb-size-dropdown">
@@ -101,7 +102,7 @@ function BlockSizeItem() {
       <Components.Generic.Menu.Root position="right" sub portalElement={portal}>
         <Components.Generic.Menu.Trigger sub>
           <Components.Generic.Menu.Item className="bn-menu-item" subTrigger>
-            Largeur
+            {t('Largeur')}
           </Components.Generic.Menu.Item>
         </Components.Generic.Menu.Trigger>
         <Components.Generic.Menu.Dropdown sub className="bn-menu-dropdown nb-size-dropdown">
@@ -113,7 +114,7 @@ function BlockSizeItem() {
               checked={current === pct}
               onClick={() => applyBlockWidth(editor, block, pct)}
             >
-              {pct === 100 ? 'Pleine largeur' : `${pct} %`}
+              {pct === 100 ? t('Pleine largeur') : t('{pct} %', { pct })}
             </Components.Generic.Menu.Item>
           ))}
         </Components.Generic.Menu.Dropdown>
@@ -124,11 +125,11 @@ function BlockSizeItem() {
 }
 
 const COLUMN_SHARES = [
-  { label: 'Un quart de la ligne', value: 1 / 4 },
-  { label: 'Un tiers', value: 1 / 3 },
-  { label: 'La moitié', value: 1 / 2 },
-  { label: 'Deux tiers', value: 2 / 3 },
-  { label: 'Trois quarts', value: 3 / 4 },
+  { label: t('Un quart de la ligne'), value: 1 / 4 },
+  { label: t('Un tiers'), value: 1 / 3 },
+  { label: t('La moitié'), value: 1 / 2 },
+  { label: t('Deux tiers'), value: 2 / 3 },
+  { label: t('Trois quarts'), value: 3 / 4 },
 ];
 
 /** Sous-menu « Largeur de la colonne » pour un bloc placé dans une colonne (utile aussi sans souris). */
@@ -146,7 +147,7 @@ function ColumnWidthItem() {
     <Components.Generic.Menu.Root position="right" sub portalElement={portal}>
       <Components.Generic.Menu.Trigger sub>
         <Components.Generic.Menu.Item className="bn-menu-item" subTrigger>
-          Largeur de la colonne
+          {t('Largeur de la colonne')}
         </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown sub className="bn-menu-dropdown nb-size-dropdown">
@@ -167,7 +168,7 @@ function ColumnWidthItem() {
           checked={equal}
           onClick={() => setColumnShare(editor, found.column.id, null)}
         >
-          Parts égales
+          {t('Parts égales')}
         </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
@@ -231,7 +232,7 @@ export function MediaWidthSelect() {
       className="bn-select nb-width-select"
       portalElement={portal}
       items={WIDTH_PRESETS.map((pct) => ({
-        text: pct === 100 ? 'Pleine largeur' : `Largeur ${pct} %`,
+        text: pct === 100 ? t('Pleine largeur') : t('Largeur {pct} %', { pct }),
         icon: <Icon name="resize" size={14} />,
         isSelected: current === pct,
         onClick: () => applyBlockWidth(editor, block, pct),

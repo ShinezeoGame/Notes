@@ -6,6 +6,7 @@ import { useCamerasConfig } from '../../lib/cameras';
 import { cardLayout, cardOrder, configStatusKey, saveCardOrder, saveCardSize, useHomelabConfig } from '../../lib/homelab';
 import { navigate } from '../../lib/router';
 import { bool, str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 export function CamerasWidget({ widget, doc }: WidgetProps) {
   return (
@@ -19,9 +20,9 @@ export function CamerasSettings({ config, set, doc }: SettingsProps) {
   const cfg = useCamerasConfig(doc);
   return (
     <label className="nb-field">
-      <span>Caméras affichées</span>
+      <span>{t('Caméras affichées')}</span>
       <select className="nb-input" value={str(config.cameraId)} onChange={(e) => set({ cameraId: e.target.value })}>
-        <option value="">Toutes</option>
+        <option value="">{t('Toutes')}</option>
         {cfg.cameras.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -43,8 +44,8 @@ export function SmartHomeWidget({ widget, doc }: WidgetProps) {
 export function SmartHomeSettings({ config, set }: SettingsProps) {
   return (
     <label className="nb-check">
-      <input type="checkbox" checked={bool(config.favoritesOnly, true)} onChange={(e) => set({ favoritesOnly: e.target.checked })} /> Favoris seulement (★
-      dans la section Maison)
+      <input type="checkbox" checked={bool(config.favoritesOnly, true)} onChange={(e) => set({ favoritesOnly: e.target.checked })} />{' '}
+      {t('Favoris seulement (★ dans la section Maison)')}
     </label>
   );
 }

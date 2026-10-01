@@ -6,6 +6,7 @@ import { useBlockNoteEditor, useComponentsContext, useSelectedBlocks } from '@bl
 import type { BlockNoteEditor } from '@blocknote/core';
 import { ImageCropDialog, renderCropArea, type CropState } from '../components/ImageCropDialog';
 import { Icon } from '../icons/Icon';
+import { t } from '../lib/i18n';
 
 type AnyEditor = BlockNoteEditor<any, any, any>;
 type LooseBlock = { id: string; type: string; props: Record<string, unknown> };
@@ -17,8 +18,8 @@ export const ImageCropContext = createContext<(req: ImageCropRequest) => void>((
 
 /** Formats proposés (0 : celui de l'image d'origine). */
 const FORMATS = [
-  { label: 'Original', aspect: 0 },
-  { label: 'Carré', aspect: 1 },
+  { label: t('Original'), aspect: 0 },
+  { label: t('Carré'), aspect: 1 },
   { label: '4:3', aspect: 4 / 3 },
   { label: '3:2', aspect: 3 / 2 },
   { label: '16:9', aspect: 16 / 9 },
@@ -39,8 +40,8 @@ export function ImageCropButton() {
   return (
     <Components.FormattingToolbar.Button
       className="bn-button"
-      label="Recadrer"
-      mainTooltip="Recadrer l’image"
+      label={t('Recadrer')}
+      mainTooltip={t('Recadrer l’image')}
       icon={<Icon name="crop" size={16} />}
       onClick={() => request({ blockId: block.id, src: url })}
     />
@@ -67,5 +68,5 @@ export function NoteImageCrop({
     if (editor.getBlock(req.blockId)) editor.updateBlock(req.blockId, { props: { url } });
     onClose();
   };
-  return <ImageCropDialog src={req.src} formats={FORMATS} title="Recadrer l’image" onCancel={onClose} onDone={finish} />;
+  return <ImageCropDialog src={req.src} formats={FORMATS} title={t('Recadrer l’image')} onCancel={onClose} onDone={finish} />;
 }

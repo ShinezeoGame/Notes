@@ -1,10 +1,13 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Melo</title>
-    <!-- Page affichée par l'application pour ordinateur quand le serveur est injoignable (couleurs du thème sombre). -->
+    <!--
+      Page affichée par l'application pour ordinateur quand le serveur est injoignable (couleurs du thème sombre), dans
+      la langue choisie dans Melo (paramètre lang).
+    -->
     <style>
       body {
         margin: 0;
@@ -63,29 +66,51 @@
   <body>
     <div class="card">
       <img src="build/icon.png" width="56" height="56" alt="" />
-      <h1 id="title">Serveur injoignable</h1>
+      <h1 id="title"></h1>
       <p id="message"></p>
       <p class="muted" id="detail"></p>
       <div class="actions">
-        <button class="primary" id="retry">Réessayer</button>
-        <button id="local">Utiliser l’espace de cet ordinateur</button>
+        <button class="primary" id="retry"></button>
+        <button id="local"></button>
       </div>
     </div>
     <script>
+      const TEXTS = {
+        en: {
+          unreachable: 'Server unreachable',
+          noStart: 'Melo could not start',
+          noStartText: 'The server built into Melo does not start. Try again; if the problem persists, restart the computer, then reopen Melo.',
+          noServer: (host) => `Melo cannot reach the server ${host}. Check the Internet connection, then try again.`,
+          retry: 'Try again',
+          local: 'Use this computer’s workspace',
+        },
+        fr: {
+          unreachable: 'Serveur injoignable',
+          noStart: 'Melo n’a pas pu démarrer',
+          noStartText: 'Le serveur intégré à Melo ne démarre pas. Réessayez ; si le problème continue, redémarrez l’ordinateur puis rouvrez Melo.',
+          noServer: (host) => `Melo n’arrive pas à joindre le serveur ${host}. Vérifiez la connexion Internet, puis réessayez.`,
+          retry: 'Réessayer',
+          local: 'Utiliser l’espace de cet ordinateur',
+        },
+      };
       const q = new URLSearchParams(location.search);
+      const lang = q.get('lang') === 'fr' ? 'fr' : 'en';
+      const tx = TEXTS[lang];
+      document.documentElement.lang = lang;
       const kind = q.get('kind');
       let host = '';
       try {
         host = new URL(q.get('server') || '').host;
       } catch {}
+      document.getElementById('retry').textContent = tx.retry;
+      document.getElementById('local').textContent = tx.local;
       if (kind === 'local') {
-        document.getElementById('title').textContent = 'Melo n’a pas pu démarrer';
-        document.getElementById('message').textContent =
-          'Le serveur intégré à Melo ne démarre pas. Réessayez ; si le problème continue, redémarrez l’ordinateur puis rouvrez Melo.';
+        document.getElementById('title').textContent = tx.noStart;
+        document.getElementById('message').textContent = tx.noStartText;
         document.getElementById('local').hidden = true;
       } else {
-        document.getElementById('message').textContent =
-          `Melo n’arrive pas à joindre le serveur ${host || ''}. Vérifiez la connexion Internet, puis réessayez.`;
+        document.getElementById('title').textContent = tx.unreachable;
+        document.getElementById('message').textContent = tx.noServer(host);
       }
       document.getElementById('detail').textContent = q.get('detail') || '';
       const run = (button, action) => {

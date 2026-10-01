@@ -4,6 +4,7 @@ import type { BlockConfig } from '@blocknote/core';
 import { useAppCtx } from '../context';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
+import { t, tn } from '../../lib/i18n';
 
 const pdfConfig = {
   type: 'pdf',
@@ -39,7 +40,7 @@ function PdfView({ block, editor }: Props) {
       const uploaded = await ctx.uploadFile(file);
       editor.updateBlock(block, { props: { url: uploaded, name: file.name } });
     } catch (err) {
-      ctx.notify(err instanceof Error ? err.message : 'Téléversement impossible.', 'error');
+      ctx.notify(err instanceof Error ? err.message : t('Téléversement impossible.'), 'error');
     } finally {
       setUploading(false);
     }
@@ -87,7 +88,7 @@ function PdfView({ block, editor }: Props) {
           <span className="nb-placeholder-icon">
             <Icon name="filePdf" size={20} />
           </span>
-          {uploading ? 'Téléversement…' : 'Ajouter un PDF'}
+          {uploading ? t('Téléversement…') : t('Ajouter un PDF')}
         </button>
       </div>
     );
@@ -108,15 +109,15 @@ function PdfView({ block, editor }: Props) {
     <div contentEditable={false}>
       <div className="nb-media-toolbar">
         <span className="nb-media-title" title={name}>
-          <Icon name="filePdf" size={15} /> {name || 'Document PDF'}
-          {numPages ? <span className="nb-muted"> · {numPages} page{numPages > 1 ? 's' : ''}</span> : null}
+          <Icon name="filePdf" size={15} /> {name || t('Document PDF')}
+          {numPages ? <span className="nb-muted"> · {tn(numPages, '{n} page', '{n} pages')}</span> : null}
         </span>
         <span className="nb-media-actions">
           <button type="button" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? 'Réduire' : 'Agrandir'}
+            {expanded ? t('Réduire') : t('Agrandir')}
           </button>
           <button type="button" onClick={() => window.open(url, '_blank', 'noopener')}>
-            Ouvrir
+            {t('Ouvrir')}
           </button>
           {editable ? (
             <>
@@ -128,19 +129,19 @@ function PdfView({ block, editor }: Props) {
                 onChange={(e) => void onFile(e.target.files?.[0])}
               />
               <button type="button" onClick={pick} disabled={uploading}>
-                Remplacer
+                {t('Remplacer')}
               </button>
             </>
           ) : null}
         </span>
       </div>
       <div className="nb-pdf-viewport" style={{ maxHeight: expanded ? 'none' : liveHeight }} ref={containerRef} />
-      {state === 'loading' ? <div className="nb-media-status">Chargement du PDF…</div> : null}
+      {state === 'loading' ? <div className="nb-media-status">{t('Chargement du PDF…')}</div> : null}
       {state === 'error' ? (
         <div className="nb-media-status">
-          Aperçu indisponible.{' '}
+          {t('Aperçu indisponible.')}{' '}
           <a href={url} target="_blank" rel="noopener noreferrer">
-            Ouvrir le fichier
+            {t('Ouvrir le fichier')}
           </a>
         </div>
       ) : null}
@@ -155,7 +156,7 @@ export const PdfBlock = createReactBlockSpec(pdfConfig, {
   render: (props) => <PdfView {...props} />,
   toExternalHTML: ({ block }) => (
     <a href={block.props.url} target="_blank" rel="noopener noreferrer">
-      {block.props.name || 'Document PDF'}
+      {block.props.name || t('Document PDF')}
     </a>
   ),
 });

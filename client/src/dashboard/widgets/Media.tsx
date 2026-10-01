@@ -9,6 +9,7 @@ import { ImageCropDialog, parseCropSource, renderCropArea, type CropState } from
 import { getSettings, isNative } from '../../lib/settings';
 import { Icon } from '../../icons/Icon';
 import { num, str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 export function ImageWidget({ widget, openSettings, editing }: WidgetProps) {
   const url = str(widget.config.url);
@@ -19,9 +20,9 @@ export function ImageWidget({ widget, openSettings, editing }: WidgetProps) {
     return (
       <div className="w-empty">
         <Icon name="image" size={26} />
-        {failed ? <span className="w-muted">Image introuvable.</span> : null}
+        {failed ? <span className="w-muted">{t('Image introuvable.')}</span> : null}
         <button type="button" className="nb-btn nb-btn--sm" onClick={openSettings} disabled={editing}>
-          Choisir une image
+          {t('Choisir une image')}
         </button>
       </div>
     );
@@ -60,7 +61,7 @@ export function ImageSettings({ widgetId, config, set }: SettingsProps) {
     if (!file) return;
     setError('');
     if (!file.type.startsWith('image/')) {
-      setError('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).');
+      setError(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'));
       return;
     }
     setCrop({ src: URL.createObjectURL(file), file, initial: null, aspect: widgetAspect() });
@@ -88,14 +89,14 @@ export function ImageSettings({ widgetId, config, set }: SettingsProps) {
     <>
       {str(config.url) ? <img className="w-image-preview" src={str(config.url)} alt="" /> : null}
       <div className="nb-field">
-        <span>Image</span>
+        <span>{t('Image')}</span>
         <div className="nb-row nb-gap">
           <button type="button" className="nb-btn" onClick={() => input.current?.click()}>
-            <Icon name="upload" size={15} /> Envoyer une image
+            <Icon name="upload" size={15} /> {t('Envoyer une image')}
           </button>
           {str(config.url) ? (
             <button type="button" className="nb-btn" onClick={recrop}>
-              <Icon name="crop" size={15} /> Recadrer
+              <Icon name="crop" size={15} /> {t('Recadrer')}
             </button>
           ) : null}
         </div>
@@ -110,17 +111,23 @@ export function ImageSettings({ widgetId, config, set }: SettingsProps) {
           }}
         />
         <div className="nb-row nb-gap">
-          <input className="nb-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="… ou adresse d’une image (https://…)" inputMode="url" />
+          <input
+            className="nb-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t('… ou adresse d’une image (https://…)')}
+            inputMode="url"
+          />
           <button
             type="button"
             className="nb-btn"
             disabled={!draft.trim()}
             onClick={() => {
-              if (!isImageLink(draft.trim()) && !/^https?:\/\//i.test(draft.trim())) setError('Adresse d’image invalide.');
+              if (!isImageLink(draft.trim()) && !/^https?:\/\//i.test(draft.trim())) setError(t('Adresse d’image invalide.'));
               else set({ url: draft.trim(), source: null });
             }}
           >
-            Utiliser
+            {t('Utiliser')}
           </button>
         </div>
         {error ? <div className="nb-error">{error}</div> : null}
@@ -130,22 +137,28 @@ export function ImageSettings({ widgetId, config, set }: SettingsProps) {
           src={crop.src}
           initial={crop.initial}
           aspect={crop.aspect}
-          title="Recadrer l’image"
+          title={t('Recadrer l’image')}
           animated={crop.file?.type === 'image/gif'}
           onCancel={closeCrop}
           onDone={finishCrop}
         />
       ) : null}
       <label className="nb-field">
-        <span>Cadrage</span>
+        <span>{t('Cadrage')}</span>
         <select className="nb-input" value={str(config.fit, 'cover')} onChange={(e) => set({ fit: e.target.value })}>
-          <option value="cover">Remplir le widget (image recadrée)</option>
-          <option value="contain">Image entière</option>
+          <option value="cover">{t('Remplir le widget (image recadrée)')}</option>
+          <option value="contain">{t('Image entière')}</option>
         </select>
       </label>
       <label className="nb-field">
-        <span>Lien à l’appui (facultatif)</span>
-        <input className="nb-input" value={str(config.link)} onChange={(e) => set({ link: e.target.value })} placeholder="https://…" inputMode="url" />
+        <span>{t('Lien à l’appui (facultatif)')}</span>
+        <input
+          className="nb-input"
+          value={str(config.link)}
+          onChange={(e) => set({ link: e.target.value })}
+          placeholder={t('https://…')}
+          inputMode="url"
+        />
       </label>
     </>
   );
@@ -205,7 +218,7 @@ export function WebWidget({ widget, openSettings, editing }: WidgetProps) {
       <div className="w-empty">
         <Icon name="globe" size={26} />
         <button type="button" className="nb-btn nb-btn--sm" onClick={openSettings} disabled={editing}>
-          Choisir un site
+          {t('Choisir un site')}
         </button>
       </div>
     );
@@ -215,21 +228,21 @@ export function WebWidget({ widget, openSettings, editing }: WidgetProps) {
     const host = new URL(url).host;
     // Application Windows ancienne (pont sans embedsAnySite) : sa mise à jour affiche le site.
     const elsewhere = desktop()
-      ? ' La nouvelle version de Melo pour Windows l’affiche ici.'
+      ? t('La nouvelle version de Melo pour Windows l’affiche ici.')
       : isNative()
         ? ''
-        : ' Il s’affiche dans l’application Melo pour Windows.';
+        : t('Il s’affiche dans l’application Melo pour Windows.');
     return (
       <div className="w-empty w-web-blocked">
         <Icon name="globe" size={26} />
         <b className="w-web-host">{host}</b>
         <span className="w-muted">
           {state === 'insecure'
-            ? `Ce site en http ne peut pas s’afficher dans Melo ouvert en https.${elsewhere}`
-            : `Ce site refuse de s’afficher dans une autre application.${elsewhere}`}
+            ? [t('Ce site en http ne peut pas s’afficher dans Melo ouvert en https.'), elsewhere].filter(Boolean).join(' ')
+            : [t('Ce site refuse de s’afficher dans une autre application.'), elsewhere].filter(Boolean).join(' ')}
         </span>
         <button type="button" className="nb-btn nb-btn--sm" onClick={() => window.open(url, '_blank', 'noopener')} disabled={editing}>
-          <Icon name="externalLink" size={14} /> Ouvrir le site
+          <Icon name="externalLink" size={14} /> {t('Ouvrir le site')}
         </button>
       </div>
     );
@@ -254,17 +267,24 @@ export function WebSettings({ config, set }: SettingsProps) {
   return (
     <>
       <label className="nb-field">
-        <span>Adresse du site</span>
-        <input className="nb-input" value={str(config.url)} onChange={(e) => set({ url: e.target.value })} placeholder="https://…" inputMode="url" autoFocus />
+        <span>{t('Adresse du site')}</span>
+        <input
+          className="nb-input"
+          value={str(config.url)}
+          onChange={(e) => set({ url: e.target.value })}
+          placeholder={t('https://…')}
+          inputMode="url"
+          autoFocus
+        />
       </label>
       <label className="nb-field">
-        <span>Zoom : {num(config.zoom, 100)} %</span>
+        <span>{t('Zoom : {pct} %', { pct: num(config.zoom, 100) })}</span>
         <input type="range" min={40} max={150} step={10} value={num(config.zoom, 100)} onChange={(e) => set({ zoom: Number(e.target.value) })} />
       </label>
       <p className="nb-muted w-settings-hint">
-        Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils
-        s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Melo propose alors de les
-        ouvrir. Dans l’application Melo pour Windows, tous les sites s’affichent.
+        {t(
+          'Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Melo propose alors de les ouvrir. Dans l’application Melo pour Windows, tous les sites s’affichent.',
+        )}
       </p>
     </>
   );

@@ -1,6 +1,7 @@
 // Widget Horloge : heure (numérique ou à aiguilles), date, salutation, fuseau horaire au choix (horloge du monde).
 import { useEffect, useMemo, useState } from 'react';
 import { bool, str, type SettingsProps, type WidgetProps } from '../types';
+import { t, locale } from '../../lib/i18n';
 
 /** Date courante, mise à jour à chaque seconde ou à chaque minute (calée sur l'horloge). */
 export function useNow(stepMs: number): Date {
@@ -70,9 +71,12 @@ export function ClockWidget({ widget }: WidgetProps) {
   const now = useNow(seconds ? 1000 : 60_000);
   const { h } = partsIn(now, timeZone);
   const name = str(c.name).trim();
-  const greeting = bool(c.greeting) ? `${h >= 5 && h < 18 ? 'Bonjour' : 'Bonsoir'}${name ? `, ${name}` : ''}` : '';
-  const time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', second: seconds ? '2-digit' : undefined, timeZone }).format(now);
-  const date = capitalize(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone }).format(now));
+  const hello = h >= 5 && h < 18 ? t('Bonjour') : t('Bonsoir');
+  const greeting = bool(c.greeting) ? (name ? t('{hello}, {name}', { hello, name }) : hello) : '';
+  const time = new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit', second: seconds ? '2-digit' : undefined, timeZone }).format(
+    now,
+  );
+  const date = capitalize(new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone }).format(now));
   return (
     <div className={`w-clock${analog ? ' w-clock--analog' : ''}${seconds ? ' w-clock--seconds' : ''}`}>
       {greeting ? <div className="w-clock-greeting">{greeting}</div> : null}
@@ -94,32 +98,33 @@ export function ClockSettings({ config, set }: SettingsProps) {
   return (
     <>
       <label className="nb-field">
-        <span>Affichage</span>
+        <span>{t('Affichage')}</span>
         <select className="nb-input" value={str(config.style, 'digital')} onChange={(e) => set({ style: e.target.value })}>
-          <option value="digital">Numérique</option>
-          <option value="analog">À aiguilles</option>
+          <option value="digital">{t('Numérique')}</option>
+          <option value="analog">{t('À aiguilles')}</option>
         </select>
       </label>
       <label className="nb-check">
-        <input type="checkbox" checked={bool(config.seconds)} onChange={(e) => set({ seconds: e.target.checked })} /> Secondes
+        <input type="checkbox" checked={bool(config.seconds)} onChange={(e) => set({ seconds: e.target.checked })} /> {t('Secondes')}
       </label>
       <label className="nb-check">
-        <input type="checkbox" checked={bool(config.date, true)} onChange={(e) => set({ date: e.target.checked })} /> Date
+        <input type="checkbox" checked={bool(config.date, true)} onChange={(e) => set({ date: e.target.checked })} /> {t('Date')}
       </label>
       <label className="nb-check">
-        <input type="checkbox" checked={bool(config.greeting)} onChange={(e) => set({ greeting: e.target.checked })} /> Salutation (« Bonjour », « Bonsoir »)
+        <input type="checkbox" checked={bool(config.greeting)} onChange={(e) => set({ greeting: e.target.checked })} />{' '}
+        {t('Salutation (« Bonjour », « Bonsoir »)')}
       </label>
       {bool(config.greeting) ? (
         <label className="nb-field">
-          <span>Votre prénom (facultatif)</span>
+          <span>{t('Votre prénom (facultatif)')}</span>
           <input className="nb-input" value={str(config.name)} maxLength={40} onChange={(e) => set({ name: e.target.value })} />
         </label>
       ) : null}
       {zones.length ? (
         <label className="nb-field">
-          <span>Fuseau horaire</span>
+          <span>{t('Fuseau horaire')}</span>
           <select className="nb-input" value={str(config.timezone)} onChange={(e) => set({ timezone: e.target.value })}>
-            <option value="">Heure de cet appareil</option>
+            <option value="">{t('Heure de cet appareil')}</option>
             {zones.map((z) => (
               <option key={z} value={z}>
                 {z.replace(/_/g, ' ')}

@@ -5,7 +5,7 @@ import type { PDFFont } from '@cantoo/pdf-lib';
 /** Hauteur de ligne et position de la ligne de base, en multiples de la taille du texte. */
 export const LINE_HEIGHT = 1.2;
 export const BASELINE = 0.945;
-export const TEXT_FONT = 'Helvetica, Arial, "Liberation Sans", "Nimbus Sans", Roboto, sans-serif';
+export const TEXT_FONT = 'Helvetica, Arial, "Liberation Sans", "Nimbus Sans", Roboto, sans-serif'; // i18n-ignore
 
 /** Caractères de la table Windows-1252 (codes 0x80 à 0x9F) disponibles dans les polices standard des PDF. */
 const CP1252_EXTRA = new Set('€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ');

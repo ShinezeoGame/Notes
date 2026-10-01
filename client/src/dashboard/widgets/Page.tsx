@@ -10,13 +10,14 @@ import { pgRoom } from '../../lib/yjs';
 import { Icon } from '../../icons/Icon';
 import { PageIcon } from '../../icons/pageIcon';
 import { str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 /** Pages de l'espace (hors corbeille) dans l'ordre de l'arborescence, avec leur profondeur. */
 export function pageOptions(store: WorkspaceStore): { id: string; title: string; depth: number }[] {
   const out: { id: string; title: string; depth: number }[] = [];
   const walk = (parentId: string, depth: number) => {
     for (const p of store.children(parentId)) {
-      out.push({ id: p.id, title: p.title || 'Sans titre', depth });
+      out.push({ id: p.id, title: p.title || t('Sans titre'), depth });
       walk(p.id, depth + 1);
     }
   };
@@ -39,9 +40,9 @@ export function PageWidget({ widget, store, openSettings, editing }: WidgetProps
     return (
       <div className="w-empty">
         <Icon name="note" size={26} />
-        {pageId ? <span className="w-muted">Cette page a été supprimée.</span> : null}
+        {pageId ? <span className="w-muted">{t('Cette page a été supprimée.')}</span> : null}
         <button type="button" className="nb-btn nb-btn--sm" onClick={openSettings} disabled={editing}>
-          Choisir une page
+          {t('Choisir une page')}
         </button>
       </div>
     );
@@ -49,11 +50,17 @@ export function PageWidget({ widget, store, openSettings, editing }: WidgetProps
   return (
     <div className="w-page">
       <div className="w-page-head">
-        <button type="button" className="w-page-title" onClick={() => ctx.openPage(pageId)} title="Ouvrir dans Notes">
+        <button type="button" className="w-page-title" onClick={() => ctx.openPage(pageId)} title={t('Ouvrir dans Notes')}>
           <PageIcon icon={page!.icon} size={18} />
-          <span>{page!.title || 'Sans titre'}</span>
+          <span>{page!.title || t('Sans titre')}</span>
         </button>
-        <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => ctx.openPage(pageId)} aria-label="Ouvrir dans Notes" title="Ouvrir dans Notes">
+        <button
+          type="button"
+          className="nb-icon-btn nb-icon-btn--sm"
+          onClick={() => ctx.openPage(pageId)}
+          aria-label={t('Ouvrir dans Notes')}
+          title={t('Ouvrir dans Notes')}
+        >
           <Icon name="externalLink" size={14} />
         </button>
       </div>
@@ -63,7 +70,7 @@ export function PageWidget({ widget, store, openSettings, editing }: WidgetProps
             <Editor key={handle.room} handle={handle} editable />
           </AppContext.Provider>
         ) : (
-          <div className="w-muted w-page-loading">Chargement…</div>
+          <div className="w-muted w-page-loading">{t('Chargement…')}</div>
         )}
       </div>
     </div>
@@ -76,9 +83,9 @@ export function PageSettings({ config, set, store }: SettingsProps) {
   return (
     <>
       <label className="nb-field">
-        <span>Page affichée</span>
+        <span>{t('Page affichée')}</span>
         <select className="nb-input" value={str(config.pageId)} onChange={(e) => set({ pageId: e.target.value })}>
-          <option value="">Choisir…</option>
+          <option value="">{t('Choisir…')}</option>
           {options.map((o) => (
             <option key={o.id} value={o.id}>
               {'  '.repeat(o.depth)}
@@ -87,12 +94,8 @@ export function PageSettings({ config, set, store }: SettingsProps) {
           ))}
         </select>
       </label>
-      <button
-        type="button"
-        className="nb-btn nb-btn--sm"
-        onClick={() => set({ pageId: store.createPage('', 'Note de l’accueil') })}
-      >
-        <Icon name="plus" size={14} /> Nouvelle page
+      <button type="button" className="nb-btn nb-btn--sm" onClick={() => set({ pageId: store.createPage('', t('Note de l’accueil')) })}>
+        <Icon name="plus" size={14} /> {t('Nouvelle page')}
       </button>
     </>
   );

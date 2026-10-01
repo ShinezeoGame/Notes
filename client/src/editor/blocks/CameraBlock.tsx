@@ -5,6 +5,7 @@ import { useCamerasConfig } from '../../lib/cameras';
 import { useAppCtx } from '../context';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
+import { t } from '../../lib/i18n';
 
 const cameraConfig = {
   type: 'camera',
@@ -21,7 +22,7 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
         <div className="nb-placeholder-btn">
-          <Icon name="cctv" size={18} /> Caméra de surveillance, visible uniquement par le propriétaire de l’espace
+          <Icon name="cctv" size={18} /> {t('Caméra de surveillance, visible uniquement par le propriétaire de l’espace')}
         </div>
       </div>
     );
@@ -46,9 +47,9 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
                   className="nb-media-select"
                   value={camera ? cameraId : ''}
                   onChange={(ev) => editor.updateBlock(block, { props: { cameraId: ev.target.value } })}
-                  aria-label="Caméra affichée"
+                  aria-label={t('Caméra affichée')}
                 >
-                  <option value="">Toutes les caméras</option>
+                  <option value="">{t('Toutes les caméras')}</option>
                   {cfg.cameras.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -56,12 +57,12 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
                   ))}
                 </select>
               ) : (
-                <span className="cam-block-name">{camera ? camera.name : cameraId ? 'Caméra' : 'Caméras'}</span>
+                <span className="cam-block-name">{camera ? camera.name : cameraId ? t('Caméra') : t('Caméras')}</span>
               )}
             </span>
             <span className="nb-media-actions">
               <button type="button" onClick={() => ctx.openCameras?.()}>
-                Ouvrir
+                {t('Ouvrir')}
               </button>
             </span>
           </div>
@@ -76,5 +77,5 @@ function CameraBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof c
 
 export const CameraBlock = createReactBlockSpec(cameraConfig, {
   render: (props) => <CameraBlockView {...props} />,
-  toExternalHTML: () => <p>Caméra de surveillance</p>,
+  toExternalHTML: () => <p>{t('Caméra de surveillance')}</p>,
 });

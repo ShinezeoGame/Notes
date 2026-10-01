@@ -7,6 +7,7 @@ import { dayKey, parseEventsJson, parseIcs, type CalEvent } from './ics';
 import { fetchGoogleCalendarsEvents, parseGoogleSource, requestGoogleToken } from './google';
 import { getSettings } from './settings';
 import { newId } from './ids';
+import { t } from './i18n';
 
 export type AgendaCalendar = {
   id: string;
@@ -62,7 +63,7 @@ export function addCalendar(doc: Y.Doc, res: { title: string; events: CalEvent[]
   doc.transact(() => {
     if (!existing) {
       const color = CALENDAR_COLORS[calendars.length % CALENDAR_COLORS.length];
-      writeCalendars(doc, [...calendars, { id, name: res.title || 'Agenda', color, source: res.source, enabled: true }]);
+      writeCalendars(doc, [...calendars, { id, name: res.title || t('Agenda'), color, source: res.source, enabled: true }]);
     }
     writeEvents(doc, id, res.events);
   });
@@ -92,14 +93,14 @@ export async function refreshCalendar(
 ): Promise<{ count: number; failed: string[] }> {
   let events: CalEvent[];
   let failed: string[] = [];
-  if (!cal.source) throw new Error('Agenda importé d’un fichier : importez le fichier à nouveau pour le mettre à jour.');
+  if (!cal.source) throw new Error(t('Agenda importé d’un fichier : importez le fichier à nouveau pour le mettre à jour.'));
   if (isGoogleSource(cal.source)) {
     const clientId = getSettings().googleClientId;
-    if (!clientId) throw new Error('Renseignez un ID client Google dans les réglages pour actualiser cet agenda.');
+    if (!clientId) throw new Error(t('Renseignez un ID client Google dans les réglages pour actualiser cet agenda.'));
     const token = await requestGoogleToken(clientId);
     ({ events, failed } = await fetchGoogleCalendarsEvents(token, parseGoogleSource(cal.source)));
   } else {
-    if (!fetchIcs) throw new Error('Un serveur Melo est nécessaire pour actualiser un agenda iCal.');
+    if (!fetchIcs) throw new Error(t('Un serveur Melo est nécessaire pour actualiser un agenda iCal.'));
     events = parseIcs(await fetchIcs(cal.source)).events;
   }
   writeEvents(doc, cal.id, events);

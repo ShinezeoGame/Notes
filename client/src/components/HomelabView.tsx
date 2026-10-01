@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { api, serverBase } from '../lib/api';
 import {
+  categoryLabel,
   categoryRank,
   formatBytes,
   formatStat,
@@ -30,6 +31,7 @@ import {
 import { sortByOrder, useSortable, type SortItemProps } from '../lib/sortable';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
+import { t, tn, tServer } from '../lib/i18n';
 
 type PanelProps = {
   compact?: boolean;
@@ -64,15 +66,19 @@ function barClass(percent: number | null | undefined): string {
 function GaugeBar({ label, gauge, hint, warn }: { label: string; gauge: Gauge | null | undefined; hint?: string; warn?: boolean }) {
   if (!gauge) return null;
   const pct = gauge.percent == null ? null : Math.max(0, Math.min(100, gauge.percent));
-  const detail = hint ?? (gauge.total ? `${formatBytes(gauge.used)} / ${formatBytes(gauge.total)}` : pct != null ? `${pct.toFixed(0)} %` : '—');
+  const detail =
+    hint ?? (gauge.total ? `${formatBytes(gauge.used)} / ${formatBytes(gauge.total)}` : pct != null ? t('{pct} %', { pct: pct.toFixed(0) }) : '—');
   return (
     <div className="hl-gauge">
       <div className="hl-gauge-head">
         <span className="hl-gauge-label" title={label}>
-          {warn ? <Icon name="alert" size={13} className="hl-warn-icon" title="Volume signalé en mauvais état" /> : null}
+          {warn ? <Icon name="alert" size={13} className="hl-warn-icon" title={t('Volume signalé en mauvais état')} /> : null}
           {label}
         </span>
-        <span className="hl-gauge-detail">{detail}{pct != null && gauge.total ? ` · ${pct.toFixed(0)} %` : ''}</span>
+        <span className="hl-gauge-detail">
+          {detail}
+          {pct != null && gauge.total ? ` · ${t('{pct} %', { pct: pct.toFixed(0) })}` : ''}
+        </span>
       </div>
       <div className={`hl-bar${barClass(pct)}`}>
         <div className="hl-bar-fill" style={{ width: `${pct ?? 0}%` }} />
@@ -88,9 +94,9 @@ function VisualTile({ v, size }: { v: { name: IconName; src?: string; color: str
 function StatChip({ s }: { s: StatValue }) {
   const warn = s.kind === 'warn-if-positive' && typeof s.value === 'number' && s.value > 0;
   return (
-    <span className={`hl-chip${warn ? ' hl-chip--warn' : ''}`} title={s.label}>
+    <span className={`hl-chip${warn ? ' hl-chip--warn' : ''}`} title={tServer(s.label)}>
       <span className="hl-chip-value">{formatStat(s)}</span>
-      <span className="hl-chip-label">{s.label}</span>
+      <span className="hl-chip-label">{tServer(s.label)}</span>
     </span>
   );
 }
@@ -148,8 +154,12 @@ export function ServiceCard({ s, compact, fit, editing = false }: { s: ServiceSt
       <div className="hl-service-head">
         <VisualTile v={serviceVisual(s)} size={compact ? 26 : 32} />
         <span className="hl-service-name">{s.name || s.type}</span>
-        <span className={`hl-dot${s.ok ? ' hl-dot--up' : ' hl-dot--down'}`} title={s.ok ? 'En ligne' : 'Hors ligne'} />
-        {s.latency != null ? <span className="hl-latency">{s.latency} ms</span> : null}
+        <span className={`hl-dot${s.ok ? ' hl-dot--up' : ' hl-dot--down'}`} title={s.ok ? t('En ligne') : t('Hors ligne')} />
+        {s.latency != null ? (
+          <span className="hl-latency">
+            {s.latency} {t('ms')}
+          </span>
+        ) : null}
       </div>
       {showStats ? (
         <FitList className="hl-chips" maxHeight={fixed ? undefined : autoRows * CHIP_ROW - 6}>
@@ -158,7 +168,7 @@ export function ServiceCard({ s, compact, fit, editing = false }: { s: ServiceSt
           ))}
         </FitList>
       ) : null}
-      {s.error ? <div className="hl-error">{s.error}</div> : null}
+      {s.error ? <div className="hl-error">{tServer(s.error)}</div> : null}
       {(!compact || fixed) && s.version ? <div className="hl-version">v{s.version}</div> : null}
     </button>
   );
@@ -180,40 +190,57 @@ export function DeviceCard({ d, compact: compactView, fit }: { d: DeviceStatus; 
         <>
           <div className="hl-device-meta">
             {[d.hostname, d.model, d.os].filter(Boolean).join(' · ')}
-            {d.cores ? ` · ${d.cores} cœurs` : ''}
+            {d.cores ? ` · ${tn(d.cores, '{n} cœur', '{n} cœurs')}` : ''}
           </div>
           <FitList className="hl-gauges">
-            <GaugeBar label="CPU" gauge={cpuGauge} hint={d.cpu != null ? `${d.cpu.toFixed(0)} %${d.load?.length ? ` · charge ${d.load.slice(0, 3).join(' / ')}` : ''}` : undefined} />
-            {d.cpu == null && d.load?.length ? <div className="hl-device-meta">Charge : {d.load.slice(0, 3).join(' / ')}</div> : null}
-            <GaugeBar label="Mémoire" gauge={d.memory} hint={d.memory && !d.memory.total && d.memory.percent != null ? `${d.memory.percent.toFixed(0)} %` : undefined} />
-            {!compact ? <GaugeBar label="Swap" gauge={d.swap && d.swap.total ? d.swap : null} /> : null}
+            <GaugeBar
+              label={t('CPU')}
+              gauge={cpuGauge}
+              hint={
+                d.cpu != null
+                  ? `${t('{pct} %', { pct: d.cpu.toFixed(0) })}${d.load?.length ? ` · ${t('charge {load}', { load: d.load.slice(0, 3).join(' / ') })}` : ''}`
+                  : undefined
+              }
+            />
+            {d.cpu == null && d.load?.length ? (
+              <div className="hl-device-meta">{t('Charge : {load}', { load: d.load.slice(0, 3).join(' / ') })}</div>
+            ) : null}
+            <GaugeBar
+              label={t('Mémoire')}
+              gauge={d.memory}
+              hint={d.memory && !d.memory.total && d.memory.percent != null ? t('{pct} %', { pct: d.memory.percent.toFixed(0) }) : undefined}
+            />
+            {!compact ? <GaugeBar label={t('Swap')} gauge={d.swap && d.swap.total ? d.swap : null} /> : null}
             {(d.disks ?? []).slice(0, compact ? 2 : 24).map((disk) => (
               <GaugeBar key={disk.name} label={disk.name} gauge={disk.error ? null : disk} warn={disk.warn} />
             ))}
           </FitList>
           <div className="hl-device-foot">
             {d.uptime != null ? (
-              <span title="Temps de fonctionnement">
+              <span title={t('Temps de fonctionnement')}>
                 <Icon name="clock" size={13} /> {formatUptime(d.uptime)}
               </span>
             ) : null}
-            {(d.temps ?? []).slice(0, compact ? 1 : 4).map((t) => (
-              <span key={t.label} className={t.value >= 75 ? 'hl-temp--hot' : ''} title={t.label}>
-                <Icon name="thermometer" size={13} /> {t.label.length > 14 ? `${t.label.slice(0, 14)}…` : t.label} {t.value.toFixed(0)} °C
-              </span>
-            ))}
+            {(d.temps ?? []).slice(0, compact ? 1 : 4).map((temp) => {
+              const label = tServer(temp.label);
+              return (
+                <span key={temp.label} className={temp.value >= 75 ? 'hl-temp--hot' : ''} title={label}>
+                  <Icon name="thermometer" size={13} /> {label.length > 14 ? `${label.slice(0, 14)}…` : label} {temp.value.toFixed(0)} °C
+                </span>
+              );
+            })}
             {d.network ? (
-              <span title="Réseau">
+              <span title={t('Réseau')}>
                 <Icon name="arrowDown" size={13} /> {formatBytes(d.network.rx)}/s <Icon name="arrowUp" size={13} /> {formatBytes(d.network.tx)}/s
               </span>
             ) : null}
             {(d.extra ?? []).map((e) => (
-              <span key={e.label}>{e.label} : {formatStat(e)}</span>
+              <span key={e.label}>{t('{label} : {value}', { label: tServer(e.label), value: formatStat(e) })}</span>
             ))}
           </div>
         </>
       ) : (
-        <div className="hl-error">{d.error || 'Indisponible'}</div>
+        <div className="hl-error">{d.error ? tServer(d.error) : t('Indisponible')}</div>
       )}
     </div>
   );
@@ -250,7 +277,7 @@ export function HomelabPanel({
         setStatus(await api.homelabStatus(force));
         setError('');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erreur');
+        setError(err instanceof Error ? err.message : t('Erreur'));
       } finally {
         setLoading(false);
       }
@@ -286,7 +313,7 @@ export function HomelabPanel({
   const grouped = useMemo(() => {
     const groups = new Map<string, ServiceStatus[]>();
     for (const s of sortByOrder(status?.services ?? [], order, (x) => x.id)) {
-      const cat = s.category || 'Autres';
+      const cat = s.category || 'Autres'; // i18n-ignore : rubrique enregistrée (affichée par categoryLabel)
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(s);
     }
@@ -296,18 +323,18 @@ export function HomelabPanel({
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>Le tableau de bord interroge vos applications depuis le serveur Melo (accès au réseau local, pas de problème de CORS).</p>
-        <p className="nb-muted">Configurez l’adresse du serveur dans les réglages, idéalement un serveur hébergé dans votre homelab.</p>
+        <p>{t('Le tableau de bord interroge vos applications depuis le serveur Melo (accès au réseau local, pas de problème de CORS).')}</p>
+        <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages, idéalement un serveur hébergé dans votre homelab.')}</p>
       </div>
     );
   }
   if (!configured) {
     return (
       <div className="nb-notice hl-empty">
-        <p>Aucune application ni appareil configuré pour l’instant.</p>
+        <p>{t('Aucune application ni appareil configuré pour l’instant.')}</p>
         {onConfigure ? (
           <button type="button" className="nb-btn nb-btn--primary" onClick={onConfigure}>
-            Configurer le homelab
+            {t('Configurer le homelab')}
           </button>
         ) : null}
       </div>
@@ -323,20 +350,26 @@ export function HomelabPanel({
         <div className="hl-edit-hint">
           <Icon name="gripCorner" size={14} />
           <span>
-            Glissez un module pour le déplacer ; tirez son bord droit, son bord inférieur ou son coin pour le redimensionner (double-clic sur le coin : taille
-            automatique).
+            {t(
+              'Glissez un module pour le déplacer ; tirez son bord droit, son bord inférieur ou son coin pour le redimensionner (double-clic sur le coin : taille automatique).',
+            )}
           </span>
           {onGroupedChange ? (
             <label className="nb-check hl-group-toggle">
-              <input type="checkbox" checked={byCategory} onChange={(e) => onGroupedChange(e.target.checked)} /> Ranger par catégorie
+              <input type="checkbox" checked={byCategory} onChange={(e) => onGroupedChange(e.target.checked)} /> {t('Ranger par catégorie')}
             </label>
           ) : null}
         </div>
       ) : null}
       <div className="hl-toolbar">
         <span className="nb-muted">
-          {status ? `Actualisé il y a ${ago} s` : loading ? 'Interrogation…' : ''}
-          {status && downCount ? <span className="hl-down-count"> · {downCount} hors ligne</span> : null}
+          {status ? t('Actualisé il y a {n} s', { n: ago ?? 0 }) : loading ? t('Interrogation…') : ''}
+          {status && downCount ? (
+            <span className="hl-down-count">
+              {' '}
+              · {downCount} {t('hors ligne')}
+            </span>
+          ) : null}
         </span>
         <span className="nb-row nb-gap hl-toolbar-actions">
           {onResize ? (
@@ -344,28 +377,28 @@ export function HomelabPanel({
               type="button"
               className={`nb-btn nb-btn--sm${editing ? ' nb-btn--primary' : ''}`}
               onClick={() => setEditing((v) => !v)}
-              title="Déplacer et redimensionner les modules, ranger par catégorie ou librement"
+              title={t('Déplacer et redimensionner les modules, ranger par catégorie ou librement')}
             >
-              <Icon name={editing ? 'check' : 'resize'} size={14} /> {editing ? 'Terminer' : 'Disposition'}
+              <Icon name={editing ? 'check' : 'resize'} size={14} /> {editing ? t('Terminer') : t('Disposition')}
             </button>
           ) : null}
           {editing && onResetLayout ? (
             <button type="button" className="nb-btn nb-btn--sm" onClick={onResetLayout}>
-              Tailles par défaut
+              {t('Tailles par défaut')}
             </button>
           ) : null}
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => void refresh(true)} disabled={loading}>
-            {loading ? '…' : 'Actualiser'}
+            {loading ? '…' : t('Actualiser')}
           </button>
           {onConfigure ? (
             <button type="button" className="nb-btn nb-btn--sm" onClick={onConfigure}>
-              Configurer
+              {t('Configurer')}
             </button>
           ) : null}
         </span>
       </div>
       {error ? <div className="nb-error">{error}</div> : null}
-      {!status && loading ? <div className="hl-loading">Interrogation de vos appareils et applications…</div> : null}
+      {!status && loading ? <div className="hl-loading">{t('Interrogation de vos appareils et applications…')}</div> : null}
       {!byCategory ? (
         <section className="hl-section">
           <CardGrid
@@ -397,7 +430,7 @@ export function HomelabPanel({
       ) : null}
       {byCategory && devices.length ? (
         <section className="hl-section">
-          {!compact ? <h2>Appareils</h2> : null}
+          {!compact ? <h2>{t('Appareils')}</h2> : null}
           <CardGrid
             className="hl-grid hl-grid--devices"
             compact={compact}
@@ -415,7 +448,7 @@ export function HomelabPanel({
       ) : null}
       {(byCategory ? grouped : []).map(([cat, list]) => (
         <section key={cat} className="hl-section">
-          {!compact ? <h2>{cat}</h2> : null}
+          {!compact ? <h2>{categoryLabel(cat)}</h2> : null}
           <CardGrid
             className="hl-grid"
             compact={compact}
@@ -527,7 +560,7 @@ function CardGrid({
 }
 
 function sizeLabel(pct: number | undefined, height: number | undefined): string {
-  return `${pct === undefined ? 'auto' : `${pct} %`} × ${height === undefined ? 'auto' : `${height} px`}`;
+  return `${pct === undefined ? t('auto') : t('{pct} %', { pct })} × ${height === undefined ? t('auto') : `${height} px`}`;
 }
 
 function CardCell({ item, geo, editing, onResize, sort }: { item: GridItem; geo: Geometry; editing: boolean; onResize?: (id: string, size: CardSize) => void; sort?: SortItemProps }) {
@@ -617,14 +650,18 @@ function CardCell({ item, geo, editing, onResize, sort }: { item: GridItem; geo:
         {editing ? (
           <>
             <div className="hl-size-badge">{sizeLabel(pct, fixedH)}</div>
-            {!geo.stacked ? <div className="hl-rs hl-rs--x" title="Glisser pour changer la largeur" onPointerDown={start('x')} {...handlers} /> : null}
-            <div className="hl-rs hl-rs--y" title="Glisser pour changer la hauteur" onPointerDown={start('y')} {...handlers} />
+            {!geo.stacked ? (
+              <div className="hl-rs hl-rs--x" title={t('Glisser pour changer la largeur')} onPointerDown={start('x')} {...handlers} />
+            ) : null}
+            <div className="hl-rs hl-rs--y" title={t('Glisser pour changer la hauteur')} onPointerDown={start('y')} {...handlers} />
             <div
               className="hl-grip"
               role="button"
               tabIndex={0}
-              aria-label={`Taille du module : ${sizeLabel(pct, fixedH)}. Flèches pour ajuster, double-clic pour la taille automatique.`}
-              title="Glisser pour redimensionner · double-clic : taille automatique"
+              aria-label={t('Taille du module : {size}. Flèches pour ajuster, double-clic pour la taille automatique.', {
+                size: sizeLabel(pct, fixedH),
+              })}
+              title={t('Glisser pour redimensionner · double-clic : taille automatique')}
               onPointerDown={start(geo.stacked ? 'y' : 'xy')}
               onDoubleClick={reset}
               onKeyDown={onKey}

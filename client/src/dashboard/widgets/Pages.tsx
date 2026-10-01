@@ -6,6 +6,7 @@ import { navigate } from '../../lib/router';
 import { Icon } from '../../icons/Icon';
 import { PageIcon } from '../../icons/pageIcon';
 import { str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 export function PagesWidget({ widget, store }: WidgetProps) {
   useWorkspacePages(store);
@@ -24,12 +25,12 @@ export function PagesWidget({ widget, store }: WidgetProps) {
           <li key={p.id}>
             <button type="button" onClick={() => ctx.openPage(p.id)}>
               <PageIcon icon={p.icon} size={17} />
-              <span>{p.title || 'Sans titre'}</span>
+              <span>{p.title || t('Sans titre')}</span>
             </button>
           </li>
         ))}
       </ul>
-      {!pages.length ? <p className="w-muted w-tasks-empty">Aucune page pour l’instant.</p> : null}
+      {!pages.length ? <p className="w-muted w-tasks-empty">{t('Aucune page pour l’instant.')}</p> : null}
       <div className="w-pages-foot">
         <button
           type="button"
@@ -39,10 +40,10 @@ export function PagesWidget({ widget, store }: WidgetProps) {
             ctx.openPage(id);
           }}
         >
-          <Icon name="plus" size={14} /> Nouvelle page
+          <Icon name="plus" size={14} /> {t('Nouvelle page')}
         </button>
         <button type="button" className="w-link-btn" onClick={() => navigate('#/notes')}>
-          Toutes les notes <Icon name="chevronRight" size={14} />
+          {t('Toutes les notes')} <Icon name="chevronRight" size={14} />
         </button>
       </div>
     </div>
@@ -52,10 +53,10 @@ export function PagesWidget({ widget, store }: WidgetProps) {
 export function PagesSettings({ config, set }: SettingsProps) {
   return (
     <label className="nb-field">
-      <span>Pages affichées</span>
+      <span>{t('Pages affichées')}</span>
       <select className="nb-input" value={str(config.mode, 'recent')} onChange={(e) => set({ mode: e.target.value })}>
-        <option value="recent">Ouvertes récemment (sur cet appareil)</option>
-        <option value="roots">Pages principales</option>
+        <option value="recent">{t('Ouvertes récemment (sur cet appareil)')}</option>
+        <option value="roots">{t('Pages principales')}</option>
       </select>
     </label>
   );

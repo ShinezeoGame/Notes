@@ -5,6 +5,7 @@ import { useAppCtx } from '../context';
 import { cardLayout, cardOrder, saveCardOrder, saveCardSize, useHomelabConfig } from '../../lib/homelab';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
+import { t } from '../../lib/i18n';
 
 const homelabConfig = {
   type: 'homelab',
@@ -20,7 +21,7 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
         <div className="nb-placeholder-btn">
-          <Icon name="home" size={18} /> Tableau de bord homelab, visible uniquement par le propriétaire de l’espace
+          <Icon name="home" size={18} /> {t('Tableau de bord homelab, visible uniquement par le propriétaire de l’espace')}
         </div>
       </div>
     );
@@ -33,34 +34,34 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
       className="nb-homelab-block"
     >
       {() => (
-    <div contentEditable={false}>
-      <div className="nb-media-toolbar">
-        <span className="nb-media-title">
-          <Icon name="home" size={15} /> Homelab
-        </span>
-        <span className="nb-media-actions">
-          {editor.isEditable ? (
-            <button type="button" onClick={() => editor.updateBlock(block, { props: { compact: !block.props.compact } })}>
-              {block.props.compact ? 'Vue détaillée' : 'Vue compacte'}
-            </button>
-          ) : null}
-          <button type="button" onClick={() => ctx.openDashboard?.()}>
-            Ouvrir
-          </button>
-        </span>
-      </div>
-      <div className="nb-homelab-body">
-        <HomelabPanel
-          compact={block.props.compact}
-          configured={ctx.homelabConfigured ?? false}
-          layout={cardLayout(cfg)}
-          onResize={doc && editor.isEditable ? (id, size) => saveCardSize(doc, id, size) : undefined}
-          order={cardOrder(cfg)}
-          onReorder={doc && editor.isEditable ? (ids) => saveCardOrder(doc, ids) : undefined}
-          grouped={cfg.grouped}
-        />
-      </div>
-    </div>
+        <div contentEditable={false}>
+          <div className="nb-media-toolbar">
+            <span className="nb-media-title">
+              <Icon name="home" size={15} /> {t('Homelab')}
+            </span>
+            <span className="nb-media-actions">
+              {editor.isEditable ? (
+                <button type="button" onClick={() => editor.updateBlock(block, { props: { compact: !block.props.compact } })}>
+                  {block.props.compact ? t('Vue détaillée') : t('Vue compacte')}
+                </button>
+              ) : null}
+              <button type="button" onClick={() => ctx.openDashboard?.()}>
+                {t('Ouvrir')}
+              </button>
+            </span>
+          </div>
+          <div className="nb-homelab-body">
+            <HomelabPanel
+              compact={block.props.compact}
+              configured={ctx.homelabConfigured ?? false}
+              layout={cardLayout(cfg)}
+              onResize={doc && editor.isEditable ? (id, size) => saveCardSize(doc, id, size) : undefined}
+              order={cardOrder(cfg)}
+              onReorder={doc && editor.isEditable ? (ids) => saveCardOrder(doc, ids) : undefined}
+              grouped={cfg.grouped}
+            />
+          </div>
+        </div>
       )}
     </ResizableFrame>
   );
@@ -68,5 +69,5 @@ function HomelabBlockView({ block, editor }: ReactCustomBlockRenderProps<typeof 
 
 export const HomelabBlock = createReactBlockSpec(homelabConfig, {
   render: (props) => <HomelabBlockView {...props} />,
-  toExternalHTML: () => <p>Tableau de bord homelab</p>,
+  toExternalHTML: () => <p>{t('Tableau de bord homelab')}</p>,
 });

@@ -9,6 +9,8 @@ import { CalendarImportDialog } from './CalendarImportDialog';
 import { PageEditorPane } from './PageEditorPane';
 import { STATUS_LABEL } from './AppNav';
 import { toast } from './Toast';
+import { t } from '../lib/i18n';
+import { LanguageSwitch } from './LanguageSwitch';
 
 type Props = { token: string; pageId: string | null };
 
@@ -23,7 +25,7 @@ export function SharedView({ token, pageId }: Props) {
       setTree(await api.getShare(token));
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lien indisponible.');
+      setError(err instanceof Error ? err.message : t('Lien indisponible.'));
     }
   }, [token]);
 
@@ -44,7 +46,7 @@ export function SharedView({ token, pageId }: Props) {
   const icon = meta.icon || pageInfo?.icon || '';
 
   useEffect(() => {
-    document.title = `${title || 'Sans titre'} – Melo (partagé)`;
+    document.title = t('{title} – Melo (partagé)', { title: title || t('Sans titre') });
   }, [title]);
 
   const importCalendar = useCallback(
@@ -64,13 +66,13 @@ export function SharedView({ token, pageId }: Props) {
       },
       openPage: (id) => navigate({ name: 'shared', token, pageId: id }),
       createSubpage: canEdit
-        ? async (parentId, t = '') => {
+        ? async (parentId, title = '') => {
             try {
-              const { id } = await api.createSharedPage(token, parentId, t);
+              const { id } = await api.createSharedPage(token, parentId, title);
               await refreshTree();
               return id;
             } catch (err) {
-              toast(err instanceof Error ? err.message : 'Création impossible.', 'error');
+              toast(err instanceof Error ? err.message : t('Création impossible.'), 'error');
               return null;
             }
           }
@@ -87,24 +89,24 @@ export function SharedView({ token, pageId }: Props) {
     return (
       <div className="nb-center">
         <div className="nb-card">
-          <h1>Lien indisponible</h1>
+          <h1>{t('Lien indisponible')}</h1>
           <p className="nb-muted">{error}</p>
           <a className="nb-btn nb-btn--primary" href="#/">
-            Ouvrir mes notes
+            {t('Ouvrir mes notes')}
           </a>
         </div>
       </div>
     );
   }
-  if (!tree) return <div className="nb-center nb-loading">Chargement de la page partagée…</div>;
+  if (!tree) return <div className="nb-center nb-loading">{t('Chargement de la page partagée…')}</div>;
   if (!pageInfo || !currentId) {
     return (
       <div className="nb-center">
         <div className="nb-card">
-          <h1>Page introuvable</h1>
-          <p className="nb-muted">Cette page ne fait pas (ou plus) partie du partage.</p>
+          <h1>{t('Page introuvable')}</h1>
+          <p className="nb-muted">{t('Cette page ne fait pas (ou plus) partie du partage.')}</p>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate({ name: 'shared', token, pageId: null })}>
-            Revenir à la page partagée
+            {t('Revenir à la page partagée')}
           </button>
         </div>
       </div>
@@ -131,7 +133,7 @@ export function SharedView({ token, pageId }: Props) {
   while (cur && cur.parentId && guard++ < 50) {
     const parent = tree.pages.find((p) => p.id === cur!.parentId);
     if (!parent) break;
-    crumbs.unshift({ id: parent.id, title: parent.title || 'Sans titre' });
+    crumbs.unshift({ id: parent.id, title: parent.title || t('Sans titre') });
     cur = parent;
   }
 
@@ -146,25 +148,28 @@ export function SharedView({ token, pageId }: Props) {
                   {c.title}
                 </button>
               ))}
-              <span className="nb-crumb-current">{title || 'Sans titre'}</span>
+              <span className="nb-crumb-current">{title || t('Sans titre')}</span>
             </nav>
             <div className="nb-topbar-right">
-              <span className={`nb-badge nb-badge--${tree.mode}`}>{tree.mode === 'edit' ? 'Modification en direct' : 'Lecture seule'}</span>
+              <LanguageSwitch short />
+              <span className={`nb-badge nb-badge--${tree.mode}`}>{tree.mode === 'edit' ? t('Modification en direct') : t('Lecture seule')}</span>
               <span className={`nb-status nb-status--${status}`} title={STATUS_LABEL[status]} />
               <input
                 className="nb-input nb-input--sm nb-only-desktop"
-                title="Votre nom (visible par les autres participants)"
+                title={t('Votre nom (visible par les autres participants)')}
                 value={settings.userName}
                 onChange={(e) => updateSettings({ userName: e.target.value })}
                 maxLength={40}
               />
-              <a className="nb-btn nb-btn--sm" href="#/" title="Créer mon propre espace de notes">
-                Mes notes
+              <a className="nb-btn nb-btn--sm" href="#/" title={t('Créer mon propre espace de notes')}>
+                {t('Mes notes')}
               </a>
             </div>
           </header>
-          {status === 'denied' ? <div className="nb-banner">Le serveur a refusé l’accès à cette page (lien révoqué ?).</div> : null}
-          {status === 'outdated' ? <div className="nb-banner">Rechargez la page : une version plus récente de Melo est nécessaire pour l’afficher.</div> : null}
+          {status === 'denied' ? <div className="nb-banner">{t('Le serveur a refusé l’accès à cette page (lien révoqué ?).')}</div> : null}
+          {status === 'outdated' ? (
+            <div className="nb-banner">{t('Rechargez la page : une version plus récente de Melo est nécessaire pour l’afficher.')}</div>
+          ) : null}
           <div className="nb-content">
             <PageEditorPane
               handle={handle}

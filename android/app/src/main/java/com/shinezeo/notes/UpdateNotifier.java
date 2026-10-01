@@ -10,7 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
-/** Notification « Mise à jour de Melo disponible » ; la toucher ouvre l'application et lance la mise à jour. */
+/**
+ * Notification « Mise à jour de Melo disponible » (dans la langue choisie dans l'application) ; la toucher ouvre
+ * l'application et lance la mise à jour.
+ */
 final class UpdateNotifier {
 
     static final String EXTRA_UPDATE = "com.shinezeo.notes.UPDATE";
@@ -30,10 +33,11 @@ final class UpdateNotifier {
             return false;
         }
 
+        boolean fr = UpdateCheckJob.isFrench(context);
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Mises à jour", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Nouvelle version de Melo disponible");
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, fr ? "Mises à jour" : "Updates", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(fr ? "Nouvelle version de Melo disponible" : "New version of Melo available");
             nm.createNotificationChannel(channel);
             builder = new Notification.Builder(context, CHANNEL_ID);
         } else {
@@ -48,8 +52,8 @@ final class UpdateNotifier {
         builder
             .setSmallIcon(R.drawable.ic_stat_notes)
             .setColor(0xFF2383E2)
-            .setContentTitle("Mise à jour de Melo disponible")
-            .setContentText("Touchez pour installer la nouvelle version.")
+            .setContentTitle(fr ? "Mise à jour de Melo disponible" : "Melo update available")
+            .setContentText(fr ? "Touchez pour installer la nouvelle version." : "Tap to install the new version.")
             .setContentIntent(pending)
             .setAutoCancel(true);
         try {

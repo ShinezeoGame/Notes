@@ -37,7 +37,7 @@ Toutes les versions, avec ces instructions : **[page de téléchargement](https:
 ### Application Android
 
 1. Sur le téléphone, téléchargez `Melo-Android.apk` ([dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest)), autorisez l’installation depuis des sources inconnues, installez.
-2. Au premier lancement, choisissez **Commencer** (Melo sur ce téléphone seul, sans serveur) ou **J’ai une invitation ou un code** : collez le lien reçu (invitation, ou liaison affichée par *Réglages → Relier un autre appareil* sur un appareil déjà relié), ou saisissez l’adresse du serveur puis le **code à 6 chiffres**, pour retrouver exactement les mêmes pages. Une application déjà installée se relie depuis *Réglages → Saisir un lien ou un code*.
+2. Au premier lancement, touchez **Français** en haut de l’écran pour passer Melo en français, puis choisissez **Commencer** (Melo sur ce téléphone seul, sans serveur) ou **J’ai une invitation ou un code** : collez le lien reçu (invitation, ou liaison affichée par *Réglages → Relier un autre appareil* sur un appareil déjà relié), ou saisissez l’adresse du serveur puis le **code à 6 chiffres**, pour retrouver exactement les mêmes pages. Une application déjà installée se relie depuis *Réglages → Saisir un lien ou un code*.
 
 **Mises à jour, sans retélécharger l’APK** :
 
@@ -55,12 +55,14 @@ Depuis Edge, Chrome ou Brave, le bouton **Installer l’application** (en bas de
 
 ## Premiers pas
 
-1. Au premier lancement, **Commencer** : Melo fonctionne tout de suite, sur cet appareil. Vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**.
+1. Au premier lancement, Melo s’affiche en anglais : touchez **Français** en haut de l’écran, il redémarre aussitôt en français. Puis **Commencer** : Melo fonctionne tout de suite, sur cet appareil. Vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**.
 2. Indiquez votre prénom et cochez ce que vous allez utiliser : seules ces sections s’affichent (**Personnaliser → Sections** pour changer d’avis).
 3. Une courte présentation montre l’essentiel ; revoyez‑la quand vous voulez : **Réglages → Revoir la présentation**.
 4. La barre de gauche réunit les sections par usage : **Accueil** ; **Organisation** (Notes, Agenda) ; **Maison** (Objets connectés, Caméras, Homelab) ; **Outils** (Atelier PDF). Sur ordinateur, elle se replie en icônes avec la flèche du haut. Sur téléphone : onglets en bas de l’écran, le reste dans **Plus**.
 
 Tout est stocké sur l’appareil (hors ligne d’abord) et synchronisé dès qu’un serveur est joignable ; plusieurs appareils peuvent être reliés au même espace.
+
+**Langue** (anglais ou français) : propre à chaque appareil, elle se change à tout moment dans **Réglages → Vous → Langue de l’interface**. Dans un navigateur, une petite carte en bas de l’écran la propose à la première visite ; sur une page partagée, **EN / FR** en haut à droite. Une installation de Melo d’avant le choix de la langue reste en français. Le contenu (pages, titres, widgets) n’est pas traduit.
 
 ## Partager
 

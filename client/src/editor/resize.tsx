@@ -1,6 +1,7 @@
 // Cadre redimensionnable pour les blocs personnalisés (PDF, vidéo intégrée, agenda, homelab) :
 // poignée droite pour la largeur (en %), poignée basse optionnelle pour la hauteur (en px).
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { t } from '../lib/i18n';
 
 type Props = {
   editable: boolean;
@@ -77,14 +78,16 @@ export function ResizableFrame({ editable, width, onWidthCommit, height, minHeig
   return (
     <div ref={ref} className={`nb-resizable${resizing ? ' nb-resizable--active' : ''}${className ? ` ${className}` : ''}`} style={{ width: `${w}%` }}>
       {children(liveH ?? height, resizing)}
-      {editable ? (
-        <div className="nb-resize-x" title="Glisser pour changer la largeur" onPointerDown={start('x')} {...handlers} />
-      ) : null}
+      {editable ? <div className="nb-resize-x" title={t('Glisser pour changer la largeur')} onPointerDown={start('x')} {...handlers} /> : null}
       {editable && onHeightCommit ? (
-        <div className="nb-resize-y" title="Glisser pour changer la hauteur" onPointerDown={start('y')} {...handlers} />
+        <div className="nb-resize-y" title={t('Glisser pour changer la hauteur')} onPointerDown={start('y')} {...handlers} />
       ) : null}
-      {liveW != null ? <div className="nb-resize-badge">{liveW} %</div> : null}
-      {liveH != null ? <div className="nb-resize-badge">{liveH} px</div> : null}
+      {liveW != null ? <div className="nb-resize-badge">{t('{pct} %', { pct: liveW })}</div> : null}
+      {liveH != null ? (
+        <div className="nb-resize-badge">
+          {liveH} {t('px')}
+        </div>
+      ) : null}
     </div>
   );
 }

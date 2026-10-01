@@ -29,6 +29,7 @@ public class UpdateCheckJob extends JobService {
     private static final String KEY_CURRENT = "currentVersion";
     private static final String KEY_NOTIFY = "notify";
     private static final String KEY_LAST_NOTIFIED = "lastNotified";
+    private static final String KEY_LANG = "lang";
 
     private volatile Thread worker;
 
@@ -56,13 +57,19 @@ public class UpdateCheckJob extends JobService {
         return true;
     }
 
-    static void saveSettings(Context context, String serverUrl, String currentVersion, boolean notify) {
+    static void saveSettings(Context context, String serverUrl, String currentVersion, boolean notify, String lang) {
         prefs(context)
             .edit()
             .putString(KEY_SERVER, serverUrl == null ? "" : serverUrl)
             .putString(KEY_CURRENT, currentVersion == null ? "" : currentVersion)
             .putBoolean(KEY_NOTIFY, notify)
+            .putString(KEY_LANG, "en".equals(lang) ? "en" : "fr")
             .apply();
+    }
+
+    /** Langue de l'interface choisie dans l'application : vrai pour le français (réglage absent : français). */
+    static boolean isFrench(Context context) {
+        return !"en".equals(prefs(context).getString(KEY_LANG, "fr"));
     }
 
     static void setLastNotified(Context context, String version) {

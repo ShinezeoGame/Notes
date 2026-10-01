@@ -4,6 +4,7 @@ import { Modal } from './Modal';
 import { api } from '../lib/api';
 import {
   CATEGORIES,
+  categoryLabel,
   DEVICE_ICON_CHOICES,
   DEVICE_TYPES,
   SERVICE_ICON_CHOICES,
@@ -29,6 +30,7 @@ import { prepareImage } from '../lib/images';
 import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
+import { t, tn, tx, tServer } from '../lib/i18n';
 
 type Props = { doc: Y.Doc; onClose: () => void };
 type Tab = 'services' | 'devices' | 'general';
@@ -74,12 +76,18 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
 
   const addPreset = () => {
     const host = presetHost.trim();
-    if (!host) return toast('Indiquez l’adresse IP ou le nom d’hôte de votre serveur.', 'error');
+    if (!host) return toast(t('Indiquez l’adresse IP ou le nom d’hôte de votre serveur.'), 'error');
     const existing = new Set(cfg.services.map((s) => s.type));
     const added = mediaStackPreset(host).filter((s) => !existing.has(s.type));
-    if (!added.length) return toast('Toutes les applications de la stack sont déjà présentes.');
+    if (!added.length) return toast(t('Toutes les applications de la stack sont déjà présentes.'));
     save({ services: [...cfg.services, ...added] });
-    toast(`${added.length} application(s) ajoutée(s). Renseignez leurs clés API pour afficher les statistiques.`);
+    toast(
+      tn(
+        added.length,
+        '{n} application ajoutée. Renseignez sa clé API pour afficher les statistiques.',
+        '{n} applications ajoutées. Renseignez leurs clés API pour afficher les statistiques.',
+      ),
+    );
   };
 
   const runTest = async (payload: { service?: Service; device?: Device }) => {
@@ -88,43 +96,55 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
     try {
       const r = await api.homelabTest(payload);
       if (r.ok) {
-        const details = 'stats' in r && Array.isArray(r.stats) && r.stats.length ? ` — ${r.stats.map((s) => `${s.label} : ${s.value}`).join(', ')}` : '';
-        setTestResult({ ok: true, text: `Connexion réussie${'latency' in r && r.latency != null ? ` (${r.latency} ms)` : ''}${details}${r.error ? ` — ${r.error}` : ''}` });
-      } else setTestResult({ ok: false, text: r.error || 'Échec' });
+        // Libellés et messages du serveur, écrits en français : traduits à l'affichage.
+        const details =
+          'stats' in r && Array.isArray(r.stats) && r.stats.length
+            ? ` — ${r.stats.map((s) => t('{label} : {value}', { label: tServer(s.label), value: s.value })).join(', ')}`
+            : '';
+        const latency = 'latency' in r && r.latency != null ? ` (${r.latency} ms)` : '';
+        setTestResult({ ok: true, text: `${t('Connexion réussie')}${latency}${details}${r.error ? ` — ${tServer(r.error)}` : ''}` });
+      } else setTestResult({ ok: false, text: tServer(r.error ?? '') || t('Échec') });
     } catch (err) {
-      setTestResult({ ok: false, text: err instanceof Error ? err.message : 'Échec' });
+      setTestResult({ ok: false, text: err instanceof Error ? err.message : t('Échec') });
     } finally {
       setTesting(false);
     }
   };
 
   return (
-    <Modal title="Configurer le homelab" onClose={onClose} width={720}>
+    <Modal title={t('Configurer le homelab')} onClose={onClose} width={720}>
       <div className="nb-tabs">
         <button type="button" className={tab === 'services' ? 'active' : ''} onClick={() => setTab('services')}>
-          Applications ({cfg.services.length})
+          {t('Applications ({n})', { n: cfg.services.length })}
         </button>
         <button type="button" className={tab === 'devices' ? 'active' : ''} onClick={() => setTab('devices')}>
-          Appareils ({cfg.devices.length})
+          {t('Appareils ({n})', { n: cfg.devices.length })}
         </button>
         <button type="button" className={tab === 'general' ? 'active' : ''} onClick={() => setTab('general')}>
-          Général
+          {t('Général')}
         </button>
       </div>
 
       {tab === 'services' && !editingService ? (
         <div className="nb-tab-panel">
           <div className="hl-preset">
-            <span className="nb-muted">Ajouter rapidement la stack multimédia (Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent) :</span>
+            <span className="nb-muted">
+              {t('Ajouter rapidement la stack multimédia (Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent) :')}
+            </span>
             <div className="nb-row nb-gap">
-              <input className="nb-input" placeholder="IP ou nom d’hôte, ex. 192.168.1.10" value={presetHost} onChange={(e) => setPresetHost(e.target.value)} />
+              <input
+                className="nb-input"
+                placeholder={t('IP ou nom d’hôte, ex. 192.168.1.10')}
+                value={presetHost}
+                onChange={(e) => setPresetHost(e.target.value)}
+              />
               <button type="button" className="nb-btn" onClick={addPreset}>
-                Ajouter la stack
+                {t('Ajouter la stack')}
               </button>
             </div>
           </div>
           <div className="hl-config-list">
-            {cfg.services.length === 0 ? <div className="nb-muted">Aucune application.</div> : null}
+            {cfg.services.length === 0 ? <div className="nb-muted">{t('Aucune application.')}</div> : null}
             {cfg.services.map((s, i) => (
               <div key={s.id} className="hl-config-item">
                 <VisualTile v={serviceVisual(s)} />
@@ -132,21 +152,43 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
                   {s.name || SERVICE_TYPES[s.type]?.label}
                   <span className="nb-muted"> · {SERVICE_TYPES[s.type]?.label ?? s.type} · {s.url}</span>
                 </span>
-                <button type="button" className="nb-icon-btn nb-icon-btn--sm" title="Monter" aria-label="Monter" onClick={() => save({ services: move(cfg.services, i, -1) })}>
+                <button
+                  type="button"
+                  className="nb-icon-btn nb-icon-btn--sm"
+                  title={t('Monter')}
+                  aria-label={t('Monter')}
+                  onClick={() => save({ services: move(cfg.services, i, -1) })}
+                >
                   <Icon name="arrowUp" size={14} />
                 </button>
-                <button type="button" className="nb-icon-btn nb-icon-btn--sm" title="Descendre" aria-label="Descendre" onClick={() => save({ services: move(cfg.services, i, 1) })}>
+                <button
+                  type="button"
+                  className="nb-icon-btn nb-icon-btn--sm"
+                  title={t('Descendre')}
+                  aria-label={t('Descendre')}
+                  onClick={() => save({ services: move(cfg.services, i, 1) })}
+                >
                   <Icon name="arrowDown" size={14} />
                 </button>
-                <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditingService({ ...s })}>Modifier</button>
-                <button type="button" className="nb-btn nb-btn--sm nb-btn--danger" title="Supprimer" aria-label="Supprimer" onClick={() => confirm(`Supprimer « ${s.name} » ?`) && save({ services: cfg.services.filter((x) => x.id !== s.id) })}>
+                <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditingService({ ...s })}>
+                  {t('Modifier')}
+                </button>
+                <button
+                  type="button"
+                  className="nb-btn nb-btn--sm nb-btn--danger"
+                  title={t('Supprimer')}
+                  aria-label={t('Supprimer')}
+                  onClick={() =>
+                    confirm(t('Supprimer « {name} » ?', { name: s.name })) && save({ services: cfg.services.filter((x) => x.id !== s.id) })
+                  }
+                >
                   <Icon name="trash" size={14} />
                 </button>
               </div>
             ))}
           </div>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => setEditingService(newService('sonarr'))}>
-            <Icon name="plus" size={16} /> Ajouter une application
+            <Icon name="plus" size={16} /> {t('Ajouter une application')}
           </button>
         </div>
       ) : null}
@@ -169,10 +211,12 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
       {tab === 'devices' && !editingDevice ? (
         <div className="nb-tab-panel">
           <p className="nb-muted">
-            Statistiques CPU, mémoire, disques et températures de vos machines (NAS, serveur…). Le plus universel : Glances en mode web sur chaque machine.
+            {t(
+              'Statistiques CPU, mémoire, disques et températures de vos machines (NAS, serveur…). Le plus universel : Glances en mode web sur chaque machine.',
+            )}
           </p>
           <div className="hl-config-list">
-            {cfg.devices.length === 0 ? <div className="nb-muted">Aucun appareil.</div> : null}
+            {cfg.devices.length === 0 ? <div className="nb-muted">{t('Aucun appareil.')}</div> : null}
             {cfg.devices.map((d, i) => (
               <div key={d.id} className="hl-config-item">
                 <VisualTile v={deviceVisual(d)} />
@@ -180,14 +224,36 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
                   {d.name || DEVICE_TYPES[d.type]?.label}
                   <span className="nb-muted"> · {DEVICE_TYPES[d.type]?.label}{d.url ? ` · ${d.url}` : ''}</span>
                 </span>
-                <button type="button" className="nb-icon-btn nb-icon-btn--sm" title="Monter" aria-label="Monter" onClick={() => save({ devices: move(cfg.devices, i, -1) })}>
+                <button
+                  type="button"
+                  className="nb-icon-btn nb-icon-btn--sm"
+                  title={t('Monter')}
+                  aria-label={t('Monter')}
+                  onClick={() => save({ devices: move(cfg.devices, i, -1) })}
+                >
                   <Icon name="arrowUp" size={14} />
                 </button>
-                <button type="button" className="nb-icon-btn nb-icon-btn--sm" title="Descendre" aria-label="Descendre" onClick={() => save({ devices: move(cfg.devices, i, 1) })}>
+                <button
+                  type="button"
+                  className="nb-icon-btn nb-icon-btn--sm"
+                  title={t('Descendre')}
+                  aria-label={t('Descendre')}
+                  onClick={() => save({ devices: move(cfg.devices, i, 1) })}
+                >
                   <Icon name="arrowDown" size={14} />
                 </button>
-                <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditingDevice({ ...d })}>Modifier</button>
-                <button type="button" className="nb-btn nb-btn--sm nb-btn--danger" title="Supprimer" aria-label="Supprimer" onClick={() => confirm(`Supprimer « ${d.name} » ?`) && save({ devices: cfg.devices.filter((x) => x.id !== d.id) })}>
+                <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditingDevice({ ...d })}>
+                  {t('Modifier')}
+                </button>
+                <button
+                  type="button"
+                  className="nb-btn nb-btn--sm nb-btn--danger"
+                  title={t('Supprimer')}
+                  aria-label={t('Supprimer')}
+                  onClick={() =>
+                    confirm(t('Supprimer « {name} » ?', { name: d.name })) && save({ devices: cfg.devices.filter((x) => x.id !== d.id) })
+                  }
+                >
                   <Icon name="trash" size={14} />
                 </button>
               </div>
@@ -195,11 +261,11 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
           </div>
           <div className="nb-row nb-gap">
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => setEditingDevice(newDevice('glances'))}>
-              <Icon name="plus" size={16} /> Ajouter un appareil
+              <Icon name="plus" size={16} /> {t('Ajouter un appareil')}
             </button>
             {!cfg.devices.some((d) => d.type === 'local') ? (
               <button type="button" className="nb-btn" onClick={() => upsertDevice(newDevice('local'))}>
-                <Icon name="plus" size={16} /> Ajouter l’hôte de ce serveur
+                <Icon name="plus" size={16} /> {t('Ajouter l’hôte de ce serveur')}
               </button>
             ) : null}
           </div>
@@ -224,7 +290,7 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
       {tab === 'general' ? (
         <div className="nb-tab-panel">
           <label className="nb-field">
-            <span>Intervalle d’actualisation (secondes)</span>
+            <span>{t('Intervalle d’actualisation (secondes)')}</span>
             <input
               className="nb-input"
               type="number"
@@ -235,10 +301,12 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
             />
           </label>
           <p className="nb-muted">
-            Les clés API et mots de passe sont enregistrés dans votre espace de travail (synchronisé sur vos appareils et lu par le serveur). Ils ne sont jamais renvoyés au navigateur ni exposés aux pages partagées.
+            {t(
+              'Les clés API et mots de passe sont enregistrés dans votre espace de travail (synchronisé sur vos appareils et lu par le serveur). Ils ne sont jamais renvoyés au navigateur ni exposés aux pages partagées.',
+            )}
           </p>
           <p className="nb-muted">
-            Astuce : tapez <code>/Homelab</code> dans une page pour y intégrer un aperçu du tableau de bord.
+            {tx('Astuce : tapez <c>/Homelab</c> dans une page pour y intégrer un aperçu du tableau de bord.', { c: (s) => <code>{s}</code> })}
           </p>
         </div>
       ) : null}
@@ -271,7 +339,7 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
   const [crop, setCrop] = useState<{ src: string; file?: File } | null>(null);
   const upload = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+      toast(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'), 'error');
       return;
     }
     setCrop({ src: URL.createObjectURL(file), file });
@@ -293,9 +361,18 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
   };
   return (
     <div className="nb-field hl-span2">
-      <span>Icône</span>
+      <span>{t('Icône')}</span>
       <div className="hl-icon-choices">
-        <button type="button" className={`hl-icon-choice${!value ? ' hl-icon-choice--active' : ''}`} title="Icône par défaut" aria-label="Icône par défaut" onClick={() => { setUrl(''); onChange(''); }}>
+        <button
+          type="button"
+          className={`hl-icon-choice${!value ? ' hl-icon-choice--active' : ''}`}
+          title={t('Icône par défaut')}
+          aria-label={t('Icône par défaut')}
+          onClick={() => {
+            setUrl('');
+            onChange('');
+          }}
+        >
           <AppTile name={visual.name} color={visual.color} size={26} />
         </button>
         {choices.map((name) => (
@@ -318,7 +395,7 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
       <div className="nb-row nb-gap">
         <input
           className="nb-input"
-          placeholder="…ou l’URL d’une image, par exemple https://…/logo.png"
+          placeholder={t('…ou l’URL d’une image, par exemple https://…/logo.png')}
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -326,11 +403,11 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
           }}
         />
         <button type="button" className="nb-btn" onClick={() => fileRef.current?.click()}>
-          <Icon name="upload" size={15} /> Importer une image
+          <Icon name="upload" size={15} /> {t('Importer une image')}
         </button>
         {isImageIcon(value) ? (
           <button type="button" className="nb-btn" onClick={() => setCrop({ src: value })}>
-            <Icon name="crop" size={15} /> Recadrer
+            <Icon name="crop" size={15} /> {t('Recadrer')}
           </button>
         ) : null}
         <input
@@ -338,7 +415,7 @@ function IconChoiceField({ value, choices, visual, onChange }: { value: string; 
           type="file"
           accept="image/*"
           hidden
-          aria-label="Image de l’icône"
+          aria-label={t('Image de l’icône')}
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = '';
@@ -372,7 +449,7 @@ function ServiceForm({ value, onChange, onCancel, onSave, onTest, testing, testR
     <div className="nb-tab-panel hl-form">
       <div className="hl-form-grid">
         <label className="nb-field">
-          <span>Type</span>
+          <span>{t('Type')}</span>
           <select className="nb-input" value={value.type} onChange={(e) => changeType(e.target.value as ServiceType)}>
             {(Object.keys(SERVICE_TYPES) as ServiceType[]).map((t) => (
               <option key={t} value={t}>
@@ -382,66 +459,102 @@ function ServiceForm({ value, onChange, onCancel, onSave, onTest, testing, testR
           </select>
         </label>
         <label className="nb-field">
-          <span>Nom affiché</span>
+          <span>{t('Nom affiché')}</span>
           <input className="nb-input" value={value.name} placeholder={meta.label} onChange={(e) => set({ name: e.target.value })} />
         </label>
         <label className="nb-field hl-span2">
-          <span>URL (ouverte au clic, et utilisée pour la vérification)</span>
-          <input className="nb-input" placeholder={defaultUrl(value.type, '192.168.1.10', 'service') || 'https://…'} value={value.url} onChange={(e) => set({ url: e.target.value })} />
+          <span>{t('URL (ouverte au clic, et utilisée pour la vérification)')}</span>
+          <input
+            className="nb-input"
+            placeholder={defaultUrl(value.type, '192.168.1.10', 'service') || t('https://…')}
+            value={value.url}
+            onChange={(e) => set({ url: e.target.value })}
+          />
         </label>
         <label className="nb-field hl-span2">
-          <span>URL interne (optionnel : adresse vue par le serveur Melo si différente, ex. http://sonarr:8989)</span>
+          <span>{t('URL interne (optionnel : adresse vue par le serveur Melo si différente, ex. http://sonarr:8989)')}</span>
           <input className="nb-input" value={value.internalUrl ?? ''} onChange={(e) => set({ internalUrl: e.target.value || undefined })} />
         </label>
         {meta.auth === 'apiKey' || meta.auth === 'token' ? (
           <label className="nb-field hl-span2">
-            <span>{meta.auth === 'token' ? 'Jeton d’accès' : 'Clé API'}{meta.help ? ` — ${meta.help}` : ''}</span>
-            <input className="nb-input" type="password" autoComplete="off" value={value.apiKey ?? ''} onChange={(e) => set({ apiKey: e.target.value })} />
+            <span>
+              {meta.auth === 'token' ? t('Jeton d’accès') : t('Clé API')}
+              {meta.help ? ` — ${meta.help}` : ''}
+            </span>
+            <input
+              className="nb-input"
+              type="password"
+              autoComplete="off"
+              value={value.apiKey ?? ''}
+              onChange={(e) => set({ apiKey: e.target.value })}
+            />
           </label>
         ) : null}
         {meta.auth === 'password' ? (
           <label className="nb-field hl-span2">
-            <span>Mot de passe / jeton{meta.help ? ` — ${meta.help}` : ''}</span>
-            <input className="nb-input" type="password" autoComplete="off" value={value.password ?? ''} onChange={(e) => set({ password: e.target.value })} />
+            <span>
+              {t('Mot de passe / jeton')}
+              {meta.help ? ` — ${meta.help}` : ''}
+            </span>
+            <input
+              className="nb-input"
+              type="password"
+              autoComplete="off"
+              value={value.password ?? ''}
+              onChange={(e) => set({ password: e.target.value })}
+            />
           </label>
         ) : null}
         {meta.auth === 'userpass' || meta.auth === 'userpass-optional' ? (
           <>
             <label className="nb-field">
-              <span>Utilisateur{meta.auth === 'userpass-optional' ? ' (optionnel)' : ''}</span>
+              <span>
+                {t('Utilisateur')}
+                {meta.auth === 'userpass-optional' ? t(' (optionnel)') : ''}
+              </span>
               <input className="nb-input" autoComplete="off" value={value.username ?? ''} onChange={(e) => set({ username: e.target.value })} />
             </label>
             <label className="nb-field">
-              <span>Mot de passe{meta.help ? ` — ${meta.help}` : ''}</span>
-              <input className="nb-input" type="password" autoComplete="off" value={value.password ?? ''} onChange={(e) => set({ password: e.target.value })} />
+              <span>
+                {t('Mot de passe')}
+                {meta.help ? ` — ${meta.help}` : ''}
+              </span>
+              <input
+                className="nb-input"
+                type="password"
+                autoComplete="off"
+                value={value.password ?? ''}
+                onChange={(e) => set({ password: e.target.value })}
+              />
             </label>
           </>
         ) : null}
         <label className="nb-field">
-          <span>Catégorie</span>
+          <span>{t('Catégorie')}</span>
           <select className="nb-input" value={value.category} onChange={(e) => set({ category: e.target.value })}>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {categoryLabel(c)}
               </option>
             ))}
           </select>
         </label>
         <IconChoiceField value={value.icon} choices={SERVICE_ICON_CHOICES} visual={{ name: meta.icon, color: meta.color }} onChange={(icon) => set({ icon })} />
         <label className="nb-check hl-span2">
-          <input type="checkbox" checked={Boolean(value.insecure)} onChange={(e) => set({ insecure: e.target.checked })} /> Ignorer le certificat TLS (auto-signé)
+          <input type="checkbox" checked={Boolean(value.insecure)} onChange={(e) => set({ insecure: e.target.checked })} />{' '}
+          {t('Ignorer le certificat TLS (auto-signé)')}
         </label>
       </div>
       <TestMessage result={testResult} />
       <div className="nb-row nb-gap nb-end hl-form-actions">
         <button type="button" className="nb-btn" onClick={onTest} disabled={testing || !value.url.trim()}>
-          {testing ? 'Test…' : 'Tester'}
+          {testing ? t('Test…') : t('Tester')}
         </button>
         <button type="button" className="nb-btn" onClick={onCancel}>
-          Annuler
+          {t('Annuler')}
         </button>
         <button type="button" className="nb-btn nb-btn--primary" onClick={onSave} disabled={!canSave}>
-          Enregistrer
+          {t('Enregistrer')}
         </button>
       </div>
     </div>
@@ -452,7 +565,12 @@ function DeviceForm({ value, onChange, onCancel, onSave, onTest, testing, testRe
   const meta = DEVICE_TYPES[value.type];
   const set = (patch: Partial<Device>) => onChange({ ...value, ...patch });
   const changeType = (type: DeviceType) => {
-    set({ type, icon: value.icon && value.icon !== meta.icon ? value.icon : '', insecure: type === 'proxmox' ? true : value.insecure, name: value.name || (type === 'local' ? 'Serveur' : '') });
+    set({
+      type,
+      icon: value.icon && value.icon !== meta.icon ? value.icon : '',
+      insecure: type === 'proxmox' ? true : value.insecure,
+      name: value.name || (type === 'local' ? t('Serveur') : ''),
+    });
   };
   const needsUrl = value.type !== 'local';
   const canSave = Boolean(value.name.trim()) && (!needsUrl || Boolean(value.url?.trim()));
@@ -460,7 +578,7 @@ function DeviceForm({ value, onChange, onCancel, onSave, onTest, testing, testRe
     <div className="nb-tab-panel hl-form">
       <div className="hl-form-grid">
         <label className="nb-field">
-          <span>Type</span>
+          <span>{t('Type')}</span>
           <select className="nb-input" value={value.type} onChange={(e) => changeType(e.target.value as DeviceType)}>
             {(Object.keys(DEVICE_TYPES) as DeviceType[]).map((t) => (
               <option key={t} value={t}>
@@ -470,30 +588,38 @@ function DeviceForm({ value, onChange, onCancel, onSave, onTest, testing, testRe
           </select>
         </label>
         <label className="nb-field">
-          <span>Nom affiché (ex. NAS, Serveur)</span>
+          <span>{t('Nom affiché (ex. NAS, Serveur)')}</span>
           <input className="nb-input" value={value.name} onChange={(e) => set({ name: e.target.value })} />
         </label>
         <p className="nb-muted hl-span2">{meta.help}</p>
         {needsUrl ? (
           <label className="nb-field hl-span2">
-            <span>URL</span>
+            <span>{t('URL')}</span>
             <input className="nb-input" placeholder={defaultUrl(value.type, '192.168.1.20', 'device')} value={value.url ?? ''} onChange={(e) => set({ url: e.target.value })} />
           </label>
         ) : null}
         {value.type === 'local' ? (
           <label className="nb-field hl-span2">
-            <span>Points de montage à surveiller (séparés par des virgules)</span>
-            <input className="nb-input" placeholder="/, /data, /mnt/media" value={value.mounts ?? ''} onChange={(e) => set({ mounts: e.target.value })} />
+            <span>{t('Points de montage à surveiller (séparés par des virgules)')}</span>
+            <input
+              className="nb-input"
+              placeholder={t('/, /data, /mnt/media')}
+              value={value.mounts ?? ''}
+              onChange={(e) => set({ mounts: e.target.value })}
+            />
           </label>
         ) : null}
         {meta.auth === 'userpass' || meta.auth === 'userpass-optional' ? (
           <>
             <label className="nb-field">
-              <span>Utilisateur{meta.auth === 'userpass-optional' ? ' (optionnel)' : ''}</span>
+              <span>
+                {t('Utilisateur')}
+                {meta.auth === 'userpass-optional' ? t(' (optionnel)') : ''}
+              </span>
               <input className="nb-input" autoComplete="off" value={value.username ?? ''} onChange={(e) => set({ username: e.target.value })} />
             </label>
             <label className="nb-field">
-              <span>Mot de passe</span>
+              <span>{t('Mot de passe')}</span>
               <input className="nb-input" type="password" autoComplete="off" value={value.password ?? ''} onChange={(e) => set({ password: e.target.value })} />
             </label>
           </>
@@ -501,42 +627,49 @@ function DeviceForm({ value, onChange, onCancel, onSave, onTest, testing, testRe
         {meta.auth === 'pve-token' ? (
           <>
             <label className="nb-field">
-              <span>Identifiant du jeton (utilisateur@pam!nom)</span>
-              <input className="nb-input" placeholder="root@pam!notes" autoComplete="off" value={value.username ?? ''} onChange={(e) => set({ username: e.target.value })} />
+              <span>{t('Identifiant du jeton (utilisateur@pam!nom)')}</span>
+              <input
+                className="nb-input"
+                placeholder={t('root@pam!notes')}
+                autoComplete="off"
+                value={value.username ?? ''}
+                onChange={(e) => set({ username: e.target.value })}
+              />
             </label>
             <label className="nb-field">
-              <span>Secret du jeton</span>
+              <span>{t('Secret du jeton')}</span>
               <input className="nb-input" type="password" autoComplete="off" value={value.token ?? ''} onChange={(e) => set({ token: e.target.value })} />
             </label>
             <label className="nb-field">
-              <span>Nœud (optionnel, premier nœud par défaut)</span>
+              <span>{t('Nœud (optionnel, premier nœud par défaut)')}</span>
               <input className="nb-input" value={value.node ?? ''} onChange={(e) => set({ node: e.target.value || undefined })} />
             </label>
           </>
         ) : null}
         {meta.auth === 'token' ? (
           <label className="nb-field hl-span2">
-            <span>Clé API</span>
+            <span>{t('Clé API')}</span>
             <input className="nb-input" type="password" autoComplete="off" value={value.token ?? ''} onChange={(e) => set({ token: e.target.value })} />
           </label>
         ) : null}
         <IconChoiceField value={value.icon ?? ''} choices={DEVICE_ICON_CHOICES} visual={{ name: meta.icon, color: meta.color }} onChange={(icon) => set({ icon })} />
         {needsUrl ? (
           <label className="nb-check">
-            <input type="checkbox" checked={Boolean(value.insecure)} onChange={(e) => set({ insecure: e.target.checked })} /> Ignorer le certificat TLS
+            <input type="checkbox" checked={Boolean(value.insecure)} onChange={(e) => set({ insecure: e.target.checked })} />{' '}
+            {t('Ignorer le certificat TLS')}
           </label>
         ) : null}
       </div>
       <TestMessage result={testResult} />
       <div className="nb-row nb-gap nb-end hl-form-actions">
         <button type="button" className="nb-btn" onClick={onTest} disabled={testing || (needsUrl && !value.url?.trim())}>
-          {testing ? 'Test…' : 'Tester'}
+          {testing ? t('Test…') : t('Tester')}
         </button>
         <button type="button" className="nb-btn" onClick={onCancel}>
-          Annuler
+          {t('Annuler')}
         </button>
         <button type="button" className="nb-btn nb-btn--primary" onClick={onSave} disabled={!canSave}>
-          Enregistrer
+          {t('Enregistrer')}
         </button>
       </div>
     </div>

@@ -4,15 +4,16 @@ import { useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import { noteText } from '../model';
 import { str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 export const NOTE_COLORS: { id: string; label: string; color: string }[] = [
-  { id: '', label: 'Aucune', color: '' },
-  { id: 'yellow', label: 'Jaune', color: '#f5d565' },
-  { id: 'orange', label: 'Orange', color: '#f4a261' },
-  { id: 'pink', label: 'Rose', color: '#f28fb1' },
-  { id: 'green', label: 'Vert', color: '#8fd19e' },
-  { id: 'blue', label: 'Bleu', color: '#8ec5ff' },
-  { id: 'purple', label: 'Violet', color: '#c3a6ff' },
+  { id: '', label: t('Aucune'), color: '' },
+  { id: 'yellow', label: t('Jaune'), color: '#f5d565' },
+  { id: 'orange', label: t('Orange'), color: '#f4a261' },
+  { id: 'pink', label: t('Rose'), color: '#f28fb1' },
+  { id: 'green', label: t('Vert'), color: '#8fd19e' },
+  { id: 'blue', label: t('Bleu'), color: '#8ec5ff' },
+  { id: 'purple', label: t('Violet'), color: '#c3a6ff' },
 ];
 
 /** Remplace le texte partagé par `next` en ne modifiant que la partie changée (fusion avec les autres appareils). */
@@ -70,8 +71,8 @@ export function NoteWidget({ widget, doc }: WidgetProps) {
     <textarea
       ref={ref}
       className={`w-note w-note--${size}`}
-      placeholder="Écrivez une note…"
-      aria-label={widget.title || 'Note rapide'}
+      placeholder={t('Écrivez une note…')}
+      aria-label={widget.title || t('Note rapide')}
       spellCheck
       onInput={(e) => {
         applyText(text, e.currentTarget.value);
@@ -89,7 +90,7 @@ export function NoteSettings({ config, set }: SettingsProps) {
   return (
     <>
       <div className="nb-field">
-        <span>Couleur (post-it)</span>
+        <span>{t('Couleur (post-it)')}</span>
         <div className="w-swatches">
           {NOTE_COLORS.map((c) => (
             <button
@@ -106,11 +107,11 @@ export function NoteSettings({ config, set }: SettingsProps) {
         </div>
       </div>
       <label className="nb-field">
-        <span>Taille du texte</span>
+        <span>{t('Taille du texte')}</span>
         <select className="nb-input" value={str(config.size, 'md')} onChange={(e) => set({ size: e.target.value })}>
-          <option value="sm">Petite</option>
-          <option value="md">Normale</option>
-          <option value="lg">Grande</option>
+          <option value="sm">{t('Petite')}</option>
+          <option value="md">{t('Normale')}</option>
+          <option value="lg">{t('Grande')}</option>
         </select>
       </label>
     </>

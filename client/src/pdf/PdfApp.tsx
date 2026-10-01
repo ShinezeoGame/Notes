@@ -5,6 +5,7 @@ import { Icon } from '../icons/Icon';
 import { PdfLibrary } from './model';
 import { PdfLibraryView } from './PdfLibraryView';
 import { PdfEditor } from './PdfEditor';
+import { t } from '../lib/i18n';
 import './pdf.css';
 
 const libraries = new WeakMap<Y.Doc, PdfLibrary>();
@@ -25,11 +26,11 @@ export default function PdfApp({ doc, pdfId }: { doc: Y.Doc; pdfId: string | nul
     return (
       <div className="nb-page">
         <h1 className="nb-page-title-static">
-          <Icon name="filePdf" size={34} /> Atelier PDF
+          <Icon name="filePdf" size={34} /> {t('Atelier PDF')}
         </h1>
         <div className="nb-notice">
-          <p>L’atelier PDF garde vos fichiers sur votre serveur Melo.</p>
-          <p className="nb-muted">Ajoutez l’adresse de votre serveur dans les réglages pour l’utiliser.</p>
+          <p>{t('L’atelier PDF garde vos fichiers sur votre serveur Melo.')}</p>
+          <p className="nb-muted">{t('Ajoutez l’adresse de votre serveur dans les réglages pour l’utiliser.')}</p>
         </div>
       </div>
     );

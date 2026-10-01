@@ -8,6 +8,7 @@ import { serverBase } from './api';
 import { getSettings, isNative, updateSettings } from './settings';
 import { callNative, hasNativePlugin, onNative } from './native';
 import { toast } from '../components/Toast';
+import { t, locale, getLang } from './i18n';
 
 export const BUILD = __APP_BUILD__;
 /** Téléchargement de l'APK, quand une mise à jour demande une application Android plus récente. */
@@ -79,7 +80,7 @@ export function needsNewApp(s: UpdateState = state): boolean {
 
 export function formatBuildDate(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function dismissUpdate() {
@@ -129,9 +130,9 @@ export async function applyUpdate(): Promise<void> {
   );
   try {
     const r = await fetch(`${base}/api/app/manifest`, { cache: 'no-store' });
-    if (!r.ok) throw new Error(`Le serveur a répondu ${r.status}.`);
+    if (!r.ok) throw new Error(t('Le serveur a répondu {status}.', { status: r.status }));
     const manifest = (await r.json()) as Manifest;
-    if (manifest.minNative > state.nativeApi) throw new Error('Cette version demande une application Android plus récente.');
+    if (manifest.minNative > state.nativeApi) throw new Error(t('Cette version demande une application Android plus récente.'));
     const { path } = await callNative<{ path: string }>('AppUpdate', 'download', {
       baseUrl: base,
       version: manifest.version,
@@ -151,7 +152,7 @@ export async function applyUpdate(): Promise<void> {
     } catch {
       /* ignore */
     }
-    set({ progress: null, error: err instanceof Error ? err.message : 'Mise à jour impossible.' });
+    set({ progress: null, error: err instanceof Error ? err.message : t('Mise à jour impossible.') });
   } finally {
     stop();
     applying = false;
@@ -162,7 +163,7 @@ export async function applyUpdate(): Promise<void> {
 export async function configureNativeUpdates(requestPermission = false): Promise<void> {
   if (!nativeUpdater()) return;
   const notify = getSettings().updateNotifications !== false;
-  await callNative('AppUpdate', 'configure', { serverUrl: serverBase() ?? '', currentVersion: BUILD.id, notify }).catch(() => {});
+  await callNative('AppUpdate', 'configure', { serverUrl: serverBase() ?? '', currentVersion: BUILD.id, notify, lang: getLang() }).catch(() => {});
   if (!notify || !serverBase()) return;
   const perm = await callNative<{ notifications?: string }>('AppUpdate', 'checkPermissions').catch(() => null);
   if (!perm?.notifications?.startsWith('prompt')) return;
@@ -199,8 +200,9 @@ async function bootNative() {
   } catch {
     /* ignore */
   }
-  if (pending?.version === BUILD.id) toast(`Melo a été mis à jour : version ${BUILD.id} du ${formatBuildDate(BUILD.builtAt)}.`);
-  else if (pending?.version) toast('La nouvelle version n’a pas pu démarrer : la version précédente est conservée.', 'error');
+  if (pending?.version === BUILD.id)
+    toast(t('Melo a été mis à jour : version {version} du {date}.', { version: BUILD.id, date: formatBuildDate(BUILD.builtAt) }));
+  else if (pending?.version) toast(t('La nouvelle version n’a pas pu démarrer : la version précédente est conservée.'), 'error');
 
   await callNative('AppUpdate', 'cleanup', { keep: bundle }).catch(() => {});
   await configureNativeUpdates();

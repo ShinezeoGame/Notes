@@ -7,9 +7,10 @@ import { navigate } from '../../lib/router';
 import { EventLine } from '../../components/AgendaView';
 import { Icon } from '../../icons/Icon';
 import { num, str, type SettingsProps, type WidgetProps } from '../types';
+import { t, locale } from '../../lib/i18n';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+const monthFmt = new Intl.DateTimeFormat(locale(), { month: 'long', year: 'numeric' });
 const keyOf = (d: Date) => dayKey(d.toISOString());
 
 function MiniMonth({ events }: { events: ReturnType<typeof useAgenda>['events'] }) {
@@ -23,11 +24,21 @@ function MiniMonth({ events }: { events: ReturnType<typeof useAgenda>['events'] 
   return (
     <div className="w-month">
       <div className="w-month-bar">
-        <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))} aria-label="Mois précédent">
+        <button
+          type="button"
+          className="nb-icon-btn nb-icon-btn--sm"
+          onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+          aria-label={t('Mois précédent')}
+        >
           <Icon name="chevronLeft" size={15} />
         </button>
         <span>{label.charAt(0).toUpperCase() + label.slice(1)}</span>
-        <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))} aria-label="Mois suivant">
+        <button
+          type="button"
+          className="nb-icon-btn nb-icon-btn--sm"
+          onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+          aria-label={t('Mois suivant')}
+        >
           <Icon name="chevronRight" size={15} />
         </button>
       </div>
@@ -55,7 +66,11 @@ function MiniMonth({ events }: { events: ReturnType<typeof useAgenda>['events'] 
         })}
       </div>
       <div className="w-month-events">
-        {list.length ? list.map((ev) => <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={selected} />) : <p className="w-muted">Aucun événement ce jour-là.</p>}
+        {list.length ? (
+          list.map((ev) => <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={selected} />)
+        ) : (
+          <p className="w-muted">{t('Aucun événement ce jour-là.')}</p>
+        )}
       </div>
     </div>
   );
@@ -79,9 +94,9 @@ export function AgendaWidget({ widget, doc, editing }: WidgetProps) {
     return (
       <div className="w-empty">
         <Icon name="calendar" size={26} />
-        <span className="w-muted">Affichez ici vos agendas Google ou iCal.</span>
+        <span className="w-muted">{t('Affichez ici vos agendas Google ou iCal.')}</span>
         <button type="button" className="nb-btn nb-btn--sm" onClick={() => void add()} disabled={editing}>
-          Ajouter un agenda
+          {t('Ajouter un agenda')}
         </button>
       </div>
     );
@@ -92,19 +107,17 @@ export function AgendaWidget({ widget, doc, editing }: WidgetProps) {
       {upcoming.length ? (
         upcoming.map(([k, list]) => (
           <section key={k} className="w-agenda-day">
-            <h4>
-              {k === today ? 'Aujourd’hui' : formatDay(new Date(`${k}T12:00:00`).toISOString())}
-            </h4>
+            <h4>{k === today ? t('Aujourd’hui') : formatDay(new Date(`${k}T12:00:00`).toISOString())}</h4>
             {list.map((ev) => (
               <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={k} />
             ))}
           </section>
         ))
       ) : (
-        <p className="w-muted">Aucun événement dans les {days} prochains jours.</p>
+        <p className="w-muted">{t('Aucun événement dans les {days} prochains jours.', { days })}</p>
       )}
       <button type="button" className="w-link-btn" onClick={() => navigate('#/agenda')}>
-        Ouvrir l’agenda <Icon name="chevronRight" size={14} />
+        {t('Ouvrir l’agenda')} <Icon name="chevronRight" size={14} />
       </button>
     </div>
   );
@@ -114,25 +127,25 @@ export function AgendaSettings({ config, set }: SettingsProps) {
   return (
     <>
       <label className="nb-field">
-        <span>Affichage</span>
+        <span>{t('Affichage')}</span>
         <select className="nb-input" value={str(config.view, 'list')} onChange={(e) => set({ view: e.target.value })}>
-          <option value="list">Prochains événements</option>
-          <option value="month">Mois</option>
+          <option value="list">{t('Prochains événements')}</option>
+          <option value="month">{t('Mois')}</option>
         </select>
       </label>
       {str(config.view, 'list') === 'list' ? (
         <label className="nb-field">
-          <span>Période</span>
+          <span>{t('Période')}</span>
           <select className="nb-input" value={num(config.days, 14)} onChange={(e) => set({ days: Number(e.target.value) })}>
-            <option value={1}>Aujourd’hui</option>
-            <option value={7}>7 jours</option>
-            <option value={14}>14 jours</option>
-            <option value={31}>1 mois</option>
-            <option value={92}>3 mois</option>
+            <option value={1}>{t('Aujourd’hui')}</option>
+            <option value={7}>{t('7 jours')}</option>
+            <option value={14}>{t('14 jours')}</option>
+            <option value={31}>{t('1 mois')}</option>
+            <option value={92}>{t('3 mois')}</option>
           </select>
         </label>
       ) : null}
-      <p className="nb-muted w-settings-hint">Les agendas se gèrent dans la section Agenda.</p>
+      <p className="nb-muted w-settings-hint">{t('Les agendas se gèrent dans la section Agenda.')}</p>
     </>
   );
 }

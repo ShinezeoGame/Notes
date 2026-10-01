@@ -1,5 +1,6 @@
 // Analyse de fichiers/flux iCalendar (export Google Agenda) en événements simples.
 import ICAL from 'ical.js';
+import { t, locale } from './i18n';
 
 export type CalEvent = {
   id: string;
@@ -23,7 +24,7 @@ const DAY = 86_400_000;
 function toEvent(e: ICAL.Event, start: ICAL.Time, end: ICAL.Time, id: string): CalEvent {
   return {
     id,
-    title: e.summary || '(Sans titre)',
+    title: e.summary || t('(Sans titre)'),
     start: start.toJSDate().toISOString(),
     end: end.toJSDate().toISOString(),
     allDay: Boolean(start.isDate),
@@ -47,7 +48,7 @@ export function parseIcs(text: string, opts: { from?: Date; to?: Date; max?: num
       /* fuseau non reconnu */
     }
   }
-  const name = String(comp.getFirstPropertyValue('x-wr-calname') ?? 'Agenda');
+  const name = String(comp.getFirstPropertyValue('x-wr-calname') ?? t('Agenda'));
 
   const masters: ICAL.Event[] = [];
   const exceptions: ICAL.Event[] = [];
@@ -102,8 +103,8 @@ export function parseEventsJson(json: string): CalEvent[] {
   }
 }
 
-const dayFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const dayFmt = new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const timeFmt = new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' });
 
 export function dayKey(iso: string): string {
   const d = new Date(iso);
@@ -118,7 +119,7 @@ export function formatDay(iso: string): string {
 export function formatTimeRange(ev: CalEvent): string {
   if (ev.allDay) {
     const days = Math.round((new Date(ev.end).getTime() - new Date(ev.start).getTime()) / DAY);
-    return days > 1 ? `Journée entière · ${days} jours` : 'Journée entière';
+    return days > 1 ? t('Journée entière · {days} jours', { days }) : t('Journée entière');
   }
   return `${timeFmt.format(new Date(ev.start))} – ${timeFmt.format(new Date(ev.end))}`;
 }

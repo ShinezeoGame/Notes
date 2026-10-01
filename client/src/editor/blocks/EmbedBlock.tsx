@@ -4,6 +4,7 @@ import type { BlockConfig } from '@blocknote/core';
 import { normalizeEmbedUrl } from '../embed';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame } from '../resize';
+import { t } from '../../lib/i18n';
 
 const embedConfig = {
   type: 'embed',
@@ -24,7 +25,7 @@ function embedLabel(kind: string | undefined, url: string): string {
   try {
     return new URL(url).hostname;
   } catch {
-    return 'Contenu intégré';
+    return t('Contenu intégré');
   }
 }
 
@@ -38,7 +39,7 @@ function EmbedView({ block, editor }: Props) {
   const submit = () => {
     const info = normalizeEmbedUrl(draft);
     if (!info) {
-      setError('Lien invalide. Collez une adresse commençant par http(s)://');
+      setError(t('Lien invalide. Collez une adresse commençant par http(s)://'));
       return;
     }
     const nextHeight = info.ratio ? Math.round(Math.min(720, Math.max(240, (window.innerWidth > 900 ? 720 : window.innerWidth - 80) / info.ratio))) : height;
@@ -57,7 +58,7 @@ function EmbedView({ block, editor }: Props) {
           <input
             className="nb-input"
             type="url"
-            placeholder="Coller un lien YouTube, Vimeo, Google Agenda, Drive…"
+            placeholder={t('Coller un lien YouTube, Vimeo, Google Agenda, Drive…')}
             value={draft}
             disabled={!editable}
             onChange={(e) => setDraft(e.target.value)}
@@ -69,11 +70,11 @@ function EmbedView({ block, editor }: Props) {
             }}
           />
           <button type="button" className="nb-btn nb-btn--primary" onClick={submit} disabled={!editable}>
-            Intégrer
+            {t('Intégrer')}
           </button>
           {url ? (
             <button type="button" className="nb-btn" onClick={() => setEditing(false)}>
-              Annuler
+              {t('Annuler')}
             </button>
           ) : null}
         </div>
@@ -95,39 +96,39 @@ function EmbedView({ block, editor }: Props) {
       className="nb-embed"
     >
       {(liveHeight, resizing) => (
-    <div contentEditable={false}>
-      <div className="nb-media-toolbar">
-        <span className="nb-media-title" title={url}>
-          <Icon name="video" size={15} /> {title || embedLabel(info?.kind, url)}
-        </span>
-        <span className="nb-media-actions">
-          <button type="button" onClick={() => window.open(url, '_blank', 'noopener')}>
-            Ouvrir
-          </button>
-          {editable ? (
-            <button
-              type="button"
-              onClick={() => {
-                setDraft(url);
-                setEditing(true);
-              }}
-            >
-              Modifier
-            </button>
-          ) : null}
-        </span>
-      </div>
-      <iframe
-        className="nb-embed-frame"
-        src={info?.src ?? url}
-        style={{ height: liveHeight, pointerEvents: resizing ? 'none' : undefined }}
-        title={title || 'Contenu intégré'}
-        loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
-    </div>
+        <div contentEditable={false}>
+          <div className="nb-media-toolbar">
+            <span className="nb-media-title" title={url}>
+              <Icon name="video" size={15} /> {title || embedLabel(info?.kind, url)}
+            </span>
+            <span className="nb-media-actions">
+              <button type="button" onClick={() => window.open(url, '_blank', 'noopener')}>
+                {t('Ouvrir')}
+              </button>
+              {editable ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraft(url);
+                    setEditing(true);
+                  }}
+                >
+                  {t('Modifier')}
+                </button>
+              ) : null}
+            </span>
+          </div>
+          <iframe
+            className="nb-embed-frame"
+            src={info?.src ?? url}
+            style={{ height: liveHeight, pointerEvents: resizing ? 'none' : undefined }}
+            title={title || t('Contenu intégré')}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
       )}
     </ResizableFrame>
   );

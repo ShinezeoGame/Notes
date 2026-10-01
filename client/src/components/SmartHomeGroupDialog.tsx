@@ -17,23 +17,24 @@ import type { IconName } from '../icons/registry';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { toast } from './Toast';
+import { t, tn } from '../lib/i18n';
 
 /** Icônes proposées pour un groupe (en plus de « automatique », qui suit les appareils choisis). */
 const GROUP_ICONS: [IconName, string][] = [
-  ['bulb', 'Ampoule'],
-  ['plug', 'Prise'],
-  ['power', 'Interrupteur'],
-  ['fan', 'Ventilateur'],
-  ['blinds', 'Volets'],
-  ['thermometer', 'Chauffage'],
-  ['sun', 'Jour'],
-  ['moon', 'Nuit'],
-  ['sparkles', 'Ambiance'],
-  ['home', 'Maison'],
-  ['tv', 'Télévision'],
-  ['speaker', 'Enceinte'],
-  ['door', 'Porte'],
-  ['grid', 'Groupe'],
+  ['bulb', t('Ampoule')],
+  ['plug', t('Prise')],
+  ['power', t('Interrupteur')],
+  ['fan', t('Ventilateur')],
+  ['blinds', t('Volets')],
+  ['thermometer', t('Chauffage')],
+  ['sun', t('Jour')],
+  ['moon', t('Nuit')],
+  ['sparkles', t('Ambiance')],
+  ['home', t('Maison')],
+  ['tv', t('Télévision')],
+  ['speaker', t('Enceinte')],
+  ['door', t('Porte')],
+  ['grid', t('Groupe')],
 ];
 
 /** Création ou modification d'un groupe d'appareils : nom, icône et appareils pilotés ensemble. */
@@ -76,35 +77,35 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
       ...c,
       groups: group ? c.groups.map((g) => (g.id === group.id ? next : g)) : [...c.groups, next],
     }));
-    toast(group ? `Groupe « ${finalName} » modifié.` : `Groupe « ${finalName} » créé.`);
+    toast(group ? t('Groupe « {name} » modifié.', { name: finalName }) : t('Groupe « {name} » créé.', { name: finalName }));
     onClose();
   };
 
   return (
     <Modal
-      title={group ? 'Modifier le groupe' : 'Nouveau groupe'}
+      title={group ? t('Modifier le groupe') : t('Nouveau groupe')}
       onClose={onClose}
       width={620}
       footer={
         <>
           <span className="nb-muted sh-group-count">
-            {members.length ? `${members.length} appareil${members.length > 1 ? 's' : ''}` : 'Choisissez les appareils du groupe'}
+            {members.length ? tn(members.length, '{n} appareil', '{n} appareils') : t('Choisissez les appareils du groupe')}
           </span>
           <button type="button" className="nb-btn" onClick={onClose}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" onClick={save} disabled={!finalName || !members.length}>
-            {group ? 'Enregistrer' : 'Créer le groupe'}
+            {group ? t('Enregistrer') : t('Créer le groupe')}
           </button>
         </>
       }
     >
       <label className="nb-field">
-        <span>Nom du groupe</span>
+        <span>{t('Nom du groupe')}</span>
         <input
           className="nb-input"
           value={nameTouched ? name : name || suggested}
-          placeholder="Ex. : Lumières du salon"
+          placeholder={t('Ex. : Lumières du salon')}
           onChange={(ev) => {
             setName(ev.target.value);
             setNameTouched(true);
@@ -113,10 +114,17 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
         />
       </label>
       <div className="nb-field">
-        <span>Icône</span>
-        <div className="sh-icon-choices" role="radiogroup" aria-label="Icône du groupe">
-          <button type="button" role="radio" aria-checked={!icon} className={`sh-icon-choice${!icon ? ' sh-icon-choice--on' : ''}`} onClick={() => setIcon('')} title="D’après les appareils du groupe">
-            <Icon name={autoIcon} size={18} /> Auto
+        <span>{t('Icône')}</span>
+        <div className="sh-icon-choices" role="radiogroup" aria-label={t('Icône du groupe')}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!icon}
+            className={`sh-icon-choice${!icon ? ' sh-icon-choice--on' : ''}`}
+            onClick={() => setIcon('')}
+            title={t('D’après les appareils du groupe')}
+          >
+            <Icon name={autoIcon} size={18} /> {t('Auto')}
           </button>
           {GROUP_ICONS.map(([key, label]) => (
             <button key={key} type="button" role="radio" aria-checked={icon === key} className={`sh-icon-choice${icon === key ? ' sh-icon-choice--on' : ''}`} onClick={() => setIcon(key)} aria-label={label} title={label}>
@@ -126,8 +134,14 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
         </div>
       </div>
       <div className="nb-field">
-        <span>Appareils</span>
-        <input className="nb-input nb-input--sm sh-pick-search" placeholder="Rechercher un appareil ou une pièce…" value={query} onChange={(ev) => setQuery(ev.target.value)} aria-label="Rechercher un appareil" />
+        <span>{t('Appareils')}</span>
+        <input
+          className="nb-input nb-input--sm sh-pick-search"
+          placeholder={t('Rechercher un appareil ou une pièce…')}
+          value={query}
+          onChange={(ev) => setQuery(ev.target.value)}
+          aria-label={t('Rechercher un appareil')}
+        />
       </div>
       <div className="sh-pick">
         {rooms.length ? (
@@ -136,9 +150,9 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
             return (
               <section key={area || '—'} className="sh-pick-room">
                 <div className="sh-pick-head">
-                  <h3>{area || 'Sans pièce'}</h3>
+                  <h3>{area || t('Sans pièce')}</h3>
                   <button type="button" className="sh-pick-all" onClick={() => toggleRoom(list)}>
-                    {all ? 'Tout décocher' : 'Tout cocher'}
+                    {all ? t('Tout décocher') : t('Tout cocher')}
                   </button>
                 </div>
                 {list.map((e) => (
@@ -146,7 +160,7 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
                     <input type="checkbox" checked={members.includes(e.id)} onChange={() => toggle(e.id)} />
                     <Icon name={entityIcon(e)} size={16} />
                     <span className="sh-pick-name">{e.name}</span>
-                    {cfg.hidden.includes(e.id) ? <Icon name="eyeOff" size={13} className="sh-pick-hidden" title="Masqué dans la liste" /> : null}
+                    {cfg.hidden.includes(e.id) ? <Icon name="eyeOff" size={13} className="sh-pick-hidden" title={t('Masqué dans la liste')} /> : null}
                     <span className="sh-pick-state">{formatState(e)}</span>
                   </label>
                 ))}
@@ -154,7 +168,7 @@ export function SmartHomeGroupDialog({ doc, group, entities, onClose }: { doc: Y
             );
           })
         ) : (
-          <p className="nb-muted">{entities.length ? 'Aucun appareil ne correspond.' : 'Appareils en cours de chargement…'}</p>
+          <p className="nb-muted">{entities.length ? t('Aucun appareil ne correspond.') : t('Appareils en cours de chargement…')}</p>
         )}
       </div>
     </Modal>

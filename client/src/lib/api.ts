@@ -3,6 +3,7 @@ import { isDesktopLocal } from './desktop';
 import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from './homelab';
 import type { HomeEntity, HomeStates } from './smarthome';
 import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
+import { t, tServer } from './i18n';
 
 export class ApiError extends Error {
   status: number;
@@ -52,7 +53,7 @@ function authHeaders(auth: Auth): Record<string, string> {
 
 async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}): Promise<T> {
   const base = serverBase();
-  if (!base) throw new ApiError('Aucun serveur configuré. Ajoutez un serveur dans les réglages.', 0);
+  if (!base) throw new ApiError(t('Aucun serveur configuré. Ajoutez un serveur dans les réglages.'), 0);
   const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) };
   if (init.auth) Object.assign(headers, authHeaders(init.auth));
   if (init.body && !(init.body instanceof FormData)) headers['content-type'] = 'application/json';
@@ -60,7 +61,7 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
   try {
     res = await fetch(`${base}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError('Serveur injoignable.', 0);
+    throw new ApiError(t('Serveur injoignable.'), 0);
   }
   let data: unknown = null;
   try {
@@ -69,7 +70,8 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
     /* pas de JSON */
   }
   if (!res.ok) {
-    const msg = (data as { error?: string } | null)?.error || `Erreur ${res.status}`;
+    // Message du serveur, écrit en français : traduit à l'affichage.
+    const msg = tServer((data as { error?: string } | null)?.error ?? '') || t('Erreur {status}', { status: res.status });
     throw new ApiError(msg, res.status);
   }
   return data as T;

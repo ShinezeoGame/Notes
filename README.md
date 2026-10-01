@@ -57,7 +57,7 @@ Ordinateur, téléphone, tablette : tout se synchronise. Un QR code suffit pour 
 - 🤖 **Android** : [Melo-Android.apk](https://github.com/ShinezeoGame/Notes/releases/download/latest/Melo-Android.apk). Ouvrez-le sur le téléphone, puis **Installer**.
 - 🌐 **Navigateur** : ouvrez l’adresse d’un serveur Melo, le vôtre ou celui d’un proche.
 
-Au premier lancement : **Commencer**. Un proche vous a envoyé un lien ou un code ? **J’ai une invitation ou un code**.
+Au premier lancement, Melo s’affiche en anglais : touchez **Français** en haut de l’écran, puis **Commencer**. Un proche vous a envoyé un lien ou un code ? **J’ai une invitation ou un code**.
 
 ## Pour aller plus loin
 

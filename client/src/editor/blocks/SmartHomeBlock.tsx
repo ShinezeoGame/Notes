@@ -4,6 +4,7 @@ import { SmartHomePanel } from '../../components/SmartHomeView';
 import { useAppCtx } from '../context';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
+import { t } from '../../lib/i18n';
 
 const smartHomeConfig = {
   type: 'smarthome',
@@ -17,7 +18,7 @@ function SmartHomeBlockView({ block, editor }: ReactCustomBlockRenderProps<typeo
     return (
       <div className="nb-file-placeholder" contentEditable={false}>
         <div className="nb-placeholder-btn">
-          <Icon name="bulb" size={18} /> Appareils de la maison, visibles uniquement par le propriétaire de l’espace
+          <Icon name="bulb" size={18} /> {t('Appareils de la maison, visibles uniquement par le propriétaire de l’espace')}
         </div>
       </div>
     );
@@ -34,16 +35,17 @@ function SmartHomeBlockView({ block, editor }: ReactCustomBlockRenderProps<typeo
         <div contentEditable={false}>
           <div className="nb-media-toolbar">
             <span className="nb-media-title">
-              <Icon name="bulb" size={15} /> Maison{favoritesOnly ? ' · favoris' : ''}
+              <Icon name="bulb" size={15} /> {t('Maison')}
+              {favoritesOnly ? t(' · favoris') : ''}
             </span>
             <span className="nb-media-actions">
               {editor.isEditable ? (
                 <button type="button" onClick={() => editor.updateBlock(block, { props: { favoritesOnly: !favoritesOnly } })}>
-                  {favoritesOnly ? 'Tous les appareils' : 'Favoris seulement'}
+                  {favoritesOnly ? t('Tous les appareils') : t('Favoris seulement')}
                 </button>
               ) : null}
               <button type="button" onClick={() => ctx.openSmartHome?.()}>
-                Ouvrir
+                {t('Ouvrir')}
               </button>
             </span>
           </div>
@@ -58,5 +60,5 @@ function SmartHomeBlockView({ block, editor }: ReactCustomBlockRenderProps<typeo
 
 export const SmartHomeBlock = createReactBlockSpec(smartHomeConfig, {
   render: (props) => <SmartHomeBlockView {...props} />,
-  toExternalHTML: () => <p>Appareils de la maison</p>,
+  toExternalHTML: () => <p>{t('Appareils de la maison')}</p>,
 });

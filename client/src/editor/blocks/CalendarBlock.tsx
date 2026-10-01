@@ -8,6 +8,7 @@ import { getSettings } from '../../lib/settings';
 import { addCalendar, useAgenda } from '../../lib/agenda';
 import { Icon } from '../../icons/Icon';
 import { ResizableFrame, normalizeWidth } from '../resize';
+import { t, tn, locale } from '../../lib/i18n';
 
 const calendarConfig = {
   type: 'calendar',
@@ -72,7 +73,7 @@ function CalendarView({ block, editor }: Props) {
       let failed: string[] = [];
       if (isGoogle) {
         const clientId = getSettings().googleClientId;
-        if (!clientId) throw new Error('Renseignez un ID client Google dans les réglages pour actualiser cet agenda.');
+        if (!clientId) throw new Error(t('Renseignez un ID client Google dans les réglages pour actualiser cet agenda.'));
         const token = await requestGoogleToken(clientId);
         ({ events, failed } = await fetchGoogleCalendarsEvents(token, parseGoogleSource(source)));
       } else {
@@ -82,10 +83,19 @@ function CalendarView({ block, editor }: Props) {
         name = title || parsed.name;
       }
       apply({ title: name, events, source });
-      if (failed.length) ctx.notify(`Agenda actualisé : ${events.length} événement(s). Lecture impossible : ${failed.join(', ')}.`, 'error');
-      else ctx.notify(`Agenda actualisé : ${events.length} événement(s).`);
+      if (failed.length)
+        ctx.notify(
+          tn(
+            events.length,
+            'Agenda actualisé : {n} événement. Lecture impossible : {failed}.',
+            'Agenda actualisé : {n} événements. Lecture impossible : {failed}.',
+            { failed: failed.join(', ') },
+          ),
+          'error',
+        );
+      else ctx.notify(tn(events.length, 'Agenda actualisé : {n} événement.', 'Agenda actualisé : {n} événements.'));
     } catch (err) {
-      ctx.notify(err instanceof Error ? err.message : 'Actualisation impossible.', 'error');
+      ctx.notify(err instanceof Error ? err.message : t('Actualisation impossible.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -97,8 +107,8 @@ function CalendarView({ block, editor }: Props) {
   const inAgenda = Boolean(source) && agenda.calendars.some((c) => c.source === source);
   const addToAgenda = () => {
     if (!agendaDoc) return;
-    addCalendar(agendaDoc, { title: title || 'Agenda', events, source });
-    ctx.notify('Agenda ajouté à la section Agenda (et au widget de l’accueil).');
+    addCalendar(agendaDoc, { title: title || t('Agenda'), events, source });
+    ctx.notify(t('Agenda ajouté à la section Agenda (et au widget de l’accueil).'));
   };
 
   const configure = async () => {
@@ -113,7 +123,7 @@ function CalendarView({ block, editor }: Props) {
           <span className="nb-placeholder-icon">
             <Icon name="calendar" size={20} />
           </span>
-          Importer un agenda Google
+          {t('Importer un agenda Google')}
         </button>
       </div>
     );
@@ -123,7 +133,7 @@ function CalendarView({ block, editor }: Props) {
     <div key={key} className={`nb-cal-day${key === todayKey ? ' nb-cal-day--today' : ''}`}>
       <div className="nb-cal-dayname">
         {formatDay(evs[0].start)}
-        {key === todayKey ? <span className="nb-cal-badge">Aujourd’hui</span> : null}
+        {key === todayKey ? <span className="nb-cal-badge">{t('Aujourd’hui')}</span> : null}
       </div>
       {evs.map((ev) => (
         <div key={`${ev.id}|${ev.start}`} className="nb-cal-event">
@@ -162,54 +172,56 @@ function CalendarView({ block, editor }: Props) {
       className="nb-calendar"
     >
       {(liveHeight) => (
-    <div contentEditable={false}>
-      <div className="nb-media-toolbar">
-        <span className="nb-media-title">
-          <Icon name="calendar" size={15} /> {title || 'Agenda'}
-          <span className="nb-muted">
-            {' '}
-            · {events.length} événement{events.length > 1 ? 's' : ''}
-            {updatedAt ? ` · mis à jour le ${new Date(updatedAt).toLocaleDateString('fr-FR')}` : ''}
-          </span>
-        </span>
-        <span className="nb-media-actions">
-          {canRefresh && editable ? (
-            <button type="button" onClick={() => void refresh()} disabled={busy}>
-              {busy ? 'Actualisation…' : 'Actualiser'}
-            </button>
-          ) : null}
-          {editable ? (
-            <button type="button" onClick={() => void configure()}>
-              Modifier
-            </button>
-          ) : null}
-          {agendaDoc && editable && !inAgenda ? (
-            <button type="button" onClick={addToAgenda} title="Afficher aussi cet agenda dans la section Agenda et sur l’accueil">
-              Ajouter à l’Agenda
-            </button>
-          ) : null}
-        </span>
-      </div>
-      {multi ? (
-        <div className="nb-cal-legend">
-          {legend.map((c) => (
-            <span key={c.name} className="nb-cal-legend-item">
-              <span className="nb-cal-dot" style={{ background: c.color }} />
-              {c.name}
+        <div contentEditable={false}>
+          <div className="nb-media-toolbar">
+            <span className="nb-media-title">
+              <Icon name="calendar" size={15} /> {title || t('Agenda')}
+              <span className="nb-muted">
+                {' '}
+                · {tn(events.length, '{n} événement', '{n} événements')}
+                {updatedAt ? ` · ${t('mis à jour le {date}', { date: new Date(updatedAt).toLocaleDateString(locale()) })}` : ''}
+              </span>
             </span>
-          ))}
+            <span className="nb-media-actions">
+              {canRefresh && editable ? (
+                <button type="button" onClick={() => void refresh()} disabled={busy}>
+                  {busy ? t('Actualisation…') : t('Actualiser')}
+                </button>
+              ) : null}
+              {editable ? (
+                <button type="button" onClick={() => void configure()}>
+                  {t('Modifier')}
+                </button>
+              ) : null}
+              {agendaDoc && editable && !inAgenda ? (
+                <button type="button" onClick={addToAgenda} title={t('Afficher aussi cet agenda dans la section Agenda et sur l’accueil')}>
+                  {t('Ajouter à l’Agenda')}
+                </button>
+              ) : null}
+            </span>
+          </div>
+          {multi ? (
+            <div className="nb-cal-legend">
+              {legend.map((c) => (
+                <span key={c.name} className="nb-cal-legend-item">
+                  <span className="nb-cal-dot" style={{ background: c.color }} />
+                  {c.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="nb-cal-list" style={{ maxHeight: liveHeight }}>
+            {past.length ? (
+              <button type="button" className="nb-cal-toggle" onClick={() => setShowPast((v) => !v)}>
+                {showPast
+                  ? t('Masquer les événements passés ({n})', { n: past.reduce((n, [, e]) => n + e.length, 0) })
+                  : t('Afficher les événements passés ({n})', { n: past.reduce((n, [, e]) => n + e.length, 0) })}
+              </button>
+            ) : null}
+            {showPast ? past.map(renderGroup) : null}
+            {upcoming.length ? upcoming.map(renderGroup) : <div className="nb-media-status">{t('Aucun événement à venir.')}</div>}
+          </div>
         </div>
-      ) : null}
-      <div className="nb-cal-list" style={{ maxHeight: liveHeight }}>
-        {past.length ? (
-          <button type="button" className="nb-cal-toggle" onClick={() => setShowPast((v) => !v)}>
-            {showPast ? 'Masquer' : 'Afficher'} les événements passés ({past.reduce((n, [, e]) => n + e.length, 0)})
-          </button>
-        ) : null}
-        {showPast ? past.map(renderGroup) : null}
-        {upcoming.length ? upcoming.map(renderGroup) : <div className="nb-media-status">Aucun événement à venir.</div>}
-      </div>
-    </div>
       )}
     </ResizableFrame>
   );
@@ -223,7 +235,7 @@ export const CalendarBlock = createReactBlockSpec(calendarConfig, {
       <ul>
         {events.map((ev) => (
           <li key={`${ev.id}|${ev.start}`}>
-            {new Date(ev.start).toLocaleString('fr-FR')} — {ev.title}
+            {new Date(ev.start).toLocaleString(locale())} — {ev.title}
           </li>
         ))}
       </ul>

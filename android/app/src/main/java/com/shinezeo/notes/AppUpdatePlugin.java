@@ -67,7 +67,10 @@ public class AppUpdatePlugin extends Plugin {
         call.resolve(ret);
     }
 
-    /** Adresse du serveur, version en cours et choix de l'utilisateur, lus par la vérification en arrière-plan. */
+    /**
+     * Adresse du serveur, version en cours, choix de l'utilisateur et langue de l'interface, lus par la vérification
+     * en arrière-plan. Sans langue (client d'avant le choix de la langue, tout en français) : français.
+     */
     @PluginMethod
     public void configure(PluginCall call) {
         try {
@@ -75,7 +78,8 @@ public class AppUpdatePlugin extends Plugin {
                 getContext(),
                 call.getString("serverUrl", ""),
                 call.getString("currentVersion", ""),
-                Boolean.TRUE.equals(call.getBoolean("notify", true))
+                Boolean.TRUE.equals(call.getBoolean("notify", true)),
+                call.getString("lang", "fr")
             );
             JSObject ret = new JSObject();
             ret.put("scheduled", UpdateCheckJob.schedule(getContext()));

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PageRef, PdfSource } from './model';
 import { drawPage, type SourceCache } from './render';
+import { t } from '../lib/i18n';
 
 type Props = {
   cache: SourceCache;
@@ -48,7 +49,7 @@ export function PageCanvas({ cache, page, src, cssWidth, forms, delay = 0 }: Pro
   return (
     <>
       <canvas ref={ref} className={`pdf-canvas${state === 'ready' ? '' : ' pdf-canvas--loading'}`} />
-      {state === 'error' ? <span className="pdf-canvas-error">Page illisible</span> : null}
+      {state === 'error' ? <span className="pdf-canvas-error">{t('Page illisible')}</span> : null}
     </>
   );
 }

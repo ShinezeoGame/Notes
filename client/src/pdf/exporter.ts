@@ -9,6 +9,7 @@ import { BASELINE, LINE_HEIGHT, layoutText } from './text';
 import { MARK_STROKE, markPath, strokePath } from './ink';
 import { loadPdfModule } from './render';
 import { repairPdf } from './qpdf';
+import { t } from '../lib/i18n';
 
 type Lib = typeof import('@cantoo/pdf-lib');
 
@@ -29,9 +30,9 @@ export async function fetchBytes(url: string, name = 'fichier'): Promise<Uint8Ar
   try {
     res = await fetch(url);
   } catch {
-    throw new Error(`Serveur injoignable : « ${name} » n’a pas pu être téléchargé.`);
+    throw new Error(t('Serveur injoignable : « {name} » n’a pas pu être téléchargé.', { name }));
   }
-  if (!res.ok) throw new Error(`« ${name} » est introuvable sur le serveur (${res.status}).`);
+  if (!res.ok) throw new Error(t('« {name} » est introuvable sur le serveur ({status}).', { name, status: res.status }));
   return new Uint8Array(await res.arrayBuffer());
 }
 
@@ -181,7 +182,7 @@ function fillWithPdfLib(L: Lib, doc: PDFDocument, values: Map<string, FormValue>
 function registerFields(L: Lib, out: PDFDocument, pages: PDFPage[]) {
   const acro = out.catalog.getOrCreateAcroForm();
   const known = new Set<string>();
-  const fields = acro.dict.lookupMaybe(L.PDFName.of('Fields'), L.PDFArray);
+  const fields = acro.dict.lookupMaybe(L.PDFName.of('Fields'), L.PDFArray); // i18n-ignore : nom PDF
   fields?.asArray().forEach((r) => known.add(r.toString()));
   for (const page of pages) {
     const annots = page.node.Annots();
@@ -191,7 +192,7 @@ function registerFields(L: Lib, out: PDFDocument, pages: PDFPage[]) {
       if (!(ref instanceof L.PDFRef)) continue;
       let fieldRef: PDFRef = ref;
       const widget = out.context.lookup(ref);
-      if (!(widget instanceof L.PDFDict) || widget.get(L.PDFName.of('Subtype')) !== L.PDFName.of('Widget')) continue;
+      if (!(widget instanceof L.PDFDict) || widget.get(L.PDFName.of('Subtype')) !== L.PDFName.of('Widget')) continue; // i18n-ignore : nom PDF
       let dict: PDFDict = widget;
       for (let guard = 0; guard < 32; guard++) {
         const parent = dict.get(L.PDFName.of('Parent'));
@@ -249,7 +250,7 @@ async function toPng(bytes: Uint8Array): Promise<Uint8Array> {
   canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
   bitmap.close();
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-  if (!blob) throw new Error('Image illisible.');
+  if (!blob) throw new Error(t('Image illisible.'));
   return new Uint8Array(await blob.arrayBuffer());
 }
 
@@ -341,13 +342,13 @@ async function rasterPage(ctx: DrawContext, pdf: PdfDocument, index: number): Pr
   canvas.width = Math.floor(viewport.width);
   canvas.height = Math.floor(viewport.height);
   const c2d = canvas.getContext('2d');
-  if (!c2d) throw new Error('Page illisible.');
+  if (!c2d) throw new Error(t('Page illisible.'));
   c2d.fillStyle = '#ffffff';
   c2d.fillRect(0, 0, canvas.width, canvas.height);
   await p.render({ canvasContext: c2d, canvas, viewport }).promise;
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
   canvas.width = 0;
-  if (!blob) throw new Error('Page illisible.');
+  if (!blob) throw new Error(t('Page illisible.'));
   const img = await ctx.out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
   const page = ctx.out.addPage([base.width, base.height]);
   page.drawImage(img, { x: 0, y: 0, width: base.width, height: base.height });
@@ -357,11 +358,11 @@ async function rasterPage(ctx: DrawContext, pdf: PdfDocument, index: number): Pr
 /** Fabrique le PDF (octets) à partir de l'état du document. */
 export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): Promise<Uint8Array> {
   const progress = opts.onProgress ?? (() => {});
-  progress(0, 'Préparation…');
+  progress(0, t('Préparation…'));
   const L = await import('@cantoo/pdf-lib');
   const wanted = opts.pageIds ? new Set(opts.pageIds) : null;
   const refs = state.pages.filter((p) => !wanted || wanted.has(p.id));
-  if (refs.length === 0) throw new Error('Aucune page à exporter.');
+  if (refs.length === 0) throw new Error(t('Aucune page à exporter.'));
 
   const out = await L.PDFDocument.create();
   if (opts.title) out.setTitle(opts.title);
@@ -376,7 +377,7 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
   const steps = pdfSources.length + refs.length;
   let step = 0;
   for (const src of pdfSources) {
-    progress(step++ / steps, `Lecture de « ${src.name} »…`);
+    progress(step++ / steps, t('Lecture de « {name} »…', { name: src.name }));
     const values = new Map<string, FormValue>();
     const prefix = formKey(src.id, '');
     state.forms.forEach((v, k) => {
@@ -411,7 +412,7 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
   const { loadPdfData, closePdf } = await loadPdfModule();
   try {
     for (const [n, ref] of refs.entries()) {
-      progress(step++ / steps, `Page ${n + 1} sur ${refs.length}…`);
+      progress(step++ / steps, t('Page {n} sur {total}…', { n: n + 1, total: refs.length }));
       const src = ref.src ? state.sources.get(ref.src) : undefined;
       let page: PDFPage;
       let box: [number, number, number, number];
@@ -472,8 +473,8 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
     }
   }
 
-  progress(0.98, 'Enregistrement…');
+  progress(0.98, t('Enregistrement…'));
   const bytes = await out.save({ useObjectStreams: true });
-  progress(1, 'Terminé');
+  progress(1, t('Terminé'));
   return bytes;
 }

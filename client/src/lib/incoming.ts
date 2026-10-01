@@ -6,6 +6,7 @@ import { toast } from '../components/Toast';
 import { callNative, hasNativePlugin, onNative } from './native';
 import { desktop } from './desktop';
 import { navigate } from './router';
+import { t } from './i18n';
 
 const NATIVE = 'NotesFiles';
 let pending: File[] = [];
@@ -56,7 +57,7 @@ async function pullNative() {
   for (const f of list) {
     try {
       const r = await fetch(cap?.convertFileSrc ? cap.convertFileSrc(f.path) : f.path);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}` /* i18n-ignore */);
       const blob = await r.blob();
       files.push(new File([blob], f.name, { type: f.mime || blob.type }));
     } catch (err) {
@@ -65,7 +66,7 @@ async function pullNative() {
     }
   }
   void callNative(NATIVE, 'releaseIncoming', { paths: list.map((f) => f.path) }).catch(() => {});
-  if (unreadable.length) toast(`Fichier reçu illisible : ${unreadable.join(', ')}`, 'error');
+  if (unreadable.length) toast(t('Fichier reçu illisible : {files}', { files: unreadable.join(', ') }), 'error');
   receive(files);
 }
 

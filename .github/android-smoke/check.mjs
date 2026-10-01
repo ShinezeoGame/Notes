@@ -226,12 +226,21 @@ let ok = false;
 try {
   await step('Premier lancement : l’application s’ouvre et reste ouverte', async () => {
     adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
-    await until('écran « Bienvenue dans Melo »', () => js("document.body?.innerText.includes('Bienvenue dans Melo')"), 120_000, 2000);
+    await until('écran « Welcome to Melo » (anglais par défaut)', () => js("document.body?.innerText.includes('Welcome to Melo')"), 120_000, 2000);
     const ua = await js('navigator.userAgent');
     report.push(`   WebView : ${ua}`);
     console.log(`   WebView : ${ua}`);
     await sleep(6000);
     await assertAlive('au premier lancement');
+  });
+
+  // Français choisi : la notification de mise à jour (plus bas) doit aussi être en français.
+  await step('Choix de la langue : « Français » relance l’application en français', async () => {
+    // Clic différé : l'application se recharge aussitôt, après la réponse à cette évaluation.
+    await js("setTimeout(() => document.querySelector('.nb-onboarding-lang button[lang=\"fr\"]').click(), 200); true");
+    await sleep(2000);
+    await until('écran « Bienvenue dans Melo »', () => js("document.body?.innerText.includes('Bienvenue dans Melo')"), 60_000, 1000);
+    await assertAlive('après le choix de la langue');
   });
 
   await step('Liaison au serveur : l’application reste ouverte, affiche l’accueil puis les pages', async () => {

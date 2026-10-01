@@ -10,6 +10,7 @@ import { CoverPicker, PageCover, isValidCover } from './PageCover';
 import { toast } from './Toast';
 import { Icon } from '../icons/Icon';
 import { PageIcon } from '../icons/pageIcon';
+import { t } from '../lib/i18n';
 
 type Props = {
   handle: DocHandle | null;
@@ -66,7 +67,7 @@ export function PageEditorPane(props: Props) {
     setPickerOpen(false);
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+        toast(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'), 'error');
         return;
       }
       setCropReq({ src: URL.createObjectURL(file), file, initial: null });
@@ -106,7 +107,7 @@ export function PageEditorPane(props: Props) {
     setCoverPickerOpen(false);
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).', 'error');
+        toast(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'), 'error');
         return;
       }
       setCoverCrop({ src: URL.createObjectURL(file), file, initial: null, aspect: coverAspect() });
@@ -170,7 +171,7 @@ export function PageEditorPane(props: Props) {
                 type="button"
                 className="nb-page-icon"
                 onClick={() => editable && setPickerOpen((v) => !v)}
-                title={editable ? 'Changer l’icône' : undefined}
+                title={editable ? t('Changer l’icône') : undefined}
                 disabled={!editable}
               >
                 <PageIcon icon={icon} size={iconSize} />
@@ -180,12 +181,12 @@ export function PageEditorPane(props: Props) {
               <div className="nb-page-controls">
                 {icon ? null : (
                   <button type="button" className="nb-page-icon-add" onClick={() => setPickerOpen((v) => !v)}>
-                    <Icon name="smile" size={16} /> Ajouter une icône
+                    <Icon name="smile" size={16} /> {t('Ajouter une icône')}
                   </button>
                 )}
                 {cover ? null : (
                   <button type="button" className="nb-page-icon-add" onClick={() => setCoverPickerOpen((v) => !v)} disabled={!ready}>
-                    <Icon name="image" size={16} /> Ajouter une bannière
+                    <Icon name="image" size={16} /> {t('Ajouter une bannière')}
                   </button>
                 )}
               </div>
@@ -198,7 +199,7 @@ export function PageEditorPane(props: Props) {
                 src={coverCrop.src}
                 initial={coverCrop.initial}
                 aspect={coverCrop.aspect}
-                title="Recadrer la bannière"
+                title={t('Recadrer la bannière')}
                 animated={coverCrop.file?.type === 'image/gif'}
                 onCancel={closeCoverCrop}
                 onDone={finishCoverCrop}
@@ -230,7 +231,7 @@ export function PageEditorPane(props: Props) {
           <textarea
             ref={titleRef}
             className="nb-page-title"
-            placeholder="Sans titre"
+            placeholder={t('Sans titre')}
             value={title}
             rows={1}
             readOnly={!editable}
@@ -259,20 +260,20 @@ export function PageEditorPane(props: Props) {
         <div className="nb-subpages">
           {subpages.length ? (
             <>
-              <div className="nb-subpages-head">Sous-pages</div>
+              <div className="nb-subpages-head">{t('Sous-pages')}</div>
               {subpages.map((p) => (
                 <button key={p.id} type="button" className="nb-subpage" onClick={() => props.onOpenPage(p.id)}>
                   <span className="nb-tree-icon">
                     <PageIcon icon={p.icon} size={16} />
                   </span>
-                  <span>{p.title || 'Sans titre'}</span>
+                  <span>{p.title || t('Sans titre')}</span>
                 </button>
               ))}
             </>
           ) : null}
           {props.onCreateSubpage && editable ? (
             <button type="button" className="nb-subpage nb-subpage--new" onClick={props.onCreateSubpage}>
-              <Icon name="plus" size={16} /> Nouvelle sous-page
+              <Icon name="plus" size={16} /> {t('Nouvelle sous-page')}
             </button>
           ) : null}
         </div>

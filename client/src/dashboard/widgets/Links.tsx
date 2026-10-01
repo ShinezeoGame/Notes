@@ -9,6 +9,7 @@ import { Icon } from '../../icons/Icon';
 import { PageIcon } from '../../icons/pageIcon';
 import { pageOptions } from './Page';
 import { str, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 /** Lien : adresse web, ou page de notes (« page:<id> »). */
 type Link = { id: string; label: string; url: string };
@@ -62,7 +63,7 @@ export function LinksWidget({ widget, store, openSettings, editing, setConfig }:
       <div className="w-empty">
         <Icon name="link" size={24} />
         <button type="button" className="nb-btn nb-btn--sm" onClick={openSettings} disabled={editing}>
-          Ajouter des raccourcis
+          {t('Ajouter des raccourcis')}
         </button>
       </div>
     );
@@ -76,7 +77,7 @@ export function LinksWidget({ widget, store, openSettings, editing, setConfig }:
         const cls = `w-link${sort.className ? ` ${sort.className}` : ''}`;
         if (l.url.startsWith('page:')) {
           const page = store.get(l.url.slice(5));
-          const label = l.label || page?.title || 'Page supprimée';
+          const label = l.label || page?.title || t('Page supprimée');
           return (
             <button key={l.id} {...sort} type="button" className={cls} onClick={() => page && ctx.openPage(page.id)} title={label}>
               <span className="w-link-icon">
@@ -108,28 +109,28 @@ export function LinksSettings({ config, set, store }: SettingsProps) {
   return (
     <>
       <label className="nb-field">
-        <span>Affichage</span>
+        <span>{t('Affichage')}</span>
         <select className="nb-input" value={str(config.style, 'tiles')} onChange={(e) => set({ style: e.target.value })}>
-          <option value="tiles">Tuiles</option>
-          <option value="list">Liste</option>
+          <option value="tiles">{t('Tuiles')}</option>
+          <option value="list">{t('Liste')}</option>
         </select>
       </label>
       <div className="nb-field">
-        <span>Raccourcis</span>
+        <span>{t('Raccourcis')}</span>
         {links.map((l, i) => (
           <div key={l.id} className="w-links-row">
             <input
               className="nb-input"
               value={l.label}
-              placeholder="Nom"
-              aria-label="Nom du raccourci"
+              placeholder={t('Nom')}
+              aria-label={t('Nom du raccourci')}
               onChange={(e) => update(links.map((x) => (x.id === l.id ? { ...x, label: e.target.value } : x)))}
             />
             {l.url.startsWith('page:') ? (
               <select
                 className="nb-input"
                 value={l.url.slice(5)}
-                aria-label="Page"
+                aria-label={t('Page')}
                 onChange={(e) => update(links.map((x) => (x.id === l.id ? { ...x, url: `page:${e.target.value}` } : x)))}
               >
                 {pages.map((o) => (
@@ -143,27 +144,37 @@ export function LinksSettings({ config, set, store }: SettingsProps) {
               <input
                 className="nb-input"
                 value={l.url}
-                placeholder="exemple.fr"
-                aria-label="Adresse"
+                placeholder={t('exemple.fr')}
+                aria-label={t('Adresse')}
                 inputMode="url"
                 onChange={(e) => update(links.map((x) => (x.id === l.id ? { ...x, url: e.target.value } : x)))}
               />
             )}
-            <button type="button" className="nb-icon-btn" disabled={i === 0} onClick={() => update([...links.slice(0, i - 1), l, links[i - 1], ...links.slice(i + 1)])} aria-label="Monter">
+            <button
+              type="button"
+              className="nb-icon-btn"
+              disabled={i === 0}
+              onClick={() => update([...links.slice(0, i - 1), l, links[i - 1], ...links.slice(i + 1)])}
+              aria-label={t('Monter')}
+            >
               <Icon name="arrowUp" size={15} />
             </button>
-            <button type="button" className="nb-icon-btn" onClick={() => update(links.filter((x) => x.id !== l.id))} aria-label="Supprimer">
+            <button type="button" className="nb-icon-btn" onClick={() => update(links.filter((x) => x.id !== l.id))} aria-label={t('Supprimer')}>
               <Icon name="trash" size={15} />
             </button>
           </div>
         ))}
         <div className="nb-row nb-gap">
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => update([...links, { id: newId(), label: '', url: '' }])}>
-            <Icon name="plus" size={14} /> Site web
+            <Icon name="plus" size={14} /> {t('Site web')}
           </button>
           {pages.length ? (
-            <button type="button" className="nb-btn nb-btn--sm" onClick={() => update([...links, { id: newId(), label: '', url: `page:${pages[0].id}` }])}>
-              <Icon name="plus" size={14} /> Page de notes
+            <button
+              type="button"
+              className="nb-btn nb-btn--sm"
+              onClick={() => update([...links, { id: newId(), label: '', url: `page:${pages[0].id}` }])}
+            >
+              <Icon name="plus" size={14} /> {t('Page de notes')}
             </button>
           ) : null}
         </div>

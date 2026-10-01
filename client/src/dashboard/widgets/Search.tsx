@@ -5,6 +5,7 @@ import { useWorkspacePages } from '../../lib/workspace';
 import { Icon } from '../../icons/Icon';
 import { PageIcon } from '../../icons/pageIcon';
 import { str, type SettingsProps, type WidgetProps } from '../types';
+import { t, getLang } from '../../lib/i18n';
 
 export const ENGINES: { id: string; label: string; url: string }[] = [
   { id: 'google', label: 'Google', url: 'https://www.google.com/search?q=' },
@@ -12,9 +13,9 @@ export const ENGINES: { id: string; label: string; url: string }[] = [
   { id: 'qwant', label: 'Qwant', url: 'https://www.qwant.com/?q=' },
   { id: 'bing', label: 'Bing', url: 'https://www.bing.com/search?q=' },
   { id: 'ecosia', label: 'Ecosia', url: 'https://www.ecosia.org/search?q=' },
-  { id: 'wikipedia', label: 'Wikipédia', url: 'https://fr.wikipedia.org/w/index.php?search=' },
+  { id: 'wikipedia', label: t('Wikipédia'), url: `https://${getLang() === 'fr' ? 'fr' : 'en'}.wikipedia.org/w/index.php?search=` },
   { id: 'youtube', label: 'YouTube', url: 'https://www.youtube.com/results?search_query=' },
-  { id: 'notes', label: 'Mes notes', url: '' },
+  { id: 'notes', label: t('Mes notes'), url: '' },
 ];
 
 export function SearchWidget({ widget, store }: WidgetProps) {
@@ -44,8 +45,8 @@ export function SearchWidget({ widget, store }: WidgetProps) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={engine.id === 'notes' ? 'Rechercher une page…' : `Rechercher avec ${engine.label}…`}
-          aria-label="Rechercher"
+          placeholder={engine.id === 'notes' ? t('Rechercher une page…') : t('Rechercher avec {engine}…', { engine: engine.label })}
+          aria-label={t('Rechercher')}
           enterKeyHint="search"
         />
       </form>
@@ -54,7 +55,7 @@ export function SearchWidget({ widget, store }: WidgetProps) {
           {results.map((p) => (
             <li key={p.id}>
               <button type="button" onClick={() => ctx.openPage(p.id)}>
-                <PageIcon icon={p.icon} size={15} /> {p.title || 'Sans titre'}
+                <PageIcon icon={p.icon} size={15} /> {p.title || t('Sans titre')}
               </button>
             </li>
           ))}
@@ -67,7 +68,7 @@ export function SearchWidget({ widget, store }: WidgetProps) {
 export function SearchSettings({ config, set }: SettingsProps) {
   return (
     <label className="nb-field">
-      <span>Rechercher avec</span>
+      <span>{t('Rechercher avec')}</span>
       <select className="nb-input" value={str(config.engine, 'google')} onChange={(e) => set({ engine: e.target.value })}>
         {ENGINES.map((e) => (
           <option key={e.id} value={e.id}>

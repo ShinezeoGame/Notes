@@ -182,7 +182,7 @@ export function dropBeside(view: EditorView, drop: SideDrop): boolean {
 function placeCursor(view: EditorView, orientation: DropPosition['orientation'], edge: number | undefined) {
   if (edge == null) return;
   const parent = view.dom.offsetParent as HTMLElement | null;
-  const line = parent?.querySelector<HTMLElement>(`:scope > .prosemirror-dropcursor-${orientation}`);
+  const line = parent?.querySelector<HTMLElement>(`:scope > .prosemirror-dropcursor-${orientation}`); // i18n-ignore
   if (!parent || !line) return;
   const box = parent.getBoundingClientRect();
   line.style.left = `${edge - box.left + parent.scrollLeft - line.offsetWidth / 2}px`;

@@ -13,6 +13,7 @@ import { ExportDialog } from './ExportDialog';
 import { PasswordDialog } from './dialogs';
 import { PagesView } from './PagesView';
 import { AnnotateView } from './AnnotateView';
+import { t, tn } from '../lib/i18n';
 
 const isTyping = (el: Element | null) => Boolean(el?.closest('input, textarea, select, [contenteditable="true"]'));
 
@@ -34,16 +35,16 @@ export function PdfEditor({ library, id }: { library: PdfLibrary; id: string }) 
     return (
       <div className="nb-page">
         <div className="nb-card">
-          <h1>PDF introuvable</h1>
-          <p className="nb-muted">Ce PDF n’existe pas ou a été supprimé.</p>
+          <h1>{t('PDF introuvable')}</h1>
+          <p className="nb-muted">{t('Ce PDF n’existe pas ou a été supprimé.')}</p>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/pdf')}>
-            Retour à la bibliothèque
+            {t('Retour à la bibliothèque')}
           </button>
         </div>
       </div>
     );
   }
-  if (!project || !ready) return <div className="pdf-loading nb-muted">Ouverture du PDF…</div>;
+  if (!project || !ready) return <div className="pdf-loading nb-muted">{t('Ouverture du PDF…')}</div>;
   return <EditorBody library={library} entry={entry} project={project} cache={cache} />;
 }
 
@@ -120,29 +121,29 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
   const addFiles = async (files: File[], at: number) => {
     try {
       const r = await importFiles(files, { askPassword, onProgress: setBusy });
-      if (r.skipped.length) toast(`Fichier ignoré : ${r.skipped.join(', ')}`, 'error');
+      if (r.skipped.length) toast(t('Fichier ignoré : {files}', { files: r.skipped.join(', ') }), 'error');
       if (r.pages.length === 0) return;
       project.addPages(r.sources, r.pages, at);
       library.addFiles(entry.id, r.files);
       setSelection(new Set(r.pages.map((p) => p.id)));
-      toast(`${r.pages.length} page${r.pages.length > 1 ? 's' : ''} ajoutée${r.pages.length > 1 ? 's' : ''}.`);
+      toast(tn(r.pages.length, '{n} page ajoutée.', '{n} pages ajoutées.'));
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Ajout impossible.', 'error');
+      toast(err instanceof Error ? err.message : t('Ajout impossible.'), 'error');
     } finally {
       setBusy(null);
     }
   };
 
   const extract = async (pageIds: string[]) => {
-    setBusy('Création du nouveau PDF…');
+    setBusy(t('Création du nouveau PDF…'));
     try {
-      const newId = await createProject(library, `${entry.name} (extrait)`, copyContent([{ state, pageIds }]), entry.files);
-      toast(`Nouveau PDF créé avec ${pageIds.length} page${pageIds.length > 1 ? 's' : ''}.`, 'info', {
+      const newId = await createProject(library, t('{name} (extrait)', { name: entry.name }), copyContent([{ state, pageIds }]), entry.files);
+      toast(tn(pageIds.length, 'Nouveau PDF créé avec {n} page.', 'Nouveau PDF créé avec {n} pages.'), 'info', {
         duration: 8000,
-        action: { label: 'Ouvrir', run: () => navigate({ name: 'pdf', pdfId: newId }) },
+        action: { label: t('Ouvrir'), run: () => navigate({ name: 'pdf', pdfId: newId }) },
       });
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Extraction impossible.', 'error');
+      toast(err instanceof Error ? err.message : t('Extraction impossible.'), 'error');
     } finally {
       setBusy(null);
     }
@@ -164,12 +165,18 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
   return (
     <div className="pdfe">
       <header className="pdfe-head">
-        <button type="button" className="nb-icon-btn" aria-label="Retour à la bibliothèque" title="Retour à la bibliothèque" onClick={() => navigate('#/pdf')}>
+        <button
+          type="button"
+          className="nb-icon-btn"
+          aria-label={t('Retour à la bibliothèque')}
+          title={t('Retour à la bibliothèque')}
+          onClick={() => navigate('#/pdf')}
+        >
           <Icon name="chevronLeft" size={20} />
         </button>
         <input
           className="pdfe-name"
-          aria-label="Nom du PDF"
+          aria-label={t('Nom du PDF')}
           value={name ?? entry.name}
           onFocus={() => setName(entry.name)}
           onChange={(e) => setName(e.target.value)}
@@ -182,9 +189,15 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
             }
           }}
         />
-        <div className="pdfe-modes" role="tablist" aria-label="Affichage">
-          <button type="button" role="tab" aria-selected={mode === 'pages'} className={mode === 'pages' ? 'active' : ''} onClick={() => setMode('pages')}>
-            <Icon name="grid" size={15} /> Pages
+        <div className="pdfe-modes" role="tablist" aria-label={t('Affichage')}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'pages'}
+            className={mode === 'pages' ? 'active' : ''}
+            onClick={() => setMode('pages')}
+          >
+            <Icon name="grid" size={15} /> {t('Pages')}
           </button>
           <button
             type="button"
@@ -193,15 +206,15 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
             className={mode === 'annotate' ? 'active' : ''}
             onClick={() => setMode('annotate')}
           >
-            <Icon name="pencil" size={15} /> Annoter
+            <Icon name="pencil" size={15} /> {t('Annoter')}
           </button>
         </div>
         <div className="pdfe-actions">
           <button
             type="button"
             className="nb-icon-btn"
-            aria-label="Annuler"
-            title="Annuler (Ctrl+Z)"
+            aria-label={t('Annuler')}
+            title={t('Annuler (Ctrl+Z)')}
             disabled={!project.canUndo}
             onClick={() => project.undo.undo()}
           >
@@ -210,15 +223,15 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
           <button
             type="button"
             className="nb-icon-btn"
-            aria-label="Rétablir"
-            title="Rétablir (Ctrl+Y)"
+            aria-label={t('Rétablir')}
+            title={t('Rétablir (Ctrl+Y)')}
             disabled={!project.canRedo}
             onClick={() => project.undo.redo()}
           >
             <Icon name="redo" size={18} />
           </button>
           <button type="button" className="nb-btn nb-btn--primary nb-btn--sm" onClick={() => setExporting(true)} disabled={waiting}>
-            <Icon name="download" size={15} /> Exporter
+            <Icon name="download" size={15} /> {t('Exporter')}
           </button>
         </div>
       </header>
@@ -229,7 +242,7 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
       ) : null}
       <div className={`pdfe-body pdfe-body--${mode}`}>
         {waiting ? (
-          <div className="pdf-loading nb-muted">Récupération du PDF depuis le serveur…</div>
+          <div className="pdf-loading nb-muted">{t('Récupération du PDF depuis le serveur…')}</div>
         ) : mode === 'pages' ? (
           <PagesView
             project={project}

@@ -55,6 +55,7 @@ import { Modal } from './Modal';
 import { SmartHomeConfigDialog } from './SmartHomeConfigDialog';
 import { SmartHomeGroupDialog } from './SmartHomeGroupDialog';
 import { toast } from './Toast';
+import { t, tn, tx, tServer, locale } from '../lib/i18n';
 
 type Run = (e: HomeEntity, service: string, data?: Record<string, unknown>, optimistic?: Partial<HomeEntity>) => Promise<boolean>;
 /** Commandes de groupe : plusieurs appareils à la fois (un appel par type d'appareil). */
@@ -82,7 +83,7 @@ function useHomeStates(enabled: boolean) {
       setData(r);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Serveur injoignable.');
+      setError(err instanceof Error ? err.message : t('Serveur injoignable.'));
     } finally {
       setLoading(false);
     }
@@ -121,7 +122,7 @@ function useHomeStates(enabled: boolean) {
         if (res.entities.length) patch(res.entities);
       } catch (err) {
         ok = false;
-        toast(err instanceof Error ? err.message : 'Commande impossible.', 'error');
+        toast(err instanceof Error ? err.message : t('Commande impossible.'), 'error');
         version.current++;
       }
       // Certains appareils confirment après coup : nouvelle lecture peu après.
@@ -141,7 +142,7 @@ function useHomeStates(enabled: boolean) {
       const changed = results.flatMap((r) => (r.status === 'fulfilled' ? r.value.entities : []));
       if (changed.length) patch(changed);
       const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
-      if (failed) toast(failed.reason instanceof Error ? failed.reason.message : 'Commande impossible.', 'error');
+      if (failed) toast(failed.reason instanceof Error ? failed.reason.message : t('Commande impossible.'), 'error');
       setTimeout(() => void refresh(), 1200);
       return !failed;
     },
@@ -206,7 +207,7 @@ function Slider({ value, min, max, step = 1, onChange, label, suffix = '%', styl
 function BrightnessSlider({ e, run }: { e: HomeEntity; run: Run }) {
   const pct = brightnessPct(e) ?? 100;
   const [value, setValue] = useSlider(pct, (v) => void run(e, 'turn_on', { brightness_pct: v }, { state: 'on', attrs: { brightness: Math.round((v / 100) * 255) } }));
-  return <Slider value={value} min={1} max={100} onChange={setValue} label={`Luminosité de ${e.name}`} />;
+  return <Slider value={value} min={1} max={100} onChange={setValue} label={t('Luminosité de {name}', { name: e.name })} />;
 }
 
 function TargetTemperature({ e, run }: { e: HomeEntity; run: Run }) {
@@ -220,13 +221,13 @@ function TargetTemperature({ e, run }: { e: HomeEntity; run: Run }) {
   const nudge = (d: number) => setValue(Math.min(max, Math.max(min, Math.round((value + d) / step) * step)));
   return (
     <div className="sh-temp">
-      <button type="button" className="sh-round" onClick={() => nudge(-step)} aria-label="Baisser la consigne" disabled={isUnavailable(e)}>
+      <button type="button" className="sh-round" onClick={() => nudge(-step)} aria-label={t('Baisser la consigne')} disabled={isUnavailable(e)}>
         <Icon name="minus" size={16} />
       </button>
-      <span className="sh-temp-value" title="Consigne">
+      <span className="sh-temp-value" title={t('Consigne')}>
         {formatValue(value, '°C')}
       </span>
-      <button type="button" className="sh-round" onClick={() => nudge(step)} aria-label="Monter la consigne" disabled={isUnavailable(e)}>
+      <button type="button" className="sh-round" onClick={() => nudge(step)} aria-label={t('Monter la consigne')} disabled={isUnavailable(e)}>
         <Icon name="plus" size={16} />
       </button>
     </div>
@@ -235,22 +236,34 @@ function TargetTemperature({ e, run }: { e: HomeEntity; run: Run }) {
 
 function CoverButtons({ e, run }: { e: HomeEntity; run: Run }) {
   const valve = e.domain === 'valve';
-  const svc = (name: string) => (valve ? `${name}_valve` : `${name}_cover`);
+  const svc = (name: string) => (valve ? `${name}_valve` : `${name}_cover`); // i18n-ignore : services de Home Assistant
   const off = isUnavailable(e);
   return (
     <div className="sh-buttons">
       {coverSupports(e, 'OPEN') ? (
-        <button type="button" className="sh-round" onClick={() => void run(e, svc('open'), undefined, { state: 'opening' })} aria-label="Ouvrir" disabled={off}>
+        <button
+          type="button"
+          className="sh-round"
+          onClick={() => void run(e, svc('open'), undefined, { state: 'opening' })}
+          aria-label={t('Ouvrir')}
+          disabled={off}
+        >
           <Icon name="chevronUp" size={16} />
         </button>
       ) : null}
       {coverSupports(e, 'STOP') ? (
-        <button type="button" className="sh-round" onClick={() => void run(e, svc('stop'))} aria-label="Arrêter" disabled={off}>
+        <button type="button" className="sh-round" onClick={() => void run(e, svc('stop'))} aria-label={t('Arrêter')} disabled={off}>
           <Icon name="stop" size={14} />
         </button>
       ) : null}
       {coverSupports(e, 'CLOSE') ? (
-        <button type="button" className="sh-round" onClick={() => void run(e, svc('close'), undefined, { state: 'closing' })} aria-label="Fermer" disabled={off}>
+        <button
+          type="button"
+          className="sh-round"
+          onClick={() => void run(e, svc('close'), undefined, { state: 'closing' })}
+          aria-label={t('Fermer')}
+          disabled={off}
+        >
           <Icon name="chevronDown" size={16} />
         </button>
       ) : null}
@@ -267,12 +280,12 @@ function MediaButtons({ e, run }: { e: HomeEntity; run: Run }) {
         type="button"
         className="sh-round"
         onClick={() => void run(e, 'media_play_pause', undefined, { state: playing ? 'paused' : 'playing' })}
-        aria-label={playing ? 'Pause' : 'Lecture'}
+        aria-label={playing ? t('Pause') : t('Lecture')}
         disabled={off}
       >
         <Icon name={playing ? 'pause' : 'play'} size={16} />
       </button>
-      <button type="button" className="sh-round" onClick={() => void run(e, 'media_next_track')} aria-label="Titre suivant" disabled={off}>
+      <button type="button" className="sh-round" onClick={() => void run(e, 'media_next_track')} aria-label={t('Titre suivant')} disabled={off}>
         <Icon name="skipNext" size={16} />
       </button>
     </div>
@@ -287,11 +300,11 @@ function LockButton({ e, run }: { e: HomeEntity; run: Run }) {
       className="nb-btn nb-btn--sm"
       disabled={isUnavailable(e)}
       onClick={() => {
-        if (locked && !confirm(`Déverrouiller « ${e.name} » ?`)) return;
+        if (locked && !confirm(t('Déverrouiller « {name} » ?', { name: e.name }))) return;
         void run(e, locked ? 'unlock' : 'lock', undefined, { state: locked ? 'unlocking' : 'locking' });
       }}
     >
-      <Icon name={locked ? 'unlock' : 'lock'} size={14} /> {locked ? 'Déverrouiller' : 'Verrouiller'}
+      <Icon name={locked ? 'unlock' : 'lock'} size={14} /> {locked ? t('Déverrouiller') : t('Verrouiller')}
     </button>
   );
 }
@@ -306,14 +319,19 @@ function CameraImage({ e, onOpen, large = false }: { e: HomeEntity; onOpen?: () 
   }, []);
   if (!e.snapshot) return null;
   return (
-    <button type="button" className={`sh-camera${large ? ' sh-camera--large' : ''}`} onClick={onOpen} aria-label={`Voir ${e.name} en direct`}>
+    <button
+      type="button"
+      className={`sh-camera${large ? ' sh-camera--large' : ''}`}
+      onClick={onOpen}
+      aria-label={t('Voir {name} en direct', { name: e.name })}
+    >
       {failed ? (
-        <span className="sh-camera-empty">Image indisponible</span>
+        <span className="sh-camera-empty">{t('Image indisponible')}</span>
       ) : (
         <img src={`${base}${e.snapshot}&_=${tick}`} alt={e.name} onError={() => setFailed(true)} onLoad={() => setFailed(false)} />
       )}
       <span className="sh-camera-live">
-        <Icon name="play" size={14} /> Direct
+        <Icon name="play" size={14} /> {t('Direct')}
       </span>
     </button>
   );
@@ -331,8 +349,9 @@ function EntityCard({ e, run, onOpen, onLive, compact, sort }: { e: HomeEntity; 
     void run(e, cmd.service, cmd.data, cmd.optimistic);
   };
   const quick = () => {
-    if (e.domain === 'scene' || e.domain === 'script') void run(e, 'turn_on').then((ok) => ok && toast(`« ${e.name} » lancé.`));
-    else if (e.domain === 'button' || e.domain === 'input_button') void run(e, 'press').then((ok) => ok && toast(`« ${e.name} » : appui envoyé.`));
+    if (e.domain === 'scene' || e.domain === 'script') void run(e, 'turn_on').then((ok) => ok && toast(t('« {name} » lancé.', { name: e.name })));
+    else if (e.domain === 'button' || e.domain === 'input_button')
+      void run(e, 'press').then((ok) => ok && toast(t('« {name} » : appui envoyé.', { name: e.name })));
   };
   const style = color ? ({ '--sh-glow': color } as CSSProperties) : undefined;
   const cls = `sh-card sh-card--${e.domain}${active ? ' sh-card--on' : ''}${alert ? ' sh-card--alert' : ''}${off ? ' sh-card--unavailable' : ''}${color ? ' sh-card--colored' : ''}`;
@@ -357,18 +376,27 @@ function EntityCard({ e, run, onOpen, onLive, compact, sort }: { e: HomeEntity; 
           className="sh-tile"
           onClick={isToggleable(e) ? toggle : e.domain === 'camera' ? onLive : quick}
           disabled={off}
-          aria-label={isToggleable(e) ? `${e.state === 'on' ? 'Éteindre' : 'Allumer'} ${e.name}` : e.name}
+          aria-label={isToggleable(e) ? `${e.state === 'on' ? t('Éteindre') : t('Allumer')} ${e.name}` : e.name}
         >
           <Icon name={entityIcon(e)} size={20} />
         </button>
         <button type="button" className="sh-card-title" onClick={onOpen}>
           <span className="sh-name">{e.name}</span>
-          <span className="sh-state">{formatState(e) || (e.domain === 'scene' ? 'Scène' : e.domain === 'script' ? 'Action' : 'Bouton')}</span>
+          <span className="sh-state">
+            {formatState(e) || (e.domain === 'scene' ? t('Scène') : e.domain === 'script' ? t('Action') : t('Bouton'))}
+          </span>
         </button>
-        {isToggleable(e) ? <Switch checked={e.domain === 'climate' ? e.state !== 'off' : e.state === 'on'} onChange={toggle} disabled={off} label={`${e.name} : marche / arrêt`} /> : null}
+        {isToggleable(e) ? (
+          <Switch
+            checked={e.domain === 'climate' ? e.state !== 'off' : e.state === 'on'}
+            onChange={toggle}
+            disabled={off}
+            label={t('{name} : marche / arrêt', { name: e.name })}
+          />
+        ) : null}
         {['scene', 'script', 'button', 'input_button'].includes(e.domain) ? (
           <button type="button" className="nb-btn nb-btn--sm" onClick={quick} disabled={off}>
-            {e.domain === 'button' || e.domain === 'input_button' ? 'Appuyer' : 'Lancer'}
+            {e.domain === 'button' || e.domain === 'input_button' ? t('Appuyer') : t('Lancer')}
           </button>
         ) : null}
       </div>
@@ -381,7 +409,16 @@ function FanSlider({ e, run }: { e: HomeEntity; run: Run }) {
   const pct = typeof e.attrs.percentage === 'number' ? e.attrs.percentage : 0;
   const step = typeof e.attrs.percentage_step === 'number' && e.attrs.percentage_step > 1 ? e.attrs.percentage_step : 1;
   const [value, setValue] = useSlider(Math.round(pct), (v) => void run(e, 'set_percentage', { percentage: v }, { attrs: { percentage: v } }));
-  return <Slider value={value} min={0} max={100} step={step > 1 ? Math.round(step) : 1} onChange={setValue} label={`Vitesse de ${e.name}`} />;
+  return (
+    <Slider
+      value={value}
+      min={0}
+      max={100}
+      step={step > 1 ? Math.round(step) : 1}
+      onChange={setValue}
+      label={t('Vitesse de {name}', { name: e.name })}
+    />
+  );
 }
 
 function VacuumButtons({ e, run }: { e: HomeEntity; run: Run }) {
@@ -390,10 +427,15 @@ function VacuumButtons({ e, run }: { e: HomeEntity; run: Run }) {
   return (
     <div className="sh-buttons">
       <button type="button" className="nb-btn nb-btn--sm" onClick={() => void run(e, cleaning ? 'pause' : 'start', undefined, { state: cleaning ? 'paused' : 'cleaning' })} disabled={off}>
-        <Icon name={cleaning ? 'pause' : 'play'} size={14} /> {cleaning ? 'Pause' : 'Démarrer'}
+        <Icon name={cleaning ? 'pause' : 'play'} size={14} /> {cleaning ? t('Pause') : t('Démarrer')}
       </button>
-      <button type="button" className="nb-btn nb-btn--sm" onClick={() => void run(e, 'return_to_base', undefined, { state: 'returning' })} disabled={off}>
-        <Icon name="home" size={14} /> Base
+      <button
+        type="button"
+        className="nb-btn nb-btn--sm"
+        onClick={() => void run(e, 'return_to_base', undefined, { state: 'returning' })}
+        disabled={off}
+      >
+        <Icon name="home" size={14} /> {t('Base')}
       </button>
     </div>
   );
@@ -403,19 +445,37 @@ function VacuumButtons({ e, run }: { e: HomeEntity; run: Run }) {
 
 function GroupBrightness({ members, runMany }: { members: HomeEntity[]; runMany: RunMany }) {
   const [value, setValue] = useSlider(groupBrightness(members) ?? 100, (v) => void runMany(groupBrightnessCalls(members, v)));
-  return <Slider value={value} min={1} max={100} onChange={setValue} label="Luminosité du groupe" />;
+  return <Slider value={value} min={1} max={100} onChange={setValue} label={t('Luminosité du groupe')} />;
 }
 
 function GroupCoverButtons({ members, runMany }: { members: HomeEntity[]; runMany: RunMany }) {
   return (
     <div className="sh-buttons">
-      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'open'))} aria-label="Tout ouvrir" title="Tout ouvrir">
+      <button
+        type="button"
+        className="sh-round"
+        onClick={() => void runMany(groupCoverCalls(members, 'open'))}
+        aria-label={t('Tout ouvrir')}
+        title={t('Tout ouvrir')}
+      >
         <Icon name="chevronUp" size={16} />
       </button>
-      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'stop'))} aria-label="Tout arrêter" title="Tout arrêter">
+      <button
+        type="button"
+        className="sh-round"
+        onClick={() => void runMany(groupCoverCalls(members, 'stop'))}
+        aria-label={t('Tout arrêter')}
+        title={t('Tout arrêter')}
+      >
         <Icon name="stop" size={14} />
       </button>
-      <button type="button" className="sh-round" onClick={() => void runMany(groupCoverCalls(members, 'close'))} aria-label="Tout fermer" title="Tout fermer">
+      <button
+        type="button"
+        className="sh-round"
+        onClick={() => void runMany(groupCoverCalls(members, 'close'))}
+        aria-label={t('Tout fermer')}
+        title={t('Tout fermer')}
+      >
         <Icon name="chevronDown" size={16} />
       </button>
     </div>
@@ -445,7 +505,7 @@ function GroupCard({ g, members, runMany, onOpen, compact, sort }: { g: HomeGrou
           className="sh-tile"
           onClick={hasSwitch ? toggle : onOpen}
           disabled={!available}
-          aria-label={hasSwitch ? `${on ? 'Tout éteindre' : 'Tout allumer'} : ${g.name}` : g.name}
+          aria-label={hasSwitch ? t('{action} : {name}', { action: on ? t('Tout éteindre') : t('Tout allumer'), name: g.name }) : g.name}
         >
           <Icon name={groupIcon(g, members)} size={20} />
           <span className="sh-group-badge" aria-hidden="true">
@@ -456,7 +516,9 @@ function GroupCard({ g, members, runMany, onOpen, compact, sort }: { g: HomeGrou
           <span className="sh-name">{g.name}</span>
           <span className="sh-state">{groupLabel(members)}</span>
         </button>
-        {hasSwitch ? <Switch checked={on} onChange={toggle} disabled={!available} label={`${g.name} : tout allumer ou tout éteindre`} /> : null}
+        {hasSwitch ? (
+          <Switch checked={on} onChange={toggle} disabled={!available} label={t('{name} : tout allumer ou tout éteindre', { name: g.name })} />
+        ) : null}
       </div>
       {body ? <div className="sh-card-body">{body}</div> : null}
     </div>
@@ -503,17 +565,17 @@ function GroupDetail({
         <>
           {onDelete ? (
             <button type="button" className="nb-btn nb-btn--sm nb-btn--danger sh-footer-start" onClick={onDelete}>
-              <Icon name="trash" size={14} /> Supprimer
+              <Icon name="trash" size={14} /> {t('Supprimer')}
             </button>
           ) : null}
           {onEdit ? (
             <button type="button" className="nb-btn nb-btn--sm" onClick={onEdit}>
-              <Icon name="pencil" size={14} /> Modifier
+              <Icon name="pencil" size={14} /> {t('Modifier')}
             </button>
           ) : null}
           {onFavorite ? (
             <button type="button" className={`nb-btn nb-btn--sm${favorite ? ' sh-fav--on' : ''}`} onClick={onFavorite} aria-pressed={favorite}>
-              <Icon name="star" size={14} /> {favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              <Icon name="star" size={14} /> {favorite ? t('Retirer des favoris') : t('Ajouter aux favoris')}
             </button>
           ) : null}
         </>
@@ -526,31 +588,35 @@ function GroupDetail({
           </span>
           <div className="sh-detail-title">
             <div className="sh-state-strong">{groupLabel(members)}</div>
-            <div className="nb-muted">
-              {[`${members.length} appareil${members.length > 1 ? 's' : ''}`, rooms.join(', ')].filter(Boolean).join(' · ')}
-            </div>
+            <div className="nb-muted">{[tn(members.length, '{n} appareil', '{n} appareils'), rooms.join(', ')].filter(Boolean).join(' · ')}</div>
           </div>
-          {hasSwitch ? <Switch checked={on} onChange={() => void runMany(groupSwitchCalls(members, !on))} label={`${g.name} : tout allumer ou tout éteindre`} /> : null}
+          {hasSwitch ? (
+            <Switch
+              checked={on}
+              onChange={() => void runMany(groupSwitchCalls(members, !on))}
+              label={t('{name} : tout allumer ou tout éteindre', { name: g.name })}
+            />
+          ) : null}
         </div>
         {hasSwitch ? (
           <div className="sh-buttons">
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => void runMany(groupSwitchCalls(members, true))}>
-              <Icon name="bulb" size={14} /> Tout allumer
+              <Icon name="bulb" size={14} /> {t('Tout allumer')}
             </button>
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => void runMany(groupSwitchCalls(members, false))}>
-              <Icon name="power" size={14} /> Tout éteindre
+              <Icon name="power" size={14} /> {t('Tout éteindre')}
             </button>
           </div>
         ) : null}
         {lights.some(supportsBrightness) ? (
           <div className="sh-field">
-            <span>Luminosité de toutes les lampes</span>
+            <span>{t('Luminosité de toutes les lampes')}</span>
             <GroupBrightness members={members} runMany={runMany} />
           </div>
         ) : null}
         {presets.length ? (
           <div className="sh-field">
-            <span>Couleur de toutes les lampes</span>
+            <span>{t('Couleur de toutes les lampes')}</span>
             <div className="sh-swatches">
               {presets.map((p) => (
                 <button
@@ -568,12 +634,12 @@ function GroupDetail({
         ) : null}
         {groupHasCovers(members) ? (
           <div className="sh-field">
-            <span>Volets</span>
+            <span>{t('Volets')}</span>
             <GroupCoverButtons members={members} runMany={runMany} />
           </div>
         ) : null}
         <div className="sh-field">
-          <span>Appareils du groupe</span>
+          <span>{t('Appareils du groupe')}</span>
           <div className="sh-grid sh-grid--compact">
             {members.map((e) => (
               <EntityCard key={e.id} e={e} run={run} compact onOpen={() => onOpenEntity(e.id)} onLive={() => onLive(e.id)} />
@@ -581,7 +647,7 @@ function GroupDetail({
           </div>
           {missing > 0 ? (
             <p className="nb-muted">
-              {missing} appareil{missing > 1 ? 's' : ''} du groupe introuvable{missing > 1 ? 's' : ''} dans Home Assistant.
+              {tn(missing, '{n} appareil du groupe introuvable dans Home Assistant.', '{n} appareils du groupe introuvables dans Home Assistant.')}
             </p>
           ) : null}
         </div>
@@ -603,19 +669,28 @@ function LightControls({ e, run }: { e: HomeEntity; run: Run }) {
     <>
       {supportsBrightness(e) ? (
         <div className="sh-field">
-          <span>Luminosité</span>
+          <span>{t('Luminosité')}</span>
           <BrightnessSlider e={e} run={run} />
         </div>
       ) : null}
       {supportsColorTemp(e) ? (
         <div className="sh-field">
-          <span>Température de couleur</span>
-          <Slider value={temp} min={minK} max={maxK} step={50} onChange={setTemp} label="Température de couleur" suffix="K" style={{ '--sh-track': `linear-gradient(90deg, ${kelvinToCss(minK)}, ${kelvinToCss(maxK)})` } as CSSProperties} />
+          <span>{t('Température de couleur')}</span>
+          <Slider
+            value={temp}
+            min={minK}
+            max={maxK}
+            step={50}
+            onChange={setTemp}
+            label={t('Température de couleur')}
+            suffix="K"
+            style={{ '--sh-track': `linear-gradient(90deg, ${kelvinToCss(minK)}, ${kelvinToCss(maxK)})` } as CSSProperties}
+          />
         </div>
       ) : null}
       {presets.length ? (
         <div className="sh-field">
-          <span>Couleur</span>
+          <span>{t('Couleur')}</span>
           <div className="sh-swatches">
             {presets.map((p) => (
               <button
@@ -636,12 +711,12 @@ function LightControls({ e, run }: { e: HomeEntity; run: Run }) {
               />
             ))}
             {supportsColor(e) ? (
-              <label className="sh-swatch sh-swatch--custom" title="Autre couleur">
+              <label className="sh-swatch sh-swatch--custom" title={t('Autre couleur')}>
                 <Icon name="palette" size={15} />
                 <input
                   type="color"
                   value={custom}
-                  aria-label="Autre couleur"
+                  aria-label={t('Autre couleur')}
                   onChange={(ev) => {
                     setCustom(ev.target.value);
                     const rgb = hexToRgb(ev.target.value);
@@ -664,18 +739,20 @@ function ClimateControls({ e, run }: { e: HomeEntity; run: Run }) {
       {typeof e.attrs.current_temperature === 'number' ? (
         <div className="sh-big">
           {formatValue(e.attrs.current_temperature, '°C')}
-          {typeof e.attrs.current_humidity === 'number' ? <span className="nb-muted"> · {e.attrs.current_humidity} %</span> : null}
+          {typeof e.attrs.current_humidity === 'number' ? (
+            <span className="nb-muted"> · {t('{pct} %', { pct: e.attrs.current_humidity })}</span>
+          ) : null}
         </div>
       ) : null}
       {e.state !== 'off' ? (
         <div className="sh-field">
-          <span>Consigne</span>
+          <span>{t('Consigne')}</span>
           <TargetTemperature e={e} run={run} />
         </div>
       ) : null}
       {modes.length ? (
         <div className="sh-field">
-          <span>Mode</span>
+          <span>{t('Mode')}</span>
           <div className="sh-chips">
             {modes.map((m) => (
               <button key={m} type="button" className={`sh-chip${e.state === m ? ' sh-chip--active' : ''}`} onClick={() => void run(e, 'set_hvac_mode', { hvac_mode: m }, { state: m })}>
@@ -700,8 +777,8 @@ function CoverControls({ e, run }: { e: HomeEntity; run: Run }) {
       <CoverButtons e={e} run={run} />
       {pos !== null && coverSupports(e, 'SET_POSITION') ? (
         <div className="sh-field">
-          <span>Ouverture</span>
-          <Slider value={value} min={0} max={100} onChange={setValue} label="Ouverture" />
+          <span>{t('Ouverture')}</span>
+          <Slider value={value} min={0} max={100} onChange={setValue} label={t('Ouverture')} />
         </div>
       ) : null}
     </>
@@ -716,8 +793,8 @@ function MediaControls({ e, run }: { e: HomeEntity; run: Run }) {
       <MediaButtons e={e} run={run} />
       {vol !== null ? (
         <div className="sh-field">
-          <span>Volume</span>
-          <Slider value={value} min={0} max={100} onChange={setValue} label="Volume" />
+          <span>{t('Volume')}</span>
+          <Slider value={value} min={0} max={100} onChange={setValue} label={t('Volume')} />
         </div>
       ) : null}
     </>
@@ -725,13 +802,13 @@ function MediaControls({ e, run }: { e: HomeEntity; run: Run }) {
 }
 
 function timeAgo(iso: string): string {
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return '';
-  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if (s < 60) return 'à l’instant';
-  if (s < 3600) return `il y a ${Math.round(s / 60)} min`;
-  if (s < 86_400) return `il y a ${Math.round(s / 3600)} h`;
-  return `le ${new Date(t).toLocaleDateString('fr-FR')}`;
+  const at = Date.parse(iso);
+  if (!Number.isFinite(at)) return '';
+  const s = Math.max(0, Math.round((Date.now() - at) / 1000));
+  if (s < 60) return t('à l’instant');
+  if (s < 3600) return t('il y a {n} min', { n: Math.round(s / 60) });
+  if (s < 86_400) return t('il y a {n} h', { n: Math.round(s / 3600) });
+  return t('le {date}', { date: new Date(at).toLocaleDateString(locale()) });
 }
 
 function EntityDetail({
@@ -758,12 +835,13 @@ function EntityDetail({
   else if (e.domain === 'climate') controls = <ClimateControls e={e} run={run} />;
   else if (e.domain === 'cover' || e.domain === 'valve') controls = <CoverControls e={e} run={run} />;
   else if (e.domain === 'media_player') controls = <MediaControls e={e} run={run} />;
-  else if (e.domain === 'fan' && e.state === 'on') controls = (
-    <div className="sh-field">
-      <span>Vitesse</span>
-      <FanSlider e={e} run={run} />
-    </div>
-  );
+  else if (e.domain === 'fan' && e.state === 'on')
+    controls = (
+      <div className="sh-field">
+        <span>{t('Vitesse')}</span>
+        <FanSlider e={e} run={run} />
+      </div>
+    );
   else if (e.domain === 'lock') controls = <LockButton e={e} run={run} />;
   else if (e.domain === 'vacuum') controls = <VacuumButtons e={e} run={run} />;
   else if (e.domain === 'camera') controls = <CameraImage e={e} onOpen={onLive} large />;
@@ -780,11 +858,16 @@ function EntityDetail({
       width={460}
       footer={
         <>
-          <button type="button" className="nb-btn nb-btn--sm" onClick={onHide} title={hidden ? 'Afficher de nouveau cet appareil dans la liste' : 'Ne plus afficher cet appareil dans la liste'}>
-            <Icon name={hidden ? 'eye' : 'eyeOff'} size={14} /> {hidden ? 'Réafficher' : 'Masquer'}
+          <button
+            type="button"
+            className="nb-btn nb-btn--sm"
+            onClick={onHide}
+            title={hidden ? t('Afficher de nouveau cet appareil dans la liste') : t('Ne plus afficher cet appareil dans la liste')}
+          >
+            <Icon name={hidden ? 'eye' : 'eyeOff'} size={14} /> {hidden ? t('Réafficher') : t('Masquer')}
           </button>
           <button type="button" className={`nb-btn nb-btn--sm${favorite ? ' sh-fav--on' : ''}`} onClick={onFavorite} aria-pressed={favorite}>
-            <Icon name="star" size={14} /> {favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            <Icon name="star" size={14} /> {favorite ? t('Retirer des favoris') : t('Ajouter aux favoris')}
           </button>
         </>
       }
@@ -795,12 +878,26 @@ function EntityDetail({
             <Icon name={entityIcon(e)} size={22} />
           </span>
           <div className="sh-detail-title">
-            <div className="sh-state-strong">{formatState(e) || 'Prêt'}</div>
+            <div className="sh-state-strong">{formatState(e) || t('Prêt')}</div>
             <div className="nb-muted">
-              {[e.area, e.changedAt && !['scene', 'script', 'button', 'input_button'].includes(e.domain) ? `modifié ${timeAgo(e.changedAt)}` : ''].filter(Boolean).join(' · ')}
+              {[
+                e.area,
+                e.changedAt && !['scene', 'script', 'button', 'input_button'].includes(e.domain)
+                  ? t('modifié {ago}', { ago: timeAgo(e.changedAt) })
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </div>
           </div>
-          {isToggleable(e) ? <Switch checked={e.domain === 'climate' ? e.state !== 'off' : e.state === 'on'} onChange={toggle} disabled={isUnavailable(e)} label={`${e.name} : marche / arrêt`} /> : null}
+          {isToggleable(e) ? (
+            <Switch
+              checked={e.domain === 'climate' ? e.state !== 'off' : e.state === 'on'}
+              onChange={toggle}
+              disabled={isUnavailable(e)}
+              label={t('{name} : marche / arrêt', { name: e.name })}
+            />
+          ) : null}
         </div>
         {controls}
       </div>
@@ -825,9 +922,9 @@ function CameraLive({ e, onClose }: { e: HomeEntity; onClose: () => void }) {
     <Modal title={e.name} onClose={onClose} width={960}>
       <div className="sh-live">
         {e.stream && !failed ? (
-          <img ref={img} src={`${base}${e.stream}`} alt={`${e.name} en direct`} onError={() => setFailed(true)} />
+          <img ref={img} src={`${base}${e.stream}`} alt={t('{name} en direct', { name: e.name })} onError={() => setFailed(true)} />
         ) : (
-          <div className="sh-camera-empty">Vidéo indisponible.</div>
+          <div className="sh-camera-empty">{t('Vidéo indisponible.')}</div>
         )}
       </div>
     </Modal>
@@ -907,8 +1004,8 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.</p>
-        <p className="nb-muted">Configurez l’adresse du serveur dans les réglages.</p>
+        <p>{t('La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.')}</p>
+        <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
     );
   }
@@ -917,11 +1014,13 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
       <div className="nb-notice sh-empty">
         <Icon name="bulb" size={28} />
         <p>
-          Reliez <b>Home Assistant</b> pour voir et piloter vos lumières, prises, volets, chauffage, caméras et capteurs, pièce par pièce.
+          {tx('Reliez <b>Home Assistant</b> pour voir et piloter vos lumières, prises, volets, chauffage, caméras et capteurs, pièce par pièce.', {
+            b: (s) => <b>{s}</b>,
+          })}
         </p>
         {onConfigure ? (
           <button type="button" className="nb-btn nb-btn--primary" onClick={onConfigure}>
-            Connecter Home Assistant
+            {t('Connecter Home Assistant')}
           </button>
         ) : null}
         {configDialog}
@@ -929,7 +1028,7 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
     );
   }
 
-  const problem = data?.error || error;
+  const problem = (data?.error ? tServer(data.error) : '') || error;
   const favoritesView = favoritesOnly || filter === 'favorites';
   const favoritesShown = favorites.filter(matches);
   const showFavoritesSection = !favoritesView && filter === 'all' && !q && favorites.length > 0;
@@ -958,13 +1057,13 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
     <div className={`sh-panel${compact ? ' sh-panel--compact' : ''}`}>
       {!favoritesOnly ? (
         <div className="sh-toolbar">
-          <div className="sh-chips" role="toolbar" aria-label="Filtrer">
+          <div className="sh-chips" role="toolbar" aria-label={t('Filtrer')}>
             <button type="button" className={`sh-chip${filter === 'all' ? ' sh-chip--active' : ''}`} onClick={() => setFilter('all')}>
-              Tout
+              {t('Tout')}
             </button>
             {favorites.length ? (
               <button type="button" className={`sh-chip${filter === 'favorites' ? ' sh-chip--active' : ''}`} onClick={() => setFilter('favorites')}>
-                <Icon name="star" size={13} /> Favoris
+                <Icon name="star" size={13} /> {t('Favoris')}
               </button>
             ) : null}
             {CATEGORIES.filter((c) => counts.get(c.key)).map((c) => (
@@ -974,15 +1073,26 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
             ))}
           </div>
           <div className="sh-toolbar-right">
-            <input className="nb-input nb-input--sm sh-search" placeholder="Rechercher…" value={query} onChange={(ev) => setQuery(ev.target.value)} aria-label="Rechercher un appareil" />
+            <input
+              className="nb-input nb-input--sm sh-search"
+              placeholder={t('Rechercher…')}
+              value={query}
+              onChange={(ev) => setQuery(ev.target.value)}
+              aria-label={t('Rechercher un appareil')}
+            />
             {onConfigure ? (
-              <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditGroup('new')} title="Piloter plusieurs appareils ensemble (toutes les lumières d’une pièce…)">
-                <Icon name="plus" size={14} /> Nouveau groupe
+              <button
+                type="button"
+                className="nb-btn nb-btn--sm"
+                onClick={() => setEditGroup('new')}
+                title={t('Piloter plusieurs appareils ensemble (toutes les lumières d’une pièce…)')}
+              >
+                <Icon name="plus" size={14} /> {t('Nouveau groupe')}
               </button>
             ) : null}
             {onConfigure ? (
               <button type="button" className="nb-btn nb-btn--sm" onClick={onConfigure}>
-                Configurer
+                {t('Configurer')}
               </button>
             ) : null}
           </div>
@@ -994,12 +1104,12 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
           <Icon name="alert" size={15} /> {problem}
         </div>
       ) : null}
-      {!data && loading ? <div className="hl-loading">Connexion à Home Assistant…</div> : null}
+      {!data && loading ? <div className="hl-loading">{t('Connexion à Home Assistant…')}</div> : null}
 
       {!favoritesView && shownGroups.length ? (
         <section className="sh-section">
           <h2>
-            <Icon name="grid" size={13} /> Groupes
+            <Icon name="grid" size={13} /> {t('Groupes')}
           </h2>
           <TileGrid items={shownGroups} compact={compact} onReorder={reorderGroups} render={render} />
         </section>
@@ -1007,24 +1117,28 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
       {showFavoritesSection ? (
         <section className="sh-section">
           <h2>
-            <Icon name="star" size={13} /> Favoris
+            <Icon name="star" size={13} /> {t('Favoris')}
           </h2>
           <TileGrid items={favorites} compact={compact} onReorder={reorderFavorites} render={render} />
         </section>
       ) : null}
-      {favoritesView
-        ? favoritesShown.length
-          ? <TileGrid items={favoritesShown} compact={compact} onReorder={reorderFavorites} render={render} />
-          : data
-            ? <p className="nb-muted">Aucun favori : ouvrez un appareil ou un groupe et touchez « Ajouter aux favoris ».</p>
-            : null
-        : groupByArea(shown, cfg.order).map(([area, list]) => (
-            <section key={area || '—'} className="sh-section">
-              <h2>{area || 'Sans pièce'}</h2>
-              <TileGrid items={entityItems(list)} compact={compact} onReorder={reorderEntities} render={render} />
-            </section>
-          ))}
-      {data && !problem && !shown.length && !shownGroups.length && !favoritesView ? <p className="nb-muted">Aucun appareil ne correspond.</p> : null}
+      {favoritesView ? (
+        favoritesShown.length ? (
+          <TileGrid items={favoritesShown} compact={compact} onReorder={reorderFavorites} render={render} />
+        ) : data ? (
+          <p className="nb-muted">{t('Aucun favori : ouvrez un appareil ou un groupe et touchez « Ajouter aux favoris ».')}</p>
+        ) : null
+      ) : (
+        groupByArea(shown, cfg.order).map(([area, list]) => (
+          <section key={area || '—'} className="sh-section">
+            <h2>{area || t('Sans pièce')}</h2>
+            <TileGrid items={entityItems(list)} compact={compact} onReorder={reorderEntities} render={render} />
+          </section>
+        ))
+      )}
+      {data && !problem && !shown.length && !shownGroups.length && !favoritesView ? (
+        <p className="nb-muted">{t('Aucun appareil ne correspond.')}</p>
+      ) : null}
 
       {detail ? (
         <EntityDetail
@@ -1037,7 +1151,11 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
             const wasHidden = cfg.hidden.includes(detail.id);
             if (doc) updateHomeConfig(doc, (c) => ({ ...c, hidden: toggleInList(c.hidden, detail.id), favorites: wasHidden ? c.favorites : c.favorites.filter((f) => f !== detail.id) }));
             setDetailId(null);
-            toast(wasHidden ? `« ${detail.name} » est de nouveau affiché.` : `« ${detail.name} » est masqué (réaffichage : Configurer).`);
+            toast(
+              wasHidden
+                ? t('« {name} » est de nouveau affiché.', { name: detail.name })
+                : t('« {name} » est masqué (réaffichage : Configurer).', { name: detail.name }),
+            );
           }}
           onLive={() => {
             setDetailId(null);
@@ -1065,10 +1183,10 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
           onDelete={
             doc && canConfigure
               ? () => {
-                  if (!confirm(`Supprimer le groupe « ${group.g.name} » ? Ses appareils ne sont pas modifiés.`)) return;
+                  if (!confirm(t('Supprimer le groupe « {name} » ? Ses appareils ne sont pas modifiés.', { name: group.g.name }))) return;
                   updateHomeConfig(doc, (c) => ({ ...c, groups: c.groups.filter((x) => x.id !== group.id), favorites: c.favorites.filter((f) => f !== group.id) }));
                   setGroupId(null);
-                  toast(`Groupe « ${group.g.name} » supprimé.`);
+                  toast(t('Groupe « {name} » supprimé.', { name: group.g.name }));
                 }
               : undefined
           }
@@ -1093,12 +1211,12 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
 /** Vue « Maison » (barre latérale). */
 export function SmartHomeView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = 'Objets connectés – Melo';
+    document.title = t('Objets connectés – Melo');
   }, []);
   return (
     <div className="nb-page hl-page sh-page">
       <h1 className="nb-page-title-static">
-        <Icon name="bulb" size={34} /> Objets connectés
+        <Icon name="bulb" size={34} /> {t('Objets connectés')}
       </h1>
       <SmartHomePanel doc={doc} />
     </div>

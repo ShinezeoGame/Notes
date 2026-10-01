@@ -7,6 +7,7 @@ import { useSortable, type SortItemProps } from '../../lib/sortable';
 import { Icon } from '../../icons/Icon';
 import { taskMap } from '../model';
 import { bool, type SettingsProps, type WidgetProps } from '../types';
+import { t } from '../../lib/i18n';
 
 type Task = { id: string; text: string; done: boolean; order: number; doneAt: number };
 
@@ -62,26 +63,26 @@ export function TasksWidget({ widget, doc, editing }: WidgetProps) {
     setDraft('');
   };
 
-  const row = (t: Task, sort?: SortItemProps) => (
-    <li key={t.id} {...sort} className={`w-task${t.done ? ' w-task--done' : ''}${sort?.className ? ` ${sort.className}` : ''}`}>
+  const row = (task: Task, sort?: SortItemProps) => (
+    <li key={task.id} {...sort} className={`w-task${task.done ? ' w-task--done' : ''}${sort?.className ? ` ${sort.className}` : ''}`}>
       <button
         type="button"
         className="w-task-check"
         role="checkbox"
-        aria-checked={t.done}
-        aria-label={t.done ? `Marquer « ${t.text} » à faire` : `Marquer « ${t.text} » faite`}
-        onClick={() => save({ ...t, done: !t.done, doneAt: t.done ? 0 : Date.now() })}
+        aria-checked={task.done}
+        aria-label={task.done ? t('Marquer « {text} » à faire', { text: task.text }) : t('Marquer « {text} » faite', { text: task.text })}
+        onClick={() => save({ ...task, done: !task.done, doneAt: task.done ? 0 : Date.now() })}
       >
-        {t.done ? <Icon name="check" size={13} strokeWidth={2.6} /> : null}
+        {task.done ? <Icon name="check" size={13} strokeWidth={2.6} /> : null}
       </button>
-      {editId === t.id ? (
+      {editId === task.id ? (
         <input
           className="w-task-edit"
-          defaultValue={t.text}
+          defaultValue={task.text}
           autoFocus
           onBlur={(e) => {
             const text = e.currentTarget.value.trim();
-            if (text && text !== t.text) save({ ...t, text });
+            if (text && text !== task.text) save({ ...task, text });
             setEditId(null);
           }}
           onKeyDown={(e) => {
@@ -90,15 +91,25 @@ export function TasksWidget({ widget, doc, editing }: WidgetProps) {
           }}
         />
       ) : (
-        <span className="w-task-text" onDoubleClick={() => setEditId(t.id)}>
-          {t.text}
+        <span className="w-task-text" onDoubleClick={() => setEditId(task.id)}>
+          {task.text}
         </span>
       )}
       <span className="w-task-actions">
-        <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => setEditId(t.id)} aria-label={`Modifier « ${t.text} »`}>
+        <button
+          type="button"
+          className="nb-icon-btn nb-icon-btn--sm"
+          onClick={() => setEditId(task.id)}
+          aria-label={t('Modifier « {text} »', { text: task.text })}
+        >
           <Icon name="pencil" size={13} />
         </button>
-        <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => map.delete(t.id)} aria-label={`Supprimer « ${t.text} »`}>
+        <button
+          type="button"
+          className="nb-icon-btn nb-icon-btn--sm"
+          onClick={() => map.delete(task.id)}
+          aria-label={t('Supprimer « {text} »', { text: task.text })}
+        >
           <Icon name="close" size={14} />
         </button>
       </span>
@@ -115,7 +126,13 @@ export function TasksWidget({ widget, doc, editing }: WidgetProps) {
         }}
       >
         <Icon name="plus" size={15} />
-        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ajouter une tâche…" aria-label="Nouvelle tâche" enterKeyHint="done" />
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={t('Ajouter une tâche…')}
+          aria-label={t('Nouvelle tâche')}
+          enterKeyHint="done"
+        />
       </form>
       <ul className="w-task-list">
         {sortable.order.map((id) => {
@@ -124,10 +141,10 @@ export function TasksWidget({ widget, doc, editing }: WidgetProps) {
         })}
         {!hideDone ? done.map((t) => row(t)) : null}
       </ul>
-      {!tasks.length ? <p className="w-muted w-tasks-empty">Rien à faire pour l’instant.</p> : null}
+      {!tasks.length ? <p className="w-muted w-tasks-empty">{t('Rien à faire pour l’instant.')}</p> : null}
       {done.length ? (
         <button type="button" className="w-link-btn" onClick={() => doc.transact(() => done.forEach((t) => map.delete(t.id)))}>
-          Effacer les tâches faites ({done.length})
+          {t('Effacer les tâches faites ({n})', { n: done.length })}
         </button>
       ) : null}
     </div>
@@ -137,7 +154,7 @@ export function TasksWidget({ widget, doc, editing }: WidgetProps) {
 export function TasksSettings({ config, set }: SettingsProps) {
   return (
     <label className="nb-check">
-      <input type="checkbox" checked={bool(config.hideDone)} onChange={(e) => set({ hideDone: e.target.checked })} /> Masquer les tâches faites
+      <input type="checkbox" checked={bool(config.hideDone)} onChange={(e) => set({ hideDone: e.target.checked })} /> {t('Masquer les tâches faites')}
     </label>
   );
 }

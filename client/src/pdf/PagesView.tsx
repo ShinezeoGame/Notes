@@ -9,6 +9,7 @@ import type { PageSize, SourceCache } from './render';
 import { PageCanvas } from './PageCanvas';
 import { AnnotSvg } from './annotations';
 import { loadHelvetica } from './text';
+import { t, tn } from '../lib/i18n';
 
 type Props = {
   project: PdfProject;
@@ -83,14 +84,14 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
   const remove = () => {
     if (chosen.length === 0) return;
     if (chosen.length === pages.length) {
-      toast('Un PDF garde au moins une page : pour tout effacer, supprimez le PDF depuis la bibliothèque.', 'error');
+      toast(t('Un PDF garde au moins une page : pour tout effacer, supprimez le PDF depuis la bibliothèque.'), 'error');
       return;
     }
     setPages(pages.filter((p) => !selection.has(p.id)));
     onSelection(new Set());
-    toast(`${chosen.length} page${chosen.length > 1 ? 's' : ''} supprimée${chosen.length > 1 ? 's' : ''}.`, 'info', {
+    toast(tn(chosen.length, '{n} page supprimée.', '{n} pages supprimées.'), 'info', {
       duration: 6000,
-      action: { label: 'Annuler', run: () => project.undo.undo() },
+      action: { label: t('Annuler'), run: () => project.undo.undo() },
     });
   };
 
@@ -162,47 +163,50 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
           insertAt.current = null;
         }}
       />
-      <div className="pdfp-bar" role="toolbar" aria-label="Pages">
+      <div className="pdfp-bar" role="toolbar" aria-label={t('Pages')}>
         {chosen.length ? (
           <>
-            <span className="pdfp-count">
-              {chosen.length} page{chosen.length > 1 ? 's' : ''}
-            </span>
-            <button type="button" className="nb-btn nb-btn--sm" onClick={() => rotate(-90)} title="Pivoter vers la gauche">
-              <Icon name="rotateLeft" size={15} /> <span className="pdfp-label">Gauche</span>
+            <span className="pdfp-count">{tn(chosen.length, '{n} page', '{n} pages')}</span>
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => rotate(-90)} title={t('Pivoter vers la gauche')}>
+              <Icon name="rotateLeft" size={15} /> <span className="pdfp-label">{t('Gauche')}</span>
             </button>
-            <button type="button" className="nb-btn nb-btn--sm" onClick={() => rotate(90)} title="Pivoter vers la droite">
-              <Icon name="rotateRight" size={15} /> <span className="pdfp-label">Droite</span>
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => rotate(90)} title={t('Pivoter vers la droite')}>
+              <Icon name="rotateRight" size={15} /> <span className="pdfp-label">{t('Droite')}</span>
             </button>
-            <button type="button" className={`nb-btn nb-btn--sm${moving ? ' nb-btn--active' : ''}`} aria-pressed={moving} onClick={() => setMoving((v) => !v)}>
-              <Icon name="move" size={15} /> Déplacer
+            <button
+              type="button"
+              className={`nb-btn nb-btn--sm${moving ? ' nb-btn--active' : ''}`}
+              aria-pressed={moving}
+              onClick={() => setMoving((v) => !v)}
+            >
+              <Icon name="move" size={15} /> {t('Déplacer')}
             </button>
             <button
               type="button"
               className="nb-btn nb-btn--sm"
               onClick={() => onExtract(chosen.map((p) => p.id))}
               disabled={busy}
-              title="Créer un nouveau PDF avec ces pages"
+              title={t('Créer un nouveau PDF avec ces pages')}
             >
-              <Icon name="scissors" size={15} /> Extraire
+              <Icon name="scissors" size={15} /> {t('Extraire')}
             </button>
             {single ? (
               <button type="button" className="nb-btn nb-btn--sm" onClick={() => onOpenPage(single.id)}>
-                <Icon name="pencil" size={15} /> Annoter
+                <Icon name="pencil" size={15} /> {t('Annoter')}
               </button>
             ) : null}
             <button type="button" className="nb-btn nb-btn--sm nb-btn--danger" onClick={remove}>
-              <Icon name="trash" size={15} /> Supprimer
+              <Icon name="trash" size={15} /> {t('Supprimer')}
             </button>
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => (setMoving(false), onSelection(new Set()))}>
-              Désélectionner
+              {t('Désélectionner')}
             </button>
           </>
         ) : (
           <>
-            <span className="pdfp-count nb-muted">Touchez des pages pour les choisir.</span>
+            <span className="pdfp-count nb-muted">{t('Touchez des pages pour les choisir.')}</span>
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => onSelection(new Set(pages.map((p) => p.id)))}>
-              Tout sélectionner
+              {t('Tout sélectionner')}
             </button>
           </>
         )}
@@ -216,7 +220,7 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
             fileInput.current?.click();
           }}
         >
-          <Icon name="filePlus" size={15} /> Ajouter PDF ou photos
+          <Icon name="filePlus" size={15} /> {t('Ajouter PDF ou photos')}
         </button>
         {touch ? (
           <button
@@ -228,23 +232,25 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
               cameraInput.current?.click();
             }}
           >
-            <Icon name="camera" size={15} /> Photo
+            <Icon name="camera" size={15} /> {t('Photo')}
           </button>
         ) : null}
         <button type="button" className="nb-btn nb-btn--sm" onClick={addBlank}>
-          <Icon name="plus" size={15} /> Page blanche
+          <Icon name="plus" size={15} /> {t('Page blanche')}
         </button>
       </div>
       {moving ? (
         <div className="pdfp-moving" role="status">
-          Touchez l’endroit où placer {chosen.length > 1 ? `les ${chosen.length} pages` : 'la page'} : avant ou après une autre page.
+          {chosen.length > 1
+            ? t('Touchez l’endroit où placer les {n} pages : avant ou après une autre page.', { n: chosen.length })
+            : t('Touchez l’endroit où placer la page : avant ou après une autre page.')}
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => setMoving(false)}>
-            Annuler
+            {t('Annuler')}
           </button>
         </div>
       ) : null}
 
-      <ol className="pdfp-grid" aria-label="Pages du PDF">
+      <ol className="pdfp-grid" aria-label={t('Pages du PDF')}>
         {pages.map((ref, index) => {
           const isSel = selection.has(ref.id);
           const src = ref.src ? state.sources.get(ref.src) : undefined;
@@ -271,7 +277,7 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
                 type="button"
                 className="pdfp-thumb"
                 aria-pressed={isSel}
-                aria-label={`Page ${index + 1}${ref.rot ? `, tournée de ${ref.rot}°` : ''}`}
+                aria-label={ref.rot ? t('Page {n}, tournée de {deg}°', { n: index + 1, deg: ref.rot }) : t('Page {n}', { n: index + 1 })}
                 draggable={!moving}
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
@@ -287,11 +293,11 @@ export function PagesView({ project, state, cache, selection, onSelection, onOpe
               <span className="pdfp-num">{index + 1}</span>
               {moving && !isSel ? (
                 <div className="pdfp-targets">
-                  <button type="button" onClick={() => moveTo(index)} aria-label={`Placer avant la page ${index + 1}`}>
-                    <Icon name="chevronLeft" size={16} /> Avant
+                  <button type="button" onClick={() => moveTo(index)} aria-label={t('Placer avant la page {n}', { n: index + 1 })}>
+                    <Icon name="chevronLeft" size={16} /> {t('Avant')}
                   </button>
-                  <button type="button" onClick={() => moveTo(index + 1)} aria-label={`Placer après la page ${index + 1}`}>
-                    Après <Icon name="chevronRight" size={16} />
+                  <button type="button" onClick={() => moveTo(index + 1)} aria-label={t('Placer après la page {n}', { n: index + 1 })}>
+                    {t('Après')} <Icon name="chevronRight" size={16} />
                   </button>
                 </div>
               ) : null}

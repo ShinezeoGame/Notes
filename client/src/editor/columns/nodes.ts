@@ -24,7 +24,7 @@ const ColumnList = Node.create({
   name: 'columnList',
   priority: 40,
   group: 'childContainer bnBlock blockGroupChild',
-  content: 'column column+',
+  content: 'column column+', // i18n-ignore
   parseHTML() {
     return [{ tag: 'div[data-node-type="columnList"]' }];
   },

@@ -20,10 +20,11 @@ import {
 } from '../lib/agenda';
 import { dayKey, formatDay, formatTimeRange } from '../lib/ics';
 import { Icon } from '../icons/Icon';
+import { t, tn, tx, locale } from '../lib/i18n';
 
 const WEEKDAYS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
-const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
-const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const monthFmt = new Intl.DateTimeFormat(locale(), { month: 'long', year: 'numeric' });
+const timeFmt = new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' });
 const keyOf = (d: Date) => dayKey(d.toISOString());
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -43,7 +44,7 @@ export function EventLine({ ev, onDay }: { ev: AgendaEvent; onDay?: string }) {
           )}
         </div>
         <div className="ag-event-meta">
-          {startsBefore && !ev.allDay ? `Jusqu’à ${timeFmt.format(new Date(ev.end))}` : formatTimeRange(ev)}
+          {startsBefore && !ev.allDay ? t('Jusqu’à {time}', { time: timeFmt.format(new Date(ev.end)) }) : formatTimeRange(ev)}
           {ev.calendar ? <span className="ag-event-cal"> · {ev.calendar}</span> : null}
         </div>
         {ev.location ? (
@@ -61,11 +62,22 @@ function CalendarRow({ cal, busy, onRefresh, doc }: { cal: AgendaCalendar; busy:
   const set = (patch: Partial<AgendaCalendar>) => updateCalendars(doc, (list) => list.map((c) => (c.id === cal.id ? { ...c, ...patch } : c)));
   return (
     <div className={`ag-cal${cal.enabled ? '' : ' ag-cal--off'}`}>
-      <button type="button" className="ag-cal-dot" style={{ background: cal.color }} onClick={() => setColors((v) => !v)} aria-label={`Couleur de ${cal.name}`} />
+      <button
+        type="button"
+        className="ag-cal-dot"
+        style={{ background: cal.color }}
+        onClick={() => setColors((v) => !v)}
+        aria-label={t('Couleur de {name}', { name: cal.name })}
+      />
       <span className="ag-cal-name" title={cal.name}>
         {cal.name}
       </span>
-      <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => set({ enabled: !cal.enabled })} title={cal.enabled ? 'Masquer' : 'Afficher'}>
+      <button
+        type="button"
+        className="nb-icon-btn nb-icon-btn--sm"
+        onClick={() => set({ enabled: !cal.enabled })}
+        title={cal.enabled ? t('Masquer') : t('Afficher')}
+      >
         <Icon name={cal.enabled ? 'eye' : 'eyeOff'} size={15} />
       </button>
       <button
@@ -73,15 +85,15 @@ function CalendarRow({ cal, busy, onRefresh, doc }: { cal: AgendaCalendar; busy:
         className="nb-icon-btn nb-icon-btn--sm"
         onClick={onRefresh}
         disabled={busy || !cal.source}
-        title={cal.source ? 'Actualiser' : 'Importé d’un fichier : pas d’actualisation'}
+        title={cal.source ? t('Actualiser') : t('Importé d’un fichier : pas d’actualisation')}
       >
         <Icon name="refresh" size={15} />
       </button>
       <button
         type="button"
         className="nb-icon-btn nb-icon-btn--sm"
-        onClick={() => confirm(`Retirer l’agenda « ${cal.name} » ?`) && removeCalendar(doc, cal.id)}
-        title="Retirer"
+        onClick={() => confirm(t('Retirer l’agenda « {name} » ?', { name: cal.name })) && removeCalendar(doc, cal.id)}
+        title={t('Retirer')}
       >
         <Icon name="trash" size={15} />
       </button>
@@ -130,9 +142,20 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
       setBusy(cal.id);
       try {
         const { count, failed } = await refreshCalendar(doc, cal, ctx.fetchIcs);
-        ctx.notify(failed.length ? `« ${cal.name} » : ${count} événement(s) ; illisibles : ${failed.join(', ')}.` : `« ${cal.name} » : ${count} événement(s).`, failed.length ? 'error' : 'info');
+        ctx.notify(
+          failed.length
+            ? tn(count, '« {name} » : {n} événement ; illisibles : {failed}.', '« {name} » : {n} événements ; illisibles : {failed}.', {
+                name: cal.name,
+                failed: failed.join(', '),
+              })
+            : tn(count, '« {name} » : {n} événement.', '« {name} » : {n} événements.', { name: cal.name }),
+          failed.length ? 'error' : 'info',
+        );
       } catch (err) {
-        ctx.notify(`« ${cal.name} » : ${err instanceof Error ? err.message : 'actualisation impossible'}`, 'error');
+        ctx.notify(
+          t('« {name} » : {error}', { name: cal.name, error: err instanceof Error ? err.message : t('Actualisation impossible.') }),
+          'error',
+        );
       }
     }
     setBusy(null);
@@ -142,7 +165,11 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
     const res = await ctx.importCalendar();
     if (res) {
       addCalendar(doc, res);
-      ctx.notify(`Agenda « ${res.title || 'Agenda'} » ajouté (${res.events.length} événement(s)).`);
+      ctx.notify(
+        tn(res.events.length, 'Agenda « {name} » ajouté ({n} événement).', 'Agenda « {name} » ajouté ({n} événements).', {
+          name: res.title || t('Agenda'),
+        }),
+      );
     }
   };
 
@@ -156,16 +183,18 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
     return (
       <div className="nb-page ag-page">
         <h1 className="nb-page-title-static">
-          <Icon name="calendar" size={34} /> Agenda
+          <Icon name="calendar" size={34} /> {t('Agenda')}
         </h1>
         <div className="nb-notice sh-empty ag-empty">
           <Icon name="calendar" size={28} />
           <p>
-            Réunissez vos agendas <b>Google</b> et vos adresses <b>iCal</b> (Outlook, Apple, école, travail…) : vue du mois, prochains événements, et
-            widget sur l’accueil.
+            {tx(
+              'Réunissez vos agendas <b>Google</b> et vos adresses <b>iCal</b> (Outlook, Apple, école, travail…) : vue du mois, prochains événements, et widget sur l’accueil.',
+              { b: (s) => <b>{s}</b> },
+            )}
           </p>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => void add()}>
-            <Icon name="plus" size={15} /> Ajouter un agenda
+            <Icon name="plus" size={15} /> {t('Ajouter un agenda')}
           </button>
         </div>
       </div>
@@ -176,22 +205,34 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
     <div className="nb-page ag-page">
       <div className="ag-head">
         <h1 className="nb-page-title-static">
-          <Icon name="calendar" size={34} /> Agenda
+          <Icon name="calendar" size={34} /> {t('Agenda')}
         </h1>
         <div className="ag-toolbar">
-          <div className="ag-seg" role="tablist" aria-label="Affichage">
-            <button type="button" role="tab" aria-selected={view === 'month'} className={view === 'month' ? 'ag-seg--on' : ''} onClick={() => setView('month')}>
-              Mois
+          <div className="ag-seg" role="tablist" aria-label={t('Affichage')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'month'}
+              className={view === 'month' ? 'ag-seg--on' : ''}
+              onClick={() => setView('month')}
+            >
+              {t('Mois')}
             </button>
-            <button type="button" role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'ag-seg--on' : ''} onClick={() => setView('list')}>
-              Liste
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'list'}
+              className={view === 'list' ? 'ag-seg--on' : ''}
+              onClick={() => setView('list')}
+            >
+              {t('Liste')}
             </button>
           </div>
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => void refresh(calendars.filter((c) => c.enabled && c.source))} disabled={Boolean(busy)}>
-            <Icon name="refresh" size={14} /> {busy ? 'Actualisation…' : 'Actualiser'}
+            <Icon name="refresh" size={14} /> {busy ? t('Actualisation…') : t('Actualiser')}
           </button>
           <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void add()}>
-            <Icon name="plus" size={14} /> Ajouter un agenda
+            <Icon name="plus" size={14} /> {t('Ajouter un agenda')}
           </button>
         </div>
       </div>
@@ -201,18 +242,18 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
           {view === 'month' ? (
             <>
               <div className="ag-monthbar">
-                <button type="button" className="nb-icon-btn" onClick={() => shift(-1)} aria-label="Mois précédent">
+                <button type="button" className="nb-icon-btn" onClick={() => shift(-1)} aria-label={t('Mois précédent')}>
                   <Icon name="chevronLeft" size={18} />
                 </button>
                 <h2 className="ag-month">{capitalize(monthFmt.format(month))}</h2>
-                <button type="button" className="nb-icon-btn" onClick={() => shift(1)} aria-label="Mois suivant">
+                <button type="button" className="nb-icon-btn" onClick={() => shift(1)} aria-label={t('Mois suivant')}>
                   <Icon name="chevronRight" size={18} />
                 </button>
                 <button type="button" className="nb-btn nb-btn--sm" onClick={goToday}>
-                  Aujourd’hui
+                  {t('Aujourd’hui')}
                 </button>
               </div>
-              <div className="ag-grid" role="grid" aria-label="Mois">
+              <div className="ag-grid" role="grid" aria-label={t('Mois')}>
                 {WEEKDAYS.map((w) => (
                   <div key={w} className="ag-weekday">
                     {w}
@@ -252,7 +293,11 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
               </div>
               <section className="ag-dayview">
                 <h3>{formatDay(new Date(`${selected}T12:00:00`).toISOString())}</h3>
-                {selectedEvents.length ? selectedEvents.map((ev) => <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={selected} />) : <p className="nb-muted">Aucun événement.</p>}
+                {selectedEvents.length ? (
+                  selectedEvents.map((ev) => <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={selected} />)
+                ) : (
+                  <p className="nb-muted">{t('Aucun événement.')}</p>
+                )}
               </section>
             </>
           ) : (
@@ -262,7 +307,7 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
                   <section key={k} className={`ag-listday${k === today ? ' ag-listday--today' : ''}`}>
                     <h3>
                       {formatDay(new Date(`${k}T12:00:00`).toISOString())}
-                      {k === today ? <span className="nb-cal-badge">Aujourd’hui</span> : null}
+                      {k === today ? <span className="nb-cal-badge">{t('Aujourd’hui')}</span> : null}
                     </h3>
                     {list.map((ev) => (
                       <EventLine key={`${ev.id}|${ev.start}`} ev={ev} onDay={k} />
@@ -270,18 +315,18 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
                   </section>
                 ))
               ) : (
-                <p className="nb-muted">Aucun événement à venir.</p>
+                <p className="nb-muted">{t('Aucun événement à venir.')}</p>
               )}
             </div>
           )}
         </div>
         <aside className="ag-side">
-          <h3>Agendas</h3>
+          <h3>{t('Agendas')}</h3>
           {calendars.map((cal) => (
             <CalendarRow key={cal.id} cal={cal} doc={doc} busy={busy === cal.id} onRefresh={() => void refresh([cal])} />
           ))}
           {calendars.some((c) => isGoogleSource(c.source)) ? (
-            <p className="nb-muted ag-hint">Agendas Google : « Actualiser » ouvre la connexion à votre compte Google.</p>
+            <p className="nb-muted ag-hint">{t('Agendas Google : « Actualiser » ouvre la connexion à votre compte Google.')}</p>
           ) : null}
         </aside>
       </div>

@@ -9,23 +9,24 @@ import { importFiles, isImageFile, isPdfFile, type AskPassword } from './importe
 import { createProject, mergeProjects, purgeProject, purgeStale, readProject, refreshThumbnail } from './projects';
 import { ExportDialog } from './ExportDialog';
 import { PasswordDialog, RenameDialog } from './dialogs';
+import { t, tn, locale } from '../lib/i18n';
 
-const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const dateFmt = new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
+const timeFmt = new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' });
 
 function when(ts: number): string {
   if (!ts) return '';
   const d = new Date(ts);
   const today = new Date();
-  if (d.toDateString() === today.toDateString()) return `aujourd’hui, ${timeFmt.format(d)}`;
+  if (d.toDateString() === today.toDateString()) return t('aujourd’hui, {time}', { time: timeFmt.format(d) });
   const y = new Date(today);
   y.setDate(today.getDate() - 1);
-  if (d.toDateString() === y.toDateString()) return `hier, ${timeFmt.format(d)}`;
+  if (d.toDateString() === y.toDateString()) return t('hier, {time}', { time: timeFmt.format(d) });
   return dateFmt.format(d);
 }
 
-const baseName = (name: string) => name.replace(/\.pdf$/i, '').trim() || 'Document';
-const photosName = () => `Photos du ${dateFmt.format(new Date())}`;
+const baseName = (name: string) => name.replace(/\.pdf$/i, '').trim() || t('Document');
+const photosName = () => t('Photos du {date}', { date: dateFmt.format(new Date()) });
 
 /** Bibliothèque de l'atelier PDF : import de PDF et de photos, assemblage, export, suppression. */
 export function PdfLibraryView({ library }: { library: PdfLibrary }) {
@@ -47,7 +48,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
   const incoming = useIncomingCount();
 
   useEffect(() => {
-    document.title = 'Atelier PDF – Melo';
+    document.title = t('Atelier PDF – Melo');
     purgeStale(library);
   }, [library]);
 
@@ -78,7 +79,8 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
     const pdfs = files.filter(isPdfFile);
     const photos = files.filter((f) => !isPdfFile(f) && isImageFile(f));
     const ignored = files.filter((f) => !isPdfFile(f) && !isImageFile(f));
-    if (ignored.length) toast(`Fichier ignoré : ${ignored.map((f) => f.name).join(', ')} (seuls les PDF et les photos sont acceptés).`, 'error');
+    if (ignored.length)
+      toast(t('Fichier ignoré : {files} (seuls les PDF et les photos sont acceptés).', { files: ignored.map((f) => f.name).join(', ') }), 'error');
     if (pdfs.length + photos.length === 0) return;
     const created: string[] = [];
     try {
@@ -94,12 +96,12 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
       }
     } catch (err) {
       console.error(err);
-      toast(err instanceof Error && err.message ? err.message : 'Import impossible.', 'error');
+      toast(err instanceof Error && err.message ? err.message : t('Import impossible.'), 'error');
     } finally {
       setBusy(null);
     }
     if (created.length === 1) navigate({ name: 'pdf', pdfId: created[0] });
-    else if (created.length > 1) toast(`${created.length} PDF importés.`);
+    else if (created.length > 1) toast(t('{n} PDF importés.', { n: created.length }));
   };
 
   useEffect(() => {
@@ -110,10 +112,10 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
   const remove = (e: PdfEntry) => {
     library.setDeleted(e.id, true);
     let undone = false;
-    toast(`« ${e.name} » est supprimé.`, 'info', {
+    toast(t('« {name} » est supprimé.', { name: e.name }), 'info', {
       duration: 8000,
       action: {
-        label: 'Annuler',
+        label: t('Annuler'),
         run: () => {
           undone = true;
           library.setDeleted(e.id, false);
@@ -128,18 +130,18 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
   const merge = async () => {
     const chosen = picked.map((id) => library.get(id)).filter((e): e is PdfEntry => Boolean(e));
     if (chosen.length < 2) return;
-    setBusy('Assemblage…');
+    setBusy(t('Assemblage…'));
     try {
       const id = await mergeProjects(
         library,
         chosen.map((e) => e.id),
-        `${chosen[0].name} (assemblé)`,
+        t('{name} (assemblé)', { name: chosen[0].name }),
       );
       setMerging(false);
       setPicked([]);
       navigate({ name: 'pdf', pdfId: id });
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Assemblage impossible.', 'error');
+      toast(err instanceof Error ? err.message : t('Assemblage impossible.'), 'error');
     } finally {
       setBusy(null);
     }
@@ -169,10 +171,12 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
       }}
     >
       <h1 className="nb-page-title-static">
-        <Icon name="filePdf" size={34} /> Atelier PDF
+        <Icon name="filePdf" size={34} /> {t('Atelier PDF')}
       </h1>
       <p className="nb-muted pdf-lib-intro">
-        Importez un PDF pour réorganiser ses pages, l’annoter, le signer ou remplir ses formulaires, puis exportez-le. L’original n’est jamais modifié.
+        {t(
+          'Importez un PDF pour réorganiser ses pages, l’annoter, le signer ou remplir ses formulaires, puis exportez-le. L’original n’est jamais modifié.',
+        )}
       </p>
 
       <input
@@ -215,14 +219,14 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
 
       <div className="pdf-lib-actions">
         <button type="button" className="nb-btn nb-btn--primary" onClick={() => pdfInput.current?.click()} disabled={Boolean(busy)}>
-          <Icon name="upload" size={16} /> Importer des PDF
+          <Icon name="upload" size={16} /> {t('Importer des PDF')}
         </button>
         <button type="button" className="nb-btn" onClick={() => photoInput.current?.click()} disabled={Boolean(busy)}>
-          <Icon name="image" size={16} /> Photos → PDF
+          <Icon name="image" size={16} /> {t('Photos → PDF')}
         </button>
         {touch ? (
           <button type="button" className="nb-btn" onClick={() => cameraInput.current?.click()} disabled={Boolean(busy)}>
-            <Icon name="camera" size={16} /> Scanner un document
+            <Icon name="camera" size={16} /> {t('Scanner un document')}
           </button>
         ) : null}
         {entries.length > 1 ? (
@@ -236,7 +240,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
             }}
             disabled={Boolean(busy)}
           >
-            <Icon name="copy" size={16} /> Assembler des PDF
+            <Icon name="copy" size={16} /> {t('Assembler des PDF')}
           </button>
         ) : null}
       </div>
@@ -249,7 +253,9 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
 
       {merging ? (
         <div className="pdf-merge-bar">
-          <span>{picked.length === 0 ? 'Touchez les PDF à assembler, dans l’ordre voulu.' : `${picked.length} PDF choisi${picked.length > 1 ? 's' : ''}`}</span>
+          <span>
+            {picked.length === 0 ? t('Touchez les PDF à assembler, dans l’ordre voulu.') : tn(picked.length, '{n} PDF choisi', '{n} PDF choisis')}
+          </span>
           <button
             type="button"
             className="nb-btn"
@@ -258,10 +264,10 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
               setPicked([]);
             }}
           >
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" disabled={picked.length < 2 || Boolean(busy)} onClick={() => void merge()}>
-            Assembler
+            {t('Assembler')}
           </button>
         </div>
       ) : null}
@@ -269,22 +275,27 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
       {entries.length === 0 ? (
         <div className="pdf-empty">
           <Icon name="filePdf" size={44} />
-          <p>Aucun PDF pour l’instant.</p>
-          <p className="nb-muted">Importez un PDF, créez-en un à partir de photos, ou déposez des fichiers ici.</p>
+          <p>{t('Aucun PDF pour l’instant.')}</p>
+          <p className="nb-muted">{t('Importez un PDF, créez-en un à partir de photos, ou déposez des fichiers ici.')}</p>
         </div>
       ) : (
-        <ul className="pdf-grid" aria-label="Vos PDF">
+        <ul className="pdf-grid" aria-label={t('Vos PDF')}>
           {entries.map((e) => {
             const order = picked.indexOf(e.id);
             return (
               <li key={e.id} className={`pdf-card${order >= 0 ? ' pdf-card--picked' : ''}`}>
-                <button type="button" className="pdf-card-open" onClick={() => open(e)} aria-label={merging ? `Choisir « ${e.name} »` : `Ouvrir « ${e.name} »`}>
+                <button
+                  type="button"
+                  className="pdf-card-open"
+                  onClick={() => open(e)}
+                  aria-label={merging ? t('Choisir « {name} »', { name: e.name }) : t('Ouvrir « {name} »', { name: e.name })}
+                >
                   <span className="pdf-card-thumb">{e.thumb ? <img src={e.thumb} alt="" /> : <Icon name="filePdf" size={36} />}</span>
                   <span className="pdf-card-name" title={e.name}>
                     {e.name}
                   </span>
                   <span className="pdf-card-meta">
-                    {e.pages} page{e.pages > 1 ? 's' : ''} · {when(e.updatedAt)}
+                    {tn(e.pages, '{n} page', '{n} pages')} · {when(e.updatedAt)}
                   </span>
                   {merging ? <span className="pdf-card-check">{order >= 0 ? order + 1 : ''}</span> : null}
                 </button>
@@ -292,7 +303,7 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
                   <button
                     type="button"
                     className="nb-icon-btn pdf-card-more"
-                    aria-label={`Plus d’options pour « ${e.name} »`}
+                    aria-label={t('Plus d’options pour « {name} »', { name: e.name })}
                     onPointerDown={(ev) => ev.stopPropagation()}
                     onClick={(ev) => {
                       const r = ev.currentTarget.getBoundingClientRect();
@@ -316,16 +327,16 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
           onPointerDown={(ev) => ev.stopPropagation()}
         >
           <button type="button" role="menuitem" onClick={() => (setMenu(null), navigate({ name: 'pdf', pdfId: menu.entry.id }))}>
-            <Icon name="pencil" size={16} /> Ouvrir
+            <Icon name="pencil" size={16} /> {t('Ouvrir')}
           </button>
           <button type="button" role="menuitem" onClick={() => (setMenu(null), setRenaming(menu.entry))}>
-            <Icon name="textSize" size={16} /> Renommer
+            <Icon name="textSize" size={16} /> {t('Renommer')}
           </button>
           <button type="button" role="menuitem" onClick={() => (setMenu(null), setExporting(menu.entry))}>
-            <Icon name="download" size={16} /> Exporter
+            <Icon name="download" size={16} /> {t('Exporter')}
           </button>
           <button type="button" role="menuitem" className="nb-menu-danger" onClick={() => (setMenu(null), remove(menu.entry))}>
-            <Icon name="trash" size={16} /> Supprimer
+            <Icon name="trash" size={16} /> {t('Supprimer')}
           </button>
         </div>
       ) : null}

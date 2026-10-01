@@ -3,21 +3,22 @@ import { useAppCtx } from '../editor/context';
 import { COVER_HEIGHT_RANGE } from '../lib/hooks';
 import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
+import { t } from '../lib/i18n';
 
 /** Dégradés proposés pour la bannière (valeur enregistrée : « gradient:<id> »). */
 export const COVER_GRADIENTS = [
-  { id: 'aurore', label: 'Aurore', css: 'linear-gradient(120deg, #f6d365 0%, #fda085 100%)' },
-  { id: 'corail', label: 'Corail', css: 'linear-gradient(120deg, #ff9a9e 0%, #fad0c4 100%)' },
-  { id: 'lavande', label: 'Lavande', css: 'linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%)' },
-  { id: 'ciel', label: 'Ciel', css: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)' },
-  { id: 'ocean', label: 'Océan', css: 'linear-gradient(120deg, #2193b0 0%, #6dd5ed 100%)' },
-  { id: 'menthe', label: 'Menthe', css: 'linear-gradient(120deg, #43e97b 0%, #38f9d7 100%)' },
-  { id: 'foret', label: 'Forêt', css: 'linear-gradient(120deg, #134e5e 0%, #71b280 100%)' },
-  { id: 'mangue', label: 'Mangue', css: 'linear-gradient(120deg, #ffe259 0%, #ffa751 100%)' },
-  { id: 'braise', label: 'Braise', css: 'linear-gradient(120deg, #cb2d3e 0%, #ef473a 100%)' },
-  { id: 'crepuscule', label: 'Crépuscule', css: 'linear-gradient(120deg, #355c7d 0%, #6c5b7b 50%, #c06c84 100%)' },
-  { id: 'nuit', label: 'Nuit', css: 'linear-gradient(120deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' },
-  { id: 'ardoise', label: 'Ardoise', css: 'linear-gradient(120deg, #232526 0%, #414345 100%)' },
+  { id: 'aurore', label: t('Aurore'), css: 'linear-gradient(120deg, #f6d365 0%, #fda085 100%)' },
+  { id: 'corail', label: t('Corail'), css: 'linear-gradient(120deg, #ff9a9e 0%, #fad0c4 100%)' },
+  { id: 'lavande', label: t('Lavande'), css: 'linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%)' },
+  { id: 'ciel', label: t('Ciel'), css: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)' },
+  { id: 'ocean', label: t('Océan'), css: 'linear-gradient(120deg, #2193b0 0%, #6dd5ed 100%)' },
+  { id: 'menthe', label: t('Menthe'), css: 'linear-gradient(120deg, #43e97b 0%, #38f9d7 100%)' },
+  { id: 'foret', label: t('Forêt'), css: 'linear-gradient(120deg, #134e5e 0%, #71b280 100%)' },
+  { id: 'mangue', label: t('Mangue'), css: 'linear-gradient(120deg, #ffe259 0%, #ffa751 100%)' },
+  { id: 'braise', label: t('Braise'), css: 'linear-gradient(120deg, #cb2d3e 0%, #ef473a 100%)' },
+  { id: 'crepuscule', label: t('Crépuscule'), css: 'linear-gradient(120deg, #355c7d 0%, #6c5b7b 50%, #c06c84 100%)' },
+  { id: 'nuit', label: t('Nuit'), css: 'linear-gradient(120deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' },
+  { id: 'ardoise', label: t('Ardoise'), css: 'linear-gradient(120deg, #232526 0%, #414345 100%)' },
 ] as const;
 
 /** Dégradé CSS d'une bannière « gradient:<id> », sinon null (image). */
@@ -150,7 +151,7 @@ export function PageCover({ cover, coverY, height, editable, onChange, onFile, o
         }}
         onPointerCancel={endDrag}
         tabIndex={repositioning ? 0 : undefined}
-        aria-label={repositioning ? 'Position de la bannière : flèches haut et bas' : undefined}
+        aria-label={repositioning ? t('Position de la bannière : flèches haut et bas') : undefined}
         onKeyDown={(e) => {
           if (!repositioning) return;
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -160,18 +161,18 @@ export function PageCover({ cover, coverY, height, editable, onChange, onFile, o
         }}
       >
         {gradient ? null : <img ref={imgRef} src={cover} alt="" draggable={false} style={{ objectPosition: `center ${y}%` }} />}
-        {repositioning ? <div className="nb-cover-hint">Glissez l’image pour la repositionner</div> : null}
+        {repositioning ? <div className="nb-cover-hint">{t('Glissez l’image pour la repositionner')}</div> : null}
       </div>
       {editable && !repositioning ? (
         <div
           className={`nb-cover-resize${liveHeight !== null ? ' nb-cover-resize--active' : ''}`}
           role="slider"
           tabIndex={0}
-          aria-label="Hauteur de la bannière"
+          aria-label={t('Hauteur de la bannière')}
           aria-valuemin={COVER_HEIGHT_RANGE.min}
           aria-valuemax={COVER_HEIGHT_RANGE.max}
           aria-valuenow={Math.round(currentHeight())}
-          title="Glissez pour changer la hauteur (double-clic : hauteur automatique)"
+          title={t('Glissez pour changer la hauteur (double-clic : hauteur automatique)')}
           onPointerDown={onResizeDown}
           onPointerMove={onResizeMove}
           onPointerUp={onResizeEnd}
@@ -197,31 +198,31 @@ export function PageCover({ cover, coverY, height, editable, onChange, onFile, o
                   setPos(null);
                 }}
               >
-                Enregistrer la position
+                {t('Enregistrer la position')}
               </button>
               <button type="button" onClick={() => setPos(null)}>
-                Annuler
+                {t('Annuler')}
               </button>
             </>
           ) : (
             <>
               <button type="button" onClick={() => setPicker((v) => !v)}>
-                Changer la bannière
+                {t('Changer la bannière')}
               </button>
               {gradient ? null : (
                 <>
                   {onCrop ? (
                     <button type="button" onClick={onCrop}>
-                      Recadrer
+                      {t('Recadrer')}
                     </button>
                   ) : null}
                   <button type="button" onClick={() => setPos(coverY)}>
-                    Repositionner
+                    {t('Repositionner')}
                   </button>
                 </>
               )}
               <button type="button" onClick={() => onChange('')}>
-                Retirer
+                {t('Retirer')}
               </button>
             </>
           )}
@@ -287,7 +288,7 @@ export function CoverPicker({ value, className, onPick, onFile, onClose }: Picke
     try {
       onPick(await app.uploadFile(await prepareImage(file, 2400, 1600, true)));
     } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
+      setError(err instanceof Error && err.message ? err.message : t('Envoi de l’image impossible.'));
       setBusy(false);
     }
   };
@@ -300,7 +301,7 @@ export function CoverPicker({ value, className, onPick, onFile, onClose }: Picke
       ref={ref}
       className={`nb-coverpicker${className ? ` ${className}` : ''}`}
       role="dialog"
-      aria-label="Bannière"
+      aria-label={t('Bannière')}
       onPaste={(e) => {
         const file = firstImage(e.clipboardData);
         if (file) {
@@ -317,36 +318,36 @@ export function CoverPicker({ value, className, onPick, onFile, onClose }: Picke
     >
       <div className="nb-coverpicker-upload">
         <button type="button" className="nb-btn nb-btn--primary" onClick={() => fileRef.current?.click()} disabled={busy}>
-          <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
+          <Icon name="upload" size={15} /> {busy ? t('Envoi…') : t('Importer une image')}
         </button>
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           hidden
-          aria-label="Image de la bannière"
+          aria-label={t('Image de la bannière')}
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = '';
             if (file) void upload(file);
           }}
         />
-        <span className="nb-muted">Ou glissez-la ici, ou collez-la (Ctrl+V). Idéal : une image large, 1500 × 500 px ou plus.</span>
+        <span className="nb-muted">{t('Ou glissez-la ici, ou collez-la (Ctrl+V). Idéal : une image large, 1500 × 500 px ou plus.')}</span>
       </div>
       <div className="nb-row nb-gap">
         <input
           className="nb-input"
-          placeholder="Lien d’une image (https://…)"
+          placeholder={t('Lien d’une image (https://…)')}
           value={link}
           onChange={(e) => setLink(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && applyLink()}
         />
         <button type="button" className="nb-btn" onClick={applyLink} disabled={!isImageLink(link)}>
-          Utiliser
+          {t('Utiliser')}
         </button>
       </div>
       {error ? <div className="nb-error">{error}</div> : null}
-      <div className="nb-coverpicker-title">Dégradés</div>
+      <div className="nb-coverpicker-title">{t('Dégradés')}</div>
       <div className="nb-coverpicker-grid">
         {COVER_GRADIENTS.map((g) => (
           <button
@@ -355,7 +356,7 @@ export function CoverPicker({ value, className, onPick, onFile, onClose }: Picke
             className={`nb-coverpicker-item${value === `gradient:${g.id}` ? ' nb-coverpicker-item--active' : ''}`}
             style={{ background: g.css }}
             title={g.label}
-            aria-label={`Dégradé ${g.label}`}
+            aria-label={t('Dégradé {name}', { name: g.label })}
             onClick={() => onPick(`gradient:${g.id}`)}
           />
         ))}

@@ -1,6 +1,7 @@
 // QPDF (compilé en WebAssembly, chargé seulement quand il sert) : retire la protection d'un PDF chiffré à
 // l'import et répare les fichiers mal formés que la bibliothèque d'écriture refuse.
 import wasmUrl from '@neslinesli93/qpdf-wasm/dist/qpdf.wasm?url';
+import { t } from '../lib/i18n';
 
 type QpdfInstance = {
   callMain: (args: string[]) => number;
@@ -16,7 +17,7 @@ type CreateQpdf = (opts: {
 /** Mot de passe absent ou faux. */
 export class PdfPasswordError extends Error {
   constructor(readonly wrong: boolean) {
-    super(wrong ? 'Mot de passe incorrect.' : 'Ce PDF est protégé par un mot de passe.');
+    super(wrong ? t('Mot de passe incorrect.') : t('Ce PDF est protégé par un mot de passe.'));
   }
 }
 
@@ -56,17 +57,17 @@ async function run(args: string[], input: Uint8Array): Promise<{ output: Uint8Ar
 /** Copie non chiffrée d'un PDF (mot de passe d'ouverture si le PDF en demande un). */
 export async function decryptPdf(bytes: Uint8Array, password = ''): Promise<Uint8Array> {
   const args = ['--decrypt'];
-  if (password) args.push(`--password=${password}`);
+  if (password) args.push(`--password=${password}`); // i18n-ignore
   const { output, log } = await run(args, bytes);
   if (output) return output;
   if (/invalid password/i.test(log)) throw new PdfPasswordError(Boolean(password));
-  throw new Error('Ce PDF est illisible ou endommagé.');
+  throw new Error(t('Ce PDF est illisible ou endommagé.'));
 }
 
 /** Réécrit un PDF mal formé (tables de références, objets abîmés) en fichier propre. */
 export async function repairPdf(bytes: Uint8Array): Promise<Uint8Array> {
   const { output } = await run(['--decrypt'], bytes);
-  if (!output) throw new Error('Ce PDF est endommagé et n’a pas pu être réparé.');
+  if (!output) throw new Error(t('Ce PDF est endommagé et n’a pas pu être réparé.'));
   return output;
 }
 

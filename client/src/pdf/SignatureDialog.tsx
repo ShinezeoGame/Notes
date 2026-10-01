@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { Icon } from '../icons/Icon';
 import { newId } from '../lib/ids';
 import { simplifyStroke, strokePath, strokesBounds } from './ink';
+import { t } from '../lib/i18n';
 
 export type SavedSignature = {
   id: string;
@@ -93,7 +94,7 @@ function SignaturePad({ strokes, onChange, color }: { strokes: number[][]; onCha
       ref={ref}
       className="pdf-sigpad"
       role="img"
-      aria-label="Zone de signature : signez ici avec le doigt ou la souris"
+      aria-label={t('Zone de signature : signez ici avec le doigt ou la souris')}
       onPointerDown={(e) => {
         if (current.current) return;
         e.preventDefault();
@@ -176,14 +177,14 @@ export function SignatureDialog({ doc, onPick, onClose }: Props) {
   };
 
   const colors = (
-    <div className="pdf-sig-colors" role="radiogroup" aria-label="Couleur de l’encre">
+    <div className="pdf-sig-colors" role="radiogroup" aria-label={t('Couleur de l’encre')}>
       {SIGNATURE_COLORS.map((c) => (
         <button
           key={c}
           type="button"
           role="radio"
           aria-checked={color === c}
-          aria-label={c === SIGNATURE_COLORS[0] ? 'Encre bleue' : 'Encre noire'}
+          aria-label={c === SIGNATURE_COLORS[0] ? t('Encre bleue') : t('Encre noire')}
           className={`pdf-swatch${color === c ? ' pdf-swatch--active' : ''}`}
           style={{ background: c }}
           onClick={() => setColor(c)}
@@ -194,7 +195,7 @@ export function SignatureDialog({ doc, onPick, onClose }: Props) {
 
   return (
     <Modal
-      title="Signature"
+      title={t('Signature')}
       onClose={onClose}
       width={560}
       footer={
@@ -202,56 +203,56 @@ export function SignatureDialog({ doc, onPick, onClose }: Props) {
           <>
             {saved.length ? (
               <button type="button" className="nb-btn" onClick={() => setDrawing(false)}>
-                Retour
+                {t('Retour')}
               </button>
             ) : (
               <button type="button" className="nb-btn" onClick={onClose}>
-                Annuler
+                {t('Annuler')}
               </button>
             )}
             <button type="button" className="nb-btn nb-btn--primary" onClick={use} disabled={!normalize(strokes)}>
-              Placer la signature
+              {t('Placer la signature')}
             </button>
           </>
         ) : (
           <button type="button" className="nb-btn" onClick={onClose}>
-            Fermer
+            {t('Fermer')}
           </button>
         )
       }
     >
       {drawing ? (
         <>
-          <p className="nb-muted pdf-sig-help">Signez dans le cadre avec le doigt ou la souris.</p>
+          <p className="nb-muted pdf-sig-help">{t('Signez dans le cadre avec le doigt ou la souris.')}</p>
           <SignaturePad strokes={strokes} onChange={setStrokes} color={color} />
           <div className="pdf-sig-row">
             {colors}
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => setStrokes([])} disabled={strokes.length === 0}>
-              <Icon name="eraser" size={14} /> Effacer
+              <Icon name="eraser" size={14} /> {t('Effacer')}
             </button>
             <button type="button" className="nb-btn nb-btn--sm" onClick={() => setStrokes((s) => s.slice(0, -1))} disabled={strokes.length === 0}>
-              <Icon name="undo" size={14} /> Dernier trait
+              <Icon name="undo" size={14} /> {t('Dernier trait')}
             </button>
           </div>
           <label className="pdf-check">
-            <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} /> Garder cette signature pour la prochaine fois
+            <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} /> {t('Garder cette signature pour la prochaine fois')}
           </label>
         </>
       ) : (
         <>
-          <p className="nb-muted pdf-sig-help">Touchez une signature pour la placer sur la page affichée.</p>
+          <p className="nb-muted pdf-sig-help">{t('Touchez une signature pour la placer sur la page affichée.')}</p>
           {colors}
           <ul className="pdf-sig-list">
             {saved.map((sig) => (
               <li key={sig.id}>
-                <button type="button" className="pdf-sig-item" onClick={() => onPick(sig, color)} aria-label="Placer cette signature">
+                <button type="button" className="pdf-sig-item" onClick={() => onPick(sig, color)} aria-label={t('Placer cette signature')}>
                   <SignaturePreview sig={sig} color={color} height={56} />
                 </button>
                 <button
                   type="button"
                   className="nb-icon-btn"
-                  aria-label="Supprimer cette signature"
-                  title="Supprimer cette signature"
+                  aria-label={t('Supprimer cette signature')}
+                  title={t('Supprimer cette signature')}
                   onClick={() => mapOf(doc).delete(sig.id)}
                 >
                   <Icon name="trash" size={16} />
@@ -267,7 +268,7 @@ export function SignatureDialog({ doc, onPick, onClose }: Props) {
               setDrawing(true);
             }}
           >
-            <Icon name="plus" size={15} /> Nouvelle signature
+            <Icon name="plus" size={15} /> {t('Nouvelle signature')}
           </button>
         </>
       )}

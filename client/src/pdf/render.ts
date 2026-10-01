@@ -3,6 +3,7 @@
 import type { PdfDocument } from '../editor/pdf';
 import { fileUrl, type PageRef, type PdfSource } from './model';
 import { A4, imagePageSize } from './geometry';
+import { t } from '../lib/i18n';
 
 type PdfModule = typeof import('../editor/pdf');
 let pdfModule: Promise<PdfModule> | null = null;
@@ -44,7 +45,7 @@ export class SourceCache {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`Photo introuvable : ${src.name}`));
+        img.onerror = () => reject(new Error(t('Photo introuvable : {name}', { name: src.name })));
         img.src = fileUrl(src.path);
       });
       p.catch(() => this.images.delete(src.id));

@@ -55,6 +55,10 @@ est déjà connu, le lire directement. Après de grosses modifications du code, 
 - Documentation : le README est une page de présentation courte, illustrée (captures dans `docs/captures/`) ; le
   détail va dans `docs/GUIDE.md` (mode d'emploi), `docs/DEVELOPPEMENT.md` (construction, architecture) et
   `INSTALLATION.md` (serveur).
+- Textes de l'interface (client) : écrits en français et toujours passés à `t()`, `tn()` ou `tx()`
+  (`client/src/lib/i18n.ts`), avec leur traduction anglaise dans `client/src/i18n/en.ts` (messages du serveur affichés :
+  `tServer()` et `client/src/i18n/en-server.ts`). Vérifier avec `npm run i18n:check` (dans `client/`) : aucun texte
+  sans traduction ni resté en dur.
 - Accueil : widgets déclarés dans `client/src/dashboard/registry.tsx` (un fichier par widget dans `widgets/`),
   disposition dans `dashboard/model.ts` ; thèmes, fond d'écran et sections dans `client/src/lib/appearance.ts`
   (couleurs en variables CSS : pas de couleur fixe dans `styles.css`).

@@ -4,6 +4,7 @@
 // le flux continue sans décodage inutile et le lecteur revient au direct au retour. Pendant une reconnexion, la dernière
 // image reste affichée.
 import { CAMERA_LINKS_EXPIRED } from './cameras';
+import { t, tServer } from './i18n';
 
 type MediaSourceClass = typeof MediaSource;
 
@@ -14,7 +15,7 @@ function mediaSourceClass(): MediaSourceClass | null {
 
 function supported(MS: MediaSourceClass, codec: string): boolean {
   try {
-    return MS.isTypeSupported(`video/mp4; codecs="${codec}"`);
+    return MS.isTypeSupported(`video/mp4; codecs="${codec}"`); // i18n-ignore
   } catch {
     return false;
   }
@@ -153,7 +154,7 @@ export class LivePlayer {
     const MS = mediaSourceClass();
     const accept = acceptedFormats();
     if (!MS || !accept.length) {
-      this.onState('error', 'Cet appareil ne sait pas lire la vidéo en direct.');
+      this.onState('error', t('Cet appareil ne sait pas lire la vidéo en direct.'));
       return;
     }
     if (!this.attempt) this.onState('connecting');
@@ -163,13 +164,13 @@ export class LivePlayer {
     try {
       res = await fetch(`${this.url()}&accept=${accept.join(',')}`, { signal: abort.signal, cache: 'no-store' });
     } catch {
-      return this.retry(session, 'Serveur Melo injoignable.');
+      return this.retry(session, t('Serveur Melo injoignable.'));
     }
     if (session !== this.session) return;
     if (!res.ok || !res.body) {
-      let message = `Erreur ${res.status}`;
+      let message = t('Erreur {status}', { status: res.status });
       try {
-        message = ((await res.json()) as { error?: string }).error || message;
+        message = tServer(((await res.json()) as { error?: string }).error ?? '') || message;
       } catch {
         /* pas de JSON */
       }
@@ -179,8 +180,8 @@ export class LivePlayer {
       return this.retry(session, message, [404, 415].includes(res.status));
     }
     const codec = res.headers.get('X-Camera-Codec') || 'avc1.42e01e';
-    const mime = `video/mp4; codecs="${codec}"`;
-    if (!supported(MS, `${codec}`)) return this.retry(session, 'Format vidéo non pris en charge par cet appareil.', true);
+    const mime = `video/mp4; codecs="${codec}"`; // i18n-ignore
+    if (!supported(MS, `${codec}`)) return this.retry(session, t('Format vidéo non pris en charge par cet appareil.'), true);
 
     const ms = new MS();
     const video = this.video;
@@ -196,7 +197,7 @@ export class LivePlayer {
     try {
       sb = ms.addSourceBuffer(mime);
     } catch {
-      return this.retry(session, 'Format vidéo non pris en charge par cet appareil.', true);
+      return this.retry(session, t('Format vidéo non pris en charge par cet appareil.'), true);
     }
     const queue: Uint8Array[] = [];
     const pump = () => {
@@ -211,7 +212,7 @@ export class LivePlayer {
           const b = video.buffered;
           this.trim(sb, true, document.visibilityState === 'hidden' && b.length ? b.end(b.length - 1) : video.currentTime);
         } else {
-          this.retry(session, 'Lecture de la vidéo interrompue.');
+          this.retry(session, t('Lecture de la vidéo interrompue.'));
         }
       }
     };
@@ -220,7 +221,7 @@ export class LivePlayer {
       this.keepLive(sb);
       pump();
     });
-    sb.addEventListener('error', () => this.retry(session, 'Lecture de la vidéo interrompue.'));
+    sb.addEventListener('error', () => this.retry(session, t('Lecture de la vidéo interrompue.')));
     video.addEventListener(
       'playing',
       () => {
@@ -230,11 +231,11 @@ export class LivePlayer {
       },
       { once: true },
     );
-    video.addEventListener('error', () => this.retry(session, 'Lecture de la vidéo interrompue.'), { once: true });
+    video.addEventListener('error', () => this.retry(session, t('Lecture de la vidéo interrompue.')), { once: true });
 
     let lastData = Date.now();
     const watchdog = setInterval(() => {
-      if (Date.now() - lastData > STALL_MS) this.retry(session, 'La caméra n’envoie plus d’images.');
+      if (Date.now() - lastData > STALL_MS) this.retry(session, t('La caméra n’envoie plus d’images.'));
     }, 5_000);
     try {
       const reader = res.body.getReader();
@@ -250,7 +251,7 @@ export class LivePlayer {
     } finally {
       clearInterval(watchdog);
     }
-    this.retry(session, 'Flux interrompu, reconnexion…');
+    this.retry(session, t('Flux interrompu, reconnexion…'));
   }
 
   /** Reste proche du direct : saute en avant si la lecture a pris du retard ou si le flux a sauté des images. */

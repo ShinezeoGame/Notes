@@ -2,6 +2,7 @@
 // personne, invitation qui donne à une autre personne son propre espace, ancien lien « Lier un appareil ».
 import { getSettings, isDefaultUserName, normalizeServerUrl, resetWorkspace, updateSettings } from './settings';
 import { clearLocalDocs } from './yjs';
+import { t, tServer } from './i18n';
 
 /** « 482913 » → « 482 913 » (saisie partielle acceptée). */
 export function formatPairingCode(code: string): string {
@@ -62,10 +63,10 @@ async function post<T>(url: string, body: unknown): Promise<T> {
       signal: AbortSignal.timeout(10_000),
     });
   } catch {
-    throw new Error('Serveur injoignable. Vérifiez l’adresse et la connexion Internet.');
+    throw new Error(t('Serveur injoignable. Vérifiez l’adresse et la connexion Internet.'));
   }
   const data = (await r.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!r.ok || !data) throw new Error(data?.error || `Le serveur a répondu ${r.status}.`);
+  if (!r.ok || !data) throw new Error(tServer(data?.error ?? '') || t('Le serveur a répondu {status}.', { status: r.status }));
   return data;
 }
 
@@ -77,7 +78,7 @@ function restart() {
 /** Échange le code contre l'espace du serveur, relie cet appareil puis recharge l'application. */
 export async function linkWithCode(serverUrl: string, code: string): Promise<void> {
   const data = await post<{ wsId?: string; key?: string }>(`${serverUrl}/api/pair/claim`, { code: code.replace(/\D/g, '') });
-  if (!data.wsId || !data.key) throw new Error('Réponse inattendue du serveur.');
+  if (!data.wsId || !data.key) throw new Error(t('Réponse inattendue du serveur.'));
   await clearLocalDocs();
   updateSettings({ serverUrl, workspaceId: data.wsId, workspaceKey: data.key, onboarded: true, lastPageId: null, expanded: {}, guest: false });
   restart();
@@ -89,10 +90,10 @@ export async function inviteInfo(serverUrl: string, token: string): Promise<{ na
   try {
     r = await fetch(`${serverUrl}/api/invite/${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(10_000) });
   } catch {
-    throw new Error('Serveur injoignable. Vérifiez la connexion Internet.');
+    throw new Error(t('Serveur injoignable. Vérifiez la connexion Internet.'));
   }
   const data = (await r.json().catch(() => null)) as { name?: string; expiresAt?: number; error?: string } | null;
-  if (!r.ok || !data) throw new Error(data?.error || `Le serveur a répondu ${r.status}.`);
+  if (!r.ok || !data) throw new Error(tServer(data?.error ?? '') || t('Le serveur a répondu {status}.', { status: r.status }));
   return { name: data.name ?? '', expiresAt: Number(data.expiresAt) || 0 };
 }
 

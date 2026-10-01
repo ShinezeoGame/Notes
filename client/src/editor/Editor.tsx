@@ -14,7 +14,7 @@ import {
 } from '@blocknote/react';
 import { filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { withCollaboration } from '@blocknote/core/yjs';
-import { fr } from '@blocknote/core/locales';
+import { en, fr } from '@blocknote/core/locales';
 import type { DocHandle } from '../lib/yjs';
 import { getSettings, useSettings } from '../lib/settings';
 import { schema } from './schema';
@@ -26,8 +26,12 @@ import { ImageCropButton, ImageCropContext, NoteImageCrop, type ImageCropRequest
 import { columnsDropCursor, insertColumns } from './columns';
 import { yjsSelectionGuard } from './yjsSelectionGuard';
 import { useThemeBase } from '../lib/appearance';
+import { t, getLang } from '../lib/i18n';
 
 type Props = { handle: DocHandle; editable: boolean };
+
+/** Textes de BlockNote (menus, barre d'outils) dans la langue de l'interface. */
+const DICTIONARY = getLang() === 'fr' ? fr : en;
 
 const SlashIcon = ({ name }: { name: IconName }) => (
   <span className="nb-slash-icon">
@@ -54,7 +58,7 @@ export function Editor({ handle, editable }: Props) {
   const editor = useCreateBlockNote(
     withCollaboration({
       schema,
-      dictionary: fr,
+      dictionary: DICTIONARY,
       // Barre verticale quand un bloc glissé vise le bord d'un autre : ils se placeront côte à côte.
       dropCursor: columnsDropCursor,
       // Annulation (Ctrl+Z) sûre après le déplacement d'un module : voir yjsSelectionGuard.
@@ -104,15 +108,15 @@ export function Editor({ handle, editable }: Props) {
 
   const getItems = async (query: string) => {
     const defaults = getDefaultReactSlashMenuItems(editor).map((item) =>
-      item.title === fr.slash_menu.image.title ? { ...item, aliases: [...(item.aliases ?? []), 'gif', 'giphy'] } : item,
+      item.title === DICTIONARY.slash_menu.image.title ? { ...item, aliases: [...(item.aliases ?? []), 'gif', 'giphy'] } : item,
     );
     const pageItems: DefaultReactSuggestionItem[] = [];
     if (ctx.createSubpage) {
       pageItems.push({
-        title: 'Sous-page',
-        subtext: 'Créer une nouvelle page à l’intérieur de celle-ci',
-        aliases: ['page', 'sous-page', 'souspage', 'subpage', 'nouvelle page'],
-        group: 'Pages',
+        title: t('Sous-page'),
+        subtext: t('Créer une nouvelle page à l’intérieur de celle-ci'),
+        aliases: ['page', 'sous-page', 'souspage', 'subpage', 'nouvelle page', 'new page'],
+        group: t('Pages'),
         icon: <SlashIcon name="file" />,
         onItemClick: () => {
           void (async () => {
@@ -125,33 +129,33 @@ export function Editor({ handle, editable }: Props) {
     const mediaItems: DefaultReactSuggestionItem[] = [
       {
         title: 'PDF',
-        subtext: 'Importer un document PDF avec aperçu',
-        aliases: ['pdf', 'document', 'fichier pdf'],
-        group: fr.slash_menu.image.group,
+        subtext: t('Importer un document PDF avec aperçu'),
+        aliases: ['pdf', 'document', 'fichier pdf', 'pdf file'],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="filePdf" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'pdf' }),
       },
       {
-        title: 'Vidéo YouTube / intégration',
-        subtext: 'YouTube, Vimeo, Google Agenda, Drive, Figma…',
-        aliases: ['youtube', 'embed', 'intégration', 'integration', 'iframe', 'vimeo', 'lien'],
-        group: fr.slash_menu.image.group,
+        title: t('Vidéo YouTube / intégration'),
+        subtext: t('YouTube, Vimeo, Google Agenda, Drive, Figma…'),
+        aliases: ['youtube', 'embed', 'intégration', 'integration', 'iframe', 'vimeo', 'lien', 'link', 'video'],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="video" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'embed' }),
       },
       {
         title: 'GIF',
-        subtext: 'Importer une image animée',
+        subtext: t('Importer une image animée'),
         aliases: ['gif', 'giphy', 'animation'],
-        group: fr.slash_menu.image.group,
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="image" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'image' }),
       },
       {
-        title: 'Agenda Google',
-        subtext: 'Importer des événements (.ics, lien iCal ou compte Google)',
-        aliases: ['agenda', 'calendar', 'calendrier', 'google', 'ics', 'événements', 'evenements'],
-        group: fr.slash_menu.image.group,
+        title: t('Agenda Google'),
+        subtext: t('Importer des événements (.ics, lien iCal ou compte Google)'),
+        aliases: ['agenda', 'calendar', 'calendrier', 'google', 'ics', 'événements', 'evenements', 'events'],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="calendar" />,
         onItemClick: () => {
           void (async () => {
@@ -170,34 +174,64 @@ export function Editor({ handle, editable }: Props) {
     if (ctx.mode === 'owner' && !getSettings().guest) {
       mediaItems.push({
         title: 'Homelab',
-        subtext: 'Intégrer le tableau de bord de vos applications et appareils',
-        aliases: ['homelab', 'dashboard', 'tableau de bord', 'serveur', 'nas'],
-        group: fr.slash_menu.image.group,
+        subtext: t('Intégrer le tableau de bord de vos applications et appareils'),
+        aliases: ['homelab', 'dashboard', 'tableau de bord', 'serveur', 'server', 'nas'],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="home" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'homelab' }),
       });
       mediaItems.push({
-        title: 'Maison',
-        subtext: 'Lumières, prises, volets, chauffage et caméras (Home Assistant)',
-        aliases: ['maison', 'domotique', 'home assistant', 'lumière', 'lampe', 'ampoule', 'prise', 'volet', 'chauffage'],
-        group: fr.slash_menu.image.group,
+        title: t('Maison'),
+        subtext: t('Lumières, prises, volets, chauffage et caméras (Home Assistant)'),
+        aliases: [
+          'maison',
+          'domotique',
+          'home assistant',
+          'lumière',
+          'lampe',
+          'ampoule',
+          'prise',
+          'volet',
+          'chauffage',
+          'home',
+          'smart home',
+          'light',
+          'lamp',
+          'plug',
+          'blind',
+          'heating',
+        ],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="bulb" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'smarthome' }),
       });
       mediaItems.push({
-        title: 'Caméra',
-        subtext: 'Direct d’une caméra de surveillance (ou de toutes)',
-        aliases: ['caméra', 'camera', 'caméras', 'surveillance', 'vidéosurveillance', 'videosurveillance', 'cctv', 'rtsp', 'flux vidéo', 'direct'],
-        group: fr.slash_menu.image.group,
+        title: t('Caméra'),
+        subtext: t('Direct d’une caméra de surveillance (ou de toutes)'),
+        aliases: [
+          'caméra',
+          'camera',
+          'caméras',
+          'cameras',
+          'surveillance',
+          'vidéosurveillance',
+          'videosurveillance',
+          'cctv',
+          'rtsp',
+          'flux vidéo',
+          'direct',
+          'live',
+        ],
+        group: DICTIONARY.slash_menu.image.group,
         icon: <SlashIcon name="cctv" />,
         onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'camera' }),
       });
     }
     const layoutItems: DefaultReactSuggestionItem[] = [2, 3].map((n) => ({
-      title: `${n} colonnes`,
-      subtext: n === 2 ? 'Deux blocs côte à côte (texte, image, vidéo, module…)' : 'Trois blocs côte à côte',
-      aliases: ['colonnes', 'colonne', 'columns', 'côte à côte', 'cote a cote', 'mise en page', 'layout'],
-      group: 'Mise en page',
+      title: t('{n} colonnes', { n }),
+      subtext: n === 2 ? t('Deux blocs côte à côte (texte, image, vidéo, module…)') : t('Trois blocs côte à côte'),
+      aliases: ['colonnes', 'colonne', 'columns', 'column', 'côte à côte', 'cote a cote', 'side by side', 'mise en page', 'layout'],
+      group: t('Mise en page'),
       icon: <SlashIcon name={n === 2 ? 'columns2' : 'columns3'} />,
       onItemClick: () => insertColumns(editor, n),
     }));

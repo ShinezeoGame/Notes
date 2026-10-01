@@ -26,6 +26,8 @@ type DesktopBridge = {
   onUpdate: (callback: (update: DesktopUpdate) => void) => () => void;
   /** Redémarre sur la mise à jour téléchargée. */
   installUpdate: () => void;
+  /** Niveau 3 : langue de l'interface, pour les menus et la page d'erreur de l'application. */
+  setLanguage?: (lang: 'en' | 'fr') => void;
 };
 
 export function desktop(): DesktopBridge | null {

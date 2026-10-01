@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal';
+import { t } from '../lib/i18n';
 
 /**
  * Recadrage d'une image dans un cadre (carré pour une icône, large pour une bannière, au format de l'écran pour un fond
@@ -48,7 +49,7 @@ async function toBlob(canvas: HTMLCanvasElement, type: string): Promise<Blob> {
   } catch {
     blob = null;
   }
-  if (!blob) throw new Error('Cette image vient d’un autre site et ne peut pas être recadrée : importez-la depuis votre appareil.');
+  if (!blob) throw new Error(t('Cette image vient d’un autre site et ne peut pas être recadrée : importez-la depuis votre appareil.'));
   return blob;
 }
 
@@ -60,7 +61,7 @@ export async function renderCrop(img: HTMLImageElement, crop: CropState): Promis
   canvas.width = ICON_SIZE;
   canvas.height = ICON_SIZE;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Recadrage impossible sur cet appareil.');
+  if (!ctx) throw new Error(t('Recadrage impossible sur cet appareil.'));
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, p.left, p.top, p.width, p.height);
   return toBlob(canvas, 'image/png');
@@ -81,7 +82,7 @@ export async function renderCropArea(img: HTMLImageElement, crop: CropState, asp
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Recadrage impossible sur cet appareil.');
+  if (!ctx) throw new Error(t('Recadrage impossible sur cet appareil.'));
   if (!transparent) {
     // Marges (image dézoomée) : même fond que les images réduites à l'envoi.
     ctx.fillStyle = '#191919';
@@ -129,7 +130,17 @@ type Props = {
 const MARGIN = 30;
 
 /** Fenêtre « Recadrer » : déplacer l'image, zoomer (curseur, molette, deux doigts), aperçu en direct. */
-export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats, title = 'Recadrer l’icône', previews = !formats && fixedAspect === 1, animated, onCancel, onDone }: Props) {
+export function ImageCropDialog({
+  src,
+  initial,
+  aspect: fixedAspect = 1,
+  formats,
+  title = t('Recadrer l’icône'),
+  previews = !formats && fixedAspect === 1,
+  animated,
+  onCancel,
+  onDone,
+}: Props) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   // Format choisi parmi `formats` (index), le format de l'image d'origine valant 0.
   const [formatIndex, setFormatIndex] = useState(0);
@@ -177,7 +188,7 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
       setLoaded(l);
       setCrop(clampCrop(initial ?? { cx: 0.5, cy: 0.5, zoom: 1 }, l, frameRef.current));
     };
-    img.onerror = () => alive && setError('Image illisible : essayez un fichier JPG, PNG ou WebP.');
+    img.onerror = () => alive && setError(t('Image illisible : essayez un fichier JPG, PNG ou WebP.'));
     img.src = src;
     return () => {
       alive = false;
@@ -254,7 +265,7 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
     try {
       await onDone(loaded.img, withCrop ? crop : null, aspect);
     } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
+      setError(err instanceof Error && err.message ? err.message : t('Envoi de l’image impossible.'));
       setBusy(false);
     }
   };
@@ -283,20 +294,20 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
         <>
           {animated ? (
             <button type="button" className="nb-btn nb-crop-keep" onClick={() => void finish(false)} disabled={!loaded || busy}>
-              Garder le GIF animé
+              {t('Garder le GIF animé')}
             </button>
           ) : null}
           <button type="button" className="nb-btn" onClick={onCancel} disabled={busy}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => void finish(true)} disabled={!loaded || busy}>
-            {busy ? 'Envoi…' : 'Valider'}
+            {busy ? t('Envoi…') : t('Valider')}
           </button>
         </>
       }
     >
       {formats ? (
-        <div className="ap-seg nb-crop-formats" role="radiogroup" aria-label="Format">
+        <div className="ap-seg nb-crop-formats" role="radiogroup" aria-label={t('Format')}>
           {formats.map((f, i) => (
             <button
               key={f.label}
@@ -327,7 +338,7 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
           className="nb-crop-frame"
           style={{ width: frame.w, height: frame.h }}
           tabIndex={0}
-          aria-label="Partie gardée : glissez pour déplacer l’image, flèches pour la déplacer, + et − pour zoomer"
+          aria-label={t('Partie gardée : glissez pour déplacer l’image, flèches pour la déplacer, + et − pour zoomer')}
           onKeyDown={(e) => {
             const step = e.shiftKey ? 20 : 5;
             const moves: Record<string, [number, number]> = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
@@ -342,11 +353,11 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
         >
           {main ? <img src={src} alt="" draggable={false} style={{ left: main.left, top: main.top, width: main.width, height: main.height }} /> : null}
         </div>
-        {!loaded && !error ? <div className="nb-crop-loading">Chargement de l’image…</div> : null}
+        {!loaded && !error ? <div className="nb-crop-loading">{t('Chargement de l’image…')}</div> : null}
       </div>
       <div className="nb-crop-controls">
         <label className="nb-crop-zoom">
-          <span>Zoom</span>
+          <span>{t('Zoom')}</span>
           <input
             type="range"
             min={zMin}
@@ -358,28 +369,30 @@ export function ImageCropDialog({ src, initial, aspect: fixedAspect = 1, formats
               change((c) => ({ ...c, zoom }));
             }}
             disabled={!loaded}
-            aria-label="Zoom"
+            aria-label={t('Zoom')}
           />
         </label>
         <div className="nb-row nb-gap">
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => change(() => ({ cx: 0.5, cy: 0.5, zoom: zMin }))} disabled={!loaded}>
-            Image entière
+            {t('Image entière')}
           </button>
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => change(() => ({ cx: 0.5, cy: 0.5, zoom: 1 }))} disabled={!loaded}>
-            Remplir le cadre
+            {t('Remplir le cadre')}
           </button>
         </div>
       </div>
       {previews ? (
         <div className="nb-crop-previews">
-          <span className="nb-muted">Aperçu</span>
+          <span className="nb-muted">{t('Aperçu')}</span>
           {preview(64)}
           {preview(32)}
           {preview(18)}
         </div>
       ) : null}
-      <p className="nb-muted nb-crop-help">Glissez l’image pour choisir la partie à garder ; zoomez avec le curseur, la molette ou deux doigts.</p>
-      {animated ? <p className="nb-muted nb-crop-help">Un GIF animé recadré devient une image fixe.</p> : null}
+      <p className="nb-muted nb-crop-help">
+        {t('Glissez l’image pour choisir la partie à garder ; zoomez avec le curseur, la molette ou deux doigts.')}
+      </p>
+      {animated ? <p className="nb-muted nb-crop-help">{t('Un GIF animé recadré devient une image fixe.')}</p> : null}
       {error ? <div className="nb-error">{error}</div> : null}
     </Modal>
   );

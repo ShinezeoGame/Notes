@@ -15,6 +15,7 @@ import {
   type GoogleCalendar,
 } from '../lib/google';
 import { Icon } from '../icons/Icon';
+import { t, tn, tx, locale } from '../lib/i18n';
 
 type Props = {
   initial?: { source?: string; title?: string };
@@ -79,7 +80,7 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       const parsed = parseIcs(text);
       setPreview({ name: parsed.name, events: parsed.events, source: '' });
     } catch {
-      setError('Ce fichier n’est pas un calendrier iCal valide.');
+      setError(t('Ce fichier n’est pas un calendrier iCal valide.'));
     } finally {
       setBusy(false);
     }
@@ -87,7 +88,7 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
 
   const fetchUrl = async () => {
     if (!ctx.fetchIcs) {
-      setError('La récupération d’un lien iCal nécessite un serveur configuré (réglages).');
+      setError(t('La récupération d’un lien iCal nécessite un serveur configuré (réglages).'));
       return;
     }
     setBusy(true);
@@ -97,7 +98,7 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       const parsed = parseIcs(text);
       setPreview({ name: parsed.name, events: parsed.events, source: url.trim() });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Récupération impossible.');
+      setError(err instanceof Error ? err.message : t('Récupération impossible.'));
     } finally {
       setBusy(false);
     }
@@ -139,7 +140,7 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       setSelected(pick);
       for (const id of pick) void loadCalendar(t, id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion Google impossible.');
+      setError(err instanceof Error ? err.message : t('Connexion Google impossible.'));
     } finally {
       setBusy(false);
     }
@@ -178,37 +179,39 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
 
   return (
     <Modal
-      title="Importer un agenda Google"
+      title={t('Importer un agenda Google')}
       onClose={onClose}
       width={640}
       footer={
         <>
           <button type="button" className="nb-btn" onClick={onClose}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" disabled={!current || waiting} onClick={finish}>
-            {waiting ? 'Chargement…' : `Insérer ${current ? `(${current.events.length} événements)` : ''}`}
+            {waiting ? t('Chargement…') : current ? tn(current.events.length, 'Insérer ({n} événement)', 'Insérer ({n} événements)') : t('Insérer')}
           </button>
         </>
       }
     >
       <div className="nb-tabs">
         <button type="button" className={tab === 'file' ? 'active' : ''} onClick={() => setTab('file')}>
-          Fichier .ics
+          {t('Fichier .ics')}
         </button>
         <button type="button" className={tab === 'url' ? 'active' : ''} onClick={() => setTab('url')}>
-          Lien iCal (synchronisable)
+          {t('Lien iCal (synchronisable)')}
         </button>
         <button type="button" className={tab === 'google' ? 'active' : ''} onClick={() => setTab('google')}>
-          Compte Google
+          {t('Compte Google')}
         </button>
       </div>
 
       {tab === 'file' ? (
         <div className="nb-tab-panel">
           <p className="nb-muted">
-            Dans Google Agenda (ordinateur) : <b>Paramètres → Importer et exporter → Exporter</b>. Décompressez le fichier .zip puis choisissez le
-            fichier <code>.ics</code> de l’agenda voulu.
+            {tx(
+              'Dans Google Agenda (ordinateur) : <b>Paramètres → Importer et exporter → Exporter</b>. Décompressez le fichier .zip puis choisissez le fichier <c>.ics</c> de l’agenda voulu.',
+              { b: (s) => <b>{s}</b>, c: (s) => <code>{s}</code> },
+            )}
           </p>
           <input type="file" accept=".ics,text/calendar" onChange={(e) => void onFile(e.target.files?.[0])} disabled={busy} />
         </div>
@@ -217,22 +220,24 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       {tab === 'url' ? (
         <div className="nb-tab-panel">
           <p className="nb-muted">
-            Dans Google Agenda : <b>Paramètres → votre agenda → Intégrer l’agenda → « Adresse secrète au format iCal »</b>. Collez ce lien : le bloc
-            pourra ensuite être actualisé d’un clic.
+            {tx(
+              'Dans Google Agenda : <b>Paramètres → votre agenda → Intégrer l’agenda → « Adresse secrète au format iCal »</b>. Collez ce lien : le bloc pourra ensuite être actualisé d’un clic.',
+              { b: (s) => <b>{s}</b> },
+            )}
           </p>
           <div className="nb-row nb-gap">
             <input
               className="nb-input"
-              placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+              placeholder={t('https://calendar.google.com/calendar/ical/…/basic.ics')}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && void fetchUrl()}
             />
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => void fetchUrl()} disabled={busy || !url.trim()}>
-              {busy ? 'Chargement…' : 'Récupérer'}
+              {busy ? t('Chargement…') : t('Récupérer')}
             </button>
           </div>
-          {!ctx.fetchIcs ? <div className="nb-error">Un serveur est nécessaire pour récupérer un lien iCal (voir réglages).</div> : null}
+          {!ctx.fetchIcs ? <div className="nb-error">{t('Un serveur est nécessaire pour récupérer un lien iCal (voir réglages).')}</div> : null}
         </div>
       ) : null}
 
@@ -240,25 +245,30 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
         <div className="nb-tab-panel">
           {!settings.googleClientId ? (
             <div className="nb-notice">
-              <p>Pour se connecter directement à Google, renseignez un <b>ID client OAuth Google</b> dans les réglages.</p>
+              <p>
+                {tx('Pour se connecter directement à Google, renseignez un <b>ID client OAuth Google</b> dans les réglages.', {
+                  b: (s) => <b>{s}</b>,
+                })}
+              </p>
               <p className="nb-muted">
-                Créez-le sur console.cloud.google.com (API Google Calendar activée, identifiant OAuth de type « Application Web », origine
-                JavaScript autorisée = l’adresse de cette application). En attendant, utilisez l’import .ics ou le lien iCal.
+                {t(
+                  'Créez-le sur console.cloud.google.com (API Google Calendar activée, identifiant OAuth de type « Application Web », origine JavaScript autorisée = l’adresse de cette application). En attendant, utilisez l’import .ics ou le lien iCal.',
+                )}
               </p>
             </div>
           ) : calendars === null ? (
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => void connectGoogle()} disabled={busy}>
-              {busy ? 'Connexion…' : 'Se connecter avec Google'}
+              {busy ? t('Connexion…') : t('Se connecter avec Google')}
             </button>
           ) : (
             <>
               <div className="nb-cal-pick-head">
                 <span className="nb-muted">
-                  {selected.length ? `${selected.length} agenda${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''}` : 'Cochez les agendas à afficher'}
+                  {selected.length ? tn(selected.length, '{n} agenda sélectionné', '{n} agendas sélectionnés') : t('Cochez les agendas à afficher')}
                 </span>
                 {calendars.length > 1 ? (
                   <button type="button" className="nb-cal-toggle" onClick={toggleAll}>
-                    {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                    {allSelected ? t('Tout désélectionner') : t('Tout sélectionner')}
                   </button>
                 ) : null}
               </div>
@@ -276,15 +286,15 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
                       </span>
                       <span className="nb-cal-pick-name">
                         {calendarName(c)}
-                        {c.primary ? <span className="nb-muted"> · principal</span> : null}
+                        {c.primary ? <span className="nb-muted"> {t('· principal')}</span> : null}
                       </span>
                       <span className={`nb-cal-pick-meta${status === 'error' ? ' nb-cal-pick-meta--error' : ''}`}>
                         {status === 'loading'
-                          ? 'Chargement…'
+                          ? t('Chargement…')
                           : status === 'error'
-                            ? 'Lecture impossible'
+                            ? t('Lecture impossible')
                             : checked && count !== undefined
-                              ? `${count} événement${count > 1 ? 's' : ''}`
+                              ? tn(count, '{n} événement', '{n} événements')
                               : ''}
                       </span>
                     </label>
@@ -301,7 +311,7 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
       {current ? (
         <div className="nb-preview">
           <label className="nb-field">
-            <span>Titre du bloc</span>
+            <span>{t('Titre du bloc')}</span>
             <input
               className="nb-input"
               value={shownTitle}
@@ -312,14 +322,24 @@ export function CalendarImportDialog({ initial, onClose, onResult }: Props) {
             />
           </label>
           <div className="nb-muted">
-            {current.events.length} événement(s) trouvé(s)
-            {calendarCount > 1 ? ` dans ${calendarCount} agendas` : ''} sur la période (30 jours passés → 12 mois à venir).
+            {calendarCount > 1
+              ? tn(
+                  current.events.length,
+                  '{n} événement trouvé dans {cals} agendas sur la période (30 jours passés → 12 mois à venir).',
+                  '{n} événements trouvés dans {cals} agendas sur la période (30 jours passés → 12 mois à venir).',
+                  { cals: calendarCount },
+                )
+              : tn(
+                  current.events.length,
+                  '{n} événement trouvé sur la période (30 jours passés → 12 mois à venir).',
+                  '{n} événements trouvés sur la période (30 jours passés → 12 mois à venir).',
+                )}
           </div>
           <ul className={`nb-preview-list${dotted ? ' nb-preview-list--dots' : ''}`}>
             {previewEvents.map((ev) => (
               <li key={`${ev.id}|${ev.start}`}>
                 {dotted ? <span className="nb-cal-dot" style={{ background: ev.color }} title={ev.calendar} /> : null}
-                {new Date(ev.start).toLocaleDateString('fr-FR')} · {ev.title}
+                {new Date(ev.start).toLocaleDateString(locale())} · {ev.title}
               </li>
             ))}
             {current.events.length > previewEvents.length ? <li className="nb-muted">…</li> : null}

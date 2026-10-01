@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../components/Modal';
+import { t } from '../lib/i18n';
 
 /** Mot de passe d'un PDF protégé (le PDF est ensuite gardé sans protection dans la bibliothèque). */
 export function PasswordDialog({
@@ -16,16 +17,16 @@ export function PasswordDialog({
   const [value, setValue] = useState('');
   return (
     <Modal
-      title="PDF protégé"
+      title={t('PDF protégé')}
       onClose={onCancel}
       width={420}
       footer={
         <>
           <button type="button" className="nb-btn" onClick={onCancel}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="submit" form="pdf-password-form" className="nb-btn nb-btn--primary" disabled={!value}>
-            Ouvrir
+            {t('Ouvrir')}
           </button>
         </>
       }
@@ -38,13 +39,16 @@ export function PasswordDialog({
         }}
       >
         <p className="nb-muted" style={{ marginTop: 0 }}>
-          « {fileName} » demande un mot de passe pour s’ouvrir. Une fois ouvert, il est gardé sans mot de passe dans votre bibliothèque, sur votre serveur.
+          {t(
+            '« {name} » demande un mot de passe pour s’ouvrir. Une fois ouvert, il est gardé sans mot de passe dans votre bibliothèque, sur votre serveur.',
+            { name: fileName },
+          )}
         </p>
         <label className="nb-field">
-          <span>Mot de passe</span>
+          <span>{t('Mot de passe')}</span>
           <input className="nb-input" type="password" autoFocus value={value} onChange={(e) => setValue(e.target.value)} autoComplete="off" />
         </label>
-        {wrong ? <div className="nb-error">Mot de passe incorrect, réessayez.</div> : null}
+        {wrong ? <div className="nb-error">{t('Mot de passe incorrect, réessayez.')}</div> : null}
       </form>
     </Modal>
   );
@@ -56,16 +60,16 @@ export function RenameDialog({ name, onSave, onClose }: { name: string; onSave: 
   const clean = value.trim();
   return (
     <Modal
-      title="Renommer le PDF"
+      title={t('Renommer le PDF')}
       onClose={onClose}
       width={420}
       footer={
         <>
           <button type="button" className="nb-btn" onClick={onClose}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="submit" form="pdf-rename-form" className="nb-btn nb-btn--primary" disabled={!clean}>
-            Renommer
+            {t('Renommer')}
           </button>
         </>
       }
@@ -78,7 +82,7 @@ export function RenameDialog({ name, onSave, onClose }: { name: string; onSave: 
         }}
       >
         <label className="nb-field">
-          <span>Nom</span>
+          <span>{t('Nom')}</span>
           <input className="nb-input" autoFocus value={value} onChange={(e) => setValue(e.target.value)} onFocus={(e) => e.target.select()} />
         </label>
       </form>

@@ -5,6 +5,7 @@ import type * as Y from 'yjs';
 import { isIconName, type IconName } from '../icons/registry';
 import { newId } from './ids';
 import { reorderSubset } from './sortable';
+import { t, tn, locale } from './i18n';
 
 export type HomeEntity = {
   id: string;
@@ -117,15 +118,15 @@ export const isHomeConfigured = (cfg: HomeConfig) => Boolean(cfg.url.trim() && c
 export type CategoryKey = 'light' | 'power' | 'climate' | 'cover' | 'camera' | 'media' | 'sensor' | 'scene' | 'other';
 
 export const CATEGORIES: { key: CategoryKey; label: string; icon: IconName; domains: string[] }[] = [
-  { key: 'light', label: 'Lumières', icon: 'bulb', domains: ['light'] },
-  { key: 'power', label: 'Prises', icon: 'plug', domains: ['switch', 'input_boolean', 'siren'] },
-  { key: 'climate', label: 'Climat', icon: 'thermometer', domains: ['climate', 'fan', 'humidifier'] },
-  { key: 'cover', label: 'Volets et portes', icon: 'blinds', domains: ['cover', 'valve', 'lock'] },
-  { key: 'camera', label: 'Caméras', icon: 'camera', domains: ['camera'] },
-  { key: 'media', label: 'Multimédia', icon: 'speaker', domains: ['media_player'] },
-  { key: 'sensor', label: 'Capteurs', icon: 'activity', domains: ['sensor', 'binary_sensor', 'alarm_control_panel'] },
-  { key: 'scene', label: 'Scènes', icon: 'sparkles', domains: ['scene', 'script', 'button', 'input_button'] },
-  { key: 'other', label: 'Autres', icon: 'cube', domains: ['vacuum'] },
+  { key: 'light', label: t('Lumières'), icon: 'bulb', domains: ['light'] },
+  { key: 'power', label: t('Prises'), icon: 'plug', domains: ['switch', 'input_boolean', 'siren'] },
+  { key: 'climate', label: t('Climat'), icon: 'thermometer', domains: ['climate', 'fan', 'humidifier'] },
+  { key: 'cover', label: t('Volets et portes'), icon: 'blinds', domains: ['cover', 'valve', 'lock'] },
+  { key: 'camera', label: t('Caméras'), icon: 'camera', domains: ['camera'] },
+  { key: 'media', label: t('Multimédia'), icon: 'speaker', domains: ['media_player'] },
+  { key: 'sensor', label: t('Capteurs'), icon: 'activity', domains: ['sensor', 'binary_sensor', 'alarm_control_panel'] },
+  { key: 'scene', label: t('Scènes'), icon: 'sparkles', domains: ['scene', 'script', 'button', 'input_button'] },
+  { key: 'other', label: t('Autres'), icon: 'cube', domains: ['vacuum'] },
 ];
 
 export function categoryOf(domain: string): CategoryKey {
@@ -169,7 +170,7 @@ export function isAlert(e: HomeEntity): boolean {
   return false;
 }
 
-const NUMBER = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+const NUMBER = new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 });
 
 export function formatValue(value: string | number, unit = ''): string {
   const n = typeof value === 'number' ? value : Number(value);
@@ -181,55 +182,78 @@ export const brightnessPct = (e: HomeEntity): number | null =>
   e.state === 'on' && typeof e.attrs.brightness === 'number' ? Math.max(1, Math.round((e.attrs.brightness / 255) * 100)) : null;
 
 const HVAC: Record<string, string> = {
-  off: 'Arrêt',
-  heat: 'Chauffage',
-  cool: 'Climatisation',
-  auto: 'Automatique',
-  heat_cool: 'Chaud / froid',
-  dry: 'Déshumidification',
-  fan_only: 'Ventilation',
+  off: t('Arrêt'),
+  heat: t('Chauffage'),
+  cool: t('Climatisation'),
+  auto: t('Automatique'),
+  heat_cool: t('Chaud / froid'),
+  dry: t('Déshumidification'),
+  fan_only: t('Ventilation'),
 };
 export const hvacLabel = (mode: string) => HVAC[mode] ?? mode;
 
 const SIMPLE: Record<string, Record<string, string>> = {
-  light: { on: 'Allumée', off: 'Éteinte' },
-  switch: { on: 'Allumé', off: 'Éteint' },
-  input_boolean: { on: 'Activé', off: 'Désactivé' },
-  siren: { on: 'En marche', off: 'Arrêtée' },
-  fan: { on: 'En marche', off: 'Arrêté' },
-  humidifier: { on: 'En marche', off: 'Arrêté' },
-  cover: { open: 'Ouvert', closed: 'Fermé', opening: 'Ouverture…', closing: 'Fermeture…', stopped: 'Arrêté' },
-  valve: { open: 'Ouverte', closed: 'Fermée', opening: 'Ouverture…', closing: 'Fermeture…' },
-  lock: { locked: 'Verrouillée', unlocked: 'Déverrouillée', jammed: 'Bloquée !', locking: 'Verrouillage…', unlocking: 'Déverrouillage…', open: 'Ouverte' },
-  media_player: { playing: 'Lecture', paused: 'En pause', idle: 'Inactif', off: 'Éteint', on: 'Allumé', standby: 'En veille', buffering: 'Chargement…' },
-  vacuum: { cleaning: 'Nettoyage', docked: 'Sur sa base', returning: 'Retour à la base', idle: 'Inactif', paused: 'En pause', error: 'Erreur' },
-  camera: { idle: 'En veille', recording: 'Enregistrement', streaming: 'En direct' },
+  light: { on: t('Allumée'), off: t('Éteinte') },
+  switch: { on: t('Allumé'), off: t('Éteint') },
+  input_boolean: { on: t('Activé'), off: t('Désactivé') },
+  siren: { on: t('En marche'), off: t('Arrêtée') },
+  fan: { on: t('En marche'), off: t('Arrêté') },
+  humidifier: { on: t('En marche'), off: t('Arrêté') },
+  cover: { open: t('Ouvert'), closed: t('Fermé'), opening: t('Ouverture…'), closing: t('Fermeture…'), stopped: t('Arrêté') },
+  valve: { open: t('Ouverte'), closed: t('Fermée'), opening: t('Ouverture…'), closing: t('Fermeture…') },
+  lock: {
+    locked: t('Verrouillée'),
+    unlocked: t('Déverrouillée'),
+    jammed: t('Bloquée !'),
+    locking: t('Verrouillage…'),
+    unlocking: t('Déverrouillage…'),
+    open: t('Ouverte'),
+  },
+  media_player: {
+    playing: t('Lecture'),
+    paused: t('En pause'),
+    idle: t('Inactif'),
+    off: t('Éteint'),
+    on: t('Allumé'),
+    standby: t('En veille'),
+    buffering: t('Chargement…'),
+  },
+  vacuum: {
+    cleaning: t('Nettoyage'),
+    docked: t('Sur sa base'),
+    returning: t('Retour à la base'),
+    idle: t('Inactif'),
+    paused: t('En pause'),
+    error: t('Erreur'),
+  },
+  camera: { idle: t('En veille'), recording: t('Enregistrement'), streaming: t('En direct') },
   alarm_control_panel: {
-    disarmed: 'Désactivée',
-    armed_home: 'Activée (maison)',
-    armed_away: 'Activée (absence)',
-    armed_night: 'Activée (nuit)',
-    armed_vacation: 'Activée (vacances)',
-    arming: 'Activation…',
-    pending: 'En attente…',
-    triggered: 'Déclenchée !',
+    disarmed: t('Désactivée'),
+    armed_home: t('Activée (maison)'),
+    armed_away: t('Activée (absence)'),
+    armed_night: t('Activée (nuit)'),
+    armed_vacation: t('Activée (vacances)'),
+    arming: t('Activation…'),
+    pending: t('En attente…'),
+    triggered: t('Déclenchée !'),
   },
 };
 
 function binaryLabel(e: HomeEntity): string {
   const on = e.state === 'on';
-  if (OPENING_CLASSES.has(e.deviceClass)) return on ? 'Ouverte' : 'Fermée';
-  if (['motion', 'occupancy', 'presence'].includes(e.deviceClass)) return on ? (e.deviceClass === 'motion' ? 'Mouvement détecté' : 'Présence') : 'Aucun mouvement';
-  if (ALERT_CLASSES.has(e.deviceClass)) return on ? 'Alerte !' : 'Normal';
-  if (e.deviceClass === 'lock') return on ? 'Déverrouillé' : 'Verrouillé';
-  if (e.deviceClass === 'light') return on ? 'Lumière' : 'Obscurité';
-  if (e.deviceClass === 'vibration' || e.deviceClass === 'sound') return on ? 'Détecté' : 'Calme';
-  return on ? 'Activé' : 'Désactivé';
+  if (OPENING_CLASSES.has(e.deviceClass)) return on ? t('Ouverte') : t('Fermée');
+  if (['motion', 'occupancy', 'presence'].includes(e.deviceClass))
+    return on ? (e.deviceClass === 'motion' ? t('Mouvement détecté') : t('Présence')) : t('Aucun mouvement');
+  if (ALERT_CLASSES.has(e.deviceClass)) return on ? t('Alerte !') : t('Normal');
+  if (e.deviceClass === 'lock') return on ? t('Déverrouillé') : t('Verrouillé');
+  if (e.deviceClass === 'light') return on ? t('Lumière') : t('Obscurité');
+  if (e.deviceClass === 'vibration' || e.deviceClass === 'sound') return on ? t('Détecté') : t('Calme');
+  return on ? t('Activé') : t('Désactivé');
 }
 
 /** Texte d'état en français (« Allumée · 80 % », « 19,5 °C », « Ouvert · 70 % »…). */
 export function formatState(e: HomeEntity): string {
-  if (e.state === 'unavailable') return 'Indisponible';
+  if (e.state === 'unavailable') return t('Indisponible');
   const a = e.attrs;
   switch (e.domain) {
     case 'sensor':
@@ -238,28 +262,36 @@ export function formatState(e: HomeEntity): string {
       return e.state === 'unknown' ? '—' : binaryLabel(e);
     case 'light': {
       const pct = brightnessPct(e);
-      return pct !== null ? `Allumée · ${pct} %` : (SIMPLE.light[e.state] ?? e.state);
+      return pct !== null ? t('Allumée · {pct} %', { pct }) : (SIMPLE.light[e.state] ?? e.state);
     }
     case 'fan':
-      return e.state === 'on' && typeof a.percentage === 'number' && a.percentage > 0 ? `En marche · ${Math.round(a.percentage)} %` : (SIMPLE.fan[e.state] ?? e.state);
+      return e.state === 'on' && typeof a.percentage === 'number' && a.percentage > 0
+        ? t('En marche · {pct} %', { pct: Math.round(a.percentage) })
+        : (SIMPLE.fan[e.state] ?? e.state);
     case 'cover':
     case 'valve': {
       const base = SIMPLE[e.domain][e.state] ?? e.state;
-      return e.state === 'open' && typeof a.current_position === 'number' && a.current_position < 100 ? `${base} · ${a.current_position} %` : base;
+      return e.state === 'open' && typeof a.current_position === 'number' && a.current_position < 100
+        ? t('{state} · {pct} %', { state: base, pct: a.current_position })
+        : base;
     }
     case 'climate': {
       const current = typeof a.current_temperature === 'number' ? formatValue(a.current_temperature, '°C') : '';
       return [current, hvacLabel(e.state)].filter(Boolean).join(' · ');
     }
     case 'humidifier':
-      return e.state === 'on' && typeof a.humidity === 'number' ? `En marche · ${a.humidity} %` : (SIMPLE.humidifier[e.state] ?? e.state);
+      return e.state === 'on' && typeof a.humidity === 'number'
+        ? t('En marche · {pct} %', { pct: a.humidity })
+        : (SIMPLE.humidifier[e.state] ?? e.state);
     case 'media_player': {
       const title = [a.media_title, a.media_artist].filter((x) => typeof x === 'string' && x).join(' — ');
       const base = SIMPLE.media_player[e.state] ?? e.state;
       return title && (e.state === 'playing' || e.state === 'paused') ? `${base} · ${title}` : base;
     }
     case 'vacuum':
-      return typeof a.battery_level === 'number' ? `${SIMPLE.vacuum[e.state] ?? e.state} · batterie ${a.battery_level} %` : (SIMPLE.vacuum[e.state] ?? e.state);
+      return typeof a.battery_level === 'number'
+        ? t('{state} · batterie {pct} %', { state: SIMPLE.vacuum[e.state] ?? e.state, pct: a.battery_level })
+        : (SIMPLE.vacuum[e.state] ?? e.state);
     case 'scene':
     case 'script':
     case 'button':
@@ -342,17 +374,17 @@ export function lightColor(e: HomeEntity): string | null {
 }
 
 export const LIGHT_PRESETS: { label: string; rgb?: [number, number, number]; kelvin?: number }[] = [
-  { label: 'Blanc chaud', kelvin: 2700 },
-  { label: 'Blanc neutre', kelvin: 4000 },
-  { label: 'Blanc froid', kelvin: 6000 },
-  { label: 'Rouge', rgb: [255, 40, 30] },
-  { label: 'Orange', rgb: [255, 140, 20] },
-  { label: 'Jaune', rgb: [255, 220, 40] },
-  { label: 'Vert', rgb: [60, 220, 90] },
-  { label: 'Cyan', rgb: [40, 200, 230] },
-  { label: 'Bleu', rgb: [50, 90, 255] },
-  { label: 'Violet', rgb: [150, 70, 255] },
-  { label: 'Rose', rgb: [255, 80, 180] },
+  { label: t('Blanc chaud'), kelvin: 2700 },
+  { label: t('Blanc neutre'), kelvin: 4000 },
+  { label: t('Blanc froid'), kelvin: 6000 },
+  { label: t('Rouge'), rgb: [255, 40, 30] },
+  { label: t('Orange'), rgb: [255, 140, 20] },
+  { label: t('Jaune'), rgb: [255, 220, 40] },
+  { label: t('Vert'), rgb: [60, 220, 90] },
+  { label: t('Cyan'), rgb: [40, 200, 230] },
+  { label: t('Bleu'), rgb: [50, 90, 255] },
+  { label: t('Violet'), rgb: [150, 70, 255] },
+  { label: t('Rose'), rgb: [255, 80, 180] },
 ];
 
 /** Aperçu d'une température de couleur (approximation pour les pastilles). */
@@ -413,10 +445,10 @@ export function groupByArea(list: HomeEntity[], order: readonly string[] = []): 
     const ra = rank.get(a.id) ?? Infinity;
     const rb = rank.get(b.id) ?? Infinity;
     if (ra !== rb) return ra - rb;
-    return kind(a) - kind(b) || a.name.localeCompare(b.name, 'fr');
+    return kind(a) - kind(b) || a.name.localeCompare(b.name, locale());
   };
   for (const items of groups.values()) items.sort(compare);
-  return Array.from(groups.entries()).sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'fr')));
+  return Array.from(groups.entries()).sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, locale())));
 }
 
 /** Enregistre l'ordre d'appareils affichés ensemble (une pièce, les résultats d'une recherche…) après un glisser-déposer. */
@@ -461,28 +493,33 @@ export function groupBrightness(members: HomeEntity[]): number | null {
 
 /** « 3 allumées sur 5 · 60 % », « Toutes éteintes », « Tous fermés »… */
 export function groupLabel(members: HomeEntity[]): string {
-  if (!members.length) return 'Aucun appareil';
+  if (!members.length) return t('Aucun appareil');
   const available = members.filter((e) => !isUnavailable(e));
-  if (!available.length) return 'Indisponible';
+  if (!available.length) return t('Indisponible');
   const parts: string[] = [];
   const toggles = available.filter(isToggleable);
   if (toggles.length) {
     const on = toggles.filter(isSwitchedOn).length;
     const f = toggles.every((e) => e.domain === 'light'); // « les lampes » : accord au féminin
     const one = toggles.length === 1;
-    if (on === 0) parts.push(one ? (f ? 'Éteinte' : 'Éteint') : f ? 'Toutes éteintes' : 'Tous éteints');
-    else if (on === toggles.length) parts.push(one ? (f ? 'Allumée' : 'Allumé') : f ? 'Toutes allumées' : 'Tous allumés');
-    else parts.push(`${on} ${f ? 'allumée' : 'allumé'}${on > 1 ? 's' : ''} sur ${toggles.length}`);
+    if (on === 0) parts.push(one ? (f ? t('Éteinte') : t('Éteint')) : f ? t('Toutes éteintes') : t('Tous éteints'));
+    else if (on === toggles.length) parts.push(one ? (f ? t('Allumée') : t('Allumé')) : f ? t('Toutes allumées') : t('Tous allumés'));
+    else
+      parts.push(
+        f
+          ? tn(on, '{n} allumée sur {total}', '{n} allumées sur {total}', { total: toggles.length })
+          : tn(on, '{n} allumé sur {total}', '{n} allumés sur {total}', { total: toggles.length }),
+      );
     const pct = groupBrightness(toggles);
-    if (pct !== null) parts.push(`${pct} %`);
+    if (pct !== null) parts.push(t('{pct} %', { pct }));
   }
   const covers = available.filter(isCover);
   if (covers.length) {
     const open = covers.filter(isActive).length;
     const one = covers.length === 1;
-    if (open === 0) parts.push(one ? 'Fermé' : 'Tous fermés');
-    else if (open === covers.length) parts.push(one ? 'Ouvert' : 'Tous ouverts');
-    else parts.push(`${open} ouvert${open > 1 ? 's' : ''} sur ${covers.length}`);
+    if (open === 0) parts.push(one ? t('Fermé') : t('Tous fermés'));
+    else if (open === covers.length) parts.push(one ? t('Ouvert') : t('Tous ouverts'));
+    else parts.push(tn(open, '{n} ouvert sur {total}', '{n} ouverts sur {total}', { total: covers.length }));
   }
   return parts.join(' · ');
 }
@@ -562,6 +599,6 @@ export function suggestGroupName(members: HomeEntity[]): string {
   if (!members.length) return '';
   const cats = new Set(members.map((e) => categoryOf(e.domain)));
   const areas = new Set(members.map((e) => e.area).filter(Boolean));
-  const cat = cats.size === 1 ? CATEGORIES.find((c) => c.key === [...cats][0])?.label ?? 'Appareils' : 'Appareils';
+  const cat = cats.size === 1 ? (CATEGORIES.find((c) => c.key === [...cats][0])?.label ?? t('Appareils')) : t('Appareils');
   return areas.size === 1 && members.every((e) => e.area) ? `${cat} · ${[...areas][0]}` : cat;
 }

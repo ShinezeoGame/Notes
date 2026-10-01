@@ -11,26 +11,76 @@ import { isDesktopLocal } from '../lib/desktop';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { MeloLogo } from './Logo';
+import { t } from '../lib/i18n';
 
 export type SectionGroupId = 'main' | 'organize' | 'house' | 'tools';
 
 /** Groupes de la navigation, dans leur ordre d'affichage (l'accueil, seul, n'a pas de titre). */
 export const SECTION_GROUPS: { id: SectionGroupId; label: string }[] = [
   { id: 'main', label: '' },
-  { id: 'organize', label: 'Organisation' },
-  { id: 'house', label: 'Maison' },
-  { id: 'tools', label: 'Outils' },
+  { id: 'organize', label: t('Organisation') },
+  { id: 'house', label: t('Maison') },
+  { id: 'tools', label: t('Outils') },
 ];
 
 /** `short` : libellé de la barre d'onglets du téléphone ; `hint` : ce que contient la section, en quelques mots. */
 export const SECTIONS: Record<SectionId, { label: string; short: string; icon: IconName; hash: string; group: SectionGroupId; hint: string }> = {
-  home: { label: 'Accueil', short: 'Accueil', icon: 'dashboard', hash: '#/', group: 'main', hint: 'Vos widgets : horloge, météo, tâches, raccourcis…' },
-  notes: { label: 'Notes', short: 'Notes', icon: 'note', hash: '#/notes', group: 'organize', hint: 'Pages de notes, listes et idées, à partager' },
-  agenda: { label: 'Agenda', short: 'Agenda', icon: 'calendar', hash: '#/agenda', group: 'organize', hint: 'Vos agendas Google, Outlook ou iCal réunis' },
-  smarthome: { label: 'Objets connectés', short: 'Maison', icon: 'bulb', hash: '#/maison', group: 'house', hint: 'Lumières, prises, volets… avec Home Assistant' },
-  cameras: { label: 'Caméras', short: 'Caméras', icon: 'cctv', hash: '#/cameras', group: 'house', hint: 'Le direct de vos caméras de surveillance' },
-  homelab: { label: 'Homelab', short: 'Homelab', icon: 'server', hash: '#/homelab', group: 'house', hint: 'L’état de vos serveurs et applications' },
-  pdf: { label: 'Atelier PDF', short: 'PDF', icon: 'filePdf', hash: '#/pdf', group: 'tools', hint: 'Signer, remplir, annoter et assembler des PDF' },
+  home: {
+    label: t('Accueil'),
+    short: t('Accueil'),
+    icon: 'dashboard',
+    hash: '#/',
+    group: 'main',
+    hint: t('Vos widgets : horloge, météo, tâches, raccourcis…'),
+  },
+  notes: {
+    label: t('Notes'),
+    short: t('Notes'),
+    icon: 'note',
+    hash: '#/notes',
+    group: 'organize',
+    hint: t('Pages de notes, listes et idées, à partager'),
+  },
+  agenda: {
+    label: t('Agenda'),
+    short: t('Agenda'),
+    icon: 'calendar',
+    hash: '#/agenda',
+    group: 'organize',
+    hint: t('Vos agendas Google, Outlook ou iCal réunis'),
+  },
+  smarthome: {
+    label: t('Objets connectés'),
+    short: t('Maison'),
+    icon: 'bulb',
+    hash: '#/maison',
+    group: 'house',
+    hint: t('Lumières, prises, volets… avec Home Assistant'),
+  },
+  cameras: {
+    label: t('Caméras'),
+    short: t('Caméras'),
+    icon: 'cctv',
+    hash: '#/cameras',
+    group: 'house',
+    hint: t('Le direct de vos caméras de surveillance'),
+  },
+  homelab: {
+    label: t('Homelab'),
+    short: t('Homelab'),
+    icon: 'server',
+    hash: '#/homelab',
+    group: 'house',
+    hint: t('L’état de vos serveurs et applications'),
+  },
+  pdf: {
+    label: t('Atelier PDF'),
+    short: t('PDF'),
+    icon: 'filePdf',
+    hash: '#/pdf',
+    group: 'tools',
+    hint: t('Signer, remplir, annoter et assembler des PDF'),
+  },
 };
 
 /** Sections visibles réunies par groupe (groupes vides retirés), dans l'ordre choisi à l'intérieur de chaque groupe. */
@@ -44,17 +94,17 @@ export function navOrder(order: SectionId[], hidden: SectionId[] = []): SectionI
 }
 
 export const STATUS_LABEL: Record<ConnStatus, string> = {
-  offline: 'Hors ligne (appareil seul)',
-  connecting: 'Connexion au serveur…',
-  connected: 'Synchronisé',
-  disconnected: 'Déconnecté – nouvelle tentative…',
-  denied: 'Accès refusé par le serveur',
-  outdated: 'Mise à jour de Melo nécessaire',
+  offline: t('Hors ligne (appareil seul)'),
+  connecting: t('Connexion au serveur…'),
+  connected: t('Synchronisé'),
+  disconnected: t('Déconnecté – nouvelle tentative…'),
+  denied: t('Accès refusé par le serveur'),
+  outdated: t('Mise à jour de Melo nécessaire'),
 };
 
 /** État de la synchronisation en mots ; l'espace de l'application pour ordinateur reste sur cet ordinateur. */
 export function statusLabel(status: ConnStatus): string {
-  return status === 'connected' && isDesktopLocal() ? 'Enregistré sur cet ordinateur' : STATUS_LABEL[status];
+  return status === 'connected' && isDesktopLocal() ? t('Enregistré sur cet ordinateur') : STATUS_LABEL[status];
 }
 
 /** Sections affichées sur la barre d'onglets du téléphone, avant « Plus ». */
@@ -117,16 +167,16 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
     const moreGroups = groups.map((g) => ({ ...g, ids: g.ids.filter((id) => more.includes(id)) })).filter((g) => g.ids.length);
     return (
       <>
-        <nav className="nb-tabbar" aria-label="Sections">
+        <nav className="nb-tabbar" aria-label={t('Sections')}>
           {tabs.map((id) => item(id, '', SECTIONS[id].short))}
           <button type="button" className={`nb-nav-item${moreActive || moreOpen ? ' nb-nav-item--active' : ''}`} onClick={() => setMoreOpen((v) => !v)}>
             <Icon name="dots" size={22} />
-            <span className="nb-nav-label">Plus</span>
+            <span className="nb-nav-label">{t('Plus')}</span>
           </button>
         </nav>
         {moreOpen ? (
           <div className="nb-sheet-backdrop" onClick={() => setMoreOpen(false)}>
-            <div className="nb-sheet" role="dialog" aria-label="Plus" onClick={(e) => e.stopPropagation()}>
+            <div className="nb-sheet" role="dialog" aria-label={t('Plus')} onClick={(e) => e.stopPropagation()}>
               {moreGroups.map((g) => (
                 <div key={g.id} className="nb-sheet-group">
                   {g.label ? <div className="nb-nav-group-label">{g.label}</div> : null}
@@ -134,19 +184,19 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
                 </div>
               ))}
               <div className="nb-sheet-group">
-                <div className="nb-nav-group-label">Melo</div>
+                <div className="nb-nav-group-label">{t('Melo')}</div>
                 <div className="nb-sheet-grid">
                   <button type="button" className="nb-nav-item nb-nav-item--tile" onClick={() => (setMoreOpen(false), onSearch())}>
                     <Icon name="search" size={22} />
-                    <span className="nb-nav-label">Rechercher</span>
+                    <span className="nb-nav-label">{t('Rechercher')}</span>
                   </button>
                   <button type="button" className="nb-nav-item nb-nav-item--tile" onClick={() => (setMoreOpen(false), onCustomize())}>
                     <Icon name="palette" size={22} />
-                    <span className="nb-nav-label">Personnaliser</span>
+                    <span className="nb-nav-label">{t('Personnaliser')}</span>
                   </button>
                   <button type="button" className="nb-nav-item nb-nav-item--tile" onClick={() => (setMoreOpen(false), onSettings())}>
                     <Icon name="settings" size={22} />
-                    <span className="nb-nav-label">Réglages</span>
+                    <span className="nb-nav-label">{t('Réglages')}</span>
                   </button>
                 </div>
               </div>
@@ -161,25 +211,25 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
   }
 
   return (
-    <nav className={`nb-rail${collapsed ? ' nb-rail--collapsed' : ''}`} aria-label="Sections">
+    <nav className={`nb-rail${collapsed ? ' nb-rail--collapsed' : ''}`} aria-label={t('Sections')}>
       <div className="nb-rail-head">
         <MeloLogo size={22} className="nb-workspace-avatar" />
-        <span className="nb-rail-name">Melo</span>
+        <span className="nb-rail-name">{t('Melo')}</span>
         <span className={`nb-status nb-status--${status}`} title={statusLabel(status)} />
         <button
           type="button"
           className="nb-icon-btn nb-icon-btn--sm nb-rail-collapse"
           onClick={() => updateSettings({ navCollapsed: !getSettings().navCollapsed })}
-          title={collapsed ? 'Déplier la barre' : 'Replier la barre'}
-          aria-label={collapsed ? 'Déplier la barre' : 'Replier la barre'}
+          title={collapsed ? t('Déplier la barre') : t('Replier la barre')}
+          aria-label={collapsed ? t('Déplier la barre') : t('Replier la barre')}
         >
           <Icon name={collapsed ? 'chevronRight' : 'chevronLeft'} size={16} />
         </button>
       </div>
-      <button type="button" className="nb-nav-item nb-rail-search" onClick={onSearch} title="Rechercher (Ctrl+K)">
+      <button type="button" className="nb-nav-item nb-rail-search" onClick={onSearch} title={t('Rechercher (Ctrl+K)')}>
         <Icon name="search" size={18} />
-        <span className="nb-nav-label">Rechercher</span>
-        <kbd className="nb-nav-kbd">Ctrl K</kbd>
+        <span className="nb-nav-label">{t('Rechercher')}</span>
+        <kbd className="nb-nav-kbd">{t('Ctrl K')}</kbd>
       </button>
       <div className="nb-rail-sections">
         {groups.map((g) => (
@@ -191,18 +241,23 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
       </div>
       <div className="nb-rail-foot">
         {install.canInstall && pointer ? (
-          <button type="button" className="nb-nav-item" onClick={() => void promptInstall()} title={collapsed ? 'Installer l’application' : undefined}>
+          <button
+            type="button"
+            className="nb-nav-item"
+            onClick={() => void promptInstall()}
+            title={collapsed ? t('Installer l’application') : undefined}
+          >
             <Icon name="download" size={18} />
-            <span className="nb-nav-label">Installer l’application</span>
+            <span className="nb-nav-label">{t('Installer l’application')}</span>
           </button>
         ) : null}
-        <button type="button" className="nb-nav-item" onClick={onCustomize} title={collapsed ? 'Personnaliser' : undefined}>
+        <button type="button" className="nb-nav-item" onClick={onCustomize} title={collapsed ? t('Personnaliser') : undefined}>
           <Icon name="palette" size={18} />
-          <span className="nb-nav-label">Personnaliser</span>
+          <span className="nb-nav-label">{t('Personnaliser')}</span>
         </button>
-        <button type="button" className="nb-nav-item" onClick={onSettings} title={collapsed ? 'Réglages' : undefined}>
+        <button type="button" className="nb-nav-item" onClick={onSettings} title={collapsed ? t('Réglages') : undefined}>
           <Icon name="settings" size={18} />
-          <span className="nb-nav-label">Réglages</span>
+          <span className="nb-nav-label">{t('Réglages')}</span>
         </button>
       </div>
     </nav>

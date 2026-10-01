@@ -2,7 +2,14 @@ import { useSyncExternalStore } from 'react';
 import { newId, newKey, randomColor } from './ids';
 import { isDesktopLocal } from './desktop';
 
+/** Langue de l'interface (voir lib/i18n.ts). */
+export type Lang = 'en' | 'fr';
+
 export type Settings = {
+  /** Langue de l'interface, propre à l'appareil : anglais pour une nouvelle installation. */
+  lang: Lang;
+  /** Langue choisie (ou proposition fermée) : la proposition du premier lancement ne s'affiche plus. */
+  langChosen: boolean;
   /** URL du serveur de synchronisation (null = mode hors ligne, appareil seul). */
   serverUrl: string | null;
   workspaceId: string;
@@ -50,12 +57,14 @@ function defaultServerUrl(): string | null {
   return null;
 }
 
-function defaults(): Settings {
+function defaults(lang: Lang = 'en'): Settings {
   return {
+    lang,
+    langChosen: false,
     serverUrl: defaultServerUrl(),
     workspaceId: newId(),
     workspaceKey: newKey(),
-    userName: `Utilisateur ${Math.floor(1000 + Math.random() * 9000)}`,
+    userName: `${lang === 'fr' ? 'Utilisateur' : 'User'} ${Math.floor(1000 + Math.random() * 9000)}`, // i18n-ignore : settings est lu avant i18n
     userColor: randomColor(),
     googleClientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || '',
     updateNotifications: true,
@@ -78,7 +87,15 @@ function load(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Settings>;
-      return { ...defaults(), ...parsed };
+      // Installation d'avant le choix de la langue : elle reste en français.
+      const s: Settings =
+        parsed.lang !== 'en' && parsed.lang !== 'fr'
+          ? { ...defaults('fr'), ...parsed, lang: 'fr', langChosen: true }
+          : { ...defaults(parsed.lang), ...parsed };
+      // Réglages apparus depuis le dernier enregistrement (langue…) : enregistrés aussitôt, pour rester les mêmes
+      // d'un lancement à l'autre.
+      if (Object.keys(s).some((k) => !(k in parsed))) persist(s);
+      return s;
     }
   } catch {
     /* stockage indisponible */
@@ -114,9 +131,9 @@ export function resetWorkspace() {
   updateSettings({ workspaceId: d.workspaceId, workspaceKey: d.workspaceKey, lastPageId: null, expanded: {}, guest: false, hostName: '' });
 }
 
-/** Nom affiché encore choisi au hasard (« Utilisateur 1234 ») : à remplacer par le vrai prénom. */
+/** Nom affiché encore choisi au hasard (« Utilisateur 1234 », « User 1234 ») : à remplacer par le vrai prénom. */
 export function isDefaultUserName(name: string): boolean {
-  return /^Utilisateur \d{4}$/.test(name);
+  return /^(Utilisateur|User) \d{4}$/.test(name);
 }
 
 export function subscribeSettings(fn: () => void) {

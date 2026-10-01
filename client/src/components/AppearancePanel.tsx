@@ -25,6 +25,7 @@ import { serverBase } from '../lib/api';
 import { isDesktopLocal } from '../lib/desktop';
 import { SECTIONS, groupSections } from './AppNav';
 import { Icon } from '../icons/Icon';
+import { t } from '../lib/i18n';
 
 type Props = {
   doc: Y.Doc;
@@ -34,15 +35,28 @@ type Props = {
   onClose: () => void;
 };
 
-function Range({ label, value, min, max, step = 1, unit, onChange }: { label: string; value: number; min: number; max: number; step?: number; unit: string; onChange: (v: number) => void }) {
+function Range({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  unit,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit: '%' | 'px';
+  onChange: (v: number) => void;
+}) {
   return (
     <label className="ap-range">
       <span>
         {label}
-        <b>
-          {value}
-          {unit}
-        </b>
+        <b>{unit === '%' ? t('{pct} %', { pct: value }) : `${value} px`}</b>
       </span>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </label>
@@ -122,7 +136,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
     if (!file) return;
     setError('');
     if (!file.type.startsWith('image/')) {
-      setError('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).');
+      setError(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'));
       return;
     }
     setCrop({ src: URL.createObjectURL(file), file, initial: null });
@@ -166,12 +180,12 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
 
   return createPortal(
     <div className="ap-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside className="ap-panel" role="dialog" aria-label="Personnaliser">
+      <aside className="ap-panel" role="dialog" aria-label={t('Personnaliser')}>
         <header className="ap-head">
           <h2>
-            <Icon name="palette" size={18} /> Personnaliser
+            <Icon name="palette" size={18} /> {t('Personnaliser')}
           </h2>
-          <button type="button" className="nb-icon-btn" onClick={onClose} aria-label="Fermer">
+          <button type="button" className="nb-icon-btn" onClick={onClose} aria-label={t('Fermer')}>
             <Icon name="close" size={18} />
           </button>
         </header>
@@ -179,17 +193,17 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
           {synced || own ? (
             <section className="ap-section">
               <label className="nb-check">
-                <input type="checkbox" checked={!own} onChange={(e) => setEverywhere(e.target.checked)} /> Appliquer à tous vos appareils
+                <input type="checkbox" checked={!own} onChange={(e) => setEverywhere(e.target.checked)} /> {t('Appliquer à tous vos appareils')}
               </label>
               <p className="nb-muted ap-hint">
                 {own
-                  ? 'Cet appareil garde sa propre apparence : ses changements ne touchent pas vos autres appareils.'
-                  : 'Ordinateur, téléphone, application Windows : les changements s’appliquent partout.'}
+                  ? t('Cet appareil garde sa propre apparence : ses changements ne touchent pas vos autres appareils.')
+                  : t('Ordinateur, téléphone, application Windows : les changements s’appliquent partout.')}
               </p>
             </section>
           ) : null}
           <section className="ap-section">
-            <h3>Thème</h3>
+            <h3>{t('Thème')}</h3>
             <div className="ap-themes">
               {THEMES.map((t) => (
                 <button
@@ -214,7 +228,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
           </section>
 
           <section className="ap-section">
-            <h3>Couleur d’accent</h3>
+            <h3>{t('Couleur d’accent')}</h3>
             <div className="ap-swatches">
               {ACCENTS.map((a) => (
                 <button
@@ -228,22 +242,22 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                   aria-pressed={draft.accent === a.color}
                 />
               ))}
-              <label className="ap-swatch ap-swatch--custom" title="Autre couleur">
-                <input type="color" value={draft.accent} onChange={(e) => change({ accent: e.target.value })} aria-label="Autre couleur" />
+              <label className="ap-swatch ap-swatch--custom" title={t('Autre couleur')}>
+                <input type="color" value={draft.accent} onChange={(e) => change({ accent: e.target.value })} aria-label={t('Autre couleur')} />
                 <Icon name="plus" size={14} />
               </label>
             </div>
           </section>
 
           <section className="ap-section">
-            <h3>Fond d’écran</h3>
-            <div className="ap-seg" role="radiogroup" aria-label="Type de fond d’écran">
+            <h3>{t('Fond d’écran')}</h3>
+            <div className="ap-seg" role="radiogroup" aria-label={t('Type de fond d’écran')}>
               {(
                 [
-                  ['none', 'Aucun'],
-                  ['gradient', 'Dégradé'],
-                  ['color', 'Couleur'],
-                  ['image', 'Image'],
+                  ['none', t('Aucun')],
+                  ['gradient', t('Dégradé')],
+                  ['color', t('Couleur')],
+                  ['image', t('Image')],
                 ] as [WallpaperKind, string][]
               ).map(([k, label]) => (
                 <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? 'ap-seg--on' : ''} onClick={() => setKind(k)}>
@@ -269,19 +283,23 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
             ) : null}
             {kind === 'color' ? (
               <label className="ap-color">
-                <input type="color" value={/^#[0-9a-f]{6}$/i.test(draft.wallpaper.value) ? draft.wallpaper.value : '#1e3a8a'} onChange={(e) => setWallpaper({ value: e.target.value })} />
-                Choisir la couleur
+                <input
+                  type="color"
+                  value={/^#[0-9a-f]{6}$/i.test(draft.wallpaper.value) ? draft.wallpaper.value : '#1e3a8a'}
+                  onChange={(e) => setWallpaper({ value: e.target.value })}
+                />
+                {t('Choisir la couleur')}
               </label>
             ) : null}
             {kind === 'image' ? (
               <div className="ap-image">
                 <div className="nb-row nb-gap">
                   <button type="button" className="nb-btn nb-btn--sm" onClick={() => fileInput.current?.click()}>
-                    <Icon name="upload" size={14} /> Envoyer une image
+                    <Icon name="upload" size={14} /> {t('Envoyer une image')}
                   </button>
                   {draft.wallpaper.value ? (
                     <button type="button" className="nb-btn nb-btn--sm" onClick={recrop}>
-                      <Icon name="crop" size={14} /> Recadrer
+                      <Icon name="crop" size={14} /> {t('Recadrer')}
                     </button>
                   ) : null}
                 </div>
@@ -300,47 +318,75 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                     className="nb-input"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="… ou adresse d’une image (https://…)"
+                    placeholder={t('… ou adresse d’une image (https://…)')}
                     inputMode="url"
                   />
-                  <button type="button" className="nb-btn nb-btn--sm" disabled={!/^https?:\/\/\S+$/i.test(imageUrl.trim())} onClick={() => setWallpaper({ value: imageUrl.trim(), source: null })}>
-                    Utiliser
+                  <button
+                    type="button"
+                    className="nb-btn nb-btn--sm"
+                    disabled={!/^https?:\/\/\S+$/i.test(imageUrl.trim())}
+                    onClick={() => setWallpaper({ value: imageUrl.trim(), source: null })}
+                  >
+                    {t('Utiliser')}
                   </button>
                 </div>
                 {error ? <div className="nb-error">{error}</div> : null}
-                <Range label="Flou" value={draft.wallpaper.blur} min={0} max={30} unit=" px" onChange={(v) => setWallpaper({ blur: v })} />
+                <Range label={t('Flou')} value={draft.wallpaper.blur} min={0} max={30} unit="px" onChange={(v) => setWallpaper({ blur: v })} />
               </div>
             ) : null}
             {kind !== 'none' ? (
               <>
-                <Range label="Voile (lisibilité)" value={draft.wallpaper.dim} min={0} max={90} unit=" %" onChange={(v) => setWallpaper({ dim: v })} />
+                <Range
+                  label={t('Voile (lisibilité)')}
+                  value={draft.wallpaper.dim}
+                  min={0}
+                  max={90}
+                  unit="%"
+                  onChange={(v) => setWallpaper({ dim: v })}
+                />
                 <label className="nb-check">
-                  <input type="checkbox" checked={draft.wallpaper.everywhere} onChange={(e) => setWallpaper({ everywhere: e.target.checked })} /> Dans toute
-                  l’application (pas seulement l’accueil)
+                  <input type="checkbox" checked={draft.wallpaper.everywhere} onChange={(e) => setWallpaper({ everywhere: e.target.checked })} />{' '}
+                  {t('Dans toute l’application (pas seulement l’accueil)')}
                 </label>
               </>
             ) : null}
           </section>
 
           <section className="ap-section">
-            <h3>Widgets</h3>
-            <Range label="Opacité du fond" value={draft.widgetOpacity} min={0} max={100} step={5} unit=" %" onChange={(v) => change({ widgetOpacity: v })} />
-            <Range label="Flou derrière" value={draft.widgetBlur} min={0} max={40} unit=" px" onChange={(v) => change({ widgetBlur: v })} />
-            <Range label="Arrondi des coins" value={draft.radius} min={0} max={32} unit=" px" onChange={(v) => change({ radius: v })} />
-            <Range label="Espacement" value={draft.gap} min={0} max={40} step={2} unit=" px" onChange={(v) => change({ gap: v })} />
+            <h3>{t('Widgets')}</h3>
+            <Range
+              label={t('Opacité du fond')}
+              value={draft.widgetOpacity}
+              min={0}
+              max={100}
+              step={5}
+              unit="%"
+              onChange={(v) => change({ widgetOpacity: v })}
+            />
+            <Range label={t('Flou derrière')} value={draft.widgetBlur} min={0} max={40} unit="px" onChange={(v) => change({ widgetBlur: v })} />
+            <Range label={t('Arrondi des coins')} value={draft.radius} min={0} max={32} unit="px" onChange={(v) => change({ radius: v })} />
+            <Range label={t('Espacement')} value={draft.gap} min={0} max={40} step={2} unit="px" onChange={(v) => change({ gap: v })} />
           </section>
 
           <section className="ap-section">
-            <h3>Texte</h3>
-            <Range label="Taille du texte" value={draft.textScale} min={80} max={140} step={5} unit=" %" onChange={(v) => change({ textScale: v })} />
+            <h3>{t('Texte')}</h3>
+            <Range
+              label={t('Taille du texte')}
+              value={draft.textScale}
+              min={80}
+              max={140}
+              step={5}
+              unit="%"
+              onChange={(v) => change({ textScale: v })}
+            />
           </section>
 
           <section className="ap-section">
-            <h3>Sections</h3>
-            <p className="nb-muted ap-hint">Sections affichées dans la navigation, et leur ordre dans chaque groupe.</p>
+            <h3>{t('Sections')}</h3>
+            <p className="nb-muted ap-hint">{t('Sections affichées dans la navigation, et leur ordre dans chaque groupe.')}</p>
             <div className="ap-sections">
               {groupSections(draft.sections).map((g) => (
-                <div key={g.id} className="ap-section-group" role="group" aria-label={g.label || 'Accueil'}>
+                <div key={g.id} className="ap-section-group" role="group" aria-label={g.label || t('Accueil')}>
                   {g.label ? <div className="ap-section-group-label">{g.label}</div> : null}
                   {g.ids.map((id, i) => {
                     const hidden = draft.hidden.includes(id);
@@ -351,7 +397,13 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                         <span title={s.hint}>{s.label}</span>
                         {g.ids.length > 1 ? (
                           <>
-                            <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => moveSection(id, -1)} disabled={i === 0} aria-label={`Monter ${s.label}`}>
+                            <button
+                              type="button"
+                              className="nb-icon-btn nb-icon-btn--sm"
+                              onClick={() => moveSection(id, -1)}
+                              disabled={i === 0}
+                              aria-label={t('Monter {section}', { section: s.label })}
+                            >
                               <Icon name="arrowUp" size={14} />
                             </button>
                             <button
@@ -359,7 +411,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                               className="nb-icon-btn nb-icon-btn--sm"
                               onClick={() => moveSection(id, 1)}
                               disabled={i === g.ids.length - 1}
-                              aria-label={`Descendre ${s.label}`}
+                              aria-label={t('Descendre {section}', { section: s.label })}
                             >
                               <Icon name="arrowDown" size={14} />
                             </button>
@@ -370,8 +422,8 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
                           className="nb-icon-btn nb-icon-btn--sm"
                           disabled={id === 'home'}
                           onClick={() => change({ hidden: hidden ? draft.hidden.filter((h) => h !== id) : [...draft.hidden, id] })}
-                          aria-label={hidden ? `Afficher ${s.label}` : `Masquer ${s.label}`}
-                          title={id === 'home' ? 'L’accueil reste toujours affiché' : hidden ? 'Afficher' : 'Masquer'}
+                          aria-label={hidden ? t('Afficher {section}', { section: s.label }) : t('Masquer {section}', { section: s.label })}
+                          title={id === 'home' ? t('L’accueil reste toujours affiché') : hidden ? t('Afficher') : t('Masquer')}
                         >
                           <Icon name={hidden ? 'eyeOff' : 'eye'} size={15} />
                         </button>
@@ -388,7 +440,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
               src={crop.src}
               initial={crop.initial}
               aspect={screenAspect}
-              title="Recadrer le fond d’écran"
+              title={t('Recadrer le fond d’écran')}
               animated={crop.file?.type === 'image/gif'}
               onCancel={closeCrop}
               onDone={finishCrop}
@@ -397,9 +449,9 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
           <button
             type="button"
             className="nb-btn nb-btn--sm ap-reset"
-            onClick={() => confirm('Revenir à l’apparence de départ (thème sombre, sans fond d’écran) ?') && change({ ...DEFAULT_APPEARANCE })}
+            onClick={() => confirm(t('Revenir à l’apparence de départ (thème sombre, sans fond d’écran) ?')) && change({ ...DEFAULT_APPEARANCE })}
           >
-            <Icon name="refresh" size={14} /> Apparence de départ
+            <Icon name="refresh" size={14} /> {t('Apparence de départ')}
           </button>
         </div>
       </aside>

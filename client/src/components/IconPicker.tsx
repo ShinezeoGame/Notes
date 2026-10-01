@@ -4,6 +4,7 @@ import { ICON_SIZE_RANGE } from '../lib/hooks';
 import { firstImage, isImageLink, prepareImage } from '../lib/images';
 import { Icon } from '../icons/Icon';
 import { PAGE_COLORS, PAGE_ICON_CHOICES, encodePageIcon, resolvePageIcon, type PageColor } from '../icons/pageIcon';
+import { t } from '../lib/i18n';
 
 type Props = {
   value: string;
@@ -41,7 +42,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
     try {
       onSelect(await app.uploadFile(await prepareImage(file, 256, 256, false)));
     } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : 'Envoi de l’image impossible.');
+      setError(err instanceof Error && err.message ? err.message : t('Envoi de l’image impossible.'));
       setBusy(false);
     }
   };
@@ -80,7 +81,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
         className={tab === 'icons' ? 'nb-iconpicker-tab--active' : ''}
         onClick={() => setTab('icons')}
       >
-        Icônes
+        {t('Icônes')}
       </button>
       <button
         type="button"
@@ -89,11 +90,11 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
         className={tab === 'image' ? 'nb-iconpicker-tab--active' : ''}
         onClick={() => setTab('image')}
       >
-        Image
+        {t('Image')}
       </button>
       {value ? (
         <button type="button" className="nb-iconpicker-remove" onClick={() => onSelect('')}>
-          Retirer
+          {t('Retirer')}
         </button>
       ) : null}
     </div>
@@ -102,7 +103,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
   const sizeControl =
     value && onSizeChange ? (
       <div className="nb-iconpicker-size">
-        <span>Taille</span>
+        <span>{t('Taille')}</span>
         <input
           type="range"
           min={ICON_SIZE_RANGE.min}
@@ -110,11 +111,13 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
           step={4}
           value={size}
           onChange={(e) => onSizeChange(Number(e.target.value))}
-          aria-label="Taille de l’icône"
+          aria-label={t('Taille de l’icône')}
         />
-        <span className="nb-muted nb-iconpicker-size-value">{size} px</span>
+        <span className="nb-muted nb-iconpicker-size-value">
+          {size} {t('px')}
+        </span>
         <button type="button" className="nb-btn nb-btn--sm" onClick={() => onSizeChange(0)} disabled={size === ICON_SIZE_RANGE.default}>
-          Par défaut
+          {t('Par défaut')}
         </button>
       </div>
     ) : null;
@@ -142,40 +145,42 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
         <div className="nb-iconpicker-image">
           {current.kind === 'img' ? (
             <div className="nb-row nb-gap">
-              <img className="nb-iconpicker-preview" src={current.src} alt="Image actuelle" />
+              <img className="nb-iconpicker-preview" src={current.src} alt={t('Image actuelle')} />
               {onCrop ? (
                 <button type="button" className="nb-btn" onClick={() => onCrop({ src: current.src })}>
-                  <Icon name="crop" size={15} /> Recadrer
+                  <Icon name="crop" size={15} /> {t('Recadrer')}
                 </button>
               ) : null}
             </div>
           ) : null}
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => fileRef.current?.click()} disabled={busy}>
-            <Icon name="upload" size={15} /> {busy ? 'Envoi…' : 'Importer une image'}
+            <Icon name="upload" size={15} /> {busy ? t('Envoi…') : t('Importer une image')}
           </button>
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             hidden
-            aria-label="Image de l’icône"
+            aria-label={t('Image de l’icône')}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = '';
               if (file) void upload(file);
             }}
           />
-          <span className="nb-muted">Votre logo, une photo… Ou glissez-la ici, ou collez-la (Ctrl+V). Idéal : une image carrée, PNG transparent.</span>
+          <span className="nb-muted">
+            {t('Votre logo, une photo… Ou glissez-la ici, ou collez-la (Ctrl+V). Idéal : une image carrée, PNG transparent.')}
+          </span>
           <div className="nb-row nb-gap">
             <input
               className="nb-input"
-              placeholder="Lien d’une image (https://…)"
+              placeholder={t('Lien d’une image (https://…)')}
               value={link}
               onChange={(e) => setLink(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyLink()}
             />
             <button type="button" className="nb-btn" onClick={applyLink} disabled={!isImageLink(link)}>
-              Utiliser
+              {t('Utiliser')}
             </button>
           </div>
           {error ? <div className="nb-error">{error}</div> : null}
@@ -189,7 +194,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
     <div className="nb-iconpicker" ref={ref}>
       {tabs}
       <div className="nb-iconpicker-head">
-        <input className="nb-input" placeholder="Rechercher une icône…" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+        <input className="nb-input" placeholder={t('Rechercher une icône…')} value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
         <button
           type="button"
           className="nb-btn"
@@ -199,10 +204,10 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
             onSelect(encodePageIcon(pick.name, colors[Math.floor(Math.random() * colors.length)]));
           }}
         >
-          Aléatoire
+          {t('Aléatoire')}
         </button>
       </div>
-      <div className="nb-iconpicker-colors" role="radiogroup" aria-label="Couleur de l’icône">
+      <div className="nb-iconpicker-colors" role="radiogroup" aria-label={t('Couleur de l’icône')}>
         {(Object.keys(PAGE_COLORS) as PageColor[]).map((key) => (
           <button
             key={key}
@@ -217,7 +222,7 @@ export function IconPicker({ value, onSelect, onClose, onCrop, size = ICON_SIZE_
         ))}
       </div>
       <div className="nb-iconpicker-grid">
-        {choices.length === 0 ? <div className="nb-muted nb-pad">Aucune icône trouvée.</div> : null}
+        {choices.length === 0 ? <div className="nb-muted nb-pad">{t('Aucune icône trouvée.')}</div> : null}
         {choices.map((c) => {
           const active = current.kind === 'svg' && current.name === c.name;
           return (

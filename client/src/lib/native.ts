@@ -1,3 +1,4 @@
+import { t, tServer } from './i18n';
 // Appels aux plugins natifs de l'application Android (pont Capacitor injecté dans la WebView).
 
 type NativeBridge = {
@@ -17,8 +18,12 @@ export function hasNativePlugin(name: string): boolean {
 
 export function callNative<T = void>(plugin: string, method: string, options: object = {}): Promise<T> {
   const cap = bridge();
-  if (!cap?.nativePromise) return Promise.reject(new Error('Fonction réservée à l’application Android.'));
-  return cap.nativePromise<T>(plugin, method, options);
+  if (!cap?.nativePromise) return Promise.reject(new Error(t('Fonction réservée à l’application Android.')));
+  return cap.nativePromise<T>(plugin, method, options).catch((err: unknown) => {
+    // Message de l'application Android, écrit en français : traduit comme ceux du serveur.
+    if (err instanceof Error && err.message) err.message = tServer(err.message);
+    throw err;
+  });
 }
 
 /** Écoute un évènement d'un plugin natif ; renvoie la fonction de désinscription. */

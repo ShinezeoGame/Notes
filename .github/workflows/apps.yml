@@ -307,7 +307,7 @@ jobs:
             echo "1. Téléchargez **Melo-Windows.exe** (en bas de cette page, rubrique *Assets*). Si le navigateur hésite, choisissez **Conserver**."
             echo "2. Ouvrez le fichier. Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur **Informations complémentaires**, puis **Exécuter quand même** : l'application n'est simplement pas signée par un éditeur payant."
             echo "3. Melo s'installe tout seul, sans droits d'administrateur, puis s'ouvre. Il se retrouve ensuite sur le bureau et dans le menu Démarrer."
-            echo "4. Au premier lancement : **Commencer** pour utiliser Melo seul sur cet ordinateur, ou **J'ai une invitation ou un code** pour rejoindre le serveur Melo d'un proche."
+            echo "4. Au premier lancement, Melo s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer** pour utiliser Melo seul sur cet ordinateur, ou **J'ai une invitation ou un code** pour rejoindre le serveur Melo d'un proche."
             echo
             echo "Nouvelle version : installez-la par-dessus l'ancienne, vos pages sont gardées."
             echo
@@ -315,7 +315,7 @@ jobs:
             echo
             echo "1. Sur le téléphone, téléchargez **Melo-Android.apk**."
             echo "2. Ouvrez-le ; autorisez l'installation d'applications de cette source si le téléphone le demande, puis **Installer**."
-            echo "3. Au premier lancement : **Commencer**, ou **J'ai une invitation ou un code**."
+            echo "3. Au premier lancement, Melo s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer**, ou **J'ai une invitation ou un code**."
             echo
             echo "*Melo-Android-signe.apk* n'apparaît que si une clé de signature est configurée dans les secrets du dépôt."
           } > "$RUNNER_TEMP/notes.md"

@@ -10,7 +10,7 @@ const path = require('node:path');
 const PORT = 47821;
 const LOCAL = `http://127.0.0.1:${PORT}`;
 /** Fonctions offertes par le pont (voir client/src/lib/desktop.ts) : augmenter à chaque ajout. */
-const BRIDGE_API = 2;
+const BRIDGE_API = 3;
 /** Taille maximale d'un PDF ouvert avec Melo. */
 const MAX_OPEN_BYTES = 200 * 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
@@ -35,7 +35,10 @@ function log(...parts) {
   }
 }
 
-/** { server: adresse du serveur distant affiché (null : espace de cet ordinateur), bounds, maximized } */
+/**
+ * { server: adresse du serveur distant affiché (null : espace de cet ordinateur), bounds, maximized, lang: langue
+ * choisie dans Melo ('en', 'fr' ; null : pas encore connue) }
+ */
 let config = readConfig();
 let win = null;
 /** Serveur intégré : { child, ready } pendant qu'il tourne. */
@@ -49,11 +52,53 @@ let updateReady = null;
 function readConfig() {
   try {
     const c = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    return { server: typeof c.server === 'string' ? normalizeServer(c.server) : null, bounds: c.bounds ?? null, maximized: Boolean(c.maximized) };
+    return {
+      server: typeof c.server === 'string' ? normalizeServer(c.server) : null,
+      bounds: c.bounds ?? null,
+      maximized: Boolean(c.maximized),
+      lang: c.lang === 'en' || c.lang === 'fr' ? c.lang : null,
+    };
   } catch {
-    return { server: null, bounds: null, maximized: false };
+    return { server: null, bounds: null, maximized: false, lang: null };
   }
 }
+
+/** Textes de l'application elle-même (menus, erreurs du serveur intégré), dans la langue choisie dans Melo. */
+const TEXTS = {
+  en: {
+    reload: 'Reload',
+    devTools: 'Developer tools',
+    quit: 'Quit Melo',
+    view: 'View',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    resetZoom: 'Actual size',
+    fullScreen: 'Full screen',
+    noAnswer: 'it does not respond',
+    portUsed: (port) => `port ${port} is already used by another program`,
+    stopped: (code) => `unexpected stop (code ${code})`,
+  },
+  fr: {
+    reload: 'Recharger',
+    devTools: 'Outils de développement',
+    quit: 'Quitter Melo',
+    view: 'Affichage',
+    zoomIn: 'Zoom avant',
+    zoomOut: 'Zoom arrière',
+    resetZoom: 'Taille réelle',
+    fullScreen: 'Plein écran',
+    noAnswer: 'il ne répond pas',
+    portUsed: (port) => `le port ${port} est déjà utilisé par un autre programme`,
+    stopped: (code) => `arrêt inattendu (code ${code})`,
+  },
+};
+
+/** Langue choisie dans Melo (pont : setLanguage) ; avant que Melo ne l'indique, celle de Windows. */
+function uiLang() {
+  return config.lang ?? (/^fr\b/i.test(app.getLocale()) ? 'fr' : 'en');
+}
+
+const text = () => TEXTS[uiLang()];
 
 function saveConfig() {
   try {
@@ -115,7 +160,7 @@ function startServer() {
   child.stderr?.pipe(serverLog);
   const entry = { child, serverLog, ready: null, started: false };
   entry.ready = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('il ne répond pas')), 30_000);
+    const timer = setTimeout(() => reject(new Error(text().noAnswer)), 30_000);
     child.on('message', (m) => {
       if (m?.type === 'ready') {
         clearTimeout(timer);
@@ -123,14 +168,14 @@ function startServer() {
         resolve();
       } else if (m?.type === 'error') {
         clearTimeout(timer);
-        const err = new Error(m.code === 'EADDRINUSE' ? `le port ${PORT} est déjà utilisé par un autre programme` : String(m.code));
+        const err = new Error(m.code === 'EADDRINUSE' ? text().portUsed(PORT) : String(m.code));
         err.code = m.code;
         reject(err);
       }
     });
     child.on('exit', (code) => {
       clearTimeout(timer);
-      reject(new Error(`arrêt inattendu (code ${code})`));
+      reject(new Error(text().stopped(code)));
       if (server !== entry) return;
       server = null;
       // Arrêt imprévu en cours d'utilisation : relancé (trois fois au plus), la page se reconnecte d'elle-même.
@@ -288,7 +333,7 @@ function loadApp(url) {
 /** Page d'erreur : serveur distant injoignable, ou serveur intégré qui ne démarre pas. */
 function showProblem(kind, detail) {
   if (!win) return;
-  void win.loadFile(path.join(__dirname, 'offline.html'), { query: { kind, server: config.server ?? '', detail: String(detail ?? '') } });
+  void win.loadFile(path.join(__dirname, 'offline.html'), { query: { kind, server: config.server ?? '', detail: String(detail ?? ''), lang: uiLang() } });
 }
 
 async function openLocal() {
@@ -427,28 +472,37 @@ ipcMain.on('melo:install-update', (e) => {
   if (trusted(e) && updater && updateReady) updater.quitAndInstall(true, true);
 });
 
+// Niveau 3 : langue de l'interface, indiquée par Melo à chaque ouverture (menus, page d'erreur).
+ipcMain.on('melo:lang', (e, lang) => {
+  if (!trusted(e) || (lang !== 'en' && lang !== 'fr') || config.lang === lang) return;
+  config.lang = lang;
+  saveConfig();
+  Menu.setApplicationMenu(buildMenu());
+});
+
 // ---------- Démarrage ----------
 
 function buildMenu() {
   // Barre de menus cachée (touche Alt) : raccourcis de rechargement, de zoom et de plein écran.
+  const tx = text();
   return Menu.buildFromTemplate([
     {
       label: 'Melo',
       submenu: [
-        { label: 'Recharger', accelerator: 'CmdOrCtrl+R', click: () => win?.webContents.reload() },
-        { role: 'toggleDevTools', label: 'Outils de développement' },
+        { label: tx.reload, accelerator: 'CmdOrCtrl+R', click: () => win?.webContents.reload() },
+        { role: 'toggleDevTools', label: tx.devTools },
         { type: 'separator' },
-        { role: 'quit', label: 'Quitter Melo' },
+        { role: 'quit', label: tx.quit },
       ],
     },
     {
-      label: 'Affichage',
+      label: tx.view,
       submenu: [
-        { role: 'zoomIn', label: 'Zoom avant' },
-        { role: 'zoomOut', label: 'Zoom arrière' },
-        { role: 'resetZoom', label: 'Taille réelle' },
+        { role: 'zoomIn', label: tx.zoomIn },
+        { role: 'zoomOut', label: tx.zoomOut },
+        { role: 'resetZoom', label: tx.resetZoom },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Plein écran' },
+        { role: 'togglefullscreen', label: tx.fullScreen },
       ],
     },
   ]);

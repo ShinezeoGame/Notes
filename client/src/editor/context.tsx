@@ -33,6 +33,6 @@ export const AppContext = createContext<AppContextValue | null>(null);
 
 export function useAppCtx(): AppContextValue {
   const v = useContext(AppContext);
-  if (!v) throw new Error('AppContext manquant');
+  if (!v) throw new Error('AppContext manquant'); // i18n-ignore
   return v;
 }

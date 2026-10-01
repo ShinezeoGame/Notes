@@ -12,6 +12,7 @@ import { AppNav, SECTIONS, statusLabel } from './components/AppNav';
 import { AppearancePanel } from './components/AppearancePanel';
 import { CalendarImportDialog } from './components/CalendarImportDialog';
 import { Onboarding } from './components/Onboarding';
+import { LanguageHint } from './components/LanguageSwitch';
 import { WelcomeDialog } from './components/Welcome';
 import { PageEditorPane } from './components/PageEditorPane';
 import { PagesPanel } from './components/PagesPanel';
@@ -34,6 +35,7 @@ import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, 
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { MeloLogo } from './components/Logo';
+import { t } from './lib/i18n';
 
 // Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
@@ -52,6 +54,7 @@ export default function App() {
   return (
     <>
       {content}
+      {route.name === 'shared' ? null : <LanguageHint />}
       <UpdateBanner />
       <ToastHost />
     </>
@@ -76,16 +79,16 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
     <div className="nb-center">
       <div className="nb-card">
         <MeloLogo size={48} className="nb-logo" />
-        <h1>Lier cet appareil</h1>
+        <h1>{t('Lier cet appareil')}</h1>
         <p className="nb-muted">
-          Ce lien connecte cet appareil à un espace de travail existant. Les pages locales actuelles ne seront plus affichées ici.
+          {t('Ce lien connecte cet appareil à un espace de travail existant. Les pages locales actuelles ne seront plus affichées ici.')}
         </p>
         <div className="nb-row nb-gap nb-end">
           <button type="button" className="nb-btn" onClick={() => navigate('#/')}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => void apply()}>
-            Lier cet appareil
+            {t('Lier cet appareil')}
           </button>
         </div>
       </div>
@@ -195,7 +198,7 @@ function OwnerApp() {
     const last = getSettings().lastPageId;
     let target = last && store.get(last) && store.isVisible(last) ? last : store.roots()[0]?.id;
     if (!target && synced && !store.getSnapshot().length) {
-      target = store.createPage('', 'Bienvenue');
+      target = store.createPage('', t('Bienvenue'));
       store.update(target, { icon: encodePageIcon('sparkles', 'yellow') });
     }
     if (target && !isMobile) navigate({ name: 'page', pageId: target }, { replace: true });
@@ -222,7 +225,7 @@ function OwnerApp() {
       if (!store) return;
       store.softDelete(id);
       if (pageId && (pageId === id || store.ancestors(pageId).some((a) => a.id === id))) navigate('#/notes');
-      toast('Page déplacée dans la corbeille.');
+      toast(t('Page déplacée dans la corbeille.'));
     },
     [store, pageId],
   );
@@ -239,7 +242,7 @@ function OwnerApp() {
   const uploadFile = useCallback(async (file: File) => {
     if (serverBase()) return (await api.upload(file, ownerAuth())).url;
     if (file.size > 15 * 1024 * 1024) {
-      throw new Error('Fichier trop volumineux en mode hors ligne (15 Mo max). Configurez un serveur pour des fichiers plus lourds.');
+      throw new Error(t('Fichier trop volumineux en mode hors ligne (15 Mo max). Configurez un serveur pour des fichiers plus lourds.'));
     }
     return fileToDataUrl(file);
   }, []);
@@ -270,7 +273,7 @@ function OwnerApp() {
   );
 
   if (!store || !wsHandle.ready) {
-    return <div className="nb-center nb-loading">Chargement de votre espace…</div>;
+    return <div className="nb-center nb-loading">{t('Chargement de votre espace…')}</div>;
   }
 
   const goSection = (id: SectionId) => navigate(SECTIONS[id].hash);
@@ -301,7 +304,7 @@ function OwnerApp() {
   else if (route.name === 'cameras') content = <CamerasView doc={store.doc} />;
   else if (route.name === 'pdf')
     content = (
-      <Suspense fallback={<div className="nb-center nb-loading">Chargement de l’atelier PDF…</div>}>
+      <Suspense fallback={<div className="nb-center nb-loading">{t('Chargement de l’atelier PDF…')}</div>}>
         <PdfApp doc={store.doc} pdfId={pdfId} />
       </Suspense>
     );
@@ -351,19 +354,21 @@ function OwnerApp() {
           ) : null}
           {status === 'outdated' ? (
             <div className="nb-banner nb-banner--error">
-              Cette page utilise une nouveauté de Melo (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent
-              sur l’appareil en attendant.
+              {t(
+                'Cette page utilise une nouveauté de Melo (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent sur l’appareil en attendant.',
+              )}
               <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
-                Mettre à jour
+                {t('Mettre à jour')}
               </button>
             </div>
           ) : null}
           {status === 'denied' ? (
             <div className="nb-banner nb-banner--error">
-              Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Reliez‑le avec le code à 6 chiffres
-              affiché dans les réglages d’un appareil déjà connecté.
+              {t(
+                'Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Reliez‑le avec le code à 6 chiffres affiché dans les réglages d’un appareil déjà connecté.',
+              )}
               <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => setDialog({ type: 'link' })}>
-                Saisir un code
+                {t('Saisir un code')}
               </button>
             </div>
           ) : null}
@@ -413,9 +418,11 @@ function NotesEmpty({ store, onCreate }: { store: WorkspaceStore; onCreate: () =
     <div className="nb-center-pane">
       <div className="nb-notice sh-empty">
         <Icon name="note" size={28} />
-        <p>{store.roots().length ? 'Choisissez une page dans la liste.' : 'Aucune page pour l’instant : créez votre première page de notes.'}</p>
+        <p>
+          {store.roots().length ? t('Choisissez une page dans la liste.') : t('Aucune page pour l’instant : créez votre première page de notes.')}
+        </p>
         <button type="button" className="nb-btn nb-btn--primary" onClick={onCreate}>
-          <Icon name="plus" size={15} /> Nouvelle page
+          <Icon name="plus" size={15} /> {t('Nouvelle page')}
         </button>
       </div>
     </div>
@@ -456,12 +463,12 @@ function TopBar(props: {
   };
 
   let title;
-  if (route.name === 'trash') title = <span className="nb-crumb-current">Corbeille</span>;
+  if (route.name === 'trash') title = <span className="nb-crumb-current">{t('Corbeille')}</span>;
   else if (route.name === 'pdf' && props.pdfName)
     title = (
       <>
         <button type="button" onClick={() => navigate('#/pdf')}>
-          <Icon name="filePdf" size={15} /> PDF
+          <Icon name="filePdf" size={15} /> {t('PDF')}
         </button>
         <span className="nb-crumb-current">{props.pdfName}</span>
       </>
@@ -478,13 +485,13 @@ function TopBar(props: {
         {(props.mobile ? crumbs.slice(-1) : crumbs).map((c) => (
           <button key={c.id} type="button" onClick={() => props.onOpenPage(c.id)}>
             <PageIcon icon={c.icon} size={15} fallback={null} />
-            {c.title || 'Sans titre'}
+            {c.title || t('Sans titre')}
           </button>
         ))}
         {page ? (
           <span className="nb-crumb-current">
             <PageIcon icon={page.icon} size={15} fallback={null} />
-            {page.title || 'Sans titre'}
+            {page.title || t('Sans titre')}
           </span>
         ) : null}
       </>
@@ -493,7 +500,7 @@ function TopBar(props: {
   return (
     <header className="nb-topbar">
       {section === 'notes' && props.mobile ? (
-        <button type="button" className="nb-icon-btn" onClick={back} aria-label="Retour">
+        <button type="button" className="nb-icon-btn" onClick={back} aria-label={t('Retour')}>
           <Icon name="chevronLeft" size={20} />
         </button>
       ) : null}
@@ -502,8 +509,8 @@ function TopBar(props: {
           type="button"
           className="nb-icon-btn"
           onClick={props.onTogglePages}
-          aria-label={props.pagesHidden ? 'Afficher la liste des pages' : 'Masquer la liste des pages'}
-          title={props.pagesHidden ? 'Afficher la liste des pages' : 'Masquer la liste des pages'}
+          aria-label={props.pagesHidden ? t('Afficher la liste des pages') : t('Masquer la liste des pages')}
+          title={props.pagesHidden ? t('Afficher la liste des pages') : t('Masquer la liste des pages')}
         >
           <Icon name="menu" size={18} />
         </button>
@@ -514,10 +521,10 @@ function TopBar(props: {
         {page ? (
           <>
             <button type="button" className="nb-btn nb-btn--sm" onClick={props.onShare}>
-              Partager
+              {t('Partager')}
             </button>
             <div className="nb-menu-anchor" onMouseDown={(e) => e.stopPropagation()}>
-              <button type="button" className="nb-icon-btn" onClick={() => setMenuOpen((v) => !v)} aria-label="Plus d’options">
+              <button type="button" className="nb-icon-btn" onClick={() => setMenuOpen((v) => !v)} aria-label={t('Plus d’options')}>
                 <Icon name="dots" size={18} />
               </button>
               {menuOpen ? (
@@ -526,11 +533,11 @@ function TopBar(props: {
                     type="button"
                     onClick={() => {
                       navigator.clipboard?.writeText(`${location.origin}${location.pathname}#/p/${page.id}`);
-                      toast('Lien interne copié.');
+                      toast(t('Lien interne copié.'));
                       setMenuOpen(false);
                     }}
                   >
-                    <Icon name="copy" size={16} /> Copier le lien interne
+                    <Icon name="copy" size={16} /> {t('Copier le lien interne')}
                   </button>
                   <button
                     type="button"
@@ -538,7 +545,7 @@ function TopBar(props: {
                     aria-checked={!page.narrow}
                     onClick={() => store.update(page.id, { narrow: !page.narrow })}
                   >
-                    <Icon name="width" size={16} /> Pleine largeur
+                    <Icon name="width" size={16} /> {t('Pleine largeur')}
                     <span className={`nb-switch${page.narrow ? '' : ' nb-switch--on'}`} aria-hidden="true" />
                   </button>
                   <button
@@ -549,7 +556,7 @@ function TopBar(props: {
                       setMenuOpen(false);
                     }}
                   >
-                    <Icon name="trash" size={16} /> Supprimer la page
+                    <Icon name="trash" size={16} /> {t('Supprimer la page')}
                   </button>
                 </div>
               ) : null}
@@ -568,7 +575,7 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
   const { handle, ready } = useDocHandle(pgRoom(settings.workspaceId, pageId), ownerAuth(), true);
 
   useEffect(() => {
-    document.title = page ? `${page.title || 'Sans titre'} – Melo` : 'Melo';
+    document.title = page ? `${page.title || t('Sans titre')} – Melo` : 'Melo';
   }, [page?.title, page]);
 
   // Les invités d'un lien de partage lisent la largeur dans le document de la page.
@@ -582,10 +589,10 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
     return (
       <div className="nb-center">
         <div className="nb-card">
-          <h1>Page introuvable</h1>
-          <p className="nb-muted">Cette page n’existe pas ou a été supprimée définitivement.</p>
+          <h1>{t('Page introuvable')}</h1>
+          <p className="nb-muted">{t('Cette page n’existe pas ou a été supprimée définitivement.')}</p>
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/notes')}>
-            Retour aux notes
+            {t('Retour aux notes')}
           </button>
         </div>
       </div>
@@ -607,9 +614,9 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
     <>
       {inTrash ? (
         <div className="nb-banner">
-          Cette page est dans la corbeille.
+          {t('Cette page est dans la corbeille.')}
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => store.restore(pageId)}>
-            Restaurer
+            {t('Restaurer')}
           </button>
         </div>
       ) : null}
@@ -683,7 +690,7 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
   return (
     <div className="nb-page hl-page">
       <h1 className="nb-page-title-static">
-        <Icon name="server" size={34} /> Homelab
+        <Icon name="server" size={34} /> {t('Homelab')}
       </h1>
       <HomelabPanel
         refreshSeconds={cfg.refreshSeconds}

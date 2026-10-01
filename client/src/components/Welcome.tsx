@@ -7,97 +7,88 @@ import { changeAppearance, type Appearance, type SectionId } from '../lib/appear
 import { isDesktopLocal } from '../lib/desktop';
 import { isDefaultUserName, updateSettings, useSettings } from '../lib/settings';
 import { Icon } from '../icons/Icon';
+import { LanguageSwitch } from './LanguageSwitch';
 import type { IconName } from '../icons/registry';
 import { SECTIONS, groupSections } from './AppNav';
 import { Modal } from './Modal';
+import { t, tx } from '../lib/i18n';
 
 /** Sections reliées au réseau du serveur (matériel à la maison) : proposées décochées aux nouveaux venus. */
 const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab'];
 
 type Slide = { icon: IconName; title: string; text: ReactNode };
 
+/** Mise en forme des phrases de la présentation : <b>…</b> en gras, <m>…</m> en gras à chasse fixe (touches, « / »). */
+const b = (s: string) => <b>{s}</b>;
+const m = (s: string) => <b className="nb-mono">{s}</b>;
+
 function slides(visible: (id: SectionId) => boolean, guest: boolean): Slide[] {
   const list: Slide[] = [
     {
       icon: 'dashboard',
-      title: 'Votre accueil',
-      text: (
-        <>
-          Des widgets (horloge, météo, tâches, agenda, raccourcis…) à placer où vous voulez : <b>glissez</b> un widget pour le déplacer, <b>tirez un coin</b>{' '}
-          pour l’agrandir. Le bouton <b>+</b>, en bas à droite, ouvre le catalogue. Sur téléphone : un appui long sur un widget, ou <b>Modifier</b> en bas à
-          droite.
-        </>
+      title: t('Votre accueil'),
+      text: tx(
+        'Des widgets (horloge, météo, tâches, agenda, raccourcis…) à placer où vous voulez : <b>glissez</b> un widget pour le déplacer, <b>tirez un coin</b> pour l’agrandir. Le bouton <b>+</b>, en bas à droite, ouvre le catalogue. Sur téléphone : un appui long sur un widget, ou <b>Modifier</b> en bas à droite.',
+        { b },
       ),
     },
   ];
   if (visible('notes'))
     list.push({
       icon: 'note',
-      title: 'Vos notes',
-      text: (
-        <>
-          Des pages, et des pages dans les pages. Dans une page, tapez <b className="nb-mono">/</b> pour ajouter un titre, une liste de cases à cocher, une image,
-          un tableau, des colonnes… Le bouton <b>Partager</b> envoie une page à qui vous voulez, en lecture ou en modification à plusieurs.
-        </>
+      title: t('Vos notes'),
+      text: tx(
+        'Des pages, et des pages dans les pages. Dans une page, tapez <m>/</m> pour ajouter un titre, une liste de cases à cocher, une image, un tableau, des colonnes… Le bouton <b>Partager</b> envoie une page à qui vous voulez, en lecture ou en modification à plusieurs.',
+        { b, m },
       ),
     });
   if (visible('agenda') || visible('pdf'))
     list.push({
       icon: 'filePdf',
-      title: 'Vos outils',
+      title: t('Vos outils'),
       text: (
         <>
           {visible('pdf') ? (
-            <>
-              L’<b>atelier PDF</b> signe, remplit, annote et assemble vos PDF, et transforme des photos en PDF.{' '}
-            </>
+            <>{tx('L’<b>atelier PDF</b> signe, remplit, annote et assemble vos PDF, et transforme des photos en PDF.', { b })} </>
           ) : null}
-          {visible('agenda') ? (
-            <>
-              L’<b>agenda</b> réunit vos agendas Google, Outlook ou iCal.
-            </>
-          ) : null}
+          {visible('agenda') ? tx('L’<b>agenda</b> réunit vos agendas Google, Outlook ou iCal.', { b }) : null}
         </>
       ),
     });
   if (!guest && HOUSE.some(visible))
     list.push({
       icon: 'bulb',
-      title: 'Votre maison',
-      text: (
-        <>
-          Lumières et prises (avec Home Assistant), caméras de surveillance et homelab : chaque section vous guide pas à pas pour relier votre matériel.
-        </>
+      title: t('Votre maison'),
+      text: t(
+        'Lumières et prises (avec Home Assistant), caméras de surveillance et homelab : chaque section vous guide pas à pas pour relier votre matériel.',
       ),
     });
   list.push({
     icon: 'smartphone',
-    title: 'Sur tous vos appareils',
+    title: t('Sur tous vos appareils'),
     text: canShareLinks() ? (
       <>
-        <b>Réglages → Relier un autre appareil</b> : scannez le QR code avec votre téléphone pour y retrouver les mêmes pages.
-        {guest ? null : (
-          <>
-            {' '}
-            <b>Inviter une personne</b> donne à un proche son propre espace sur votre serveur.
-          </>
-        )}
+        {tx('<b>Réglages → Relier un autre appareil</b> : scannez le QR code avec votre téléphone pour y retrouver les mêmes pages.', { b })}
+        {guest ? null : <> {tx('<b>Inviter une personne</b> donne à un proche son propre espace sur votre serveur.', { b })}</>}
       </>
+    ) : isDesktopLocal() ? (
+      tx(
+        'Melo fonctionne seul sur cet ordinateur. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
+        { b },
+      )
     ) : (
-      <>
-        Melo fonctionne seul sur {isDesktopLocal() ? 'cet ordinateur' : 'cet appareil'}. Pour le retrouver sur votre téléphone ou partager des pages :{' '}
-        <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.
-      </>
+      tx(
+        'Melo fonctionne seul sur cet appareil. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
+        { b },
+      )
     ),
   });
   list.push({
     icon: 'palette',
-    title: 'À votre goût',
-    text: (
-      <>
-        <b>Personnaliser</b> change le thème, la couleur, le fond d’écran et les sections affichées. La barre de gauche se replie avec la petite flèche en haut, et{' '}
-        <b className="nb-mono">Ctrl K</b> cherche dans vos pages.
-      </>
+    title: t('À votre goût'),
+    text: tx(
+      '<b>Personnaliser</b> change le thème, la couleur, le fond d’écran et les sections affichées. La barre de gauche se replie avec la petite flèche en haut, et <m>Ctrl K</m> cherche dans vos pages.',
+      { b, m },
     ),
   });
   return list;
@@ -121,7 +112,7 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
   };
 
   const confirmSetup = () => {
-    if (name.trim()) updateSettings({ userName: name.trim() });
+    updateSettings({ langChosen: true, ...(name.trim() ? { userName: name.trim() } : {}) });
     changeAppearance(doc, () => ({ hidden }));
     setStep(0);
   };
@@ -130,27 +121,37 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
     const groups = groupSections(appearance.sections).filter((g) => g.id !== 'main');
     return (
       <Modal
-        title="Bienvenue !"
+        title={t('Bienvenue !')}
         onClose={finish}
         width={560}
         footer={
           <>
             <button type="button" className="nb-btn" onClick={finish}>
-              Plus tard
+              {t('Plus tard')}
             </button>
             <button type="button" className="nb-btn nb-btn--primary" onClick={confirmSetup}>
-              Continuer
+              {t('Continuer')}
             </button>
           </>
         }
       >
         <div className="nb-welcome">
+          <div className="nb-welcome-lang">
+            <LanguageSwitch />
+          </div>
           <label className="nb-field">
-            <span>Votre prénom (affiché quand vous modifiez une page à plusieurs)</span>
-            <input className="nb-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Ex. : Camille" autoFocus />
+            <span>{t('Votre prénom (affiché quand vous modifiez une page à plusieurs)')}</span>
+            <input
+              className="nb-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={40}
+              placeholder={t('Ex. : Camille')}
+              autoFocus
+            />
           </label>
           <div className="nb-field">
-            <span>Qu’allez-vous utiliser ? Seules ces sections s’affichent ; vous pourrez changer d’avis dans Personnaliser.</span>
+            <span>{t('Qu’allez-vous utiliser ? Seules ces sections s’affichent ; vous pourrez changer d’avis dans Personnaliser.')}</span>
             <div className="nb-welcome-sections">
               {groups.map((g) => {
                 const ids = g.ids.filter((id) => !(guest && HOUSE.includes(id)));
@@ -186,27 +187,27 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
   const last = step >= list.length - 1;
   return (
     <Modal
-      title="Découvrir Melo"
+      title={t('Découvrir Melo')}
       onClose={finish}
       width={520}
       footer={
         <>
-          <div className="nb-welcome-dots" aria-label={`Écran ${step + 1} sur ${list.length}`}>
+          <div className="nb-welcome-dots" aria-label={t('Écran {n} sur {total}', { n: step + 1, total: list.length })}>
             {list.map((s, i) => (
               <span key={s.title} className={i === step ? 'nb-welcome-dot--on' : ''} />
             ))}
           </div>
           {step > 0 ? (
             <button type="button" className="nb-btn" onClick={() => setStep(step - 1)}>
-              Précédent
+              {t('Précédent')}
             </button>
           ) : (
             <button type="button" className="nb-btn" onClick={finish}>
-              Passer
+              {t('Passer')}
             </button>
           )}
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => (last ? finish() : setStep(step + 1))} autoFocus>
-            {last ? 'C’est parti !' : 'Suivant'}
+            {last ? t('C’est parti !') : t('Suivant')}
           </button>
         </>
       }

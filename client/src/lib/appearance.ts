@@ -5,6 +5,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import { styleSystemBars } from './native';
+import { t } from './i18n';
 
 export type ThemeId = 'dark' | 'black' | 'midnight' | 'forest' | 'light' | 'sepia' | 'lavender';
 
@@ -27,7 +28,7 @@ type Palette = {
 export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   {
     id: 'dark',
-    label: 'Sombre',
+    label: t('Sombre'),
     palette: {
       base: 'dark', bg: '#191919', sidebar: '#202020', elevated: '#252525', hover: '#2c2c2c', active: '#373737', border: '#2f2f2f',
       borderStrong: '#3f3f3f', text: '#d4d4d4', strong: '#ffffff', muted: '#9b9b9b', faint: '#5a5a5a', input: '#1f1f1f',
@@ -35,7 +36,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'black',
-    label: 'Noir',
+    label: t('Noir'),
     palette: {
       base: 'dark', bg: '#000000', sidebar: '#0a0a0a', elevated: '#141414', hover: '#1c1c1c', active: '#262626', border: '#1f1f1f',
       borderStrong: '#2e2e2e', text: '#d6d6d6', strong: '#ffffff', muted: '#8f8f8f', faint: '#4d4d4d', input: '#0d0d0d',
@@ -43,7 +44,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'midnight',
-    label: 'Bleu nuit',
+    label: t('Bleu nuit'),
     palette: {
       base: 'dark', bg: '#0b1220', sidebar: '#0f1a2e', elevated: '#16233d', hover: '#1d2d4d', active: '#26395f', border: '#1f2c47',
       borderStrong: '#2b3b5c', text: '#d5dcec', strong: '#ffffff', muted: '#8d9ab5', faint: '#4d5a75', input: '#0e1728',
@@ -51,7 +52,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'forest',
-    label: 'Forêt',
+    label: t('Forêt'),
     palette: {
       base: 'dark', bg: '#0f1a14', sidebar: '#13211a', elevated: '#1a2c22', hover: '#21382b', active: '#2a4636', border: '#22362b',
       borderStrong: '#2e4739', text: '#d4e3d8', strong: '#ffffff', muted: '#8fa697', faint: '#4f6457', input: '#111e17',
@@ -59,7 +60,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'light',
-    label: 'Clair',
+    label: t('Clair'),
     palette: {
       base: 'light', bg: '#ffffff', sidebar: '#f7f7f5', elevated: '#ffffff', hover: '#efefed', active: '#e6e6e3', border: '#e6e6e3',
       borderStrong: '#d4d4d1', text: '#37352f', strong: '#191919', muted: '#787774', faint: '#b4b4b0', input: '#ffffff',
@@ -67,7 +68,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'sepia',
-    label: 'Crème',
+    label: t('Crème'),
     palette: {
       base: 'light', bg: '#f7f3ea', sidebar: '#efe8da', elevated: '#fbf8f1', hover: '#ebe3d3', active: '#e2d8c4', border: '#e1d7c3',
       borderStrong: '#cfc2a8', text: '#3d3528', strong: '#1f1a12', muted: '#7d715e', faint: '#b3a78f', input: '#fffdf8',
@@ -75,7 +76,7 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
   },
   {
     id: 'lavender',
-    label: 'Lavande',
+    label: t('Lavande'),
     palette: {
       base: 'light', bg: '#f7f5fb', sidebar: '#efebf7', elevated: '#ffffff', hover: '#e9e3f3', active: '#ded6ee', border: '#e2dbef',
       borderStrong: '#cdc2e3', text: '#342e45', strong: '#1c1728', muted: '#7b7290', faint: '#b2a9c6', input: '#ffffff',
@@ -84,15 +85,15 @@ export const THEMES: { id: ThemeId; label: string; palette: Palette }[] = [
 ];
 
 export const ACCENTS: { color: string; label: string }[] = [
-  { color: '#2383e2', label: 'Bleu' },
-  { color: '#7c5cff', label: 'Violet' },
-  { color: '#c14c8a', label: 'Rose' },
-  { color: '#e03e3e', label: 'Rouge' },
-  { color: '#d9730d', label: 'Orange' },
-  { color: '#dfab01', label: 'Jaune' },
-  { color: '#2eaf7d', label: 'Vert' },
-  { color: '#0ea5b7', label: 'Turquoise' },
-  { color: '#787774', label: 'Gris' },
+  { color: '#2383e2', label: t('Bleu') },
+  { color: '#7c5cff', label: t('Violet') },
+  { color: '#c14c8a', label: t('Rose') },
+  { color: '#e03e3e', label: t('Rouge') },
+  { color: '#d9730d', label: t('Orange') },
+  { color: '#dfab01', label: t('Jaune') },
+  { color: '#2eaf7d', label: t('Vert') },
+  { color: '#0ea5b7', label: t('Turquoise') },
+  { color: '#787774', label: t('Gris') },
 ];
 
 export type WallpaperKind = 'none' | 'color' | 'gradient' | 'image';
@@ -111,14 +112,14 @@ export type Wallpaper = {
 };
 
 export const GRADIENTS: { id: string; label: string; css: string }[] = [
-  { id: 'aurora', label: 'Aurore', css: 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #db2777 100%)' },
-  { id: 'ocean', label: 'Océan', css: 'linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' },
-  { id: 'sunset', label: 'Coucher de soleil', css: 'linear-gradient(135deg, #f97316 0%, #db2777 55%, #7c3aed 100%)' },
-  { id: 'forest', label: 'Forêt', css: 'linear-gradient(160deg, #0b3d2e 0%, #14532d 55%, #3f6212 100%)' },
-  { id: 'night', label: 'Nuit étoilée', css: 'radial-gradient(ellipse at top, #1b2735 0%, #090a0f 100%)' },
-  { id: 'mist', label: 'Brume', css: 'linear-gradient(135deg, #e0e7ff 0%, #fae8ff 50%, #fef3c7 100%)' },
-  { id: 'peach', label: 'Pêche', css: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-  { id: 'mint', label: 'Menthe', css: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)' },
+  { id: 'aurora', label: t('Aurore'), css: 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #db2777 100%)' },
+  { id: 'ocean', label: t('Océan'), css: 'linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' },
+  { id: 'sunset', label: t('Coucher de soleil'), css: 'linear-gradient(135deg, #f97316 0%, #db2777 55%, #7c3aed 100%)' },
+  { id: 'forest', label: t('Forêt'), css: 'linear-gradient(160deg, #0b3d2e 0%, #14532d 55%, #3f6212 100%)' },
+  { id: 'night', label: t('Nuit étoilée'), css: 'radial-gradient(ellipse at top, #1b2735 0%, #090a0f 100%)' },
+  { id: 'mist', label: t('Brume'), css: 'linear-gradient(135deg, #e0e7ff 0%, #fae8ff 50%, #fef3c7 100%)' },
+  { id: 'peach', label: t('Pêche'), css: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
+  { id: 'mint', label: t('Menthe'), css: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)' },
 ];
 
 export type SectionId = 'home' | 'notes' | 'agenda' | 'smarthome' | 'cameras' | 'homelab' | 'pdf';

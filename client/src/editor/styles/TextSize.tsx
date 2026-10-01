@@ -1,13 +1,14 @@
 // Taille du texte : style de texte (marque) applicable à une sélection ou à tout un bloc.
 import { createReactStyleSpec } from '@blocknote/react';
 import type { BlockNoteEditor } from '@blocknote/core';
+import { t } from '../../lib/i18n';
 
 export const TEXT_SIZES = [
-  { value: 'small', label: 'Petit', scale: 0.85, iconSize: 12 },
-  { value: '', label: 'Normal', scale: 1, iconSize: 14 },
-  { value: 'large', label: 'Grand', scale: 1.25, iconSize: 16 },
-  { value: 'xlarge', label: 'Très grand', scale: 1.5, iconSize: 18 },
-  { value: 'huge', label: 'Énorme', scale: 2, iconSize: 20 },
+  { value: 'small', label: t('Petit'), scale: 0.85, iconSize: 12 },
+  { value: '', label: t('Normal'), scale: 1, iconSize: 14 },
+  { value: 'large', label: t('Grand'), scale: 1.25, iconSize: 16 },
+  { value: 'xlarge', label: t('Très grand'), scale: 1.5, iconSize: 18 },
+  { value: 'huge', label: t('Énorme'), scale: 2, iconSize: 20 },
 ] as const;
 
 export type TextSizeValue = (typeof TEXT_SIZES)[number]['value'];

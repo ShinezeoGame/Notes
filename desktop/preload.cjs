@@ -1,5 +1,5 @@
 // Pont entre la page de Melo et l'application pour ordinateur (main.cjs) : informations, choix du serveur, fichiers
-// ouverts avec Melo, mises à jour. Donné seulement aux pages de Melo (serveur intégré, serveur choisi, page d'erreur).
+// ouverts avec Melo, mises à jour, langue de l'interface. Donné seulement aux pages de Melo (serveur intégré, serveur choisi, page d'erreur).
 const { contextBridge, ipcRenderer } = require('electron');
 
 const info = ipcRenderer.sendSync('melo:info');
@@ -46,5 +46,6 @@ if (info) {
       return () => onUpdates.delete(callback);
     },
     installUpdate: () => ipcRenderer.send('melo:install-update'),
+    setLanguage: (lang) => ipcRenderer.send('melo:lang', String(lang)),
   });
 }

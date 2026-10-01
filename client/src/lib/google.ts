@@ -1,5 +1,6 @@
 // Import d'agenda via l'API Google Calendar (OAuth côté client, Google Identity Services).
 import type { CalEvent } from './ics';
+import { t } from './i18n';
 
 type TokenClient = { requestAccessToken: (opts?: { prompt?: string }) => void };
 type GoogleAccounts = {
@@ -33,7 +34,7 @@ export function loadGis(): Promise<void> {
       s.onload = () => resolve();
       s.onerror = () => {
         gisLoading = null;
-        reject(new Error('Impossible de charger la bibliothèque Google.'));
+        reject(new Error(t('Impossible de charger la bibliothèque Google.')));
       };
       document.head.appendChild(s);
     });
@@ -49,9 +50,9 @@ export async function requestGoogleToken(clientId: string): Promise<string> {
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
       callback: (resp) => {
         if (resp.access_token) resolve(resp.access_token);
-        else reject(new Error(resp.error_description || resp.error || 'Connexion Google refusée.'));
+        else reject(new Error(resp.error_description || resp.error || t('Connexion Google refusée.')));
       },
-      error_callback: (err) => reject(new Error(err.message || 'Connexion Google annulée.')),
+      error_callback: (err) => reject(new Error(err.message || t('Connexion Google annulée.'))),
     });
     client.requestAccessToken();
   });
@@ -76,7 +77,7 @@ export function calendarName(cal: GoogleCalendar): string {
 /** Titre proposé pour un bloc : nom de l'agenda, ou « Mes agendas » s'il y en a plusieurs. */
 export function calendarsTitle(cals: GoogleCalendar[]): string {
   if (cals.length === 1) return calendarName(cals[0]);
-  return cals.length > 1 ? 'Mes agendas' : '';
+  return cals.length > 1 ? t('Mes agendas') : '';
 }
 
 /** Source d'un bloc agenda : « google:id1,id2… » (un seul identifiant pour les anciens blocs). */
@@ -129,13 +130,13 @@ export async function fetchGoogleCalendarsEvents(
     if (r.status === 'fulfilled') parts.push({ cal: cals[i], events: r.value });
     else failed.push(calendarName(cals[i]));
   });
-  if (!parts.length) throw results.find((r): r is PromiseRejectedResult => r.status === 'rejected')?.reason ?? new Error('Agenda introuvable.');
+  if (!parts.length) throw results.find((r): r is PromiseRejectedResult => r.status === 'rejected')?.reason ?? new Error(t('Agenda introuvable.'));
   return { events: mergeCalendarEvents(parts), failed };
 }
 
 async function gfetch<T>(url: string, token: string): Promise<T> {
   const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new Error(`Google a répondu ${r.status}`);
+  if (!r.ok) throw new Error(t('Google a répondu {status}', { status: r.status }));
   return (await r.json()) as T;
 }
 
@@ -188,7 +189,7 @@ export async function fetchGoogleEvents(
       const end = ev.end.dateTime ?? `${ev.end.date}T00:00:00`;
       out.push({
         id: ev.id,
-        title: ev.summary || '(Sans titre)',
+        title: ev.summary || t('(Sans titre)'),
         start: new Date(start).toISOString(),
         end: new Date(end).toISOString(),
         allDay,

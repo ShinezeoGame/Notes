@@ -6,6 +6,7 @@
 import { api, ownerAuth } from '../lib/api';
 import { callNative, hasNativePlugin } from '../lib/native';
 import { isNative } from '../lib/settings';
+import { t } from '../lib/i18n';
 
 const NATIVE = 'NotesFiles';
 const CHUNK = 512 * 1024;
@@ -22,11 +23,11 @@ export function saveLabel(mode: SaveMode = saveMode()): string {
   switch (mode) {
     case 'native':
     case 'picker':
-      return 'Enregistrer…';
+      return t('Enregistrer…');
     case 'legacy-app':
-      return 'Ouvrir le PDF';
+      return t('Ouvrir le PDF');
     default:
-      return 'Télécharger';
+      return t('Télécharger');
   }
 }
 
@@ -96,7 +97,7 @@ export async function saveFile(bytes: Uint8Array, name: string): Promise<'saved'
     try {
       const handle = await (window as unknown as { showSaveFilePicker: SavePicker }).showSaveFilePicker({
         suggestedName: name,
-        types: [{ description: 'Document PDF', accept: { 'application/pdf': ['.pdf'] } }],
+        types: [{ description: t('Document PDF'), accept: { 'application/pdf': ['.pdf'] } }],
       });
       const writable = await handle.createWritable();
       await writable.write(bytes as BlobPart);
@@ -130,9 +131,9 @@ export async function shareFile(bytes: Uint8Array, name: string): Promise<'share
 /** Nom de fichier propre, terminé par .pdf. */
 export function pdfFileName(name: string): string {
   const base =
-    (name || 'Document')
+    (name || t('Document'))
       .replace(/\.pdf$/i, '')
       .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
-      .trim() || 'Document';
+      .trim() || t('Document');
   return `${base.slice(0, 120)}.pdf`;
 }

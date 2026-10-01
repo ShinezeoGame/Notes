@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from './Modal';
 import type { WorkspaceStore } from '../lib/workspace';
 import { PageIcon } from '../icons/pageIcon';
+import { t } from '../lib/i18n';
 
 type Props = { store: WorkspaceStore; onClose: () => void; onOpen: (pageId: string) => void };
 
@@ -20,11 +21,11 @@ export function SearchDialog({ store, onClose, onOpen }: Props) {
   };
 
   return (
-    <Modal title="Rechercher une page" onClose={onClose}>
+    <Modal title={t('Rechercher une page')} onClose={onClose}>
       <input
         ref={inputRef}
         className="nb-input nb-input--lg"
-        placeholder="Titre de la page…"
+        placeholder={t('Titre de la page…')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
@@ -40,9 +41,9 @@ export function SearchDialog({ store, onClose, onOpen }: Props) {
         }}
       />
       <div className="nb-search-results">
-        {results.length === 0 ? <div className="nb-muted nb-pad">Aucune page trouvée.</div> : null}
+        {results.length === 0 ? <div className="nb-muted nb-pad">{t('Aucune page trouvée.')}</div> : null}
         {results.map((p, i) => {
-          const crumbs = store.ancestors(p.id).map((a) => a.title || 'Sans titre');
+          const crumbs = store.ancestors(p.id).map((a) => a.title || t('Sans titre'));
           return (
             <button
               key={p.id}
@@ -54,7 +55,7 @@ export function SearchDialog({ store, onClose, onOpen }: Props) {
               <span className="nb-tree-icon">
                 <PageIcon icon={p.icon} size={16} />
               </span>
-              <span className="nb-search-title">{p.title || 'Sans titre'}</span>
+              <span className="nb-search-title">{p.title || t('Sans titre')}</span>
               {crumbs.length ? <span className="nb-search-crumbs">{crumbs.join(' / ')}</span> : null}
             </button>
           );

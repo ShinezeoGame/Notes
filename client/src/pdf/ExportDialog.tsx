@@ -3,6 +3,7 @@ import { Modal } from '../components/Modal';
 import { toast } from '../components/Toast';
 import { Icon } from '../icons/Icon';
 import { canShare, pdfFileName, saveFile, saveLabel, saveMode, shareFile } from './save';
+import { t, tn } from '../lib/i18n';
 
 type Props = {
   name: string;
@@ -42,16 +43,16 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
     try {
       const data = await bytes();
       const file = pdfFileName(fileName);
-      setProgress({ fraction: 1, label: action === 'save' ? 'Enregistrement…' : 'Partage…' });
+      setProgress({ fraction: 1, label: action === 'save' ? t('Enregistrement…') : t('Partage…') });
       if (action === 'share') {
         if ((await shareFile(data, file)) === 'cancelled') return;
       } else {
         const result = await saveFile(data, file);
         if (result === 'cancelled') return;
-        if (result === 'saved') toast(`« ${file} » est enregistré.`);
-        else if (result === 'downloaded') toast(`« ${file} » est dans vos téléchargements.`);
+        if (result === 'saved') toast(t('« {file} » est enregistré.', { file }));
+        else if (result === 'downloaded') toast(t('« {file} » est dans vos téléchargements.', { file }));
         else
-          toast('Le PDF s’ouvre dans le navigateur. Installez la dernière version de l’application pour l’enregistrer directement.', 'info', {
+          toast(t('Le PDF s’ouvre dans le navigateur. Installez la dernière version de l’application pour l’enregistrer directement.'), 'info', {
             duration: 8000,
           });
       }
@@ -59,11 +60,11 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
     } catch (err) {
       // Navigateur : le partage doit suivre de près le toucher ; le PDF (déjà prêt) part au toucher suivant.
       if (action === 'share' && (err as Error)?.name === 'NotAllowedError') {
-        setNotice('Le PDF est prêt : touchez à nouveau « Partager ».');
+        setNotice(t('Le PDF est prêt : touchez à nouveau « Partager ».'));
         return;
       }
       console.error(err);
-      setError(err instanceof Error && err.message ? err.message : 'Export impossible.');
+      setError(err instanceof Error && err.message ? err.message : t('Export impossible.'));
     } finally {
       setBusy(false);
       setProgress(null);
@@ -72,17 +73,17 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
 
   return (
     <Modal
-      title="Exporter le PDF"
+      title={t('Exporter le PDF')}
       onClose={() => !busy && onClose()}
       width={460}
       footer={
         <>
           <button type="button" className="nb-btn" onClick={onClose} disabled={busy}>
-            Annuler
+            {t('Annuler')}
           </button>
           {sharing ? (
             <button type="button" className="nb-btn" onClick={() => void run('share')} disabled={busy}>
-              <Icon name="share" size={15} /> Partager…
+              <Icon name="share" size={15} /> {t('Partager…')}
             </button>
           ) : null}
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => void run('save')} disabled={busy}>
@@ -92,12 +93,12 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
       }
     >
       <label className="nb-field">
-        <span>Nom du fichier</span>
+        <span>{t('Nom du fichier')}</span>
         <input className="nb-input" value={fileName} onChange={(e) => setFileName(e.target.value)} disabled={busy} spellCheck={false} />
       </label>
       {selectedCount > 0 ? (
         <fieldset className="pdf-export-scope" disabled={busy}>
-          <legend className="nb-sr-only">Pages à exporter</legend>
+          <legend className="nb-sr-only">{t('Pages à exporter')}</legend>
           <label>
             <input
               type="radio"
@@ -107,22 +108,23 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
                 setOnlySelected(false);
               }}
             />
-            Toutes les pages ({pageCount})
+            {t('Toutes les pages ({n})', { n: pageCount })}
           </label>
           <label>
             <input type="radio" name="pdf-scope" checked={onlySelected} onChange={() => setOnlySelected(true)} />
-            Pages sélectionnées ({selectedCount})
+            {t('Pages sélectionnées ({n})', { n: selectedCount })}
           </label>
         </fieldset>
       ) : (
         <p className="nb-muted pdf-export-note">
-          {pageCount} page{pageCount > 1 ? 's' : ''}, avec vos annotations et les formulaires remplis.
+          {tn(pageCount, '{n} page, avec vos annotations et les formulaires remplis.', '{n} pages, avec vos annotations et les formulaires remplis.')}
         </p>
       )}
       {mode === 'legacy-app' ? (
         <p className="nb-muted pdf-export-note">
-          Cette version de l’application ouvre le PDF dans le navigateur. La dernière version (à installer une fois) l’enregistre directement dans le dossier de
-          votre choix.
+          {t(
+            'Cette version de l’application ouvre le PDF dans le navigateur. La dernière version (à installer une fois) l’enregistre directement dans le dossier de votre choix.',
+          )}
         </p>
       ) : null}
       {progress ? (

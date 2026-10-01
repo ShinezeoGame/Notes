@@ -18,6 +18,7 @@ import {
   type ProjectState,
 } from './model';
 import { SourceCache, thumbnail } from './render';
+import { t } from '../lib/i18n';
 
 const room = (id: string) => pdfRoom(getSettings().workspaceId, id);
 
@@ -58,7 +59,7 @@ export async function withProject<T>(id: string, fn: (project: PdfProject) => T 
 /** Contenu d'un PDF à lire (erreur claire s'il n'est pas disponible). */
 export async function readProject(id: string): Promise<ProjectState> {
   const state = await withProject(id, (p) => p.getSnapshot());
-  if (state.pages.length === 0) throw new Error('Ce PDF n’est pas encore disponible sur cet appareil : vérifiez la connexion au serveur.');
+  if (state.pages.length === 0) throw new Error(t('Ce PDF n’est pas encore disponible sur cet appareil : vérifiez la connexion au serveur.'));
   return state;
 }
 

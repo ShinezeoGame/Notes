@@ -125,15 +125,22 @@ async function step(name, fn) {
 
 let ok = false;
 try {
-  await step('Lancement : serveur intégré démarré, écran « Bienvenue dans Melo »', async () => {
+  await step('Lancement : serveur intégré démarré, écran « Welcome to Melo » (anglais par défaut)', async () => {
     await launch();
-    await win.getByText('Bienvenue dans Melo').waitFor({ timeout: 90_000 });
+    await win.getByText('Welcome to Melo').waitFor({ timeout: 90_000 });
     const info = await win.evaluate(() => ({ mode: window.meloDesktop?.mode, version: window.meloDesktop?.version, url: location.href }));
     if (info.mode !== 'local' || !info.url.startsWith(`${LOCAL}/`)) throw new Error(JSON.stringify(info));
     const health = await (await fetch(`${LOCAL}/api/health`)).json();
     if (!health.ok) throw new Error('le serveur intégré ne répond pas');
     report.push(`   application ${info.version}`);
     await win.screenshot({ path: path.join(OUT, '1-bienvenue.png') });
+  });
+
+  await step('Choix de la langue : « Français » relance Melo en français', async () => {
+    await win.locator('.nb-onboarding-lang button[lang="fr"]').click();
+    await win.getByText('Bienvenue dans Melo').waitFor({ timeout: 60_000 });
+    const lang = await win.evaluate(() => document.documentElement.lang);
+    if (lang !== 'fr') throw new Error(`langue de la page : ${lang}`);
   });
 
   await step('« Commencer » : présentation, puis l’accueil et ses widgets', async () => {
@@ -165,7 +172,8 @@ try {
     await win.locator('.nb-rail').waitFor({ timeout: 90_000 });
     const controlled = await win.evaluate(() => Boolean(navigator.serviceWorker?.controller));
     report.push(`   réouverture servie par le service worker : ${controlled ? 'oui' : 'non'}`);
-    if (await win.getByText('Bienvenue dans Melo').count()) throw new Error('écran de bienvenue réaffiché');
+    if (await win.getByText(/Bienvenue dans Melo|Welcome to Melo/).count()) throw new Error('écran de bienvenue réaffiché');
+    if ((await win.evaluate(() => document.documentElement.lang)) !== 'fr') throw new Error('langue choisie perdue');
     await win.evaluate(() => {
       location.hash = '#/pdf';
     });

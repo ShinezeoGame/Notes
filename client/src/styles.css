@@ -1507,3 +1507,23 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
   .ap-backdrop { align-items: flex-end; }
   .ap-panel { width: 100%; height: auto; max-height: 82dvh; border-radius: 16px 16px 0 0; padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left); animation-name: ap-up; }
 }
+
+/* Choix de la langue (premier écran, présentation, Réglages, pages partagées, premier passage sur le web) */
+.nb-lang {
+  display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg-elevated);
+  color: var(--text-muted); font-size: calc(13px * var(--ui-scale)); flex-shrink: 0; width: fit-content;
+}
+.nb-lang > svg { margin: 0 3px 0 6px; flex-shrink: 0; }
+.nb-lang button { border: none; background: none; color: inherit; font: inherit; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+.nb-lang button:hover { color: var(--text-strong); }
+.nb-lang button.nb-lang--on { background: var(--accent); color: var(--on-accent); }
+.nb-onboarding-lang { display: flex; justify-content: center; margin-bottom: 16px; }
+.nb-welcome-lang { margin-bottom: 14px; }
+.nb-lang-hint {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + var(--safe-bottom)); z-index: 60; display: flex; align-items: center; gap: 6px;
+  padding: 5px 6px 5px 5px; border-radius: 999px; background: var(--bg-elevated); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+}
+.nb-lang-hint .nb-lang { border: none; padding: 0; }
+@media (max-width: 768px) {
+  .nb-lang-hint { bottom: calc(76px + var(--safe-bottom)); }
+}

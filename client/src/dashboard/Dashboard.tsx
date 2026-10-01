@@ -28,7 +28,8 @@ import {
   type Widget,
   type WidgetType,
 } from './model';
-import { WIDGETS, WIDGET_GROUPS } from './registry';
+import { WIDGETS, WIDGET_GROUPS, WIDGET_GROUP_LABELS } from './registry';
+import { t } from '../lib/i18n';
 
 /** Parties d'un widget qui gardent leur propre comportement : y appuyer ne déplace pas le widget. */
 const NO_DRAG = [
@@ -81,7 +82,7 @@ class WidgetBoundary extends Component<{ children: ReactNode }, { error: boolean
     return { error: true };
   }
   render() {
-    return this.state.error ? <div className="w-empty w-muted">Ce widget n’a pas pu s’afficher.</div> : this.props.children;
+    return this.state.error ? <div className="w-empty w-muted">{t('Ce widget n’a pas pu s’afficher.')}</div> : this.props.children;
   }
 }
 
@@ -128,12 +129,24 @@ function WidgetFrame({ widget, doc, store, editing, direct, onSettings, onRemove
       </div>
       {direct ? (
         <>
-          <div className="dash-grab" title="Glisser pour déplacer" aria-hidden="true" />
+          <div className="dash-grab" title={t('Glisser pour déplacer')} aria-hidden="true" />
           <div className="dash-quick">
-            <button type="button" className="dash-quick-btn" onClick={openSettings} aria-label={`Réglages : ${title}`} title="Réglages">
+            <button
+              type="button"
+              className="dash-quick-btn"
+              onClick={openSettings}
+              aria-label={t('Réglages : {title}', { title })}
+              title={t('Réglages')}
+            >
               <Icon name="settings" size={14} />
             </button>
-            <button type="button" className="dash-quick-btn dash-quick-btn--danger" onClick={() => onRemove(widget.id)} aria-label={`Retirer : ${title}`} title="Retirer">
+            <button
+              type="button"
+              className="dash-quick-btn dash-quick-btn--danger"
+              onClick={() => onRemove(widget.id)}
+              aria-label={t('Retirer : {title}', { title })}
+              title={t('Retirer')}
+            >
               <Icon name="close" size={14} />
             </button>
           </div>
@@ -142,15 +155,27 @@ function WidgetFrame({ widget, doc, store, editing, direct, onSettings, onRemove
       {editing ? (
         <div className="dash-edit">
           <div className="dash-edit-actions dash-nodrag">
-            <button type="button" className="dash-edit-btn" onClick={openSettings} aria-label={`Réglages : ${title}`} title="Réglages">
+            <button
+              type="button"
+              className="dash-edit-btn"
+              onClick={openSettings}
+              aria-label={t('Réglages : {title}', { title })}
+              title={t('Réglages')}
+            >
               <Icon name="settings" size={16} />
             </button>
-            <button type="button" className="dash-edit-btn dash-edit-btn--danger" onClick={() => onRemove(widget.id)} aria-label={`Retirer : ${title}`} title="Retirer">
+            <button
+              type="button"
+              className="dash-edit-btn dash-edit-btn--danger"
+              onClick={() => onRemove(widget.id)}
+              aria-label={t('Retirer : {title}', { title })}
+              title={t('Retirer')}
+            >
               <Icon name="close" size={16} />
             </button>
           </div>
           <div className="dash-edit-center">
-            <span className="dash-grip dash-drag" role="button" aria-label={`Déplacer : ${title}`}>
+            <span className="dash-grip dash-drag" role="button" aria-label={t('Déplacer : {title}', { title })}>
               <Icon name="move" size={22} />
             </span>
             <span className="dash-edit-label">{title}</span>
@@ -164,19 +189,19 @@ function WidgetFrame({ widget, doc, store, editing, direct, onSettings, onRemove
 function Catalog({ onAdd, onClose, onReset }: { onAdd: (type: WidgetType) => void; onClose: () => void; onReset: () => void }) {
   return (
     <Modal
-      title="Ajouter un widget"
+      title={t('Ajouter un widget')}
       onClose={onClose}
       width={760}
       footer={
         <button type="button" className="nb-btn nb-btn--sm dash-reset" onClick={onReset}>
-          <Icon name="refresh" size={14} /> Revenir à l’accueil de départ
+          <Icon name="refresh" size={14} /> {t('Revenir à l’accueil de départ')}
         </button>
       }
     >
       {/* Espace créé par une invitation : pas de maison, de caméras ni de homelab sur le serveur d'un autre. */}
       {WIDGET_GROUPS.filter((group) => !(group === 'Maison' && getSettings().guest)).map((group) => (
         <section key={group} className="dash-catalog-group">
-          <h3>{group}</h3>
+          <h3>{WIDGET_GROUP_LABELS[group]}</h3>
           <div className="dash-catalog">
             {(Object.entries(WIDGETS) as [WidgetType, (typeof WIDGETS)[WidgetType]][])
               .filter(([, d]) => d.group === group)
@@ -211,18 +236,18 @@ function SettingsDialog({ widget, doc, store, onClose, onRemove }: { widget: Wid
   };
   return (
     <Modal
-      title={`Réglages : ${def.label}`}
+      title={t('Réglages : {widget}', { widget: def.label })}
       onClose={onClose}
       footer={
         <>
           <button type="button" className="nb-btn nb-btn--danger dash-settings-remove" onClick={onRemove}>
-            <Icon name="trash" size={15} /> Retirer
+            <Icon name="trash" size={15} /> {t('Retirer')}
           </button>
           <button type="button" className="nb-btn" onClick={onClose}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" onClick={save}>
-            Enregistrer
+            {t('Enregistrer')}
           </button>
         </>
       }
@@ -233,14 +258,14 @@ function SettingsDialog({ widget, doc, store, onClose, onRemove }: { widget: Wid
         </div>
       ) : null}
       <label className="nb-field">
-        <span>Titre</span>
+        <span>{t('Titre')}</span>
         <input className="nb-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={def.label} maxLength={60} />
       </label>
       <label className="nb-check">
-        <input type="checkbox" checked={showTitle} onChange={(e) => setShowTitle(e.target.checked)} /> Afficher la barre de titre
+        <input type="checkbox" checked={showTitle} onChange={(e) => setShowTitle(e.target.checked)} /> {t('Afficher la barre de titre')}
       </label>
       <label className="nb-check">
-        <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} /> Sans fond (posé sur le fond d’écran)
+        <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} /> {t('Sans fond (posé sur le fond d’écran)')}
       </label>
     </Modal>
   );
@@ -369,7 +394,7 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
       const w = data.widgets.find((x) => x.id === id);
       if (!w) return;
       const label = w.title?.trim() || WIDGETS[w.type].label;
-      if (!confirm(`Retirer le widget « ${label} » de l’accueil ?`)) return;
+      if (!confirm(t('Retirer le widget « {label} » de l’accueil ?', { label }))) return;
       removeWidget(doc, id);
       setSettingsId(null);
     },
@@ -405,12 +430,12 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
     <div className={pageCls}>
       {editing ? (
         <div className="dash-toolbar">
-          <span className="dash-toolbar-hint">Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.</span>
+          <span className="dash-toolbar-hint">{t('Déplacez un widget avec sa poignée, tirez le coin pour l’agrandir.')}</span>
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => setCatalog(true)}>
-            <Icon name="plus" size={15} /> Ajouter un widget
+            <Icon name="plus" size={15} /> {t('Ajouter un widget')}
           </button>
           <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => setEditing(false)}>
-            <Icon name="check" size={15} /> Terminé
+            <Icon name="check" size={15} /> {t('Terminé')}
           </button>
         </div>
       ) : null}
@@ -419,9 +444,9 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
         {data.widgets.length === 0 ? (
           <div className="dash-empty">
             <Icon name="dashboard" size={34} />
-            <p>Votre accueil est vide.</p>
+            <p>{t('Votre accueil est vide.')}</p>
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => setCatalog(true)}>
-              <Icon name="plus" size={15} /> Ajouter un widget
+              <Icon name="plus" size={15} /> {t('Ajouter un widget')}
             </button>
           </div>
         ) : mounted ? (
@@ -455,27 +480,39 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
           {direct && !settings.dashTipSeen ? (
             <span className="dash-tip">
               <Icon name="move" size={14} />
-              <span>Glissez un widget pour le déplacer, tirez un de ses coins pour le redimensionner.</span>
-              <button type="button" className="dash-tip-close" onClick={() => updateSettings({ dashTipSeen: true })} aria-label="Masquer l’astuce" title="Masquer">
+              <span>{t('Glissez un widget pour le déplacer, tirez un de ses coins pour le redimensionner.')}</span>
+              <button
+                type="button"
+                className="dash-tip-close"
+                onClick={() => updateSettings({ dashTipSeen: true })}
+                aria-label={t('Masquer l’astuce')}
+                title={t('Masquer')}
+              >
                 <Icon name="close" size={12} />
               </button>
             </span>
           ) : null}
           {direct ? (
-            <button type="button" className="dash-fab" onClick={() => setCatalog(true)} aria-label="Ajouter un widget" title="Ajouter un widget">
+            <button
+              type="button"
+              className="dash-fab"
+              onClick={() => setCatalog(true)}
+              aria-label={t('Ajouter un widget')}
+              title={t('Ajouter un widget')}
+            >
               <Icon name="plus" size={18} />
-              <span className="dash-fab-label">Ajouter un widget</span>
+              <span className="dash-fab-label">{t('Ajouter un widget')}</span>
             </button>
           ) : (
             <button
               type="button"
               className="dash-fab"
               onClick={() => setEditing(true)}
-              aria-label="Modifier l’accueil"
-              title="Déplacer, redimensionner, ajouter des widgets (ou appui long sur un widget)"
+              aria-label={t('Modifier l’accueil')}
+              title={t('Déplacer, redimensionner, ajouter des widgets (ou appui long sur un widget)')}
             >
               <Icon name="pencil" size={16} />
-              <span className="dash-fab-label">Modifier</span>
+              <span className="dash-fab-label">{t('Modifier')}</span>
             </button>
           )}
         </div>
@@ -486,7 +523,7 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
           onAdd={add}
           onClose={() => setCatalog(false)}
           onReset={() => {
-            if (!confirm('Remplacer tous les widgets par ceux de l’accueil de départ ?')) return;
+            if (!confirm(t('Remplacer tous les widgets par ceux de l’accueil de départ ?'))) return;
             resetDashboard(doc);
             setCatalog(false);
           }}

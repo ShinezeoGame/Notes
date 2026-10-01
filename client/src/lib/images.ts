@@ -1,3 +1,4 @@
+import { t } from './i18n';
 // Images importées pour les logos de page et les bannières : réduites avant l'envoi, pour rester légères partout
 // (barre latérale, téléphone, pages partagées).
 
@@ -9,13 +10,13 @@ const KEEP_AS_IS = new Set(['image/gif', 'image/svg+xml']);
  * bannières) plutôt que PNG (logos avec transparence).
  */
 export async function prepareImage(file: File, maxW: number, maxH: number, opaque: boolean): Promise<File> {
-  if (!file.type.startsWith('image/')) throw new Error('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).');
+  if (!file.type.startsWith('image/')) throw new Error(t('Ce fichier n’est pas une image (JPG, PNG, WebP, GIF…).'));
   if (KEEP_AS_IS.has(file.type)) return file;
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    throw new Error('Image illisible : essayez un fichier JPG, PNG ou WebP.');
+    throw new Error(t('Image illisible : essayez un fichier JPG, PNG ou WebP.'));
   }
   const scale = Math.min(1, maxW / bitmap.width, maxH / bitmap.height);
   if (scale === 1 && file.size <= 500 * 1024) {

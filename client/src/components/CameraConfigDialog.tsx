@@ -6,6 +6,7 @@ import { newId } from '../lib/ids';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { toast } from './Toast';
+import { t, tx, tServer } from '../lib/i18n';
 
 const isPreset = (brand: CameraBrand) => brand !== 'rtsp' && brand !== 'image';
 
@@ -32,7 +33,13 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
   };
 
   const cleaned = (): Camera => {
-    const c: Camera = { id: form.id, name: form.name.trim() || 'Caméra', brand: form.brand, username: form.username?.trim() ?? '', password: form.password ?? '' };
+    const c: Camera = {
+      id: form.id,
+      name: form.name.trim() || t('Caméra'),
+      brand: form.brand,
+      username: form.username?.trim() ?? '',
+      password: form.password ?? '',
+    };
     if (preset) {
       c.host = form.host?.trim() ?? '';
       if (form.port) c.port = form.port;
@@ -52,7 +59,7 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
     try {
       setResult(await api.cameraTest(cleaned()));
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : 'Test impossible.' });
+      setResult({ ok: false, message: err instanceof Error ? err.message : t('Test impossible.') });
     } finally {
       setTesting(false);
     }
@@ -67,43 +74,44 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
       else cameras.push(cam);
       return { ...cfg, cameras };
     });
-    toast(camera ? `« ${cam.name} » est enregistrée.` : `« ${cam.name} » est ajoutée.`);
+    toast(camera ? t('« {name} » est enregistrée.', { name: cam.name }) : t('« {name} » est ajoutée.', { name: cam.name }));
     onClose();
   };
 
   const remove = () => {
-    if (!camera || !confirm(`Supprimer la caméra « ${camera.name} » ? Les blocs qui l’affichent dans vos pages resteront vides.`)) return;
+    if (!camera || !confirm(t('Supprimer la caméra « {name} » ? Les blocs qui l’affichent dans vos pages resteront vides.', { name: camera.name })))
+      return;
     updateCamerasConfig(doc, (cfg) => ({ ...cfg, cameras: cfg.cameras.filter((c) => c.id !== camera.id) }));
     onClose();
   };
 
   return (
     <Modal
-      title={camera ? `Réglages de « ${camera.name} »` : 'Ajouter une caméra'}
+      title={camera ? t('Réglages de « {name} »', { name: camera.name }) : t('Ajouter une caméra')}
       onClose={onClose}
       width={620}
       footer={
         <>
           {camera ? (
             <button type="button" className="nb-btn nb-btn--danger sh-disconnect" onClick={remove}>
-              Supprimer
+              {t('Supprimer')}
             </button>
           ) : null}
           <button type="button" className="nb-btn" onClick={onClose}>
-            Annuler
+            {t('Annuler')}
           </button>
           <button type="button" className="nb-btn nb-btn--primary" onClick={save} disabled={!complete}>
-            Enregistrer
+            {t('Enregistrer')}
           </button>
         </>
       }
     >
       <label className="nb-field">
-        <span>Nom</span>
-        <input className="nb-input" placeholder="Entrée, jardin, garage…" value={form.name} onChange={(ev) => set({ name: ev.target.value })} />
+        <span>{t('Nom')}</span>
+        <input className="nb-input" placeholder={t('Entrée, jardin, garage…')} value={form.name} onChange={(ev) => set({ name: ev.target.value })} />
       </label>
       <label className="nb-field">
-        <span>Marque</span>
+        <span>{t('Marque')}</span>
         <select className="nb-input" value={form.brand} onChange={(ev) => setBrand(ev.target.value as CameraBrand)}>
           {BRANDS.map((b) => (
             <option key={b.value} value={b.value}>
@@ -116,11 +124,11 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
       {preset ? (
         <div className="cam-form-row">
           <label className="nb-field cam-form-host">
-            <span>Adresse IP de la caméra{brand.channel ? ' ou de l’enregistreur' : ''}</span>
+            <span>{brand.channel ? t('Adresse IP de la caméra ou de l’enregistreur') : t('Adresse IP de la caméra')}</span>
             <input className="nb-input" placeholder="192.168.1.20" value={form.host ?? ''} onChange={(ev) => set({ host: ev.target.value })} />
           </label>
           <label className="nb-field cam-form-small">
-            <span>Port RTSP</span>
+            <span>{t('Port RTSP')}</span>
             <input
               className="nb-input"
               type="number"
@@ -133,7 +141,7 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
           </label>
           {brand.channel ? (
             <label className="nb-field cam-form-small">
-              <span>Canal</span>
+              <span>{t('Canal')}</span>
               <input
                 className="nb-input"
                 type="number"
@@ -141,7 +149,7 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
                 max={999}
                 value={form.channel ?? 1}
                 onChange={(ev) => set({ channel: Number(ev.target.value) || 1 })}
-                title="Numéro de la caméra sur l’enregistreur (1 pour une caméra seule)"
+                title={t('Numéro de la caméra sur l’enregistreur (1 pour une caméra seule)')}
               />
             </label>
           ) : null}
@@ -149,24 +157,39 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
       ) : form.brand === 'rtsp' ? (
         <>
           <label className="nb-field">
-            <span>Adresse du flux vidéo</span>
-            <input className="nb-input" placeholder="rtsp://192.168.1.20:554/stream1" value={form.url ?? ''} onChange={(ev) => set({ url: ev.target.value })} />
+            <span>{t('Adresse du flux vidéo')}</span>
+            <input
+              className="nb-input"
+              placeholder={t('rtsp://192.168.1.20:554/stream1')}
+              value={form.url ?? ''}
+              onChange={(ev) => set({ url: ev.target.value })}
+            />
           </label>
           <label className="nb-field">
-            <span>Adresse du flux secondaire, plus léger (facultatif : utilisé pour les miniatures)</span>
-            <input className="nb-input" placeholder="rtsp://192.168.1.20:554/stream2" value={form.subUrl ?? ''} onChange={(ev) => set({ subUrl: ev.target.value })} />
+            <span>{t('Adresse du flux secondaire, plus léger (facultatif : utilisé pour les miniatures)')}</span>
+            <input
+              className="nb-input"
+              placeholder={t('rtsp://192.168.1.20:554/stream2')}
+              value={form.subUrl ?? ''}
+              onChange={(ev) => set({ subUrl: ev.target.value })}
+            />
           </label>
         </>
       ) : (
         <>
           <label className="nb-field">
-            <span>Adresse de l’image ou du flux MJPEG</span>
-            <input className="nb-input" placeholder="http://192.168.1.30:8081/" value={form.url ?? ''} onChange={(ev) => set({ url: ev.target.value })} />
+            <span>{t('Adresse de l’image ou du flux MJPEG')}</span>
+            <input
+              className="nb-input"
+              placeholder={t('http://192.168.1.30:8081/')}
+              value={form.url ?? ''}
+              onChange={(ev) => set({ url: ev.target.value })}
+            />
           </label>
           {/^https:/i.test(form.url ?? '') ? (
             <label className="nb-check">
-              <input type="checkbox" checked={Boolean(form.insecure)} onChange={(ev) => set({ insecure: ev.target.checked })} /> Ignorer le certificat HTTPS
-              (certificat auto-signé)
+              <input type="checkbox" checked={Boolean(form.insecure)} onChange={(ev) => set({ insecure: ev.target.checked })} />{' '}
+              {t('Ignorer le certificat HTTPS (certificat auto-signé)')}
             </label>
           ) : null}
         </>
@@ -174,11 +197,17 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
 
       <div className="cam-form-row">
         <label className="nb-field cam-form-half">
-          <span>Identifiant{preset ? '' : ' (facultatif)'}</span>
+          <span>
+            {t('Identifiant')}
+            {preset ? '' : t(' (facultatif)')}
+          </span>
           <input className="nb-input" value={form.username ?? ''} onChange={(ev) => set({ username: ev.target.value })} autoComplete="off" />
         </label>
         <div className="nb-field cam-form-half">
-          <span>Mot de passe{preset ? '' : ' (facultatif)'}</span>
+          <span>
+            {t('Mot de passe')}
+            {preset ? '' : t(' (facultatif)')}
+          </span>
           <div className="nb-row nb-gap">
             <input
               className="nb-input"
@@ -186,10 +215,10 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
               value={form.password ?? ''}
               onChange={(ev) => set({ password: ev.target.value })}
               autoComplete="new-password"
-              aria-label="Mot de passe de la caméra"
+              aria-label={t('Mot de passe de la caméra')}
             />
             <button type="button" className="nb-btn" onClick={() => setShowPassword((v) => !v)}>
-              {showPassword ? 'Masquer' : 'Afficher'}
+              {showPassword ? t('Masquer') : t('Afficher')}
             </button>
           </div>
         </div>
@@ -198,40 +227,52 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
 
       <div className="nb-row nb-gap">
         <button type="button" className="nb-btn" onClick={() => void test()} disabled={!complete || testing}>
-          {testing ? 'Connexion à la caméra…' : 'Tester'}
+          {testing ? t('Connexion à la caméra…') : t('Tester')}
         </button>
       </div>
       {result ? (
         <div className={result.ok ? 'nb-success' : 'nb-error'}>
-          <Icon name={result.ok ? 'checkCircle' : 'xCircle'} size={15} /> {result.message}
+          <Icon name={result.ok ? 'checkCircle' : 'xCircle'} size={15} /> {tServer(result.message)}
           {result.hevc ? (
             <span className="nb-muted cam-hint-inline">
               {' '}
-              Vidéo H.265 : lue telle quelle par la plupart des téléphones, convertie par le serveur pour les autres appareils (plus gourmand ; réglez la
-              caméra en H.264 si possible).
+              {t(
+                'Vidéo H.265 : lue telle quelle par la plupart des téléphones, convertie par le serveur pour les autres appareils (plus gourmand ; réglez la caméra en H.264 si possible).',
+              )}
             </span>
           ) : null}
         </div>
       ) : null}
-      {result?.preview ? <img className="cam-preview" src={result.preview} alt="Aperçu de la caméra" /> : null}
+      {result?.preview ? <img className="cam-preview" src={result.preview} alt={t('Aperçu de la caméra')} /> : null}
 
       <details className="sh-help">
-        <summary>Où trouver ces informations ?</summary>
+        <summary>{t('Où trouver ces informations ?')}</summary>
         <ul>
           <li>
-            <b>Adresse IP</b> : dans l’application de la caméra (informations de l’appareil) ou dans la liste des appareils connectés de votre box. Donnez‑lui
-            une adresse fixe dans la box (réservation DHCP) pour qu’elle ne change pas.
+            {tx(
+              '<b>Adresse IP</b> : dans l’application de la caméra (informations de l’appareil) ou dans la liste des appareils connectés de votre box. Donnez‑lui une adresse fixe dans la box (réservation DHCP) pour qu’elle ne change pas.',
+              { b: (s) => <b>{s}</b> },
+            )}
           </li>
           <li>
-            <b>Identifiant et mot de passe</b> : ceux de la caméra (ou de l’enregistreur), souvent « admin » et le mot de passe choisi à l’installation.
+            {tx(
+              '<b>Identifiant et mot de passe</b> : ceux de la caméra (ou de l’enregistreur), souvent « admin » et le mot de passe choisi à l’installation.',
+              { b: (s) => <b>{s}</b> },
+            )}
           </li>
           <li>
-            Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Melo doit être
-            sur le même réseau que la caméra.
+            {tx(
+              'Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Melo doit être sur le même réseau que la caméra.',
+              { b: (s) => <b>{s}</b> },
+            )}
           </li>
-          <li>Les miniatures utilisent le flux secondaire de la caméra (plus léger) ; la vue agrandie, le flux principal. La vidéo est transmise sans le son.</li>
+          <li>
+            {t(
+              'Les miniatures utilisent le flux secondaire de la caméra (plus léger) ; la vue agrandie, le flux principal. La vidéo est transmise sans le son.',
+            )}
+          </li>
         </ul>
-        <p className="nb-muted">Les identifiants restent sur votre serveur Melo et vos appareils ; la vidéo passe par le serveur.</p>
+        <p className="nb-muted">{t('Les identifiants restent sur votre serveur Melo et vos appareils ; la vidéo passe par le serveur.')}</p>
       </details>
     </Modal>
   );

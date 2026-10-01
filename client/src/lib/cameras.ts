@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type * as Y from 'yjs';
 import { api, serverBase } from './api';
+import { t } from './i18n';
 
 export type CameraBrand = 'hikvision' | 'dahua' | 'reolink' | 'tapo' | 'ezviz' | 'foscam' | 'uniview' | 'axis' | 'rtsp' | 'image';
 
@@ -28,34 +29,40 @@ export type CamerasConfig = { cameras: Camera[] };
 export type BrandInfo = { value: CameraBrand; label: string; port?: number; channel?: boolean; user?: string; hint?: string };
 
 export const BRANDS: BrandInfo[] = [
-  { value: 'hikvision', label: 'Hikvision, Annke, HiWatch, Safire', port: 554, channel: true, user: 'admin' },
-  { value: 'dahua', label: 'Dahua, Amcrest, Imou, Lorex', port: 554, channel: true, user: 'admin' },
+  { value: 'hikvision', label: 'Hikvision, Annke, HiWatch, Safire', port: 554, channel: true, user: 'admin' }, // i18n-ignore
+  { value: 'dahua', label: 'Dahua, Amcrest, Imou, Lorex', port: 554, channel: true, user: 'admin' }, // i18n-ignore
   { value: 'reolink', label: 'Reolink', port: 554, channel: true, user: 'admin' },
   {
     value: 'tapo',
-    label: 'TP-Link Tapo, Vigi',
+    label: 'TP-Link Tapo, Vigi', // i18n-ignore
     port: 554,
-    hint: 'Créez d’abord un « compte de la caméra » dans l’application Tapo (réglages de la caméra → Paramètres avancés → Compte de la caméra) et saisissez-le ici.',
+    hint: t(
+      'Créez d’abord un « compte de la caméra » dans l’application Tapo (réglages de la caméra → Paramètres avancés → Compte de la caméra) et saisissez-le ici.',
+    ),
   },
   {
     value: 'ezviz',
-    label: 'Ezviz',
+    label: 'Ezviz', // i18n-ignore
     port: 554,
     user: 'admin',
-    hint: 'Identifiant « admin » ; mot de passe : le code de vérification à 6 lettres inscrit sous la caméra. Activez le flux RTSP dans l’application Ezviz s’il est proposé.',
+    hint: t(
+      'Identifiant « admin » ; mot de passe : le code de vérification à 6 lettres inscrit sous la caméra. Activez le flux RTSP dans l’application Ezviz s’il est proposé.',
+    ),
   },
   { value: 'foscam', label: 'Foscam', port: 88, user: 'admin' },
   { value: 'uniview', label: 'Uniview (UNV)', port: 554, channel: true, user: 'admin' },
   { value: 'axis', label: 'Axis', port: 554, user: 'root' },
   {
     value: 'rtsp',
-    label: 'Autre caméra ou enregistreur (adresse RTSP)',
-    hint: 'L’adresse du flux figure dans la notice ou les réglages de la caméra (souvent rubrique « Réseau » ou « RTSP »), par exemple rtsp://192.168.1.20:554/stream1.',
+    label: t('Autre caméra ou enregistreur (adresse RTSP)'),
+    hint: t(
+      'L’adresse du flux figure dans la notice ou les réglages de la caméra (souvent rubrique « Réseau » ou « RTSP »), par exemple rtsp://192.168.1.20:554/stream1.',
+    ),
   },
   {
     value: 'image',
-    label: 'Image ou flux MJPEG (adresse http)',
-    hint: 'Adresse d’une image (JPEG, actualisée chaque seconde) ou d’un flux MJPEG : MotionEye, ESP32-CAM, anciennes caméras IP…',
+    label: t('Image ou flux MJPEG (adresse http)'),
+    hint: t('Adresse d’une image (JPEG, actualisée chaque seconde) ou d’un flux MJPEG : MotionEye, ESP32-CAM, anciennes caméras IP…'),
   },
 ];
 
@@ -131,7 +138,7 @@ export function useCameras(doc: Y.Doc | null) {
           retry = setTimeout(() => void load(attempt + 1), 750);
         }
       } catch (err) {
-        if (alive) setError(err instanceof Error ? err.message : 'Serveur injoignable.');
+        if (alive) setError(err instanceof Error ? err.message : t('Serveur injoignable.'));
       }
     };
     void load();

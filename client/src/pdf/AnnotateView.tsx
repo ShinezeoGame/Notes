@@ -14,6 +14,7 @@ import { LINE_HEIGHT, TEXT_FONT, loadHelvetica } from './text';
 import { simplifyStroke } from './ink';
 import { SignatureDialog, type SavedSignature } from './SignatureDialog';
 import { uploadStamp } from './importer';
+import { t } from '../lib/i18n';
 
 export type Tool = 'select' | 'text' | 'pen' | 'highlight' | 'rect' | 'mark' | 'eraser';
 type ColorTool = 'pen' | 'text' | 'mark' | 'highlight' | 'rect';
@@ -21,51 +22,56 @@ type ColorTool = 'pen' | 'text' | 'mark' | 'highlight' | 'rect';
 const TOOLS: { id: Tool; label: string; icon: IconName; hint: string }[] = [
   {
     id: 'select',
-    label: 'Sélection',
+    label: t('Sélection'),
     icon: 'cursor',
-    hint: 'Touchez une annotation pour la déplacer ou la modifier. Les champs du formulaire se remplissent directement.',
+    hint: t('Touchez une annotation pour la déplacer ou la modifier. Les champs du formulaire se remplissent directement.'),
   },
-  { id: 'text', label: 'Texte', icon: 'type', hint: 'Touchez la page à l’endroit où écrire.' },
-  { id: 'pen', label: 'Stylo', icon: 'pencil', hint: 'Dessinez sur la page. Faites défiler avec deux doigts.' },
-  { id: 'highlight', label: 'Surligneur', icon: 'highlighter', hint: 'Faites glisser sur le passage à surligner.' },
-  { id: 'rect', label: 'Masquer', icon: 'square', hint: 'Faites glisser pour couvrir une zone. Le texte couvert reste présent dans le fichier.' },
-  { id: 'mark', label: 'Coche', icon: 'check', hint: 'Touchez une case pour la cocher.' },
-  { id: 'eraser', label: 'Gomme', icon: 'eraser', hint: 'Touchez ou frottez une annotation pour l’effacer.' },
+  { id: 'text', label: t('Texte'), icon: 'type', hint: t('Touchez la page à l’endroit où écrire.') },
+  { id: 'pen', label: t('Stylo'), icon: 'pencil', hint: t('Dessinez sur la page. Faites défiler avec deux doigts.') },
+  { id: 'highlight', label: t('Surligneur'), icon: 'highlighter', hint: t('Faites glisser sur le passage à surligner.') },
+  {
+    id: 'rect',
+    label: t('Masquer'),
+    icon: 'square',
+    hint: t('Faites glisser pour couvrir une zone. Le texte couvert reste présent dans le fichier.'),
+  },
+  { id: 'mark', label: t('Coche'), icon: 'check', hint: t('Touchez une case pour la cocher.') },
+  { id: 'eraser', label: t('Gomme'), icon: 'eraser', hint: t('Touchez ou frottez une annotation pour l’effacer.') },
 ];
 
 const COLORS: Record<ColorTool, { value: string; label: string }[]> = {
   pen: [
-    { value: '#1d4ed8', label: 'Bleu' },
-    { value: '#111111', label: 'Noir' },
-    { value: '#dc2626', label: 'Rouge' },
-    { value: '#15803d', label: 'Vert' },
-    { value: '#7c3aed', label: 'Violet' },
-    { value: '#ffffff', label: 'Blanc' },
+    { value: '#1d4ed8', label: t('Bleu') },
+    { value: '#111111', label: t('Noir') },
+    { value: '#dc2626', label: t('Rouge') },
+    { value: '#15803d', label: t('Vert') },
+    { value: '#7c3aed', label: t('Violet') },
+    { value: '#ffffff', label: t('Blanc') },
   ],
   text: [
-    { value: '#111111', label: 'Noir' },
-    { value: '#1d4ed8', label: 'Bleu' },
-    { value: '#dc2626', label: 'Rouge' },
-    { value: '#15803d', label: 'Vert' },
-    { value: '#ffffff', label: 'Blanc' },
+    { value: '#111111', label: t('Noir') },
+    { value: '#1d4ed8', label: t('Bleu') },
+    { value: '#dc2626', label: t('Rouge') },
+    { value: '#15803d', label: t('Vert') },
+    { value: '#ffffff', label: t('Blanc') },
   ],
   mark: [
-    { value: '#111111', label: 'Noir' },
-    { value: '#1d4ed8', label: 'Bleu' },
-    { value: '#dc2626', label: 'Rouge' },
-    { value: '#15803d', label: 'Vert' },
+    { value: '#111111', label: t('Noir') },
+    { value: '#1d4ed8', label: t('Bleu') },
+    { value: '#dc2626', label: t('Rouge') },
+    { value: '#15803d', label: t('Vert') },
   ],
   highlight: [
-    { value: '#facc15', label: 'Jaune' },
-    { value: '#4ade80', label: 'Vert' },
-    { value: '#f472b6', label: 'Rose' },
-    { value: '#60a5fa', label: 'Bleu' },
-    { value: '#fb923c', label: 'Orange' },
+    { value: '#facc15', label: t('Jaune') },
+    { value: '#4ade80', label: t('Vert') },
+    { value: '#f472b6', label: t('Rose') },
+    { value: '#60a5fa', label: t('Bleu') },
+    { value: '#fb923c', label: t('Orange') },
   ],
   rect: [
-    { value: '#ffffff', label: 'Blanc' },
-    { value: '#111111', label: 'Noir' },
-    { value: '#fef3c7', label: 'Crème' },
+    { value: '#ffffff', label: t('Blanc') },
+    { value: '#111111', label: t('Noir') },
+    { value: '#fef3c7', label: t('Crème') },
   ],
 };
 const TEXT_SIZES = [8, 10, 12, 14, 18, 24, 32, 48];
@@ -514,7 +520,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
       const w = Math.abs(p.x - g.x0);
       const h = Math.abs(p.y - g.y0);
       if (w < 3 || h < 3) {
-        if (g.type === 'highlight') toast('Faites glisser sur le passage à surligner.');
+        if (g.type === 'highlight') toast(t('Faites glisser sur le passage à surligner.'));
         return;
       }
       addAnnot({ id: annotId(), page: pageId, type: g.type, x: Math.min(g.x0, p.x), y: Math.min(g.y0, p.y), w, h, color: colors[g.type] });
@@ -713,7 +719,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
       },
       true,
     );
-    toast('Signature posée : faites-la glisser à sa place, et agrandissez-la avec la poignée.');
+    toast(t('Signature posée : faites-la glisser à sa place, et agrandissez-la avec la poignée.'));
   };
 
   const placeImage = async (file: File) => {
@@ -738,14 +744,14 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
         true,
       );
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Image impossible à ajouter.', 'error');
+      toast(err instanceof Error ? err.message : t('Image impossible à ajouter.'), 'error');
     }
   };
 
   // ---------- Options de l'outil ou de l'annotation choisie ----------
 
   const colorRow = (current: string, list: { value: string; label: string }[], onPick: (c: string) => void) => (
-    <div className="pdfa-colors" role="radiogroup" aria-label="Couleur">
+    <div className="pdfa-colors" role="radiogroup" aria-label={t('Couleur')}>
       {list.map((c) => (
         <button
           key={c.value}
@@ -785,11 +791,11 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
     options = (
       <>
         {kind && 'color' in a ? colorRow(a.color, COLORS[kind], (color) => set({ color })) : null}
-        {a.type === 'text' ? sizeRow('Taille', a.size, TEXT_SIZES, (size) => set({ size }), ' pt') : null}
-        {a.type === 'ink' ? sizeRow('Épaisseur', a.width, PEN_WIDTHS, (width) => set({ width }), ' pt') : null}
+        {a.type === 'text' ? sizeRow(t('Taille'), a.size, TEXT_SIZES, (size) => set({ size }), ' pt') : null}
+        {a.type === 'ink' ? sizeRow(t('Épaisseur'), a.width, PEN_WIDTHS, (width) => set({ width }), ' pt') : null}
         {a.type === 'text' ? (
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => startEditing(a, true)}>
-            <Icon name="pencil" size={14} /> Modifier le texte
+            <Icon name="pencil" size={14} /> {t('Modifier le texte')}
           </button>
         ) : null}
         <button
@@ -801,7 +807,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
             setSelected(copy.id);
           }}
         >
-          <Icon name="copy" size={14} /> Dupliquer
+          <Icon name="copy" size={14} /> {t('Dupliquer')}
         </button>
         <button
           type="button"
@@ -811,7 +817,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
             setSelected(null);
           }}
         >
-          <Icon name="trash" size={14} /> Supprimer
+          <Icon name="trash" size={14} /> {t('Supprimer')}
         </button>
       </>
     );
@@ -819,14 +825,14 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
     options = (
       <>
         {colorRow(colors.pen, COLORS.pen, (c) => setColors({ ...colors, pen: c }))}
-        {sizeRow('Épaisseur', penWidth, PEN_WIDTHS, setPenWidth, ' pt')}
+        {sizeRow(t('Épaisseur'), penWidth, PEN_WIDTHS, setPenWidth, ' pt')}
       </>
     );
   } else if (tool === 'text') {
     options = (
       <>
         {colorRow(colors.text, COLORS.text, (c) => setColors({ ...colors, text: c }))}
-        {sizeRow('Taille', textSize, TEXT_SIZES, setTextSize, ' pt')}
+        {sizeRow(t('Taille'), textSize, TEXT_SIZES, setTextSize, ' pt')}
       </>
     );
   } else if (tool === 'highlight' || tool === 'rect') {
@@ -834,12 +840,12 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
   } else if (tool === 'mark') {
     options = (
       <>
-        <div className="pdfa-marks" role="radiogroup" aria-label="Marque">
+        <div className="pdfa-marks" role="radiogroup" aria-label={t('Marque')}>
           {(
             [
-              ['check', 'check', 'Coche'],
-              ['cross', 'close', 'Croix'],
-              ['dot', 'dot', 'Point'],
+              ['check', 'check', t('Coche')],
+              ['cross', 'close', t('Croix')],
+              ['dot', 'dot', t('Point')],
             ] as const
           ).map(([kind, icon, label]) => (
             <button
@@ -857,7 +863,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
           ))}
         </div>
         {colorRow(colors.mark, COLORS.mark, (c) => setColors({ ...colors, mark: c }))}
-        {sizeRow('Taille', markSize, MARK_SIZES, setMarkSize, ' pt')}
+        {sizeRow(t('Taille'), markSize, MARK_SIZES, setMarkSize, ' pt')}
       </>
     );
   }
@@ -866,7 +872,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
   return (
     <div className="pdfa">
       <div className="pdfa-bar">
-        <div ref={toolsRef} className={`pdfa-tools${moreTools ? ' pdfa-tools--more' : ''}`} role="toolbar" aria-label="Outils d’annotation">
+        <div ref={toolsRef} className={`pdfa-tools${moreTools ? ' pdfa-tools--more' : ''}`} role="toolbar" aria-label={t('Outils d’annotation')}>
           {TOOLS.map((t) => (
             <button
               key={t.id}
@@ -885,13 +891,13 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
             </button>
           ))}
           <span className="pdfa-sep" aria-hidden="true" />
-          <button type="button" className="pdfa-tool" title="Signature" onClick={() => setSigning(true)}>
+          <button type="button" className="pdfa-tool" title={t('Signature')} onClick={() => setSigning(true)}>
             <Icon name="signature" size={18} />
-            <span>Signature</span>
+            <span>{t('Signature')}</span>
           </button>
-          <button type="button" className="pdfa-tool" title="Image" onClick={() => imageInput.current?.click()}>
+          <button type="button" className="pdfa-tool" title={t('Image')} onClick={() => imageInput.current?.click()}>
             <Icon name="image" size={18} />
-            <span>Image</span>
+            <span>{t('Image')}</span>
           </button>
           <input
             ref={imageInput}
@@ -905,14 +911,26 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
             }}
           />
         </div>
-        <div className="pdfa-zoom" role="group" aria-label="Zoom">
-          <button type="button" className="nb-icon-btn pdfa-zoom-step" aria-label="Réduire" title="Réduire" onClick={() => zoomTo(zoom / 1.25)}>
+        <div className="pdfa-zoom" role="group" aria-label={t('Zoom')}>
+          <button
+            type="button"
+            className="nb-icon-btn pdfa-zoom-step"
+            aria-label={t('Réduire')}
+            title={t('Réduire')}
+            onClick={() => zoomTo(zoom / 1.25)}
+          >
             <Icon name="zoomOut" size={17} />
           </button>
-          <button type="button" className="pdfa-zoom-value" title="Ajuster à la largeur" onClick={() => zoomTo('fit')}>
-            {Math.round((zoom / REAL_SIZE) * 100)} %
+          <button type="button" className="pdfa-zoom-value" title={t('Ajuster à la largeur')} onClick={() => zoomTo('fit')}>
+            {t('{pct} %', { pct: Math.round((zoom / REAL_SIZE) * 100) })}
           </button>
-          <button type="button" className="nb-icon-btn pdfa-zoom-step" aria-label="Agrandir" title="Agrandir" onClick={() => zoomTo(zoom * 1.25)}>
+          <button
+            type="button"
+            className="nb-icon-btn pdfa-zoom-step"
+            aria-label={t('Agrandir')}
+            title={t('Agrandir')}
+            onClick={() => zoomTo(zoom * 1.25)}
+          >
             <Icon name="zoomIn" size={17} />
           </button>
         </div>
@@ -942,7 +960,7 @@ export function AnnotateView({ project, state, cache, workspaceDoc, onFiles, foc
                 className="pdfa-page"
                 data-page={ref.id}
                 style={{ width: rs.w * zoom, height: rs.h * zoom }}
-                aria-label={`Page ${info.index + 1}`}
+                aria-label={t('Page {n}', { n: info.index + 1 })}
               >
                 <div
                   className="pdfa-layer"
@@ -1001,7 +1019,7 @@ function SelectionBox({ annot, font, zoom }: { annot: Annot; font: PDFFont | nul
         <span
           className={`pdfa-handle${annot.type === 'text' ? ' pdfa-handle--edge' : ''}`}
           data-handle="resize"
-          title={annot.type === 'text' ? 'Largeur de la zone de texte' : 'Taille'}
+          title={annot.type === 'text' ? t('Largeur de la zone de texte') : t('Taille')}
         />
       ) : null}
     </div>
@@ -1033,8 +1051,8 @@ function TextEditor({
       ref={ref}
       className="pdfa-text-editor"
       value={a.text}
-      placeholder="Votre texte"
-      aria-label="Texte à ajouter sur la page"
+      placeholder={t('Votre texte')}
+      aria-label={t('Texte à ajouter sur la page')}
       spellCheck
       style={{
         left: a.x * zoom - 2,

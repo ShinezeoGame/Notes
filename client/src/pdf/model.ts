@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
 import { newId } from '../lib/ids';
 import { serverBase } from '../lib/api';
+import { t } from '../lib/i18n';
 
 export const pdfRoom = (wsId: string, pdfId: string) => `pdf_${wsId}_${pdfId}`;
 
@@ -277,7 +278,7 @@ export type PdfEntry = {
 function toEntry(id: string, m: Y.Map<unknown>): PdfEntry {
   return {
     id,
-    name: String(m.get('name') ?? '') || 'Sans titre',
+    name: String(m.get('name') ?? '') || t('Sans titre'),
     createdAt: Number(m.get('createdAt') ?? 0),
     updatedAt: Number(m.get('updatedAt') ?? 0),
     pages: Number(m.get('pages') ?? 0),

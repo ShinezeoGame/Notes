@@ -7,6 +7,7 @@ import { reorderItems, useSortable } from '../lib/sortable';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { CameraConfigDialog } from './CameraConfigDialog';
+import { t, tx } from '../lib/i18n';
 
 const BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
 
@@ -78,10 +79,10 @@ function MjpegImage({ url, name, onState }: { url: () => string; name: string; o
     <img
       ref={img}
       src={src}
-      alt={`${name} en direct`}
+      alt={t('{name} en direct', { name })}
       onLoad={() => onState('playing')}
       onError={() => {
-        onState('retrying', 'Image indisponible, nouvel essai…');
+        onState('retrying', t('Image indisponible, nouvel essai…'));
         clearTimeout(retry.current);
         retry.current = setTimeout(() => setAttempt((n) => n + 1), 5_000);
       }}
@@ -127,10 +128,10 @@ export function CameraLive({ link, name, version = '', quality, active = true }:
   }, [run, stream, kind, video]);
 
   let overlay: string | null = null;
-  if (!link) overlay = 'Préparation…';
+  if (!link) overlay = t('Préparation…');
   else if (!active || !onScreen) overlay = null;
-  else if (state.state === 'connecting') overlay = shown === stream ? 'Reconnexion…' : 'Connexion à la caméra…';
-  else if (state.state !== 'playing') overlay = state.message ?? 'Vidéo indisponible.';
+  else if (state.state === 'connecting') overlay = shown === stream ? t('Reconnexion…') : t('Connexion à la caméra…');
+  else if (state.state !== 'playing') overlay = state.message ?? t('Vidéo indisponible.');
   // Dernière image affichée : petite mention dans un coin plutôt qu'un voile sur toute l'image.
   const mini = shown === stream && state.state !== 'error';
 
@@ -149,7 +150,7 @@ export function CameraLive({ link, name, version = '', quality, active = true }:
           />
         ) : null
       ) : (
-        <video ref={video} muted playsInline autoPlay disablePictureInPicture aria-label={`${name} en direct`} />
+        <video ref={video} muted playsInline autoPlay disablePictureInPicture aria-label={t('{name} en direct', { name })} />
       )}
       {overlay ? (
         <div className={`cam-overlay${state.state === 'error' ? ' cam-overlay--error' : ''}${mini ? ' cam-overlay--mini' : ''}`}>
@@ -178,11 +179,11 @@ export function CameraModal({ link, camera, onClose, onEdit }: { link: CameraLin
       <div className="cam-modal-actions">
         {onEdit ? (
           <button type="button" className="nb-btn nb-btn--sm" onClick={onEdit}>
-            <Icon name="settings" size={14} /> Réglages
+            <Icon name="settings" size={14} /> {t('Réglages')}
           </button>
         ) : null}
         <button type="button" className="nb-btn nb-btn--sm" onClick={fullscreen}>
-          <Icon name="maximize" size={14} /> Plein écran
+          <Icon name="maximize" size={14} /> {t('Plein écran')}
         </button>
       </div>
     </Modal>
@@ -217,8 +218,8 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.</p>
-        <p className="nb-muted">Configurez l’adresse du serveur dans les réglages.</p>
+        <p>{t('Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.')}</p>
+        <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
     );
   }
@@ -227,12 +228,14 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
       <div className="nb-notice sh-empty cam-empty">
         <Icon name="cctv" size={28} />
         <p>
-          Ajoutez vos <b>caméras de surveillance</b> (Hikvision, Dahua, Reolink, Tapo, Ezviz… ou toute caméra avec un flux RTSP) pour les regarder en
-          direct ici et dans vos pages.
+          {tx(
+            'Ajoutez vos <b>caméras de surveillance</b> (Hikvision, Dahua, Reolink, Tapo, Ezviz… ou toute caméra avec un flux RTSP) pour les regarder en direct ici et dans vos pages.',
+            { b: (s) => <b>{s}</b> },
+          )}
         </p>
         {canConfigure && doc ? (
           <button type="button" className="nb-btn nb-btn--primary" onClick={() => setEditing('new')}>
-            <Icon name="plus" size={15} /> Ajouter une caméra
+            <Icon name="plus" size={15} /> {t('Ajouter une caméra')}
           </button>
         ) : null}
         {dialog}
@@ -240,7 +243,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
     );
   }
   if (cameraId && !cameras.length) {
-    return <div className="nb-notice nb-muted">Cette caméra a été supprimée.</div>;
+    return <div className="nb-notice nb-muted">{t('Cette caméra a été supprimée.')}</div>;
   }
 
   const needsFfmpeg = !ffmpeg && cameras.some((c) => c.brand !== 'image');
@@ -249,14 +252,16 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
       {!cameraId && !compact && canConfigure && doc ? (
         <div className="cam-toolbar">
           <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditing('new')}>
-            <Icon name="plus" size={14} /> Ajouter une caméra
+            <Icon name="plus" size={14} /> {t('Ajouter une caméra')}
           </button>
         </div>
       ) : null}
       {needsFfmpeg ? (
         <div className="nb-error cam-problem">
-          <Icon name="alert" size={15} /> ffmpeg n’est pas installé sur le serveur Melo : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur
-          Docker, ou installez ffmpeg).
+          <Icon name="alert" size={15} />{' '}
+          {t(
+            'ffmpeg n’est pas installé sur le serveur Melo : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur Docker, ou installez ffmpeg).',
+          )}
         </div>
       ) : null}
       {error ? (
@@ -272,14 +277,19 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
             const sort = itemProps(c.id);
             return (
               <div key={c.id} {...sort} className={`cam-tile${sort.className ? ` ${sort.className}` : ''}`}>
-                <button type="button" className="cam-tile-view" onClick={() => setOpenId(c.id)} aria-label={`Agrandir ${c.name}`}>
+                <button type="button" className="cam-tile-view" onClick={() => setOpenId(c.id)} aria-label={t('Agrandir {name}', { name: c.name })}>
                   <CameraLive link={links.get(c.id)} name={c.name} version={cameraVersion(c)} quality="sd" active={!open} />
                 </button>
                 <div className="cam-tile-bar">
                   <span className="cam-live-dot" aria-hidden="true" />
                   <span className="cam-tile-name">{c.name}</span>
                   {canConfigure && doc ? (
-                    <button type="button" className="nb-icon-btn cam-tile-edit" onClick={() => setEditing(c)} aria-label={`Réglages de ${c.name}`}>
+                    <button
+                      type="button"
+                      className="nb-icon-btn cam-tile-edit"
+                      onClick={() => setEditing(c)}
+                      aria-label={t('Réglages de {name}', { name: c.name })}
+                    >
                       <Icon name="settings" size={15} />
                     </button>
                   ) : null}
@@ -307,12 +317,12 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
 /** Vue « Caméras » (barre latérale). */
 export function CamerasView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = 'Caméras – Melo';
+    document.title = t('Caméras – Melo');
   }, []);
   return (
     <div className="nb-page hl-page cam-page">
       <h1 className="nb-page-title-static">
-        <Icon name="cctv" size={34} /> Caméras
+        <Icon name="cctv" size={34} /> {t('Caméras')}
       </h1>
       <CamerasPanel doc={doc} />
     </div>
