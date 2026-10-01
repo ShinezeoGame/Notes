@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { newId, newKey, randomColor } from './ids';
 import { isDesktopLocal } from './desktop';
+import { parseRoute } from './router';
 
 /** Langue de l'interface (voir lib/i18n.ts). */
 export type Lang = 'en' | 'fr';
@@ -57,6 +58,16 @@ function defaultServerUrl(): string | null {
   return null;
 }
 
+/**
+ * Langue d'une nouvelle installation : l'anglais, sauf pour une personne qui arrive par un lien reçu (page partagée,
+ * invitation, liaison d'un appareil) : la langue de son navigateur, si c'est le français.
+ */
+function firstLang(): Lang {
+  const linked = ['shared', 'invite', 'pair', 'join'].includes(parseRoute(location.hash).name);
+  const browser = (navigator.languages?.[0] ?? navigator.language ?? '').toLowerCase();
+  return linked && browser.startsWith('fr') ? 'fr' : 'en';
+}
+
 function defaults(lang: Lang = 'en'): Settings {
   return {
     lang,
@@ -100,7 +111,7 @@ function load(): Settings {
   } catch {
     /* stockage indisponible */
   }
-  const s = defaults();
+  const s = defaults(firstLang());
   persist(s);
   return s;
 }

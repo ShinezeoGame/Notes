@@ -62,7 +62,7 @@ Depuis Edge, Chrome ou Brave, le bouton **Installer l’application** (en bas de
 
 Tout est stocké sur l’appareil (hors ligne d’abord) et synchronisé dès qu’un serveur est joignable ; plusieurs appareils peuvent être reliés au même espace.
 
-**Langue** (anglais ou français) : propre à chaque appareil, elle se change à tout moment dans **Réglages → Vous → Langue de l’interface**. Dans un navigateur, une petite carte en bas de l’écran la propose à la première visite ; sur une page partagée, **EN / FR** en haut à droite. Une installation de Melo d’avant le choix de la langue reste en français. Le contenu (pages, titres, widgets) n’est pas traduit.
+**Langue** (anglais ou français) : propre à chaque appareil, elle se change à tout moment dans **Réglages → Vous → Langue de l’interface**. Dans un navigateur, une petite carte en bas de l’écran la propose à la première visite ; sur une page partagée, **EN / FR** en haut à droite. Une personne qui ouvre un de vos liens (page partagée, invitation, liaison d’un appareil) pour la première fois voit Melo dans la langue de son navigateur, en français ou en anglais. Une installation de Melo d’avant le choix de la langue reste en français. Le contenu (pages, titres, widgets) n’est pas traduit.
 
 ## Partager
 
