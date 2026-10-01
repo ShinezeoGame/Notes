@@ -36,3 +36,6 @@ export function useAppCtx(): AppContextValue {
   if (!v) throw new Error('AppContext manquant'); // i18n-ignore
   return v;
 }
+
+/** Document Yjs de la page affichée (blocs qui suivent les modifications des autres personnes : tableur). */
+export const PageDocContext = createContext<Y.Doc | null>(null);

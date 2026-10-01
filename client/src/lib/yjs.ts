@@ -13,10 +13,10 @@ export type ConnStatus = 'offline' | 'connecting' | 'connected' | 'disconnected'
 
 /**
  * Version du format des pages que ce client sait lire, envoyée au serveur. Une version plus ancienne effacerait les
- * blocs qu'elle ne connaît pas (colonnes depuis la version 2, caméras depuis la 3) : le serveur ne la synchronise donc
- * plus. À augmenter avec MIN_PAGE_SCHEMA (server/src/ws.js) à chaque nouveau type de bloc.
+ * blocs qu'elle ne connaît pas (colonnes depuis la version 2, caméras depuis la 3, tableurs depuis la 4) : le serveur
+ * ne la synchronise donc plus. À augmenter avec MIN_PAGE_SCHEMA (server/src/ws.js) à chaque nouveau type de bloc.
  */
-export const DOC_SCHEMA = 3;
+export const DOC_SCHEMA = 4;
 
 export type DocHandle = {
   room: string;

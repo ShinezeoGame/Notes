@@ -27,6 +27,12 @@ Titres, listes, cases à cocher, tableaux, colonnes, images : tapez `/` et tout 
 
 <img src="docs/captures/notes.webp" width="100%" alt="Une page « Week-end à Lisbonne » avec programme en trois colonnes et liste à cocher ; Léa y ajoute « Maillot de bain » en direct">
 
+## 📊 Un tableur, comme dans Excel
+
+Tapez `/tableau` dans une page : formules en français (`SOMME`, `SI`, `RECHERCHEV`…), euros, pourcentages, dates, plusieurs feuilles. Copiez-collez avec Excel, ouvrez vos fichiers `.xlsx` dans Melo et exportez vos tableaux pour Excel.
+
+<img src="docs/captures/tableur.webp" width="100%" alt="Le budget d’un week-end dans un tableur : postes, montants prévus et dépensés en euros, reste et part calculés par des formules, total avec SOMME">
+
 ## 📅 Tous vos agendas au même endroit
 
 Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section.

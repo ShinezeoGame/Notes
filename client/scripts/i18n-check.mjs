@@ -13,8 +13,17 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(root, 'src');
 const args = new Set(process.argv.slice(2));
 
-/** Fichiers sans texte d'interface (dictionnaire, outils techniques). */
-const SKIP = [/[/\\]i18n[/\\]/, /\.d\.ts$/, /pdf-worker\.ts$/, /pdf-polyfills\.ts$/];
+/**
+ * Fichiers sans texte d'interface (dictionnaire, outils techniques ; moteur du tableur : formats et noms de fonctions
+ * d'Excel, XML des fichiers .xlsx).
+ */
+const SKIP = [
+  /[/\\]i18n[/\\]/,
+  /\.d\.ts$/,
+  /pdf-worker\.ts$/,
+  /pdf-polyfills\.ts$/,
+  /[/\\]sheet[/\\](address|axis|clipboard|engine|fill|format|formula|model|values|xlsx)\.ts$/,
+];
 /** Attributs JSX affichés à l'écran (ou lus par les lecteurs d'écran). */
 const SHOWN_ATTRS = new Set([
   'title',

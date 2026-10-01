@@ -6,6 +6,7 @@ import { CalendarBlock } from './blocks/CalendarBlock';
 import { HomelabBlock } from './blocks/HomelabBlock';
 import { SmartHomeBlock } from './blocks/SmartHomeBlock';
 import { CameraBlock } from './blocks/CameraBlock';
+import { SpreadsheetBlock } from './blocks/SpreadsheetBlock';
 import { TextSizeStyle } from './styles/TextSize';
 import { columnBlockSpecs } from './columns';
 
@@ -20,6 +21,7 @@ export const schema = BlockNoteSchema.create({
     homelab: HomelabBlock(),
     smarthome: SmartHomeBlock(),
     camera: CameraBlock(),
+    spreadsheet: SpreadsheetBlock(),
   },
   styleSpecs: {
     ...defaultStyleSpecs,

@@ -1527,3 +1527,139 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 @media (max-width: 768px) {
   .nb-lang-hint { bottom: calc(76px + var(--safe-bottom)); }
 }
+
+/* ---------- Tableur (bloc « Tableur », sheet/SheetView.tsx) ---------- */
+.nb-sheet-block { width: 100%; }
+.nb-sheet-wrap { width: 100%; }
+.xl {
+  display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+  overflow: hidden; color: var(--text); font-size: 13px; line-height: 1.35;
+}
+.xl--focus { border-color: var(--border-strong); }
+.xl-toolbar {
+  display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); flex-shrink: 0;
+}
+.xl-tb-main { display: flex; align-items: center; gap: 1px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.xl-tb-main::-webkit-scrollbar { display: none; }
+.xl-tb-side { display: flex; align-items: center; gap: 1px; flex-shrink: 0; margin-left: auto; }
+.xl-tb {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 28px; height: 28px; padding: 0 6px;
+  border: none; border-radius: 5px; background: none; color: var(--text-muted); cursor: pointer; flex-shrink: 0; font-size: 12px; white-space: nowrap;
+}
+.xl-tb:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-strong); }
+.xl-tb--on { background: var(--accent-soft); color: var(--text-strong); }
+.xl-tb:disabled { opacity: 0.4; cursor: default; }
+.xl-tb--text { font-variant-numeric: tabular-nums; }
+.xl-tb-label { max-width: 84px; overflow: hidden; text-overflow: ellipsis; }
+.xl-tb-sep { width: 1px; height: 18px; margin: 0 3px; background: var(--border); flex-shrink: 0; }
+.xl-tb-swatch { position: absolute; left: 7px; right: 7px; bottom: 3px; height: 3px; border-radius: 1px; box-shadow: 0 0 0 1px var(--border-strong); }
+.xl-fbar { display: flex; align-items: stretch; min-height: 28px; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.xl-name {
+  width: 92px; flex-shrink: 0; padding: 0 8px; border: none; border-right: 1px solid var(--border); background: transparent; color: var(--text);
+  font: inherit; font-size: 12.5px; outline: none;
+}
+.xl-name:focus { background: var(--input-bg); }
+.xl-fx {
+  display: flex; align-items: center; padding: 0 8px; border-right: 1px solid var(--border); color: var(--text-faint); font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif; user-select: none;
+}
+.xl-formula {
+  flex: 1; min-width: 0; height: 28px; padding: 5px 8px; border: none; background: transparent; color: var(--text); font: inherit; font-size: 13px;
+  line-height: 18px; resize: none; outline: none; white-space: pre; overflow: hidden;
+}
+.xl-formula:focus { height: auto; min-height: 28px; max-height: 96px; overflow-y: auto; white-space: pre-wrap; background: var(--input-bg); }
+.xl-scroll { position: relative; overflow: auto; background: var(--bg); flex-shrink: 0; overscroll-behavior: contain; }
+.xl-canvas { position: relative; }
+.xl-colhead { position: sticky; top: 0; z-index: 3; height: 24px; }
+.xl-corner {
+  position: sticky; left: 0; z-index: 2; height: 24px; background: var(--bg-elevated); border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong); cursor: pointer;
+}
+.xl-rowhead { position: sticky; left: 0; z-index: 2; }
+.xl-h {
+  position: absolute; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated);
+  color: var(--text-muted); font-size: 11.5px; user-select: none; -webkit-user-select: none; cursor: default; font-variant-numeric: tabular-nums;
+}
+.xl-h-label { overflow: hidden; white-space: nowrap; max-width: 100%; }
+.xl-colhead > .xl-h { top: 0; height: 24px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border-strong); }
+.xl-rowhead > .xl-h { left: 0; right: 0; border-right: 1px solid var(--border-strong); border-bottom: 1px solid var(--border); }
+.xl-h--sel { background: var(--bg-active); color: var(--text-strong); }
+.xl-h--full { background: var(--accent-soft); color: var(--text-strong); }
+.xl-rsz-x { position: absolute; top: 0; right: -3px; z-index: 1; width: 7px; height: 100%; cursor: col-resize; touch-action: none; }
+.xl-rsz-y { position: absolute; left: 0; bottom: -3px; z-index: 1; width: 100%; height: 7px; cursor: row-resize; touch-action: none; }
+.xl-rsz-x:hover, .xl-rsz-y:hover { background: var(--accent); }
+.xl-body { position: absolute; user-select: none; -webkit-user-select: none; cursor: cell; }
+.xl-hl, .xl-vl { position: absolute; background: var(--border); pointer-events: none; }
+.xl-hl { height: 1px; }
+.xl-vl { width: 1px; }
+.xl-cell {
+  position: absolute; z-index: 1; display: flex; align-items: flex-end; padding: 0 4px 3px; overflow: hidden; white-space: pre; line-height: 17px;
+  font-size: 13px; color: var(--text);
+}
+.xl-cell--wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.xl-cell--spill { background: var(--bg); }
+.xl-sel, .xl-active, .xl-ref, .xl-fill, .xl-clip { position: absolute; z-index: 2; pointer-events: none; }
+.xl-sel { border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.xl-active { border: 2px solid var(--accent); }
+.xl-active--in { border-width: 2px; }
+.xl-sel--blur { border-color: var(--text-faint); }
+.xl-sel.xl-sel--blur { background: color-mix(in srgb, var(--text-faint) 12%, transparent); }
+.xl-ref { border: 2px solid; }
+.xl-fill { border: 1px dashed var(--text-muted); }
+.xl-clip { border: 2px dashed var(--accent); }
+.xl-handle {
+  position: absolute; z-index: 3; width: 8px; height: 8px; background: var(--accent); border: 1px solid var(--bg); cursor: crosshair; touch-action: none;
+}
+.xl-input {
+  position: absolute; z-index: 3; margin: 0; padding: 3px 4px; border: 2px solid var(--accent); border-radius: 0; background: var(--bg-elevated);
+  color: var(--text-strong); font-size: 13px; line-height: 17px; resize: none; outline: none; overflow: hidden; white-space: pre-wrap;
+  overflow-wrap: anywhere; box-shadow: var(--shadow); user-select: text; -webkit-user-select: text; cursor: text;
+}
+.xl-input--idle { opacity: 0; pointer-events: none; border-color: transparent; box-shadow: none; caret-color: transparent; }
+.xl-foot { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 4px; border-top: 1px solid var(--border); background: var(--bg-elevated); flex-shrink: 0; }
+.xl-tabs { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.xl-tabs::-webkit-scrollbar { display: none; }
+.xl-tab {
+  flex-shrink: 0; padding: 4px 12px; border: none; border-radius: 5px; background: none; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+  font-size: 12.5px;
+}
+.xl-tab:hover { background: var(--bg-hover); color: var(--text); }
+.xl-tab--on { background: var(--bg); color: var(--text-strong); box-shadow: inset 0 -2px 0 var(--accent); }
+.xl-tab-add { display: inline-flex; align-items: center; padding: 5px 8px; }
+.xl-tab-input {
+  width: 130px; flex-shrink: 0; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 5px; background: var(--input-bg); color: var(--text-strong);
+  font: inherit; font-size: 12.5px; outline: none;
+}
+.xl-status { flex-shrink: 1; min-width: 0; padding-right: 6px; overflow: hidden; color: var(--text-muted); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.xl-pop { max-height: min(70vh, 480px); overflow-y: auto; }
+.xl-menu { min-width: 240px; }
+.xl-menu-icon { display: inline-flex; width: 15px; flex-shrink: 0; }
+.xl-menu-label { flex: 1; }
+.xl-menu-keys { margin-left: 16px; color: var(--text-faint); font-family: inherit; font-size: 12px; }
+.xl-format-sample { margin-left: 16px; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.xl-colors { min-width: 0; }
+.xl-color-auto { justify-content: center; }
+.xl-palette { display: grid; grid-template-columns: repeat(12, 22px); gap: 4px; padding: 4px 6px 6px; }
+.nb-menu .xl-swatch { width: 22px; height: 22px; padding: 0; border: 1px solid var(--border-strong); border-radius: 4px; cursor: pointer; }
+.nb-menu .xl-swatch:hover { transform: scale(1.12); }
+.nb-menu .xl-swatch--on { box-shadow: 0 0 0 2px var(--accent); }
+.xl-ac { min-width: 180px; max-height: 260px; overflow-y: auto; }
+.xl-ac button { padding: 5px 10px; font-size: 13px; font-family: inherit; }
+.nb-menu .xl-ac--on { background: var(--accent-soft); color: var(--text-strong); }
+.xl-fullnote {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius);
+  color: var(--text-muted); font-size: 13px;
+}
+.xl-fullnote .nb-btn { margin-left: auto; }
+.xl-overlay {
+  position: fixed; inset: 0; z-index: 980; display: flex; background: var(--bg);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+.xl-overlay .xl { flex: 1; border: none; border-radius: 0; }
+.xl-overlay .xl-scroll { flex: 1; min-height: 0; }
+@media (pointer: coarse) {
+  .xl-handle { width: 18px; height: 18px; margin: -5px 0 0 -5px; border-radius: 50%; border-width: 3px; }
+  .xl-rsz-x { right: -6px; width: 13px; }
+  .xl-rsz-y { bottom: -6px; height: 13px; }
+  .xl-tb { min-width: 34px; height: 34px; }
+}

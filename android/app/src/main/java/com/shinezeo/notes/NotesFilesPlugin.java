@@ -233,7 +233,7 @@ public class NotesFilesPlugin extends Plugin {
         }
     }
 
-    // ---------- Export : enregistrer ou partager le PDF fabriqué par la page ----------
+    // ---------- Export : enregistrer ou partager le fichier fabriqué par la page (PDF, tableur) ----------
 
     private File exportFile(String id) throws IOException {
         if (id == null || !id.matches("[0-9a-f-]{36}")) throw new IOException("Export inconnu.");
@@ -362,7 +362,12 @@ public class NotesFilesPlugin extends Plugin {
     }
 
     private static String mimeOf(File file) {
-        return file.getName().toLowerCase(Locale.ROOT).endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".pdf")) return "application/pdf";
+        // Tableur exporté (bloc « Tableur » des notes).
+        if (name.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        if (name.endsWith(".csv")) return "text/csv";
+        return "application/octet-stream";
     }
 
     /** Supprime les exports plus anciens que `maxAge` (0 : tous). */

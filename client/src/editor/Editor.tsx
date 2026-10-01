@@ -18,7 +18,7 @@ import { en, fr } from '@blocknote/core/locales';
 import type { DocHandle } from '../lib/yjs';
 import { getSettings, useSettings } from '../lib/settings';
 import { schema } from './schema';
-import { useAppCtx } from './context';
+import { PageDocContext, useAppCtx } from './context';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { MediaWidthSelect, NotesDragHandleMenu, TextSizeSelect } from './SizeControls';
@@ -110,6 +110,31 @@ export function Editor({ handle, editable }: Props) {
     const defaults = getDefaultReactSlashMenuItems(editor).map((item) =>
       item.title === DICTIONARY.slash_menu.image.title ? { ...item, aliases: [...(item.aliases ?? []), 'gif', 'giphy'] } : item,
     );
+    // Tableur (façon Excel) juste avant le tableau simple : « /tableau » le propose en premier.
+    const sheetItem: DefaultReactSuggestionItem = {
+      title: t('Tableur'),
+      subtext: t('Feuille de calcul façon Excel : formules, import et export .xlsx'),
+      aliases: [
+        'tableau',
+        'tableur',
+        'excel',
+        'xlsx',
+        'csv',
+        'feuille de calcul',
+        'calcul',
+        'formule',
+        'spreadsheet',
+        'sheet',
+        'calc',
+        'formula',
+        'table',
+      ],
+      group: DICTIONARY.slash_menu.table.group,
+      icon: <SlashIcon name="table" />,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'spreadsheet' }),
+    };
+    const tableAt = defaults.findIndex((item) => item.title === DICTIONARY.slash_menu.table.title);
+    defaults.splice(tableAt < 0 ? defaults.length : tableAt, 0, sheetItem);
     const pageItems: DefaultReactSuggestionItem[] = [];
     if (ctx.createSubpage) {
       pageItems.push({
@@ -240,11 +265,21 @@ export function Editor({ handle, editable }: Props) {
 
   return (
     <ImageCropContext.Provider value={setImageCrop}>
-      <BlockNoteView editor={editor} theme={themeBase} editable={editable} slashMenu={false} formattingToolbar={false} sideMenu={false} className="nb-editor">
-        <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
-        <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
-        <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />
-      </BlockNoteView>
+      <PageDocContext.Provider value={handle.doc}>
+        <BlockNoteView
+          editor={editor}
+          theme={themeBase}
+          editable={editable}
+          slashMenu={false}
+          formattingToolbar={false}
+          sideMenu={false}
+          className="nb-editor"
+        >
+          <SuggestionMenuController triggerCharacter="/" getItems={getItems} />
+          <FormattingToolbarController formattingToolbar={NotesFormattingToolbar} />
+          <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={NotesDragHandleMenu} />} />
+        </BlockNoteView>
+      </PageDocContext.Provider>
       {imageCrop ? <NoteImageCrop editor={editor} req={imageCrop} upload={ctx.uploadFile} onClose={() => setImageCrop(null)} /> : null}
     </ImageCropContext.Provider>
   );
