@@ -13,6 +13,7 @@ Tout ce que fait Melo, section par section. Pour une présentation rapide, voir 
 - [Maison connectée](#maison-connectée)
 - [Caméras de surveillance](#caméras-de-surveillance)
 - [Homelab](#homelab)
+- [Allumer un ordinateur](#allumer-un-ordinateur)
 - [Atelier PDF](#atelier-pdf)
 
 ## Installer Melo
@@ -86,7 +87,7 @@ L’accueil s’ouvre au démarrage. Un **accueil de départ** est proposé (hor
 
 Chaque taille d’écran a sa disposition : la première fois, celle de l’ordinateur est adaptée (un widget par ligne sur téléphone), puis vos changements sur ce type d’écran sont gardés. L’accueil est le même sur tous vos appareils, et le contenu des widgets (note rapide, tâches) est synchronisé en direct.
 
-Widgets : **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Météo** (Open-Meteo, gratuit et sans compte : l’appareil interroge directement open-meteo.com), **Agenda** (prochains événements ou mois), **Tâches**, **Recherche** (Google, DuckDuckGo, Qwant, Bing, Ecosia, Wikipédia, YouTube ou vos notes), **Note rapide** (couleur de post-it), **Page de notes** (une page modifiable sur l’accueil), **Pages** (récentes ou principales), **Caméras**, **Maison**, **Homelab**, **Raccourcis** (sites et pages de notes), **Image** (recadrée au format du widget), **Site web** (les tableaux de bord de votre réseau s’affichent en général, et un lien de vidéo YouTube ou Vimeo devient un lecteur ; les sites qui refusent de s’afficher dans une autre application, comme Google, sont proposés en **Ouvrir le site**. L’application pour Windows affiche tous les sites, y compris en http).
+Widgets : **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Météo** (Open-Meteo, gratuit et sans compte : l’appareil interroge directement open-meteo.com), **Agenda** (prochains événements ou mois), **Tâches**, **Recherche** (Google, DuckDuckGo, Qwant, Bing, Ecosia, Wikipédia, YouTube ou vos notes), **Note rapide** (couleur de post-it), **Page de notes** (une page modifiable sur l’accueil), **Pages** (récentes ou principales), **Caméras**, **Maison**, **Homelab**, **Allumer un PC** (voir [Allumer un ordinateur](#allumer-un-ordinateur)), **Raccourcis** (sites et pages de notes), **Image** (recadrée au format du widget), **Site web** (les tableaux de bord de votre réseau s’affichent en général, et un lien de vidéo YouTube ou Vimeo devient un lecteur ; les sites qui refusent de s’afficher dans une autre application, comme Google, sont proposés en **Ouvrir le site**. L’application pour Windows affiche tous les sites, y compris en http).
 
 ## Personnaliser
 
@@ -188,6 +189,32 @@ Section **Homelab** → **Configurer** :
 - **Applications** : « Ajouter la stack » pré-remplit Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr et qBittorrent avec leurs ports par défaut à partir de l’adresse de votre serveur ; renseignez ensuite la clé API (ou les identifiants) de chacune pour obtenir les statistiques (file d’attente, éléments manquants, lectures en cours, demandes en attente, vitesses de téléchargement, requêtes bloquées, conteneurs actifs…). Sans clé, seule la disponibilité (en ligne / hors ligne, latence) est vérifiée. L’« URL interne » permet d’indiquer une adresse Docker (ex. `http://sonarr:8989`) différente de l’URL ouverte au clic.
 - **Appareils** : *Hôte de ce serveur Melo* (aucune configuration ; en Docker, montez les volumes à surveiller et listez leurs points de montage), *Glances* (`glances -w` ou l’image Docker `nicolargo/glances`, port 61208 : le plus simple pour un NAS ou un serveur Linux), *Proxmox VE* (jeton API), *Synology DSM* (compte sans 2FA), *TrueNAS* (clé API).
 - Le bouton **Tester** de chaque formulaire valide la connexion depuis le serveur. Toutes les requêtes sont faites par le serveur Melo (accès au réseau local sans CORS) ; les secrets ne sont jamais renvoyés au navigateur. L’actualisation est automatique (30 s par défaut).
+
+## Allumer un ordinateur
+
+Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à distance un ordinateur de la maison, depuis le téléphone ou de n’importe où : le serveur Melo envoie sur son réseau le signal de réveil (Wake-on-LAN) que la carte réseau de l’ordinateur guette, même éteint. Le widget montre aussi si l’ordinateur est allumé : après un appui sur le bouton, il suit le démarrage (« Démarrage… 0:42 ») jusqu’à **Allumé**.
+
+**Choisir l’ordinateur** :
+
+1. Allumez l’ordinateur, branché à la même box que le serveur Melo.
+2. Ajoutez le widget (bouton **+** en bas à droite de l’accueil → **Allumer un PC**), puis **Chercher sur le réseau** : les appareils allumés s’affichent, avec leur nom quand il est connu. *Cet appareil* désigne celui sur lequel vous faites la recherche ; la box est à la fin. Choisissez l’ordinateur : son adresse MAC (celle de sa carte réseau) et son adresse IP se remplissent.
+3. Absent de la liste ? Saisissez son adresse MAC : sous Windows, **Paramètres → Réseau et Internet → Ethernet** → *Adresse physique (MAC)*, ou `ipconfig /all` dans l’invite de commandes. L’adresse IP (facultative) sert à savoir s’il est allumé.
+4. **Titre** (en bas des réglages) : le nom affiché dans le widget, par exemple « PC du bureau ».
+
+**Préparer l’ordinateur** (une seule fois ; rappelé dans les réglages du widget) :
+
+1. Branchez-le par un câble réseau : le réveil par Wi-Fi ne marche presque jamais.
+2. Dans le BIOS (touche Suppr ou F2 au démarrage), activez *Wake on LAN* (parfois *Power On by PCI-E*, *Resume by LAN* ou *Remote Wake Up*) et désactivez *ErP* (ou *Deep Sleep*) s’il existe : il coupe la carte réseau quand l’ordinateur est éteint.
+3. Sous Windows, **Gestionnaire de périphériques → Cartes réseau →** votre carte Ethernet **→ Propriétés** : onglet *Gestion de l’alimentation*, cochez *Autoriser ce périphérique à sortir l’ordinateur du mode veille* ; onglet *Avancé*, mettez *Wake on Magic Packet* sur *Activé*.
+4. Désactivez le démarrage rapide de Windows : **Panneau de configuration → Options d’alimentation → Choisir l’action des boutons d’alimentation → Modifier des paramètres actuellement non disponibles**, puis décochez *Activer le démarrage rapide*. Avec lui, l’ordinateur ne s’éteint pas tout à fait et ne se réveille souvent pas.
+5. Éteignez-le normalement (**Démarrer → Arrêter**) et essayez le bouton du widget. Le réveil marche aussi depuis la mise en veille.
+
+**Bon à savoir** :
+
+- Le serveur Melo, qui envoie le signal, doit rester allumé sur le même réseau que l’ordinateur. Avec l’application Windows (serveur intégré), c’est l’ordinateur où elle tourne qui envoie le signal : il ne peut pas se réveiller lui-même.
+- L’état vient de la carte réseau de l’ordinateur, qui répond même pare-feu fermé. Si la box donne son adresse IP à un autre appareil, le widget l’indique : choisissez de nouveau l’ordinateur dans les réglages, ou réservez-lui son adresse dans la box (bail DHCP fixe).
+- Serveur installé avec Docker : le signal part d’un petit relais réseau installé avec Melo (voir [INSTALLATION.md](../INSTALLATION.md#allumer-un-ordinateur-wake-on-lan)). Le widget prévient s’il ne répond pas.
+- Les personnes invitées sur votre serveur n’ont pas ce widget : il se sert de votre réseau.
 
 ## Atelier PDF
 

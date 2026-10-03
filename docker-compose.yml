@@ -12,11 +12,28 @@ services:
       # 1 = seul votre espace peut exister sur ce serveur (recommandé s'il est accessible depuis Internet)
       - MAX_WORKSPACES=${MAX_WORKSPACES:-1}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
+      # Widget « Allumer un PC » : passe par le relais réseau (service wol ci-dessous)
+      - WOL_RELAY=/run/melo-wol/relay.sock
     volumes:
       # Toutes les données (pages, fichiers importés, liens de partage) : dossier ./data à sauvegarder
       - ./data:/data
+      - wol-relay:/run/melo-wol
       # Tableau de bord homelab : montez ici en lecture seule les disques à surveiller, par exemple :
       # - /mnt/media:/mnt/media:ro
+    restart: unless-stopped
+
+  # Relais réseau du widget « Allumer un PC » (Wake-on-LAN) : depuis le réseau Docker du serveur, le signal de réveil
+  # n'atteint pas le réseau de la maison. Ce petit service tourne sur le réseau de la machine (network_mode: host),
+  # sans port ouvert ni accès aux données : il ne parle qu'au serveur, par un fichier partagé (volume wol-relay).
+  wol:
+    build: .
+    command: ['node', 'server/src/wol-relay.js']
+    network_mode: host
+    cap_add: [NET_RAW]
+    environment:
+      - WOL_RELAY=/run/melo-wol/relay.sock
+    volumes:
+      - wol-relay:/run/melo-wol
     restart: unless-stopped
 
   # Option A – Cloudflare Tunnel : docker compose --profile tunnel up -d
@@ -48,3 +65,4 @@ services:
 volumes:
   caddy-data:
   caddy-config:
+  wol-relay:

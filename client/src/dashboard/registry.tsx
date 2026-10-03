@@ -14,6 +14,7 @@ import { CamerasSettings, CamerasWidget, HomelabWidget, SmartHomeSettings, Smart
 import { LinksSettings, LinksWidget } from './widgets/Links';
 import { ImageSettings, ImageWidget, WebSettings, WebWidget } from './widgets/Media';
 import { SearchSettings, SearchWidget } from './widgets/Search';
+import { WolSettings, WolWidget } from './widgets/Wol';
 import { t } from '../lib/i18n';
 
 export type WidgetDef = {
@@ -139,6 +140,16 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     showTitle: true,
     group: 'Maison',
     Body: HomelabWidget,
+  },
+  wol: {
+    label: t('Allumer un PC'),
+    icon: 'power',
+    description: t('Allume un ordinateur à distance (Wake-on-LAN) et montre s’il est allumé.'),
+    showTitle: false,
+    group: 'Maison',
+    Body: WolWidget,
+    Settings: WolSettings,
+    setupFirst: true,
   },
   links: {
     label: t('Raccourcis'),

@@ -172,6 +172,16 @@ export const EN_SERVER: Record<string, string> = {
   'Lecture de l’image impossible.': 'Could not read the image.',
   'Indiquez l’adresse IP de la caméra.': 'Enter the camera’s IP address.',
   'Indiquez l’adresse du flux (rtsp://…).': 'Enter the stream address (rtsp://…).',
+
+  // wol.js, wol-relay.js : allumer un ordinateur à distance (Wake-on-LAN)
+  'Adresse MAC invalide.': 'Invalid MAC address.',
+  'Adresse IP ou nom invalide.': 'Invalid IP address or name.',
+  'Nom introuvable sur le réseau.': 'Name not found on the network.',
+  'Adresse de diffusion introuvable.': 'Broadcast address not found.',
+  'Envoi du signal impossible : aucun réseau disponible.': 'Could not send the signal: no network available.',
+  'Réponse invalide du relais réseau.': 'Invalid response from the network relay.',
+  'Erreur du relais réseau.': 'Network relay error.',
+  'Action impossible sur le réseau local.': 'Could not do this on the local network.',
 };
 
 /** Définition d'un flux vidéo dans un message du serveur (« 1920 × 1080 (H.264) », « définition inconnue »). */

@@ -20,7 +20,8 @@ export type WidgetType =
   | 'links'
   | 'image'
   | 'web'
-  | 'search';
+  | 'search'
+  | 'wol';
 
 export type Widget = {
   id: string;
@@ -60,6 +61,7 @@ export const SIZES: Record<WidgetType, { w: number; h: number; minW: number; min
   image: { w: 4, h: 5, minW: 1, minH: 2 },
   web: { w: 6, h: 9, minW: 2, minH: 3 },
   search: { w: 6, h: 2, minW: 2, minH: 2 },
+  wol: { w: 4, h: 3, minW: 2, minH: 2 },
 };
 
 /** Texte d'une note rapide et tâches d'une liste (un type Yjs par widget). */

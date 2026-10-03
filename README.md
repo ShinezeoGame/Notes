@@ -41,7 +41,7 @@ Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agen
 
 ## 💡 La maison sous la main
 
-Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, suivez vos caméras en direct et l’état de votre serveur maison.
+Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, votre PC à distance, et suivez vos caméras en direct et l’état de votre serveur maison.
 
 <img src="docs/captures/maison.webp" width="100%" alt="Les objets connectés : groupe « Lumières du salon », chauffage, volet, enceinte, porte d’entrée, sur l’ordinateur et sur le téléphone">
 

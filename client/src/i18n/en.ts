@@ -1738,6 +1738,53 @@ const UI: Record<string, string> = {
   'Nombre incorrect ou hors limites.': 'Invalid or out-of-range number.',
   'Ces plages n’ont aucune cellule en commun.': 'These ranges have no cell in common.',
   'Formule incorrecte.': 'Invalid formula.',
+
+  // dashboard/widgets/Wol.tsx, lib/wol.ts : widget « Allumer un PC » (Wake-on-LAN)
+  'Allumer un PC': 'Wake a PC',
+  'Allume un ordinateur à distance (Wake-on-LAN) et montre s’il est allumé.': 'Turns on a computer remotely (Wake-on-LAN) and shows whether it is on.',
+  'Ordinateur': 'Computer',
+  'Choisir l’ordinateur': 'Choose the computer',
+  'Envoi du signal…': 'Sending the signal…',
+  'Démarrage… {time}': 'Starting… {time}',
+  'Signal envoyé': 'Signal sent',
+  'Ne s’est pas allumé': 'Did not turn on',
+  'Adresse IP prise par un autre appareil': 'IP address taken by another device',
+  'Vérification…': 'Checking…',
+  'Toujours éteint après 3 minutes : vérifiez la préparation de l’ordinateur (réglages du widget).':
+    'Still off after 3 minutes: check how the computer is set up (widget settings).',
+  'Choisissez de nouveau l’ordinateur dans les réglages du widget.': 'Choose the computer again in the widget settings.',
+  'Allumer {name}': 'Turn on {name}',
+  'Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Melo.':
+    'No device found: check that the computer is on and connected to the same network as the Melo server.',
+  'Cet appareil': 'This device',
+  'Box': 'Router',
+  'Ordinateur à allumer': 'Computer to turn on',
+  'Le serveur Melo envoie le signal de réveil sur son réseau : l’ordinateur doit y être branché. Allumez-le, puis cherchez-le ici.':
+    'The Melo server sends the wake-up signal on its network: the computer must be connected to it. Turn it on, then look for it here.',
+  'Chercher de nouveau': 'Search again',
+  'Chercher sur le réseau': 'Search the network',
+  'Adresse MAC (adresse physique)': 'MAC address (physical address)',
+  'Adresse MAC invalide : six paires de caractères, par exemple 1C:69:7A:0B:2E:4F.': 'Invalid MAC address: six pairs of characters, for example 1C:69:7A:0B:2E:4F.',
+  'Adresse IP ou nom (pour savoir s’il est allumé)': 'IP address or name (to know whether it is on)',
+  'Adresse IP ou nom invalide.': 'Invalid IP address or name.',
+  'Préparer l’ordinateur (une seule fois)': 'Set up the computer (only once)',
+  'Reliez-le à la box par un câble réseau : le réveil par Wi-Fi ne marche presque jamais.':
+    'Connect it to the router with a network cable: waking over Wi-Fi almost never works.',
+  'Dans le BIOS (touche Suppr ou F2 au démarrage), activez « Wake on LAN » (parfois « Power On by PCI-E » ou « Resume by LAN ») et désactivez « ErP » s’il existe.':
+    'In the BIOS (Delete or F2 key at startup), enable “Wake on LAN” (sometimes “Power On by PCI-E” or “Resume by LAN”) and disable “ErP” if it exists.',
+  'Sous Windows, Gestionnaire de périphériques › Cartes réseau › votre carte › Propriétés : onglet Gestion de l’alimentation, cochez « Autoriser ce périphérique à sortir l’ordinateur du mode veille » ; onglet Avancé, activez « Wake on Magic Packet ».':
+    'In Windows, Device Manager › Network adapters › your adapter › Properties: on the Power Management tab, check “Allow this device to wake the computer”; on the Advanced tab, enable “Wake on Magic Packet”.',
+  'Désactivez le démarrage rapide de Windows : Panneau de configuration › Options d’alimentation › Choisir l’action des boutons d’alimentation › Modifier des paramètres actuellement non disponibles, puis décochez « Activer le démarrage rapide ».':
+    'Turn off Windows fast startup: Control Panel › Power Options › Choose what the power buttons do › Change settings that are currently unavailable, then uncheck “Turn on fast startup”.',
+  'Éteignez l’ordinateur normalement (Démarrer › Arrêter), puis essayez le bouton du widget.': 'Shut the computer down normally (Start › Shut down), then try the widget’s button.',
+  'Options avancées': 'Advanced options',
+  'Adresse de diffusion (facultatif)': 'Broadcast address (optional)',
+  'Seulement si l’ordinateur est sur un autre réseau que le serveur Melo : le signal y est aussi envoyé.':
+    'Only if the computer is on a different network from the Melo server: the signal is sent there too.',
+  'Le relais réseau du serveur Melo ne répond pas : le signal risque de ne pas atteindre l’ordinateur.':
+    'The Melo server’s network relay is not responding: the signal may not reach the computer.',
+  'Le serveur Melo tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.':
+    'The Melo server runs in Docker without its network relay: the signal may not reach the computer.',
 };
 
 export const EN: Record<string, string> = { ...EN_SERVER, ...UI };

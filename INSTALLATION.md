@@ -237,6 +237,21 @@ La section **Objets connectés** (groupe Maison) pilote vos lumières, prises, v
 
 La section **Caméras** se connecte directement à vos caméras IP et enregistreurs (flux RTSP, images ou flux MJPEG) : rien à installer, le lecteur vidéo (ffmpeg) est inclus dans l’image Docker de Melo. Les caméras doivent être joignables depuis le serveur (même réseau local) : donnez‑leur une adresse IP fixe dans votre box (réservation DHCP), puis ajoutez‑les dans Melo → **Caméras** → **Ajouter une caméra** et cliquez sur **Tester**. Sans Docker, installez ffmpeg sur le serveur (`sudo apt install ffmpeg`).
 
+### Allumer un ordinateur (Wake-on-LAN)
+
+Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ordinateur de votre réseau (réglages de l’ordinateur : voir le [mode d’emploi](docs/GUIDE.md#allumer-un-ordinateur)). Depuis son conteneur, Melo ne peut pas envoyer ce signal à tout le réseau de la box : `docker-compose.yml` lance donc à côté un petit relais, le service `wol`, branché sur le réseau de la machine (`network_mode: host`). Il n’ouvre aucun port et n’a pas accès à vos données : il ne communique qu’avec Melo, par un fichier partagé (volume `wol-relay`). Rien à faire : `docker compose up -d` (et la mise à jour automatique) le démarre, et `docker compose logs wol` affiche « relais réseau du réveil des ordinateurs prêt ».
+
+- Pour ne pas l’utiliser, ajoutez à `docker-compose.override.yml` les lignes ci-dessous, puis lancez `docker compose rm -sf wol` :
+
+  ```yaml
+  services:
+    wol:
+      profiles: [desactive]
+  ```
+
+- Docker Desktop (Windows, Mac) n’a pas d’accès direct au réseau de la box : pour ce widget, préférez l’[application Windows](#installer-melo-sur-windows-ou-mac-linux) sur un ordinateur qui reste allumé.
+- Sans Docker (`npm start`), le serveur envoie le signal lui-même. Pour savoir si un ordinateur Windows est allumé (il ne répond pas au ping), installez `arping` : `sudo apt install iputils-arping`.
+
 ### Mise à jour automatique (recommandé)
 
 Une seule commande, à lancer une fois dans le dossier `Notes` :

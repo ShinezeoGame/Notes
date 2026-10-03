@@ -3,6 +3,7 @@ import { isDesktopLocal } from './desktop';
 import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from './homelab';
 import type { HomeEntity, HomeStates } from './smarthome';
 import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
+import type { WolScan, WolStatus, WolWake } from './wol';
 import { t, tServer } from './i18n';
 
 export class ApiError extends Error {
@@ -117,6 +118,12 @@ export const api = {
   cameras: () => request<CamerasStatus>('/api/cameras', { auth: ownerAuth() }),
   cameraTest: (camera: Camera) =>
     request<CameraTestResult>('/api/cameras/test', { method: 'POST', body: JSON.stringify({ camera }), auth: ownerAuth() }),
+  /** Allumer un ordinateur (Wake-on-LAN) : signal envoyé par le serveur sur son réseau local. */
+  wolWake: (target: { mac: string; host?: string; broadcast?: string }) =>
+    request<WolWake>('/api/wol/wake', { method: 'POST', body: JSON.stringify(target), auth: ownerAuth() }),
+  wolStatus: (target: { host: string; mac?: string }) =>
+    request<WolStatus>(`/api/wol/status?${new URLSearchParams({ host: target.host, ...(target.mac ? { mac: target.mac } : {}) })}`, { auth: ownerAuth() }),
+  wolScan: () => request<WolScan>('/api/wol/scan', { method: 'POST', auth: ownerAuth() }),
   fetchIcs: (url: string, auth: Auth) =>
     request<{ text: string }>('/api/ics/fetch', { method: 'POST', body: JSON.stringify({ url }), auth }),
   deletePdf: (id: string, files: string[]) =>

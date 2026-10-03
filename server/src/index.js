@@ -52,6 +52,7 @@ import { checkDevice, checkService, homelabStatus, parseConfig } from './homelab
 import { createAppUpdates } from './appUpdates.js';
 import { checkFrame } from './frames.js';
 import { claimPairing, startPairing } from './pairing.js';
+import { wolAction } from './wol.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 import {
   cameraKind,
@@ -427,6 +428,40 @@ app.get('/api/cameras/:id/live', async (req, res) => {
   } catch (err) {
     if (!res.headersSent) res.status(err.status || 502).json({ error: err.message || 'Vidéo indisponible.' });
   }
+});
+
+// ---------- Allumer un ordinateur à distance (Wake-on-LAN, widget « Allumer un PC ») ----------
+// Adresses de l'ordinateur prises dans les réglages du widget. Réservé au propriétaire du serveur : le signal part de
+// son réseau. Dans Docker, le relais réseau fait le travail (voir wol.js).
+async function wolRoute(res, name, body) {
+  try {
+    return await wolAction(name, body);
+  } catch (err) {
+    if (!err.status) console.error('[wol]', err);
+    res.status(err.status || 500).json({ error: err.status ? err.message : 'Action impossible sur le réseau local.' });
+    return null;
+  }
+}
+const asText = (v) => (typeof v === 'string' ? v.slice(0, 260) : undefined);
+
+app.post('/api/wol/wake', requireOwner, requireHost, async (req, res) => {
+  const { mac, host, broadcast } = req.body || {};
+  const data = await wolRoute(res, 'wake', { mac: asText(mac), host: asText(host), broadcast: asText(broadcast) });
+  if (data) res.json(data);
+});
+
+app.get('/api/wol/status', requireOwner, requireHost, async (req, res) => {
+  const { host, port, mac } = req.query;
+  const data = await wolRoute(res, 'status', { host: asText(host), port: Number(port) || undefined, mac: asText(mac) });
+  if (data) res.json(data);
+});
+
+app.post('/api/wol/scan', requireOwner, requireHost, async (req, res) => {
+  const data = await wolRoute(res, 'scan', {});
+  if (!data) return;
+  // L'appareil qui fait la recherche (l'ordinateur à régler, souvent) : signalé dans la liste.
+  const you = String(req.ip || '').replace(/^::ffff:/, '');
+  res.json({ ...data, devices: data.devices.map((d) => (d.ip === you ? { ...d, you: true } : d)) });
 });
 
 // Récupération d'un flux iCal (Google Agenda "adresse secrète") côté serveur pour éviter CORS.
