@@ -6,6 +6,7 @@ import type * as Y from 'yjs';
 import { useAppCtx } from '../editor/context';
 import {
   CALENDAR_COLORS,
+  EVENT_REMINDERS,
   addCalendar,
   autoRefreshIcs,
   eventsOnDay,
@@ -27,6 +28,8 @@ import { HOLIDAY_REGIONS, SCHOOL_DATA_UNTIL, SCHOOL_ZONES, type HolidayRegion, t
 import { dayKey, formatDay, formatTimeRange } from '../lib/ics';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
+import { refreshReminders } from '../lib/reminders';
+import { getSettings } from '../lib/settings';
 import { SectionIntro, hideSection } from './SectionIntro';
 import { t, tn, tx, locale } from '../lib/i18n';
 
@@ -67,6 +70,8 @@ export function EventLine({ ev, onDay }: { ev: AgendaEvent; onDay?: string }) {
 
 function CalendarRow({ cal, busy, onRefresh, doc }: { cal: AgendaCalendar; busy: boolean; onRefresh: () => void; doc: Y.Doc }) {
   const [colors, setColors] = useState(false);
+  const [remindOpen, setRemindOpen] = useState(false);
+  const remind = EVENT_REMINDERS.find((r) => r.id === (cal.remind ?? '')) ?? EVENT_REMINDERS[0];
   const set = (patch: Partial<AgendaCalendar>) => updateCalendars(doc, (list) => list.map((c) => (c.id === cal.id ? { ...c, ...patch } : c)));
   return (
     <div className={`ag-cal${cal.enabled ? '' : ' ag-cal--off'}`}>
@@ -80,6 +85,15 @@ function CalendarRow({ cal, busy, onRefresh, doc }: { cal: AgendaCalendar; busy:
       <span className="ag-cal-name" title={cal.name}>
         {cal.name}
       </span>
+      <button
+        type="button"
+        className={`nb-icon-btn nb-icon-btn--sm${remind.id ? ' ag-cal-bell--on' : ''}`}
+        onClick={() => setRemindOpen((v) => !v)}
+        title={remind.id ? t('Rappel : {when}', { when: remind.label }) : t('Rappel des événements')}
+        aria-expanded={remindOpen}
+      >
+        <Icon name="bell" size={15} />
+      </button>
       <button
         type="button"
         className="nb-icon-btn nb-icon-btn--sm"
@@ -120,6 +134,29 @@ function CalendarRow({ cal, busy, onRefresh, doc }: { cal: AgendaCalendar; busy:
               aria-label={c}
             />
           ))}
+        </div>
+      ) : null}
+      {remindOpen ? (
+        <div className="ag-cal-remind">
+          <select
+            className="nb-input"
+            value={remind.id}
+            aria-label={t('Rappel des événements de {name}', { name: cal.name })}
+            onChange={(e) => {
+              set({ remind: e.target.value });
+              refreshReminders();
+              setRemindOpen(false);
+            }}
+          >
+            {EVENT_REMINDERS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          <p className="nb-muted">
+            {t('Journée entière : à 9 h.')} {getSettings().reminders ? null : t('Activez les rappels sur cet appareil : Réglages → Rappels.')}
+          </p>
         </div>
       ) : null}
     </div>

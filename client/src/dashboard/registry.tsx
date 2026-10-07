@@ -17,6 +17,7 @@ import { ImageSettings, ImageWidget, WebSettings, WebWidget } from './widgets/Me
 import { SearchSettings, SearchWidget } from './widgets/Search';
 import { WolSettings, WolWidget } from './widgets/Wol';
 import { WifiSettings, WifiWidget } from './widgets/Wifi';
+import { PapersWidget } from './widgets/Papers';
 import { t } from '../lib/i18n';
 
 export type WidgetDef = {
@@ -162,6 +163,16 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     Body: WolWidget,
     Settings: WolSettings,
     setupFirst: true,
+    needsServer: true,
+  },
+  papers: {
+    label: t('Papiers à renouveler'),
+    icon: 'papers',
+    description: t('Passeport, contrôle technique, assurance… : les échéances proches de vos papiers.'),
+    showTitle: true,
+    group: 'Essentiels',
+    Body: PapersWidget,
+    section: 'papers',
     needsServer: true,
   },
   wifi: {

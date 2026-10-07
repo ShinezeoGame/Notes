@@ -12,6 +12,8 @@ Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom
 - [Notes](#notes)
 - [Tableur](#tableur)
 - [Agenda](#agenda)
+- [Papiers](#papiers)
+- [Rappels](#rappels)
 - [Maison connectée](#maison-connectée)
 - [Caméras de surveillance](#caméras-de-surveillance)
 - [Homelab](#homelab)
@@ -153,6 +155,28 @@ Section **Agenda** : vos agendas Google et adresses iCal (Outlook, Apple, école
 - Pour afficher l’agenda Google interactif dans la page, utilisez `/YouTube` (bloc intégration) avec le lien d’intégration fourni par Google Agenda.
 
 Dans une page, les événements s’affichent par jour, avec la mise en avant du jour courant.
+
+**Rappel des événements** : la cloche d’un agenda (colonne *Agendas*) choisit le rappel de ses événements : à l’heure de l’événement, 10 minutes, 30 minutes ou 1 heure avant, ou la veille à 18 h (événements d’une journée entière : à 9 h le jour même). Les rappels arrivent sur les appareils où ils sont activés (voir [Rappels](#rappels)).
+
+## Papiers
+
+Section **Papiers** : vos documents importants, rangés et retrouvés en un instant (même à la mairie ou au garage, depuis le téléphone), avec un rappel avant chaque échéance.
+
+- **Ajouter un papier** : choisissez un modèle (carte d’identité, passeport, permis, carte grise, contrôle technique, assurances, carte Vitale, mutuelle, avis d’impôt, RIB, garantie…) : nom, catégorie et rappels habituels se remplissent. Indiquez à qui il appartient (« Léa », « Clio »…), son numéro si besoin, et sa date d’expiration ou d’échéance.
+- **Photos et PDF** : **Prendre une photo** (téléphone : recto puis verso) ou **Ajouter un fichier** (PDF reçu par e-mail, scan). Les photos sont allégées avant l’envoi. Touchez un fichier pour le voir en grand, l’**Enregistrer** ou le **Partager** (e-mail, WhatsApp…).
+- **Me le rappeler** : 6 mois, 3 mois, 2 mois, 1 mois, 1 semaine avant, ou le jour même, à 9 h (voir [Rappels](#rappels)). Un passeport se renouvelle en plusieurs semaines : prévoyez large.
+- **À renouveler**, en tête de la section : les papiers expirés ou bientôt expirés, du plus urgent au moins urgent. Classement **Par catégorie** ou **Par personne**, et recherche (nom, personne, numéro, notes).
+- Widget **Papiers à renouveler** (catalogue de l’accueil) : les échéances proches, et la suivante quand rien ne presse.
+- **Confidentialité** : les fichiers restent sur votre serveur Ostal, dans un dossier à part, et ne sont envoyés qu’aux appareils de votre espace (jamais par une adresse publique). Ils sont compris dans les [sauvegardes](#sauvegardes).
+
+## Rappels
+
+**Réglages → Rappels → Recevoir les rappels sur cet appareil** : les échéances de vos papiers et les événements de vos agendas (selon la cloche de chaque agenda) arrivent en notification. Le choix se fait appareil par appareil ; **Envoyer un rappel d’essai** vérifie que tout fonctionne.
+
+- **Application Android** : même Ostal fermé (le téléphone programme lui-même ses rappels, à l’heure près). Autorisez les notifications quand Android le demande.
+- **Navigateur** (Chrome, Edge, Firefox, Safari) : même Ostal fermé, envoyés par votre serveur, à condition d’ouvrir Ostal par une adresse sécurisée (`https://`, voir [INSTALLATION.md](../INSTALLATION.md#2-rendre-lapplication-accessible-depuis-internet)). Sur iPhone et iPad : ajoutez d’abord Ostal à l’écran d’accueil (bouton **Partager** → **Sur l’écran d’accueil**), ouvrez-le depuis son icône, puis activez les rappels.
+- **Application Windows** : tant qu’Ostal est ouvert, même réduit.
+- Toucher une notification ouvre Ostal sur le papier concerné, ou sur l’agenda.
 
 ## Maison connectée
 

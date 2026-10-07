@@ -39,6 +39,10 @@ Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agen
 
 <img src="docs/captures/agenda.webp" width="100%" alt="Le mois d’octobre avec les agendas Personnel, Travail et École">
 
+## 🗂️ Vos papiers, et un rappel avant chaque échéance
+
+Carte d’identité, passeport, carte grise, assurances, garanties : photographiez-les, retrouvez-les en un instant, même au guichet. Ostal vous prévient avant qu’ils expirent, et rappelle aussi les événements de vos agendas, sur le téléphone et l’ordinateur. Vos papiers restent sur votre serveur.
+
 ## 💡 La maison sous la main
 
 Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, votre PC à distance, et suivez vos caméras en direct et l’état de votre serveur maison.

@@ -37,10 +37,12 @@ import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, 
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { OstalLogo } from './components/Logo';
+import { startReminders } from './lib/reminders';
 import { t } from './lib/i18n';
 
 // Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
 const PdfApp = lazy(() => import('./pdf/PdfApp'));
+const PapersView = lazy(() => import('./papers/PapersView'));
 
 export default function App() {
   const route = useRoute();
@@ -126,6 +128,7 @@ function sectionOf(route: Route): SectionId {
     case 'trash':
       return 'notes';
     case 'agenda':
+    case 'papers':
     case 'homelab':
     case 'smarthome':
     case 'cameras':
@@ -177,6 +180,10 @@ function OwnerApp() {
   const [preview, setPreview] = useState<Appearance | null>(null);
   const look = preview ?? appearance;
   useEffect(() => applyAppearance(look), [look]);
+  // Rappels de cet appareil (et fuseau horaire de l'espace), une fois l'espace synchronisé.
+  useEffect(() => {
+    if (synced && store) startReminders(store.doc);
+  }, [synced, store]);
 
   useEffect(() => {
     if (!serverBase()) return;
@@ -309,6 +316,12 @@ function OwnerApp() {
   let content;
   if (route.name === 'trash') content = <TrashView store={store} onOpenPage={openPage} />;
   else if (route.name === 'agenda') content = <AgendaView doc={store.doc} />;
+  else if (route.name === 'papers')
+    content = (
+      <Suspense fallback={<div className="nb-center nb-loading">{t('Chargement…')}</div>}>
+        <PapersView doc={store.doc} paperId={route.paperId} />
+      </Suspense>
+    );
   else if (route.name === 'homelab') content = <HomelabSection doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />;
   else if (route.name === 'smarthome') content = <SmartHomeView doc={store.doc} />;
   else if (route.name === 'cameras') content = <CamerasView doc={store.doc} />;

@@ -49,6 +49,14 @@ export const SECTIONS: Record<SectionId, { label: string; short: string; icon: I
     group: 'organize',
     hint: t('Vos agendas Google, Outlook ou iCal réunis'),
   },
+  papers: {
+    label: t('Papiers'),
+    short: t('Papiers'),
+    icon: 'papers',
+    hash: '#/papiers',
+    group: 'organize',
+    hint: t('Vos documents importants et leurs échéances'),
+  },
   smarthome: {
     label: t('Objets connectés'),
     short: t('Maison'),

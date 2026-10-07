@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test de l'APK sur un émulateur Android (lancé par .github/workflows/apps.yml) :
 # installation, liaison à un serveur Ostal, vérification des mises à jour en arrière-plan,
-# notification et mise à jour sans réinstaller. Échoue si l'application se ferme.
+# notification et mise à jour sans réinstaller, fichiers de l'atelier PDF, rappels. Échoue si l'application se ferme.
 # Usage : run.sh <apk> <dossier du client « nouvelle version »>
 set -uo pipefail
 

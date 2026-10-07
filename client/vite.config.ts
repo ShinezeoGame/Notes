@@ -12,7 +12,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
  * se met à utiliser une nouvelle fonction native : une application Android plus ancienne ne téléchargera pas
  * cette version et proposera d'installer le nouvel APK.
  */
-const MIN_NATIVE_API = 1;
+const MIN_NATIVE_API = 2;
 
 /** Empreinte des sources : identique pour un même code, quelle que soit la machine qui construit (serveur, GitHub). */
 function sourceHash(): string {

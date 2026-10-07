@@ -269,6 +269,10 @@ Toutes les 15 minutes, le serveur regarde si une nouvelle version est publiée s
 
 Si une nouvelle version ne se construit pas, l’ancienne continue de fonctionner et le journal indique l’erreur. Ne modifiez pas les fichiers du dépôt sur le serveur : vos réglages vont dans `.env` et `docker-compose.override.yml` (sinon le journal signale une « mise à jour bloquée »).
 
+### Rappels dans le navigateur
+
+Les rappels (échéances des papiers, événements des agendas) arrivent sur l’application Android et l’application Windows sans rien régler. Dans un navigateur (ordinateur, Android, iPhone), ils demandent une adresse sécurisée (`https://`, voir la partie 2) : votre serveur les envoie alors même Ostal fermé, par le service de notifications du navigateur (Google, Mozilla, Apple ou Microsoft, qui ne reçoivent qu’un message chiffré). Le serveur doit pouvoir joindre Internet.
+
 ### Sauvegardes
 
 Ostal sauvegarde tout le serveur (pages, agenda, PDF, papiers, réglages de la maison, espaces des personnes invitées) chaque nuit s’il y a eu des changements, dans le dossier `sauvegardes`, à côté de `data`. Les 7 dernières sont gardées. Dans l’application, **Réglages → Sauvegardes** (propriétaire du serveur) permet d’en faire une tout de suite, de changer le nombre gardé, d’ajouter un mot de passe (archives chiffrées), de télécharger ou de restaurer une sauvegarde.

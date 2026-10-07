@@ -41,6 +41,8 @@ export type BackupStatus = {
   list: BackupEntry[];
 };
 export type RestoreResult = { ok: boolean; gen: string; wsId: string | null };
+/** Rappel calculé par le serveur (server/src/reminders.js). */
+export type Reminder = { key: string; at: number; kind: 'paper' | 'event'; title: string; body: string; url: string };
 
 export function serverBase(): string | null {
   const s = getSettings().serverUrl;
@@ -105,6 +107,16 @@ export const api = {
   backupDelete: (name: string) => request<BackupStatus>(`/api/backup/files/${encodeURIComponent(name)}`, { method: 'DELETE', auth: ownerAuth() }),
   backupRestore: (name: string, password: string) =>
     request<RestoreResult>('/api/backup/restore', { method: 'POST', body: JSON.stringify({ name, password }), auth: ownerAuth() }),
+  reminders: (hours: number, lang: string) =>
+    request<{ now: number; reminders: Reminder[] }>(`/api/reminders?hours=${hours}&lang=${lang}`, { auth: ownerAuth() }),
+  pushKey: () => request<{ key: string }>('/api/push/key'),
+  pushSubscribe: (subscription: PushSubscriptionJSON, lang: string) =>
+    request<{ ok: boolean }>('/api/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription, lang }), auth: ownerAuth() }),
+  pushUnsubscribe: (endpoint: string) =>
+    request<{ ok: boolean }>('/api/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }), auth: ownerAuth() }),
+  pushStatus: (endpoint: string) =>
+    request<{ subscribed: boolean; key: string }>('/api/push/status', { method: 'POST', body: JSON.stringify({ endpoint }), auth: ownerAuth() }),
+  pushTest: (endpoint: string) => request<{ ok: boolean }>('/api/push/test', { method: 'POST', body: JSON.stringify({ endpoint }), auth: ownerAuth() }),
   claim: (wsId: string, key: string) =>
     request<{ ok: boolean; guest?: boolean }>('/api/workspaces/claim', { method: 'POST', body: JSON.stringify({ wsId, key }) }),
   createInvite: (name: string) => request<InviteInfo>('/api/invites', { method: 'POST', body: JSON.stringify({ name }), auth: ownerAuth() }),

@@ -40,6 +40,9 @@ export type Settings = {
   hostName: string;
   /** Nouveau nom de l'application (Melo → Ostal, octobre 2026) déjà annoncé sur cet appareil. */
   knowsNewName: boolean;
+  /** Rappels (papiers, agendas) activés sur cet appareil ; `remindersMode` : moyen retenu (voir lib/reminders.ts). */
+  reminders: boolean;
+  remindersMode: '' | 'native' | 'push' | 'page';
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -95,6 +98,8 @@ function defaults(lang: Lang = 'en'): Settings {
     guest: false,
     hostName: '',
     knowsNewName: true,
+    reminders: false,
+    remindersMode: '',
   };
 }
 

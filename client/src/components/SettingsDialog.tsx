@@ -5,6 +5,7 @@ import { getSettings, isDefaultUserName, isNative, isStandaloneWeb, normalizeSer
 import { canShareLinks } from '../lib/api';
 import { desktop, isDesktopLocal, type DesktopUpdate } from '../lib/desktop';
 import { BackupSection } from './BackupDialog';
+import { RemindersSection } from './RemindersSection';
 import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
@@ -340,6 +341,7 @@ export function SettingsDialog({ onClose, onTour }: Props) {
         </section>
       ) : null}
 
+      <RemindersSection />
       {!settings.guest ? <BackupSection /> : null}
 
       <UpdatesSection />

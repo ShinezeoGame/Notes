@@ -41,6 +41,7 @@ import {
   createPageInWorkspace,
   deleteDoc,
   deleteWorkspaceDocs,
+  docsPaused,
   flushAll,
   getDoc,
   isPageRoom,
@@ -72,6 +73,19 @@ import {
   updateBackupSettings,
 } from './backup.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
+import { paperFile, papersDirFor, paperType, removeAllPapers } from './papers.js';
+import { workspaceReminders } from './reminders.js';
+import {
+  PushError,
+  addSubscription,
+  findSubscription,
+  reloadPush,
+  removeSubscription,
+  removeWorkspacePush,
+  sendPush,
+  startPushSchedule,
+  vapidPublicKey,
+} from './push.js';
 import {
   cameraKind,
   cameraLink,
@@ -207,6 +221,8 @@ app.delete('/api/guests/:wsId', requireOwner, requireHost, async (req, res) => {
   try {
     await deleteWorkspaceDocs(wsId);
     await removeAllUploads(wsId);
+    await removeAllPapers(wsId);
+    removeWorkspacePush(wsId);
   } catch (err) {
     console.error('[invitations] suppression incomplète de', wsId, err);
   }
@@ -263,6 +279,127 @@ app.post('/api/upload', requireEditor, (req, res) => {
   });
 });
 
+// ---------- Papiers de la maison ----------
+// Fichiers servis seulement aux appareils de l'espace (clé exigée), jamais par une adresse publique (voir papers.js).
+
+const paperUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, cb) => cb(null, papersDirFor(req.wsId)),
+    filename: (_req, file, cb) => cb(null, safeUploadName(file.originalname)),
+  }),
+  limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
+});
+
+app.post('/api/papers/files', requireOwner, (req, res) => {
+  paperUpload.single('file')(req, res, (err) => {
+    if (err) {
+      const tooBig = err.code === 'LIMIT_FILE_SIZE';
+      return res.status(tooBig ? 413 : 400).json({
+        error: tooBig ? `Fichier trop volumineux (max ${MAX_UPLOAD_MB} Mo).` : 'Téléversement impossible.',
+      });
+    }
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu.' });
+    res.json({ name: req.file.filename, size: req.file.size, type: paperType(req.file.filename) });
+  });
+});
+
+app.get('/api/papers/files/:name', requireOwner, (req, res) => {
+  const file = paperFile(req.wsId, req.params.name);
+  if (!file || !fs.existsSync(file)) return res.status(404).json({ error: 'Fichier introuvable.' });
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+  res.type(paperType(file));
+  res.sendFile(file);
+});
+
+app.delete('/api/papers/files/:name', requireOwner, async (req, res) => {
+  const file = paperFile(req.wsId, req.params.name);
+  if (!file) return res.status(404).json({ error: 'Fichier introuvable.' });
+  await fs.promises.unlink(file).catch(() => {});
+  res.json({ ok: true });
+});
+
+// ---------- Rappels ----------
+// Échéances des papiers et événements des agendas (reminders.js) : liste des prochains rappels pour les appareils qui
+// les programment eux-mêmes (application Android, page ouverte), notifications push pour les navigateurs abonnés.
+
+const reminderLang = (v) => (v === 'en' ? 'en' : 'fr');
+
+app.get('/api/reminders', requireOwner, async (req, res) => {
+  try {
+    const hours = Math.min(Math.max(Number(req.query.hours) || 48, 1), 72);
+    const now = Date.now();
+    const reminders = await workspaceReminders(req.wsId, now, now + hours * 3_600_000, reminderLang(req.query.lang));
+    res.json({ now, reminders });
+  } catch (err) {
+    console.error('[rappels]', err);
+    res.status(500).json({ error: 'Rappels illisibles.' });
+  }
+});
+
+app.get('/api/push/key', (_req, res) => res.json({ key: vapidPublicKey() }));
+
+function pushRoute(fn) {
+  return async (req, res) => {
+    try {
+      await fn(req, res);
+    } catch (err) {
+      if (err instanceof PushError) return res.status(400).json({ error: err.message });
+      console.error('[push]', err);
+      res.status(500).json({ error: 'Opération impossible.' });
+    }
+  };
+}
+
+app.post(
+  '/api/push/subscribe',
+  requireOwner,
+  pushRoute(async (req, res) => {
+    addSubscription(req.wsId, req.body?.subscription, reminderLang(req.body?.lang));
+    res.json({ ok: true });
+  }),
+);
+
+app.post(
+  '/api/push/unsubscribe',
+  requireOwner,
+  pushRoute(async (req, res) => {
+    removeSubscription(req.wsId, String(req.body?.endpoint || ''));
+    res.json({ ok: true });
+  }),
+);
+
+app.post(
+  '/api/push/status',
+  requireOwner,
+  pushRoute(async (req, res) =>
+    res.json({ subscribed: Boolean(findSubscription(req.wsId, String(req.body?.endpoint || ''))), key: vapidPublicKey() }),
+  ),
+);
+
+// Notification d'essai vers cet appareil seulement.
+app.post(
+  '/api/push/test',
+  requireOwner,
+  pushRoute(async (req, res) => {
+    const sub = findSubscription(req.wsId, String(req.body?.endpoint || ''));
+    if (!sub) return res.status(404).json({ error: 'Cet appareil n’est pas abonné aux rappels.' });
+    const en = sub.lang === 'en';
+    const result = await sendPush(sub, {
+      title: en ? 'Ostal reminders' : 'Rappels d’Ostal',
+      body: en ? 'Reminders work on this device.' : 'Les rappels fonctionnent sur cet appareil.',
+      url: '#/',
+      tag: 'test',
+    });
+    if (result === 'gone') removeSubscription(req.wsId, sub.endpoint);
+    if (result !== 'ok') {
+      return res.status(result === 'gone' ? 404 : 502).json({
+        error: result === 'gone' ? 'Cet appareil n’est plus abonné aux rappels.' : 'Notification refusée par le service du navigateur.',
+      });
+    }
+    res.json({ ok: true });
+  }),
+);
+
 app.use(
   '/uploads',
   express.static(UPLOADS_DIR, {
@@ -304,7 +441,10 @@ const restoreHooks = {
     stopCameras();
     await pauseDocs();
   },
-  reload: reloadStore,
+  reload: () => {
+    reloadStore();
+    reloadPush();
+  },
   resume: resumeDocs,
 };
 
@@ -739,6 +879,7 @@ server.on('error', (err) => {
 server.listen(PORT, HOST, () => {
   console.log(`Ostal : serveur démarré sur http://${HOST}:${PORT}`);
   startBackupSchedule(flushAll);
+  startPushSchedule(workspaceReminders, docsPaused);
   process.parentPort?.postMessage({ type: 'ready' });
 });
 

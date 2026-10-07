@@ -28,7 +28,19 @@ export type AgendaCalendar = {
   /** « google:<ids> » (agendas Google choisis) ou adresse iCal. */
   source: string;
   enabled: boolean;
+  /** Rappel des événements (server/src/reminders.js) : minutes avant ('0', '10', '30', '60'), « eve » (la veille à 18 h), ou ''. */
+  remind?: string;
 };
+
+/** Rappels possibles pour les événements d'un agenda. */
+export const EVENT_REMINDERS: { id: string; label: string }[] = [
+  { id: '', label: t('Pas de rappel') },
+  { id: '0', label: t('À l’heure de l’événement') },
+  { id: '10', label: t('10 minutes avant') },
+  { id: '30', label: t('30 minutes avant') },
+  { id: '60', label: t('1 heure avant') },
+  { id: 'eve', label: t('La veille à 18 h') },
+];
 
 /** `kind` : jour férié ou vacances scolaires (ajoutés tout seuls). */
 export type AgendaEvent = CalEvent & { calendarId: string; kind?: 'holiday' | 'school' };

@@ -1,10 +1,13 @@
 // Pilote l'application installée sur l'émulateur par le débogage de sa WebView (APK debug) et vérifie chaque
-// étape sensible côté Android : liaison à un serveur, vérification en arrière-plan, notification, mise à jour.
+// étape sensible côté Android : liaison à un serveur, vérification en arrière-plan, notification, mise à jour,
+// fichiers de l'atelier PDF, rappels programmés par le téléphone.
 // Lancé par run.sh (serveur Ostal du runner joignable depuis l'émulateur en 10.0.2.2:3000).
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import WebSocket from 'ws';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
 
 const PKG = 'com.shinezeo.notes';
 const JOB_ID = '4202';
@@ -425,6 +428,54 @@ try {
     const result = await until('réponse de l’enregistrement', () => js('window.__pdfSave'), 30_000, 1000);
     if (result.saved !== false) throw new Error('réponse inattendue : ' + JSON.stringify(result));
     await assertAlive('après l’annulation de l’enregistrement');
+  });
+
+  // ---------- Rappels : alarme programmée par le téléphone, notification à l'heure (plugin natif Reminders) ----------
+
+  await step('Rappels : événement dans 75 s, notification Android à l’heure, application en arrière-plan', async () => {
+    if (!(await js("(window.Capacitor?.PluginHeaders ?? []).some((h) => h.name === 'Reminders')"))) throw new Error('plugin Reminders absent');
+    const s = await js("JSON.parse(localStorage.getItem('notes.settings.v1'))");
+    // Agenda « Famille » avec rappel à l'heure de l'événement, écrit dans l'espace comme le ferait un autre appareil.
+    const doc = new Y.Doc();
+    const provider = new WebsocketProvider('ws://127.0.0.1:3000/ws', `ws_${s.workspaceId}`, doc, { WebSocketPolyfill: WebSocket, params: { key: s.workspaceKey } });
+    await new Promise((resolve, reject) => {
+      provider.once('sync', resolve);
+      setTimeout(() => reject(new Error('espace non synchronisé')), 30_000);
+    });
+    const start = Date.now() + 75_000;
+    doc.transact(() => {
+      const agenda = doc.getMap('agenda');
+      agenda.set('config', JSON.stringify({ calendars: [{ id: 'famille', name: 'Famille', color: '#2383e2', source: '', enabled: true, remind: '0' }] }));
+      agenda.set(
+        'events:famille',
+        JSON.stringify({
+          events: [{ id: 'ci', title: 'Rappel Ostal CI', start: new Date(start).toISOString(), end: new Date(start + 3_600_000).toISOString(), allDay: false, location: '', description: '', url: '' }],
+          updatedAt: Date.now(),
+        }),
+      );
+    });
+    await sleep(2000);
+    provider.destroy();
+    // Activation comme la page (Réglages → Rappels) ; autorisation de notification accordée d'avance (run.sh).
+    const res = await js(`(async () => {
+      const cap = window.Capacitor;
+      const perm = await cap.nativePromise('Reminders', 'requestPermission');
+      const s = JSON.parse(localStorage.getItem('notes.settings.v1'));
+      const conf = await cap.nativePromise('Reminders', 'configure', { serverUrl: '${SERVER}', wsId: s.workspaceId, key: s.workspaceKey, lang: 'fr', enabled: true });
+      return { perm, conf };
+    })()`);
+    if (!res?.perm?.granted) throw new Error('notifications non autorisées : ' + JSON.stringify(res));
+    await until('relecture des rappels programmée', () => adb('shell', 'dumpsys', 'jobscheduler', PKG).includes(`${PKG}/.ReminderJob`), 30_000, 2000);
+    adb('shell', 'input', 'keyevent', 'KEYCODE_HOME');
+    await until('notification du rappel', () => adb('shell', 'dumpsys', 'notification', '--noredact').includes('Rappel Ostal CI'), 180_000, 3000);
+    await assertAlive('après le rappel');
+  });
+
+  await step('Toucher la notification d’un rappel : Ostal s’ouvre sur la page du rappel', async () => {
+    // Même intention que la notification (extra « page à ouvrir ») ; l'application est en arrière-plan.
+    adb('shell', 'am', 'start', '-n', `${PKG}/.MainActivity`, '--es', 'com.shinezeo.notes.OPEN_URL', "'#/agenda'");
+    await until('section Agenda affichée', () => js("location.hash === '#/agenda' && !!document.querySelector('.ag-grid, .ag-list')"), 60_000, 2000);
+    await assertAlive('après l’ouverture depuis un rappel');
   });
   ok = true;
 } catch (e) {

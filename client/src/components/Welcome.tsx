@@ -17,7 +17,7 @@ import { t, tx } from '../lib/i18n';
 const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab'];
 
 /** Sections qui ne fonctionnent qu'avec un serveur Ostal : indisponibles sur un appareil seul. */
-export const NEEDS_SERVER: SectionId[] = ['smarthome', 'cameras', 'homelab', 'pdf'];
+export const NEEDS_SERVER: SectionId[] = ['papers', 'smarthome', 'cameras', 'homelab', 'pdf'];
 
 type Slide = { icon: IconName; title: string; text: ReactNode };
 

@@ -77,3 +77,40 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// Rappels envoyés par le serveur Ostal (notifications push, voir server/src/push.js) : affichés même Ostal fermé.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Ostal', {
+      body: data.body || '',
+      tag: data.tag || undefined,
+      data: { url: typeof data.url === 'string' ? data.url : '' },
+      icon: new URL('icons/app-192.png', SCOPE).href,
+    }),
+  );
+});
+
+// Notification touchée : Ostal au premier plan, sur la page du rappel (papier, agenda).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = String(event.notification.data?.url || '');
+  const hash = url.startsWith('#/') ? url : '#/';
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const open = windows.find((w) => w.url.startsWith(SCOPE.href));
+      if (open) {
+        await open.focus();
+        open.postMessage({ type: 'notes-open', url: hash });
+        return;
+      }
+      await self.clients.openWindow(SCOPE.href + hash);
+    })(),
+  );
+});

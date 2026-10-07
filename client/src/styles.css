@@ -1595,6 +1595,10 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ag-zone span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ag-zone b { color: var(--text-strong); font-weight: 600; }
 .ag-zone small { color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); line-height: 1.4; }
+/* Rappel des événements d'un agenda (cloche) */
+.ag-cal-bell--on { color: var(--accent); }
+.ag-cal-remind { width: 100%; padding: 6px 0 2px 20px; display: flex; flex-direction: column; gap: 4px; }
+.ag-cal-remind p { margin: 0; font-size: calc(12px * var(--ui-scale)); }
 /* Sans agenda : présentation compacte dans la colonne */
 .ag-side-intro .nb-intro { margin: 0 0 8px; padding: 18px 14px 14px; gap: 10px; }
 .ag-side-intro .nb-intro-icon { width: 44px; height: 44px; border-radius: 12px; }
@@ -1614,6 +1618,83 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
   .ag-band { margin: auto -2px -3px; min-height: 0; height: 5px; border-top: none; background: var(--c); }
   .ag-band-label { display: none; }
 }
+
+/* ---------- Papiers (papers/PapersView.tsx) ---------- */
+.pp-page { max-width: 1240px; }
+.pp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.pp-head .nb-page-title-static { margin: 8px 0; }
+.pp-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pp-search { width: 220px; }
+.pp-group { margin: 18px 0 8px; }
+.pp-group h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: calc(15px * var(--ui-scale)); color: var(--text-strong); }
+.pp-group--renew h2 { color: var(--warning); }
+.pp-count { font-weight: 400; font-size: calc(13px * var(--ui-scale)); }
+.pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.pp-card {
+  display: flex; align-items: center; gap: 12px; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated);
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.pp-card:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+.pp-card-icon { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.pp-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.pp-card-title { color: var(--text-strong); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-card-meta { color: var(--text-muted); font-size: calc(12.5px * var(--ui-scale)); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-card-files { flex: none; position: relative; }
+.pp-card-count {
+  position: absolute; right: -6px; bottom: -6px; padding: 0 5px; border-radius: 8px; background: var(--bg-active); color: var(--text-strong);
+  font-size: calc(11px * var(--ui-scale)); line-height: 1.5;
+}
+.pp-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block; border: 1px solid var(--border); }
+.pp-thumb--icon { display: grid; place-items: center; background: var(--bg-hover); color: var(--text-muted); }
+.pp-due { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: calc(12px * var(--ui-scale)); line-height: 1.6; background: var(--bg-hover); color: var(--text-muted); }
+.pp-due--soon { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--text-strong); }
+.pp-due--expired { background: color-mix(in srgb, var(--danger) 22%, transparent); color: var(--text-strong); }
+/* Fiche d'un papier */
+.pp-templates { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; max-height: 132px; overflow-y: auto; }
+.pp-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 14px; background: none; color: var(--text);
+  font: inherit; font-size: calc(13px * var(--ui-scale)); cursor: pointer;
+}
+.pp-chip:hover { background: var(--bg-hover); }
+.pp-chip--on { border-color: var(--accent); background: var(--accent-soft); color: var(--text-strong); }
+.pp-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.pp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pp-remind { border: none; padding: 0; margin: 0 0 12px; min-width: 0; }
+.pp-remind legend { padding: 0; margin-bottom: 6px; font-size: calc(13px * var(--ui-scale)); color: var(--text-muted); }
+.pp-remind-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-hint { margin: 6px 0 12px; font-size: calc(12.5px * var(--ui-scale)); }
+.pp-files-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 4px 0 8px; font-size: calc(13px * var(--ui-scale)); color: var(--text-muted); }
+.pp-files-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.pp-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.pp-file { position: relative; border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+.pp-file-open { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px; border: none; background: none; color: var(--text); font: inherit; text-align: left; cursor: zoom-in; }
+.pp-file-open .pp-thumb { width: 100%; height: 96px; }
+.pp-file-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: calc(12.5px * var(--ui-scale)); }
+.pp-file-size { font-size: calc(11.5px * var(--ui-scale)); }
+.pp-file-remove { position: absolute; top: 4px; right: 4px; background: var(--bg-elevated); }
+.pp-file--busy { display: grid; place-items: center; min-height: 140px; padding: 8px; color: var(--text-muted); font-size: calc(12.5px * var(--ui-scale)); text-align: center; }
+.pp-notes { resize: vertical; min-height: 54px; }
+.pp-delete { margin-right: auto; }
+.pp-viewer { display: grid; place-items: center; min-height: 200px; }
+.pp-viewer img { max-width: 100%; max-height: 70vh; border-radius: 8px; }
+.pp-viewer object { width: 100%; height: 70vh; border: none; }
+@media (max-width: 640px) {
+  .pp-row { grid-template-columns: 1fr; gap: 0; }
+  .pp-search { width: 100%; }
+  .pp-toolbar { width: 100%; }
+}
+/* Widget « Papiers à renouveler » */
+.w-papers { display: flex; flex-direction: column; gap: 4px; }
+.w-paper { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; border: none; border-radius: 8px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.w-paper:hover { background: var(--bg-hover); }
+.w-paper > .nb-svg-icon { flex: none; margin-top: 2px; color: var(--text-muted); }
+.w-paper-body { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.w-paper-body b { color: var(--text-strong); font-weight: 600; font-size: calc(13.5px * var(--ui-scale)); overflow-wrap: anywhere; }
+.w-papers-none { display: flex; gap: 6px; align-items: flex-start; margin: 4px 0; line-height: 1.45; }
+.w-papers-none .nb-svg-icon { flex: none; margin-top: 2px; color: var(--success); }
+/* Réglages → Rappels */
+.rm-intro { margin: 0 0 8px; font-size: calc(13px * var(--ui-scale)); }
+.rm-how { margin: 4px 0 8px; font-size: calc(12.5px * var(--ui-scale)); }
 
 /* ---------- Personnaliser ---------- */
 .ap-backdrop { position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.2); display: flex; justify-content: flex-end; }
