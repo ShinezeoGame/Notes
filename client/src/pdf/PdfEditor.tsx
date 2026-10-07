@@ -271,10 +271,11 @@ function EditorBody({ library, entry, project, cache }: { library: PdfLibrary; e
           name={entry.name}
           pageCount={state.pages.length}
           selectedCount={mode === 'pages' ? selection.size : 0}
-          build={async (onlySelected, onProgress) => {
+          hasMasks={state.annots.some((a) => a.type === 'rect')}
+          build={async ({ onlySelected, watermark, redact, size }, onProgress) => {
             const { exportPdf } = await import('./exporter');
             const pageIds = onlySelected ? state.pages.filter((p) => selection.has(p.id)).map((p) => p.id) : undefined;
-            return exportPdf(state, { pageIds, title: entry.name, onProgress });
+            return exportPdf(state, { pageIds, title: entry.name, onProgress, watermark, redact, size });
           }}
           onClose={() => setExporting(false)}
         />

@@ -1442,8 +1442,8 @@ const UI: Record<string, string> = {
   'Dessinez sur la page. Faites défiler avec deux doigts.': 'Draw on the page. Scroll with two fingers.',
   'Surligneur': 'Highlighter',
   'Faites glisser sur le passage à surligner.': 'Drag over the passage to highlight.',
-  'Faites glisser pour couvrir une zone. Le texte couvert reste présent dans le fichier.':
-    'Drag to cover an area. The covered text is still present in the file.',
+  'Faites glisser pour couvrir une zone. À l’export, ce qui est couvert est effacé pour de bon.':
+    'Drag to cover an area. On export, whatever is covered is erased for good.',
   'Coche': 'Check mark',
   'Touchez une case pour la cocher.': 'Tap a box to check it.',
   'Gomme': 'Eraser',
@@ -1466,6 +1466,30 @@ const UI: Record<string, string> = {
   'Texte à ajouter sur la page': 'Text to add on the page',
 
   // pdf/ExportDialog.tsx
+  '{n} Mo': '{n} MB',
+  '{n} Ko': '{n} KB',
+  'Écrivez le texte du filigrane.': 'Type the watermark text.',
+  'Ajouter un filigrane': 'Add a watermark',
+  'Ex. : Copie pour l’agence Dupont, location, le {date}': 'E.g. Copy for Dupont agency, rental, {date}',
+  'Texte du filigrane': 'Watermark text',
+  'Écrit en travers de chaque page et incrusté dans l’image. Indiquez à qui et pourquoi vous l’envoyez, avec la date : la copie ne pourra pas servir à autre chose.':
+    'Written across every page and burned into the image. Say who it is for, why, and the date: the copy can’t be used for anything else.',
+  'Effacer pour de bon ce qui est masqué': 'Erase masked content for good',
+  'Les pages concernées deviennent des images : le texte caché ne peut plus être retrouvé.':
+    'The pages concerned become images: the hidden text can no longer be recovered.',
+  'Attention : le texte couvert reste dans le fichier, il peut être retrouvé en le copiant.':
+    'Warning: the covered text stays in the file and can be recovered by copying it.',
+  'Taille du fichier': 'File size',
+  'D’origine': 'Original',
+  'Qualité intacte.': 'Full quality.',
+  'Réduite': 'Reduced',
+  'Photos et images allégées : pour l’envoyer par e-mail.': 'Lighter photos and images: to send it by email.',
+  'Minimale': 'Minimum',
+  'Pages en images légères : pour les sites qui limitent la taille.': 'Pages as light images: for websites that limit the size.',
+  'Taille du PDF : {size}': 'PDF size: {size}',
+  'Calculer la taille': 'Work out the size',
+  'Les pages deviennent des images : leur texte ne se sélectionne plus.': 'Pages become images: their text can no longer be selected.',
+  'Allègement des images…': 'Making images lighter…',
   'Enregistrement…': 'Saving…',
   'Partage…': 'Sharing…',
   '« {file} » est enregistré.': '“{file}” saved.',

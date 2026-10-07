@@ -4,7 +4,7 @@ import { useMediaQuery } from '../lib/hooks';
 import { takeIncoming, useIncomingCount } from '../lib/incoming';
 import { Icon } from '../icons/Icon';
 import { toast } from '../components/Toast';
-import { useLibrary, type PdfEntry, type PdfLibrary } from './model';
+import { useLibrary, type PdfEntry, type PdfLibrary, type ProjectState } from './model';
 import { importFiles, isImageFile, isPdfFile, type AskPassword } from './importer';
 import { createProject, mergeProjects, purgeProject, purgeStale, readProject, refreshThumbnail } from './projects';
 import { ExportDialog } from './ExportDialog';
@@ -357,15 +357,7 @@ export function PdfLibraryView({ library, onHide }: { library: PdfLibrary; onHid
         />
       ) : null}
       {exporting ? (
-        <ExportDialog
-          name={exporting.name}
-          pageCount={exporting.pages}
-          build={async (_sel, onProgress) => {
-            const { exportPdf } = await import('./exporter');
-            return exportPdf(await readProject(exporting.id), { title: exporting.name, onProgress });
-          }}
-          onClose={() => setExporting(null)}
-        />
+        <LibraryExport entry={exporting} onClose={() => setExporting(null)} />
       ) : null}
       {password ? (
         <PasswordDialog
@@ -382,5 +374,33 @@ export function PdfLibraryView({ library, onHide }: { library: PdfLibrary; onHid
         />
       ) : null}
     </div>
+  );
+}
+
+/** Export depuis la bibliothèque : le contenu du PDF est lu une fois (masques présents ?), puis exporté. */
+function LibraryExport({ entry, onClose }: { entry: PdfEntry; onClose: () => void }) {
+  const project = useRef<Promise<ProjectState> | null>(null);
+  const [hasMasks, setHasMasks] = useState<boolean | null>(null);
+  const read = () => (project.current ??= readProject(entry.id));
+  useEffect(() => {
+    read().then(
+      (state) => setHasMasks(state.annots.some((a) => a.type === 'rect')),
+      () => setHasMasks(false),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry.id]);
+  return (
+    <ExportDialog
+      name={entry.name}
+      pageCount={entry.pages}
+      hasMasks={hasMasks}
+      build={async ({ watermark, redact, size }, onProgress) => {
+        const { exportPdf } = await import('./exporter');
+        // Lecture refaite après un échec (connexion revenue).
+        const state = await read().catch(() => (project.current = readProject(entry.id)));
+        return exportPdf(state, { title: entry.name, onProgress, watermark, redact, size });
+      }}
+      onClose={onClose}
+    />
   );
 }

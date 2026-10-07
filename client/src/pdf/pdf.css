@@ -47,6 +47,23 @@
 .pdf-export-scope { border: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .pdf-export-scope label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .pdf-export-note { font-size: 13px; margin: 0 0 12px; }
+.pdf-export-option { border: none; border-top: 1px solid var(--border); margin: 0 0 4px; padding: 12px 0 8px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.pdf-export-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; }
+.pdf-export-hint { font-size: 12.5px; margin: 0; line-height: 1.4; }
+.pdf-export-legend { padding: 0; margin: 0 0 8px; font-weight: 500; float: left; width: 100%; }
+.pdf-export-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; clear: both; }
+.pdf-export-size {
+  display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+}
+.pdf-export-size input { position: absolute; opacity: 0; pointer-events: none; }
+.pdf-export-size small { color: var(--text-muted); font-size: 11.5px; line-height: 1.35; }
+.pdf-export-size:hover { background: var(--bg-hover); }
+.pdf-export-size--on { border-color: var(--accent); background: var(--accent-soft); }
+.pdf-export-size:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pdf-export-weight { display: flex; align-items: center; gap: 8px; min-height: 28px; font-size: 13px; }
+@media (max-width: 520px) {
+  .pdf-export-sizes { grid-template-columns: 1fr; }
+}
 .pdf-progress { display: flex; flex-direction: column; gap: 6px; font-size: 13px; margin-top: 4px; }
 .pdf-progress-bar { height: 6px; border-radius: 3px; background: var(--bg-active); overflow: hidden; }
 .pdf-progress-bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }

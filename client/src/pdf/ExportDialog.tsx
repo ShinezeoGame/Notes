@@ -2,44 +2,105 @@ import { useRef, useState } from 'react';
 import { Modal } from '../components/Modal';
 import { toast } from '../components/Toast';
 import { Icon } from '../icons/Icon';
+import type { ExportSize } from './exporter';
 import { canShare, pdfFileName, saveFile, saveLabel, saveMode, shareFile } from './save';
-import { t, tn } from '../lib/i18n';
+import { getLang, t, tn } from '../lib/i18n';
+
+/** Choix faits dans la fenêtre d'export. */
+export type ExportChoices = {
+  /** Seulement les pages sélectionnées dans l'éditeur. */
+  onlySelected: boolean;
+  /** Texte du filigrane ('' : sans filigrane). */
+  watermark: string;
+  /** Contenu masqué effacé pour de bon. */
+  redact: boolean;
+  size: ExportSize;
+};
 
 type Props = {
   name: string;
   pageCount: number;
   /** Pages sélectionnées dans l'éditeur (0 : pas de choix « sélection »). */
   selectedCount?: number;
-  /** Fabrique le PDF (toutes les pages, ou seulement la sélection). */
-  build: (onlySelected: boolean, onProgress: (fraction: number, label: string) => void) => Promise<Uint8Array>;
+  /** Le document a des zones couvertes avec « Masquer » (null : pas encore connu). */
+  hasMasks?: boolean | null;
+  /** Fabrique le PDF selon les choix. */
+  build: (choices: ExportChoices, onProgress: (fraction: number, label: string) => void) => Promise<Uint8Array>;
   onClose: () => void;
 };
 
-/** Fenêtre « Exporter le PDF » : nom du fichier, pages, enregistrement ou partage. */
-export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClose }: Props) {
+/** Taille d'un fichier : « 640 Ko », « 2,4 Mo ». */
+export function fileSize(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return t('{n} Mo', { n: mb.toLocaleString(getLang(), { maximumFractionDigits: 1 }) });
+  return t('{n} Ko', { n: Math.max(1, Math.round(bytes / 1024)) });
+}
+
+/** Fenêtre « Exporter le PDF » : nom du fichier, pages, filigrane, masques, taille, enregistrement ou partage. */
+export function ExportDialog({ name, pageCount, selectedCount = 0, hasMasks = false, build, onClose }: Props) {
   const [fileName, setFileName] = useState(() => pdfFileName(name));
   // Toutes les pages par défaut : n'exporter que la sélection est un choix explicite.
   const [onlySelected, setOnlySelected] = useState(false);
+  const [marking, setMarking] = useState(false);
+  const [watermark, setWatermark] = useState('');
+  const [redact, setRedact] = useState(true);
+  const [size, setSize] = useState<ExportSize>('normal');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ fraction: number; label: string } | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const cache = useRef<{ key: string; bytes: Uint8Array } | null>(null);
+  // PDF déjà fabriqués, par choix (les trois derniers) : taille connue aussitôt en revenant à un choix.
+  const cache = useRef(new Map<string, Uint8Array>());
+  const [, setBuilt] = useState(0);
+  const markInput = useRef<HTMLInputElement>(null);
   const mode = saveMode();
   const sharing = canShare();
 
+  const choices: ExportChoices = { onlySelected, watermark: marking ? watermark.trim() : '', redact: Boolean(hasMasks) && redact, size };
+  const key = JSON.stringify(choices);
+  const known = cache.current.get(key)?.length ?? null;
+  const images = Boolean(choices.watermark) || size === 'tiny';
+
   const bytes = async () => {
-    const key = String(onlySelected);
-    if (cache.current?.key === key) return cache.current.bytes;
-    const out = await build(onlySelected, (fraction, label) => setProgress({ fraction, label }));
-    cache.current = { key, bytes: out };
+    const done = cache.current.get(key);
+    if (done) return done;
+    const out = await build(choices, (fraction, label) => setProgress({ fraction, label }));
+    cache.current.set(key, out);
+    if (cache.current.size > 3) cache.current.delete(cache.current.keys().next().value!);
+    setBuilt((n) => n + 1);
     return out;
   };
 
-  const run = async (action: 'save' | 'share') => {
+  const ready = () => {
+    if (marking && !watermark.trim()) {
+      setError(t('Écrivez le texte du filigrane.'));
+      markInput.current?.focus();
+      return false;
+    }
+    return true;
+  };
+
+  /** Fabrique le PDF sans l'enregistrer, pour en connaître la taille (gardé pour l'enregistrement). */
+  const measure = async () => {
+    if (!ready()) return;
     setBusy(true);
     setError('');
+    try {
+      await bytes();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error && err.message ? err.message : t('Export impossible.'));
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
+  };
+
+  const run = async (action: 'save' | 'share') => {
+    setError('');
     setNotice('');
+    if (!ready()) return;
+    setBusy(true);
     try {
       const data = await bytes();
       const file = pdfFileName(fileName);
@@ -75,7 +136,7 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
     <Modal
       title={t('Exporter le PDF')}
       onClose={() => !busy && onClose()}
-      width={460}
+      width={480}
       footer={
         <>
           <button type="button" className="nb-btn" onClick={onClose} disabled={busy}>
@@ -100,14 +161,7 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
         <fieldset className="pdf-export-scope" disabled={busy}>
           <legend className="nb-sr-only">{t('Pages à exporter')}</legend>
           <label>
-            <input
-              type="radio"
-              name="pdf-scope"
-              checked={!onlySelected}
-              onChange={() => {
-                setOnlySelected(false);
-              }}
-            />
+            <input type="radio" name="pdf-scope" checked={!onlySelected} onChange={() => setOnlySelected(false)} />
             {t('Toutes les pages ({n})', { n: pageCount })}
           </label>
           <label>
@@ -120,6 +174,81 @@ export function ExportDialog({ name, pageCount, selectedCount = 0, build, onClos
           {tn(pageCount, '{n} page, avec vos annotations et les formulaires remplis.', '{n} pages, avec vos annotations et les formulaires remplis.')}
         </p>
       )}
+
+      <fieldset className="pdf-export-option" disabled={busy}>
+        <label className="pdf-export-check">
+          <input
+            type="checkbox"
+            checked={marking}
+            onChange={(e) => {
+              setMarking(e.target.checked);
+              setError('');
+              if (e.target.checked) setTimeout(() => markInput.current?.focus(), 0);
+            }}
+          />
+          <span>{t('Ajouter un filigrane')}</span>
+        </label>
+        {marking ? (
+          <>
+            <input
+              ref={markInput}
+              className="nb-input"
+              value={watermark}
+              onChange={(e) => setWatermark(e.target.value)}
+              maxLength={120}
+              placeholder={t('Ex. : Copie pour l’agence Dupont, location, le {date}', { date: new Date().toLocaleDateString(getLang()) })}
+              aria-label={t('Texte du filigrane')}
+            />
+            <p className="nb-muted pdf-export-hint">
+              {t('Écrit en travers de chaque page et incrusté dans l’image. Indiquez à qui et pourquoi vous l’envoyez, avec la date : la copie ne pourra pas servir à autre chose.')}
+            </p>
+          </>
+        ) : null}
+      </fieldset>
+
+      {hasMasks ? (
+        <fieldset className="pdf-export-option" disabled={busy}>
+          <label className="pdf-export-check">
+            <input type="checkbox" checked={redact} onChange={(e) => setRedact(e.target.checked)} />
+            <span>{t('Effacer pour de bon ce qui est masqué')}</span>
+          </label>
+          <p className="nb-muted pdf-export-hint">
+            {redact
+              ? t('Les pages concernées deviennent des images : le texte caché ne peut plus être retrouvé.')
+              : t('Attention : le texte couvert reste dans le fichier, il peut être retrouvé en le copiant.')}
+          </p>
+        </fieldset>
+      ) : null}
+
+      <fieldset className="pdf-export-option" disabled={busy}>
+        <legend className="pdf-export-legend">{t('Taille du fichier')}</legend>
+        <div className="pdf-export-sizes">
+          {(
+            [
+              ['normal', t('D’origine'), t('Qualité intacte.')],
+              ['small', t('Réduite'), t('Photos et images allégées : pour l’envoyer par e-mail.')],
+              ['tiny', t('Minimale'), t('Pages en images légères : pour les sites qui limitent la taille.')],
+            ] as [ExportSize, string, string][]
+          ).map(([id, label, hint]) => (
+            <label key={id} className={`pdf-export-size${size === id ? ' pdf-export-size--on' : ''}`}>
+              <input type="radio" name="pdf-size" checked={size === id} onChange={() => setSize(id)} />
+              <b>{label}</b>
+              <small>{hint}</small>
+            </label>
+          ))}
+        </div>
+        <div className="pdf-export-weight">
+          {known != null ? (
+            <span>{t('Taille du PDF : {size}', { size: fileSize(known) })}</span>
+          ) : (
+            <button type="button" className="nb-btn nb-btn--sm" onClick={() => void measure()}>
+              {t('Calculer la taille')}
+            </button>
+          )}
+        </div>
+        {images ? <p className="nb-muted pdf-export-hint">{t('Les pages deviennent des images : leur texte ne se sélectionne plus.')}</p> : null}
+      </fieldset>
+
       {mode === 'legacy-app' ? (
         <p className="nb-muted pdf-export-note">
           {t(

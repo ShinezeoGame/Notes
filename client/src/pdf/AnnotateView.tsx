@@ -33,7 +33,7 @@ const TOOLS: { id: Tool; label: string; icon: IconName; hint: string }[] = [
     id: 'rect',
     label: t('Masquer'),
     icon: 'square',
-    hint: t('Faites glisser pour couvrir une zone. Le texte couvert reste présent dans le fichier.'),
+    hint: t('Faites glisser pour couvrir une zone. À l’export, ce qui est couvert est effacé pour de bon.'),
   },
   { id: 'mark', label: t('Coche'), icon: 'check', hint: t('Touchez une case pour la cocher.') },
   { id: 'eraser', label: t('Gomme'), icon: 'eraser', hint: t('Touchez ou frottez une annotation pour l’effacer.') },

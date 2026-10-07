@@ -1,6 +1,8 @@
 // Fabrication du PDF final (bibliothèque pdf-lib) : pages des fichiers d'origine dans l'ordre choisi, rotations,
 // photos, pages blanches, formulaires remplis (valeurs écrites par pdf.js puis figées) et annotations dessinées
 // dans le contenu des pages. Les fichiers d'origine ne sont jamais modifiés.
+// Options : filigrane et contenu masqué effacé pour de bon (pages transformées en images : rien de ce qu'elles
+// cachaient n'entre dans le fichier), taille réduite (photos et images allégées) ou minimale (pages en images).
 import type { PDFDict, PDFDocument, PDFFont, PDFImage, PDFPage, PDFRef } from '@cantoo/pdf-lib';
 import type { PdfDocument } from '../editor/pdf';
 import { fileUrl, formKey, normRotation, type Annot, type FormValue, type PageRef, type PdfSource, type ProjectState, type Rotation } from './model';
@@ -15,12 +17,43 @@ type Lib = typeof import('@cantoo/pdf-lib');
 
 export type ExportProgress = (fraction: number, label: string) => void;
 
+/** Taille du fichier : d'origine, réduite (photos et images allégées), minimale (pages en images légères). */
+export type ExportSize = 'normal' | 'small' | 'tiny';
+
 export type ExportOptions = {
   /** Pages à exporter (toutes par défaut), dans l'ordre du document. */
   pageIds?: string[];
   title?: string;
   onProgress?: ExportProgress;
+  /** Texte écrit en travers de chaque page, incrusté dans l'image (toutes les pages deviennent des images). */
+  watermark?: string;
+  /** Ce que couvre « Masquer » est effacé pour de bon : les pages concernées deviennent des images. */
+  redact?: boolean;
+  size?: ExportSize;
 };
+
+/** Pages transformées en images : résolution (points par pouce) et qualité JPEG, selon la taille voulue. */
+const RASTER: Record<ExportSize, { dpi: number; quality: number }> = {
+  normal: { dpi: 200, quality: 0.85 },
+  small: { dpi: 120, quality: 0.72 },
+  tiny: { dpi: 96, quality: 0.55 },
+};
+/** Taille réduite : grand côté des photos et images ramené à ce nombre de pixels, qualité JPEG. */
+const SHRINK = { maxSide: 2000, quality: 0.72 };
+/** Nombre maximal de pixels d'une page transformée en image (mémoire des téléphones). */
+const MAX_RASTER_PIXELS = 12_000_000;
+
+/** Pages transformées en images à l'export, avec ces options. */
+export function flattenedPages(state: ProjectState, opts: Pick<ExportOptions, 'watermark' | 'redact' | 'size'>, pageIds?: string[]): Set<string> {
+  const wanted = pageIds ? new Set(pageIds) : null;
+  const all = Boolean(opts.watermark?.trim()) || opts.size === 'tiny';
+  const ids = new Set<string>();
+  for (const ref of state.pages) {
+    if (wanted && !wanted.has(ref.id)) continue;
+    if (all || (opts.redact && state.annotsByPage.get(ref.id)?.some((a) => a.type === 'rect'))) ids.add(ref.id);
+  }
+  return ids;
+}
 
 /** Fichier d'origine prêt à copier : document pdf-lib, ou pages à redessiner en images si illisible. */
 type Loaded = { kind: 'doc'; doc: PDFDocument; keepFields: boolean } | { kind: 'raster'; bytes: Uint8Array };
@@ -224,13 +257,18 @@ function copyFormDefaults(L: Lib, from: PDFDocument, out: PDFDocument) {
   }
 }
 
-type DrawContext = { L: Lib; out: PDFDocument; font: PDFFont | null; images: Map<string, Promise<PDFImage>> };
+/** Document en cours de fabrication : police (si du texte est écrit), images déjà intégrées, photos allégées ou non. */
+type DrawContext = { L: Lib; out: PDFDocument; font: PDFFont | null; images: Map<string, Promise<PDFImage>>; shrink: boolean };
 
 async function embedImage(ctx: DrawContext, path: string): Promise<PDFImage> {
   let p = ctx.images.get(path);
   if (!p) {
     p = (async () => {
       let bytes = await fetchBytes(fileUrl(path), 'image');
+      if (ctx.shrink) {
+        const small = await shrinkImage(bytes, false);
+        if (small) return ctx.out.embedJpg(small.bytes);
+      }
       const isPng = bytes[0] === 0x89 && bytes[1] === 0x50;
       const isJpg = bytes[0] === 0xff && bytes[1] === 0xd8;
       if (!isPng && !isJpg) bytes = await toPng(bytes);
@@ -241,6 +279,115 @@ async function embedImage(ctx: DrawContext, path: string): Promise<PDFImage> {
   return p;
 }
 
+const toBlob = (canvas: HTMLCanvasElement, type: string, quality?: number) =>
+  new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+
+/** Une image a-t-elle des pixels transparents ? (échantillon : tampons, logos) */
+function hasAlpha(c: CanvasRenderingContext2D, w: number, h: number): boolean {
+  const data = c.getImageData(0, 0, w, h).data;
+  const step = Math.max(1, Math.floor((w * h) / 200_000)) * 4;
+  for (let i = 3; i < data.length; i += step) if (data[i] < 250) return true;
+  return false;
+}
+
+/**
+ * Image allégée en JPEG (grand côté limité) ; null si elle est transparente, illisible ou déjà assez légère.
+ * `raw` : orientation EXIF ignorée (image d'un PDF, que les lecteurs de PDF affichent sans la tourner).
+ */
+async function shrinkImage(bytes: Uint8Array, raw: boolean): Promise<{ bytes: Uint8Array; w: number; h: number } | null> {
+  if (bytes.length < 120_000) return null;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(new Blob([bytes as BlobPart]), raw ? { imageOrientation: 'none' } : undefined);
+  } catch {
+    return null;
+  }
+  const canvas = document.createElement('canvas');
+  try {
+    const scale = Math.min(1, SHRINK.maxSide / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.width = w;
+    canvas.height = h;
+    const c2d = canvas.getContext('2d');
+    if (!c2d) return null;
+    c2d.drawImage(bitmap, 0, 0, w, h);
+    if (bytes[0] === 0x89 && hasAlpha(c2d, w, h)) return null;
+    const blob = await toBlob(canvas, 'image/jpeg', SHRINK.quality);
+    if (!blob) return null;
+    const out = new Uint8Array(await blob.arrayBuffer());
+    return out.length < bytes.length * 0.85 ? { bytes: out, w, h } : null;
+  } finally {
+    bitmap.close();
+    canvas.width = 0;
+  }
+}
+
+/**
+ * Taille réduite : images JPEG venues des PDF d'origine (scans, photos) allégées. Les images à masque, en CMJN ou
+ * dans un espace de couleurs particulier restent telles quelles.
+ */
+async function shrinkPdfImages(L: Lib, out: PDFDocument) {
+  const N = (name: string) => L.PDFName.of(name);
+  const IMAGE = N('Image'); // i18n-ignore : nom PDF
+  const DCT = N('DCTDecode'); // i18n-ignore : nom PDF
+  for (const [ref, obj] of out.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof L.PDFRawStream)) continue;
+    const d = obj.dict;
+    if (d.get(N('Subtype')) !== IMAGE) continue; // i18n-ignore : nom PDF
+    const filter = d.get(N('Filter')); // i18n-ignore : nom PDF
+    if (!(filter === DCT || (filter instanceof L.PDFArray && filter.size() === 1 && filter.get(0) === DCT))) continue;
+    if (['SMask', 'Mask', 'Decode', 'ImageMask'].some((k) => d.has(N(k)))) continue; // i18n-ignore : noms PDF
+    let cs = d.get(N('ColorSpace')); // i18n-ignore : nom PDF
+    if (cs instanceof L.PDFRef) cs = out.context.lookup(cs);
+    let simple = cs === N('DeviceRGB') || cs === N('DeviceGray'); // i18n-ignore : noms PDF
+    if (cs instanceof L.PDFArray && cs.get(0) === N('ICCBased')) {
+      const icc = out.context.lookup(cs.get(1));
+      const n = icc instanceof L.PDFRawStream ? icc.dict.get(N('N')) : undefined;
+      simple = n instanceof L.PDFNumber && (n.asNumber() === 1 || n.asNumber() === 3);
+    }
+    if (!simple) continue;
+    const small = await shrinkImage(obj.contents, true);
+    if (!small) continue;
+    out.context.assign(
+      ref,
+      out.context.stream(small.bytes, {
+        Type: 'XObject',
+        Subtype: 'Image', // i18n-ignore : nom PDF
+        Width: small.w,
+        Height: small.h,
+        ColorSpace: 'DeviceRGB',
+        BitsPerComponent: 8,
+        Filter: 'DCTDecode',
+      }),
+    );
+  }
+}
+
+/** Filigrane : texte répété en diagonale sur toute la page, foncé et semi-transparent, bordé de clair. */
+export function drawWatermark(c: CanvasRenderingContext2D, w: number, h: number, text: string) {
+  const size = Math.max(12, Math.round(Math.min(w, h) / 26));
+  c.save();
+  c.font = `600 ${size}px Helvetica, Arial, sans-serif`; // i18n-ignore : polices
+  c.textBaseline = 'middle';
+  c.lineJoin = 'round';
+  c.lineWidth = Math.max(1, size / 10);
+  c.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  c.fillStyle = 'rgba(30, 35, 60, 0.33)';
+  c.translate(w / 2, h / 2);
+  c.rotate(-Math.PI / 6);
+  const reach = Math.hypot(w, h) / 2 + size;
+  const unit = c.measureText(`${text}      `).width || size;
+  let row = 0;
+  for (let y = -reach; y <= reach; y += size * 3.4, row++) {
+    for (let x = -reach - (row % 2 ? unit / 2 : 0); x <= reach; x += unit) {
+      c.strokeText(text, x, y);
+      c.fillText(text, x, y);
+    }
+  }
+  c.restore();
+}
+
 /** Image d'un autre format (WebP, GIF…) convertie en PNG. */
 async function toPng(bytes: Uint8Array): Promise<Uint8Array> {
   const bitmap = await createImageBitmap(new Blob([bytes as BlobPart]));
@@ -249,7 +396,7 @@ async function toPng(bytes: Uint8Array): Promise<Uint8Array> {
   canvas.height = bitmap.height;
   canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
   bitmap.close();
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+  const blob = await toBlob(canvas, 'image/png');
   if (!blob) throw new Error(t('Image illisible.'));
   return new Uint8Array(await blob.arrayBuffer());
 }
@@ -346,13 +493,105 @@ async function rasterPage(ctx: DrawContext, pdf: PdfDocument, index: number): Pr
   c2d.fillStyle = '#ffffff';
   c2d.fillRect(0, 0, canvas.width, canvas.height);
   await p.render({ canvasContext: c2d, canvas, viewport }).promise;
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+  const blob = await toBlob(canvas, 'image/jpeg', 0.88);
   canvas.width = 0;
   if (!blob) throw new Error(t('Page illisible.'));
   const img = await ctx.out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
   const page = ctx.out.addPage([base.width, base.height]);
   page.drawImage(img, { x: 0, y: 0, width: base.width, height: base.height });
   return { page, box: [0, 0, base.width, base.height] };
+}
+
+type PdfJs = Awaited<ReturnType<typeof loadPdfModule>>;
+
+/** Ce dont la fabrication des pages a besoin : état du document, fichiers d'origine lus, pdf.js. */
+type Env = { L: Lib; state: ProjectState; loaded: Map<string, Loaded>; pdfjs: PdfJs; rasterDocs: Map<string, PdfDocument> };
+
+/**
+ * Ajoute la page `ref` au document de `ctx`, annotations comprises (`copy` : page déjà copiée dans ce document).
+ * Renvoie la page et, pour un formulaire gardé modifiable, le fichier d'origine de ses champs.
+ */
+async function placePage(env: Env, ctx: DrawContext, ref: PageRef, copy?: PDFPage): Promise<{ page: PDFPage; fieldsOf?: string }> {
+  const { L, state, loaded } = env;
+  const src = ref.src ? state.sources.get(ref.src) : undefined;
+  let page: PDFPage;
+  let box: [number, number, number, number];
+  let rotate: Rotation = 0;
+  let fieldsOf: string | undefined;
+  if (!src) {
+    page = ctx.out.addPage([ref.w ?? A4.w, ref.h ?? A4.h]);
+    box = [0, 0, ref.w ?? A4.w, ref.h ?? A4.h];
+  } else if (src.kind === 'image') {
+    const size = imagePageSize(src.width ?? 1000, src.height ?? 1414, ref.crop);
+    page = ctx.out.addPage([size.w, size.h]);
+    const img = await embedImage(ctx, src.path);
+    const c = ref.crop ?? { x: 0, y: 0, w: 1, h: 1 };
+    const dw = size.w / c.w;
+    const dh = size.h / c.h;
+    page.drawImage(img, { x: -c.x * dw, y: size.h + c.y * dh - dh, width: dw, height: dh });
+    box = [0, 0, size.w, size.h];
+  } else {
+    const l = loaded.get(src.id);
+    const inDoc = l?.kind === 'doc' && ref.index < l.doc.getPageCount();
+    if (l?.kind === 'doc' && inDoc) {
+      page = ctx.out.addPage(copy ?? (await ctx.out.copyPages(l.doc, [ref.index]))[0]);
+      rotate = normRotation(page.getRotation().angle);
+      const cb = page.getCropBox();
+      box = [cb.x, cb.y, cb.x + cb.width, cb.y + cb.height];
+      if (l.keepFields) fieldsOf = src.id;
+    } else if (l?.kind === 'raster') {
+      let pdf = env.rasterDocs.get(src.id);
+      if (!pdf) {
+        pdf = await env.pdfjs.loadPdfData(l.bytes);
+        env.rasterDocs.set(src.id, pdf);
+      }
+      ({ page, box } = await rasterPage(ctx, pdf, ref.index));
+    } else {
+      // Page absente du fichier (fichier remplacé ?) : page blanche plutôt qu'un échec.
+      page = ctx.out.addPage([A4.w, A4.h]);
+      box = [0, 0, A4.w, A4.h];
+    }
+  }
+  page.setRotation(L.degrees((rotate + ref.rot) % 360));
+  const annots = state.annotsByPage.get(ref.id);
+  if (annots?.length) await drawAnnotations(ctx, page, box, rotate, annots);
+  return { page, fieldsOf };
+}
+
+/**
+ * Page transformée en image : fabriquée seule dans un document à part, dessinée par pdf.js (champs de formulaire et
+ * annotations compris), filigrane ajouté, puis posée en JPEG dans `out`. Rien de ce qu'elle contenait d'autre
+ * (texte couvert par un masque, champs) n'entre dans le fichier exporté.
+ */
+async function flatPage(env: Env, out: PDFDocument, ref: PageRef, raster: { dpi: number; quality: number }, watermark: string) {
+  const { L } = env;
+  const tmp = await L.PDFDocument.create();
+  const hasText = env.state.annotsByPage.get(ref.id)?.some((a) => a.type === 'text');
+  const ctx: DrawContext = { L, out: tmp, font: hasText ? await tmp.embedFont(L.StandardFonts.Helvetica) : null, images: new Map(), shrink: false };
+  await placePage(env, ctx, ref);
+  const pdf = await env.pdfjs.loadPdfData(await tmp.save());
+  const canvas = document.createElement('canvas');
+  try {
+    const p = await pdf.getPage(1);
+    const base = p.getViewport({ scale: 1 });
+    const scale = Math.min(raster.dpi / 72, Math.sqrt(MAX_RASTER_PIXELS / Math.max(1, base.width * base.height)));
+    const viewport = p.getViewport({ scale });
+    canvas.width = Math.max(1, Math.floor(viewport.width));
+    canvas.height = Math.max(1, Math.floor(viewport.height));
+    const c2d = canvas.getContext('2d');
+    if (!c2d) throw new Error(t('Page illisible.'));
+    c2d.fillStyle = '#ffffff';
+    c2d.fillRect(0, 0, canvas.width, canvas.height);
+    await p.render({ canvasContext: c2d, canvas, viewport }).promise;
+    if (watermark) drawWatermark(c2d, canvas.width, canvas.height, watermark);
+    const blob = await toBlob(canvas, 'image/jpeg', raster.quality);
+    if (!blob) throw new Error(t('Page illisible.'));
+    const img = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+    out.addPage([base.width, base.height]).drawImage(img, { x: 0, y: 0, width: base.width, height: base.height });
+  } finally {
+    canvas.width = 0;
+    env.pdfjs.closePdf(pdf);
+  }
 }
 
 /** Fabrique le PDF (octets) à partir de l'état du document. */
@@ -363,18 +602,27 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
   const wanted = opts.pageIds ? new Set(opts.pageIds) : null;
   const refs = state.pages.filter((p) => !wanted || wanted.has(p.id));
   if (refs.length === 0) throw new Error(t('Aucune page à exporter.'));
+  const size = opts.size ?? 'normal';
+  const watermark = opts.watermark?.trim() ?? '';
+  const flat = flattenedPages(state, { ...opts, size }, opts.pageIds);
 
   const out = await L.PDFDocument.create();
   if (opts.title) out.setTitle(opts.title);
   out.setCreator('Ostal');
   out.setProducer('Ostal');
-  const needsFont = refs.some((r) => state.annotsByPage.get(r.id)?.some((a) => a.type === 'text'));
-  const ctx: DrawContext = { L, out, font: needsFont ? await out.embedFont(L.StandardFonts.Helvetica) : null, images: new Map() };
+  const needsFont = refs.some((r) => !flat.has(r.id) && state.annotsByPage.get(r.id)?.some((a) => a.type === 'text'));
+  const ctx: DrawContext = {
+    L,
+    out,
+    font: needsFont ? await out.embedFont(L.StandardFonts.Helvetica) : null,
+    images: new Map(),
+    shrink: size !== 'normal',
+  };
 
   // Fichiers d'origine (PDF) utilisés, avec les valeurs de formulaire saisies.
   const pdfSources = [...new Set(refs.map((r) => r.src))].map((id) => state.sources.get(id)).filter((s): s is PdfSource => s?.kind === 'pdf');
   const loaded = new Map<string, Loaded>();
-  const steps = pdfSources.length + refs.length;
+  const steps = pdfSources.length + refs.length + (size === 'small' ? 1 : 0);
   let step = 0;
   for (const src of pdfSources) {
     progress(step++ / steps, t('Lecture de « {name} »…', { name: src.name }));
@@ -386,12 +634,13 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
     loaded.set(src.id, await loadSource(L, src, values));
   }
 
-  // Pages copiées par fichier (une même page demandée deux fois est copiée deux fois).
+  // Pages gardées telles quelles, copiées par fichier (une même page demandée deux fois est copiée deux fois). Les
+  // pages transformées en images ne sont pas copiées : leur contenu n'entre pas dans le fichier.
   const copies = new Map<PageRef, PDFPage>();
   for (const [id, l] of loaded) {
     if (l.kind !== 'doc') continue;
     const count = l.doc.getPageCount();
-    const mine = refs.filter((r) => r.src === id && r.index < count);
+    const mine = refs.filter((r) => r.src === id && r.index < count && !flat.has(r.id));
     const seen = new Set<number>();
     const first: PageRef[] = [];
     const again: PageRef[] = [];
@@ -408,59 +657,23 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
   }
 
   const keptFields = new Map<string, PDFPage[]>();
-  const rasterDocs = new Map<string, PdfDocument>();
-  const { loadPdfData, closePdf } = await loadPdfModule();
+  const env: Env = { L, state, loaded, pdfjs: await loadPdfModule(), rasterDocs: new Map() };
   try {
     for (const [n, ref] of refs.entries()) {
       progress(step++ / steps, t('Page {n} sur {total}…', { n: n + 1, total: refs.length }));
-      const src = ref.src ? state.sources.get(ref.src) : undefined;
-      let page: PDFPage;
-      let box: [number, number, number, number];
-      let rotate: Rotation = 0;
-      if (!src) {
-        page = out.addPage([ref.w ?? A4.w, ref.h ?? A4.h]);
-        box = [0, 0, ref.w ?? A4.w, ref.h ?? A4.h];
-      } else if (src.kind === 'image') {
-        const size = imagePageSize(src.width ?? 1000, src.height ?? 1414, ref.crop);
-        page = out.addPage([size.w, size.h]);
-        const img = await embedImage(ctx, src.path);
-        const c = ref.crop ?? { x: 0, y: 0, w: 1, h: 1 };
-        const dw = size.w / c.w;
-        const dh = size.h / c.h;
-        page.drawImage(img, { x: -c.x * dw, y: size.h + c.y * dh - dh, width: dw, height: dh });
-        box = [0, 0, size.w, size.h];
-      } else {
-        const l = loaded.get(src.id);
-        const copy = copies.get(ref);
-        if (l?.kind === 'doc' && copy) {
-          page = out.addPage(copy);
-          rotate = normRotation(page.getRotation().angle);
-          const cb = page.getCropBox();
-          box = [cb.x, cb.y, cb.x + cb.width, cb.y + cb.height];
-          if (l.keepFields) {
-            const list = keptFields.get(src.id) ?? [];
-            list.push(page);
-            keptFields.set(src.id, list);
-          }
-        } else if (l?.kind === 'raster') {
-          let pdf = rasterDocs.get(src.id);
-          if (!pdf) {
-            pdf = await loadPdfData(l.bytes);
-            rasterDocs.set(src.id, pdf);
-          }
-          ({ page, box } = await rasterPage(ctx, pdf, ref.index));
-        } else {
-          // Page absente du fichier (fichier remplacé ?) : page blanche plutôt qu'un échec.
-          page = out.addPage([A4.w, A4.h]);
-          box = [0, 0, A4.w, A4.h];
-        }
+      if (flat.has(ref.id)) {
+        await flatPage(env, out, ref, RASTER[size], watermark);
+        continue;
       }
-      page.setRotation(L.degrees((rotate + ref.rot) % 360));
-      const annots = state.annotsByPage.get(ref.id);
-      if (annots?.length) await drawAnnotations(ctx, page, box, rotate, annots);
+      const { page, fieldsOf } = await placePage(env, ctx, ref, copies.get(ref));
+      if (fieldsOf) {
+        const list = keptFields.get(fieldsOf) ?? [];
+        list.push(page);
+        keptFields.set(fieldsOf, list);
+      }
     }
   } finally {
-    rasterDocs.forEach((pdf) => closePdf(pdf));
+    env.rasterDocs.forEach((pdf) => env.pdfjs.closePdf(pdf));
   }
 
   for (const [id, pages] of keptFields) {
@@ -471,6 +684,11 @@ export async function exportPdf(state: ProjectState, opts: ExportOptions = {}): 
     } catch (err) {
       console.warn('PDF : champs du formulaire non repris', err);
     }
+  }
+
+  if (size === 'small') {
+    progress(step++ / steps, t('Allègement des images…'));
+    await shrinkPdfImages(L, out);
   }
 
   progress(0.98, t('Enregistrement…'));
