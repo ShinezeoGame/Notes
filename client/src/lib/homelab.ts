@@ -405,19 +405,6 @@ export function defaultUrl(type: ServiceType | DeviceType, host: string, kind: '
   return host ? `${scheme}://${host}:${meta.port}${path}` : '';
 }
 
-/** Stack multimédia classique (arr-stack + Jellyfin + Jellyseerr + qBittorrent) sur un même hôte. */
-export function mediaStackPreset(host: string): Service[] {
-  const types: ServiceType[] = ['jellyfin', 'jellyseerr', 'sonarr', 'radarr', 'prowlarr', 'bazarr', 'qbittorrent'];
-  return types.map((type) => ({
-    id: newId(),
-    name: SERVICE_TYPES[type].label,
-    type,
-    url: defaultUrl(type, host, 'service'),
-    category: SERVICE_TYPES[type].category,
-    icon: '',
-  }));
-}
-
 export function newService(type: ServiceType = 'generic'): Service {
   const meta = SERVICE_TYPES[type];
   return { id: newId(), name: type === 'generic' ? '' : meta.label, type, url: '', category: meta.category, icon: '' };

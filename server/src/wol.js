@@ -98,8 +98,8 @@ export function scanRange(n) {
   return out;
 }
 
-/** Passerelle par défaut (la box) sous Linux, ou null. */
-function defaultGateway() {
+/** Passerelle par défaut (la box ; dans un conteneur Docker, la machine hôte) sous Linux, ou null. */
+export function defaultGateway() {
   try {
     for (const line of fs.readFileSync('/proc/net/route', 'utf8').split('\n').slice(1)) {
       const [, dest, gw] = line.trim().split(/\s+/);
@@ -114,7 +114,7 @@ function defaultGateway() {
 }
 
 /** Serveur dans un conteneur, sur un réseau Docker à part (sans le relais) : le signal n'atteint pas le réseau local. */
-function isolated() {
+export function isolated() {
   if (!fs.existsSync('/.dockerenv') && !fs.existsSync('/run/.containerenv')) return false;
   const ifaces = os.networkInterfaces();
   if (ifaces.docker0) return false; // réseau de la machine hôte (network_mode: host)
@@ -172,7 +172,7 @@ export function parseArpOutput(text, table = new Map()) {
 }
 
 /** Appareils récemment vus sur le réseau (table ARP du système) : adresse IP → adresse MAC. */
-async function arpTable() {
+export async function arpTable() {
   if (process.platform === 'linux') {
     try {
       return parseProcArp(fs.readFileSync('/proc/net/arp', 'utf8'));
@@ -325,7 +325,7 @@ async function sendAll(packet, addresses) {
 // ---------- Recherche des appareils du réseau ----------
 
 /** Un datagramme vers chaque adresse : le système demande (ARP) quelle carte réseau la porte ; seuls les appareils allumés répondent. */
-function poke(ips) {
+export function poke(ips) {
   return new Promise((resolve) => {
     const socket = dgram.createSocket('udp4');
     socket.on('error', () => resolve());
@@ -473,10 +473,14 @@ function cached(cache, key, ttl, fn) {
   return promise;
 }
 
+const discoverCache = new Map();
+
 const ACTIONS = {
   wake: (body) => wake(body),
   status: (body) => cached(statusCache, JSON.stringify([body.host, body.port, body.mac]), 3000, () => probe(body)),
   scan: () => cached(scanCache, 'scan', 10_000, () => scan()),
+  // Homelab : applications et appareils du réseau local (discover.js).
+  discover: () => cached(discoverCache, 'discover', 20_000, async () => (await import('./discover.js')).discover()),
 };
 
 export const isAction = (name) => Object.hasOwn(ACTIONS, name);
@@ -495,7 +499,7 @@ function relayCall(name, body) {
         path: `/${name}`,
         method: 'POST',
         agent: false,
-        timeout: 20_000,
+        timeout: 40_000,
         headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) },
       },
       (res) => {
@@ -521,10 +525,11 @@ function relayCall(name, body) {
 }
 
 /**
- * Action demandée par le serveur : par le relais quand il est configuré (Docker), sinon ici. Relais injoignable
- * (arrêté, pas encore installé) : on tente d'ici, et l'application le signale (`relay: 'down'`).
+ * Action sur le réseau local demandée par le serveur (réveil, état, recherches) : par le relais quand il est configuré
+ * (Docker), sinon ici. Relais injoignable (arrêté, pas encore installé) : on tente d'ici, et l'application le signale
+ * (`relay: 'down'`).
  */
-export async function wolAction(name, body) {
+export async function lanAction(name, body) {
   let relay = 'none';
   if (RELAY) {
     try {

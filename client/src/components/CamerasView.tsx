@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type * as Y from 'yjs';
 import { cameraVersion, liveUrl, updateCamerasConfig, useCameras, type Camera, type CameraLink } from '../lib/cameras';
 import { LivePlayer, type PlayerState } from '../lib/livePlayer';
@@ -7,6 +7,8 @@ import { reorderItems, useSortable } from '../lib/sortable';
 import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { CameraConfigDialog } from './CameraConfigDialog';
+import { NeedsServerIntro, SectionIntro, hideSection } from './SectionIntro';
+import { AppContext } from '../editor/context';
 import { t, tx } from '../lib/i18n';
 
 const BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
@@ -196,10 +198,13 @@ type PanelProps = {
   cameraId?: string;
   compact?: boolean;
   canConfigure?: boolean;
+  /** Section : « Je n'en ai pas besoin » (masque la section). */
+  onHide?: () => void;
 };
 
 /** Grille des caméras en direct (vue « Caméras » et bloc d'une page). */
-export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = true }: PanelProps) {
+export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = true, onHide }: PanelProps) {
+  const ctx = useContext(AppContext);
   const { cfg, hasServer, links, ffmpeg, error } = useCameras(doc);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Camera | 'new' | null>(null);
@@ -215,12 +220,46 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   const dialog =
     editing && doc ? <CameraConfigDialog doc={doc} camera={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null;
 
+  const pitch = t('Le direct de vos caméras de surveillance, ici, sur l’accueil et dans vos pages, sans ouvrir l’application de chaque marque.');
+  if (!hasServer && !compact) {
+    return (
+      <NeedsServerIntro icon="cctv" title={t('Vos caméras en direct')} onJoin={ctx?.joinServer} onHide={onHide}>
+        {pitch}
+      </NeedsServerIntro>
+    );
+  }
   if (!hasServer) {
     return (
       <div className="nb-notice">
         <p>{t('Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.')}</p>
         <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
+    );
+  }
+  if (!cfg.cameras.length && !compact && !cameraId) {
+    return (
+      <>
+        <SectionIntro
+          icon="cctv"
+          title={t('Vos caméras en direct')}
+          needs={[
+            t('Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Melo.'),
+            t('Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Melo vous guide ensuite.'),
+          ]}
+          actions={
+            canConfigure && doc ? (
+              <button type="button" className="nb-btn nb-btn--primary" onClick={() => setEditing('new')}>
+                <Icon name="plus" size={15} /> {t('Ajouter une caméra')}
+              </button>
+            ) : null
+          }
+          note={t('Les caméras seulement « cloud » (Ring, Nest, Blink, Arlo…) ne se relient pas directement ; si Home Assistant les connaît, elles s’affichent dans Objets connectés.')}
+          onHide={onHide}
+        >
+          {pitch}
+        </SectionIntro>
+        {dialog}
+      </>
     );
   }
   if (!cfg.cameras.length) {
@@ -324,7 +363,7 @@ export function CamerasView({ doc }: { doc: Y.Doc }) {
       <h1 className="nb-page-title-static">
         <Icon name="cctv" size={34} /> {t('Caméras')}
       </h1>
-      <CamerasPanel doc={doc} />
+      <CamerasPanel doc={doc} onHide={() => hideSection(doc, 'cameras')} />
     </div>
   );
 }

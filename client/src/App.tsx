@@ -30,6 +30,8 @@ import { SmartHomeView } from './components/SmartHomeView';
 import { CamerasView } from './components/CamerasView';
 import { InviteView, JoinDialog, PairView } from './components/LinkDevice';
 import { HomelabConfigDialog } from './components/HomelabConfigDialog';
+import { HomelabIntro } from './components/HomelabSetup';
+import { hideSection } from './components/SectionIntro';
 import { Dashboard } from './dashboard/Dashboard';
 import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, setCardsGrouped, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
@@ -69,6 +71,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
       workspaceId: wsId,
       workspaceKey: keyValue,
       onboarded: true,
+      firstRun: false,
       lastPageId: null,
       expanded: {},
     });
@@ -265,6 +268,7 @@ function OwnerApp() {
       openDashboard: () => navigate('#/homelab'),
       openSmartHome: () => navigate('#/maison'),
       openCameras: () => navigate('#/cameras'),
+      joinServer: () => setDialog({ type: 'link' }),
       homelabConfigured,
       workspaceDoc: store?.doc ?? null,
     }),
@@ -382,7 +386,9 @@ function OwnerApp() {
       {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'link' ? <JoinDialog onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'tour' ? <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly onClose={() => setDialog(null)} /> : null}
-      {settings.firstRun && !dialog ? <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly={false} onClose={() => undefined} /> : null}
+      {settings.firstRun && !dialog && status !== 'denied' ? (
+        <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly={false} onClose={() => undefined} />
+      ) : null}
       {dialog?.type === 'appearance' ? (
         <AppearancePanel doc={store.doc} appearance={appearance} onPreview={setPreview} onClose={() => setDialog(null)} />
       ) : null}
@@ -692,19 +698,23 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
       <h1 className="nb-page-title-static">
         <Icon name="server" size={34} /> {t('Homelab')}
       </h1>
-      <HomelabPanel
-        refreshSeconds={cfg.refreshSeconds}
-        onConfigure={onConfigure}
-        configured={configured}
-        layout={cardLayout(cfg)}
-        onResize={(id, size) => saveCardSize(doc, id, size)}
-        onResetLayout={() => resetCardSizes(doc)}
-        order={cardOrder(cfg)}
-        onReorder={(ids) => saveCardOrder(doc, ids)}
-        grouped={cfg.grouped}
-        onGroupedChange={(grouped) => setCardsGrouped(doc, grouped)}
-        refreshKey={configStatusKey(cfg)}
-      />
+      {configured ? (
+        <HomelabPanel
+          refreshSeconds={cfg.refreshSeconds}
+          onConfigure={onConfigure}
+          configured={configured}
+          layout={cardLayout(cfg)}
+          onResize={(id, size) => saveCardSize(doc, id, size)}
+          onResetLayout={() => resetCardSizes(doc)}
+          order={cardOrder(cfg)}
+          onReorder={(ids) => saveCardOrder(doc, ids)}
+          grouped={cfg.grouped}
+          onGroupedChange={(grouped) => setCardsGrouped(doc, grouped)}
+          refreshKey={configStatusKey(cfg)}
+        />
+      ) : (
+        <HomelabIntro doc={doc} onConfigure={onConfigure} onHide={() => hideSection(doc, 'homelab')} />
+      )}
     </div>
   );
 }

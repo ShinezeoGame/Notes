@@ -13,6 +13,8 @@ import { t, locale, getLang } from './i18n';
 export const BUILD = __APP_BUILD__;
 /** Téléchargement de l'APK, quand une mise à jour demande une application Android plus récente. */
 export const APK_PAGE = 'https://github.com/ShinezeoGame/Notes/releases/tag/latest';
+/** Documentation sur le dépôt public (branche par défaut) : mode d'emploi, installation d'un serveur. */
+export const DOCS_BASE = 'https://github.com/ShinezeoGame/Notes/blob/HEAD/';
 
 export type RemoteVersion = { version: string; builtAt: string; minNative: number };
 type Manifest = RemoteVersion & { size: number; files: { path: string; size: number; sha256: string }[] };

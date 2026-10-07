@@ -80,7 +80,7 @@ export async function linkWithCode(serverUrl: string, code: string): Promise<voi
   const data = await post<{ wsId?: string; key?: string }>(`${serverUrl}/api/pair/claim`, { code: code.replace(/\D/g, '') });
   if (!data.wsId || !data.key) throw new Error(t('Réponse inattendue du serveur.'));
   await clearLocalDocs();
-  updateSettings({ serverUrl, workspaceId: data.wsId, workspaceKey: data.key, onboarded: true, lastPageId: null, expanded: {}, guest: false });
+  updateSettings({ serverUrl, workspaceId: data.wsId, workspaceKey: data.key, onboarded: true, firstRun: false, lastPageId: null, expanded: {}, guest: false });
   restart();
 }
 
@@ -131,7 +131,7 @@ export async function acceptInvite(serverUrl: string, token: string, name: strin
 export async function joinWithKey(serverUrl: string, wsId: string, key: string): Promise<void> {
   await post(`${serverUrl}/api/workspaces/claim`, { wsId, key });
   await clearLocalDocs();
-  updateSettings({ serverUrl, workspaceId: wsId, workspaceKey: key, onboarded: true, lastPageId: null, expanded: {}, guest: false });
+  updateSettings({ serverUrl, workspaceId: wsId, workspaceKey: key, onboarded: true, firstRun: false, lastPageId: null, expanded: {}, guest: false });
   restart();
 }
 

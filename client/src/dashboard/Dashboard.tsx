@@ -28,7 +28,9 @@ import {
   type Widget,
   type WidgetType,
 } from './model';
-import { WIDGETS, WIDGET_GROUPS, WIDGET_GROUP_LABELS } from './registry';
+import { WIDGETS, WIDGET_GROUPS, WIDGET_GROUP_LABELS, type WidgetDef } from './registry';
+import { useAppearance } from '../lib/appearance';
+import { serverBase } from '../lib/api';
 import { t } from '../lib/i18n';
 
 /** Parties d'un widget qui gardent leur propre comportement : y appuyer ne déplace pas le widget. */
@@ -186,7 +188,13 @@ function WidgetFrame({ widget, doc, store, editing, direct, onSettings, onRemove
   );
 }
 
-function Catalog({ onAdd, onClose, onReset }: { onAdd: (type: WidgetType) => void; onClose: () => void; onReset: () => void }) {
+function Catalog({ doc, onAdd, onClose, onReset }: { doc: Y.Doc; onAdd: (type: WidgetType) => void; onClose: () => void; onReset: () => void }) {
+  const appearance = useAppearance(doc);
+  // Pas de widget pour une section masquée (pas utilisée), ni pour ce qui demande un serveur sur un appareil seul ; une
+  // personne invitée n'a pas accès au réseau du serveur (maison).
+  const available = (d: WidgetDef) =>
+    !(d.section && appearance.hidden.includes(d.section)) && !(d.needsServer && !serverBase()) && !(d.group === 'Maison' && getSettings().guest);
+  const entries = (Object.entries(WIDGETS) as [WidgetType, WidgetDef][]).filter(([, d]) => available(d));
   return (
     <Modal
       title={t('Ajouter un widget')}
@@ -198,12 +206,11 @@ function Catalog({ onAdd, onClose, onReset }: { onAdd: (type: WidgetType) => voi
         </button>
       }
     >
-      {/* Espace créé par une invitation : pas de maison, de caméras ni de homelab sur le serveur d'un autre. */}
-      {WIDGET_GROUPS.filter((group) => !(group === 'Maison' && getSettings().guest)).map((group) => (
+      {WIDGET_GROUPS.filter((group) => entries.some(([, d]) => d.group === group)).map((group) => (
         <section key={group} className="dash-catalog-group">
           <h3>{WIDGET_GROUP_LABELS[group]}</h3>
           <div className="dash-catalog">
-            {(Object.entries(WIDGETS) as [WidgetType, (typeof WIDGETS)[WidgetType]][])
+            {entries
               .filter(([, d]) => d.group === group)
               .map(([type, d]) => (
                 <button key={type} type="button" className="dash-catalog-item" onClick={() => onAdd(type)}>
@@ -520,6 +527,7 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
 
       {catalog ? (
         <Catalog
+          doc={doc}
           onAdd={add}
           onClose={() => setCatalog(false)}
           onReset={() => {

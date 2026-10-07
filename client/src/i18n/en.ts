@@ -263,10 +263,6 @@ const UI: Record<string, string> = {
   'Caméras – Melo': 'Cameras – Melo',
 
   // components/HomelabConfigDialog.tsx
-  'Indiquez l’adresse IP ou le nom d’hôte de votre serveur.': 'Enter your server’s IP address or host name.',
-  'Toutes les applications de la stack sont déjà présentes.': 'All the apps of the stack are already there.',
-  '{n} application ajoutée. Renseignez sa clé API pour afficher les statistiques.': '{n} app added. Enter its API key to show statistics.',
-  '{n} applications ajoutées. Renseignez leurs clés API pour afficher les statistiques.': '{n} apps added. Enter their API keys to show statistics.',
   '{label} : {value}': '{label}: {value}',
   'Connexion réussie': 'Connected',
   'Échec': 'Failed',
@@ -274,10 +270,6 @@ const UI: Record<string, string> = {
   'Applications ({n})': 'Apps ({n})',
   'Appareils ({n})': 'Devices ({n})',
   'Général': 'General',
-  'Ajouter rapidement la stack multimédia (Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent) :':
-    'Quickly add the media stack (Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent):',
-  'IP ou nom d’hôte, ex. 192.168.1.10': 'IP or host name, e.g. 192.168.1.10',
-  'Ajouter la stack': 'Add the stack',
   'Aucune application.': 'No apps.',
   'Monter': 'Move up',
   'Descendre': 'Move down',
@@ -1523,8 +1515,6 @@ const UI: Record<string, string> = {
   'Après': 'After',
 
   // pdf/PdfApp.tsx
-  'L’atelier PDF garde vos fichiers sur votre serveur Melo.': 'The PDF workshop keeps your files on your Melo server.',
-  'Ajoutez l’adresse de votre serveur dans les réglages pour l’utiliser.': 'Add your server’s address in the settings to use it.',
 
   // pdf/PdfEditor.tsx
   'PDF introuvable': 'PDF not found',
@@ -1785,6 +1775,86 @@ const UI: Record<string, string> = {
     'The Melo server’s network relay is not responding: the signal may not reach the computer.',
   'Le serveur Melo tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.':
     'The Melo server runs in Docker without its network relay: the signal may not reach the computer.',
+  // Nouveaux venus : bienvenue, présentation des sections (SectionIntro), homelab (recherche, import de Homepage)
+  'Passer la visite': 'Skip the tour',
+  'Pour du matériel chez vous (Home Assistant, caméras, serveur maison) : rien à cocher si vous n’en avez pas.':
+    'For equipment at home (Home Assistant, cameras, home server): nothing to tick if you don’t have any.',
+  'Nécessite un serveur Melo': 'Needs a Melo server',
+  'Section masquée. Pour la retrouver : Personnaliser → Sections.': 'Section hidden. To bring it back: Customize → Sections.',
+  'Ce qu’il vous faut': 'What you need',
+  'Je n’en ai pas besoin : masquer cette section': 'I don’t need this: hide this section',
+  'Un serveur Melo chez vous, sur le même réseau que votre matériel : c’est lui qui fait le lien, cet appareil ne peut pas le faire seul.':
+    'A Melo server at home, on the same network as your equipment: it makes the connection, this device can’t do it alone.',
+  'Installer un serveur Melo chez vous (guide pas à pas)': 'Install a Melo server at home (step-by-step guide)',
+  'Pilotez votre maison': 'Control your home',
+  'Lumières, prises, volets, chauffage, capteurs et caméras de presque toutes les marques, pièce par pièce, sur l’ordinateur comme sur le téléphone.':
+    'Lights, plugs, blinds, heating, sensors and cameras from almost any brand, room by room, on your computer and your phone.',
+  '<b>Home Assistant</b>, une application gratuite qui relie les objets connectés de presque toutes les marques (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).':
+    '<b>Home Assistant</b>, a free app that connects smart devices from almost any brand (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).',
+  'Installée chez vous, sur le même réseau que le serveur Melo : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.':
+    'Installed at home, on the same network as the Melo server: Home Assistant Green box, Raspberry Pi, NAS or mini PC.',
+  'Découvrir Home Assistant': 'Discover Home Assistant',
+  'Pour allumer un ordinateur à distance, pas besoin de Home Assistant : widget « Allumer un PC » de l’accueil.':
+    'To turn on a computer remotely, you don’t need Home Assistant: use the “Wake a PC” widget on the home screen.',
+  'Vos caméras en direct': 'Your cameras, live',
+  'Le direct de vos caméras de surveillance, ici, sur l’accueil et dans vos pages, sans ouvrir l’application de chaque marque.':
+    'Live view of your security cameras, here, on the home screen and in your pages, without opening each brand’s app.',
+  'Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Melo.':
+    'IP cameras (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… or any camera with an RTSP stream) or a recorder, on the same network as the Melo server.',
+  'Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Melo vous guide ensuite.':
+    'Their IP address and login (the ones from the camera’s app): Melo guides you from there.',
+  'Les caméras seulement « cloud » (Ring, Nest, Blink, Arlo…) ne se relient pas directement ; si Home Assistant les connaît, elles s’affichent dans Objets connectés.':
+    'Cloud-only cameras (Ring, Nest, Blink, Arlo…) can’t be connected directly; if Home Assistant knows them, they show up in Smart home.',
+  'Votre serveur maison d’un coup d’œil': 'Your home server at a glance',
+  'En ligne ou pas, processeur, mémoire, disques, téléchargements et lectures en cours : votre serveur maison et ses applications, d’un coup d’œil.':
+    'Online or not, CPU, memory, disks, downloads and playback in progress: your home server and its apps at a glance.',
+  'Un serveur chez vous (NAS, mini-PC, Raspberry Pi…) sur le même réseau que Melo.': 'A server at home (NAS, mini PC, Raspberry Pi…) on the same network as Melo.',
+  'Des applications web : Jellyfin, Plex, Nextcloud, Pi-hole, Home Assistant, la suite *arr… ou n’importe laquelle.':
+    'Web apps: Jellyfin, Plex, Nextcloud, Pi-hole, Home Assistant, the *arr suite… or any other.',
+  'Rechercher mes applications': 'Find my apps',
+  'Importer depuis Homepage': 'Import from Homepage',
+  'Ajouter à la main': 'Add manually',
+  'Vous avez déjà un tableau de bord (Homepage, Homarr, Dashy…) ? Il peut aussi s’afficher sur l’accueil, dans un widget « Site web ».':
+    'Already have a dashboard (Homepage, Homarr, Dashy…)? It can also show on the home screen, in a “Website” widget.',
+  'Ajouter d’un coup les applications de votre réseau :': 'Add the apps on your network in one go:',
+  '{n} élément ajouté. Ajoutez sa clé API dans « Configurer » pour voir ses statistiques.': '{n} item added. Add its API key in “Configure” to see its statistics.',
+  '{n} éléments ajoutés. Ajoutez les clés API dans « Configurer » pour voir les statistiques.': '{n} items added. Add the API keys in “Configure” to see the statistics.',
+  '{n} élément ajouté au homelab.': '{n} item added to the homelab.',
+  '{n} éléments ajoutés au homelab.': '{n} items added to the homelab.',
+  'Le relais réseau du serveur Melo ne répond pas : la recherche s’est limitée à la machine du serveur.':
+    'The Melo server’s network relay is not responding: the search only covered the server’s own machine.',
+  'Le serveur Melo tourne dans Docker sans son relais réseau : la recherche s’est limitée à la machine du serveur.':
+    'The Melo server runs in Docker without its network relay: the search only covered the server’s own machine.',
+  'Recherche sur votre réseau… (une dizaine de secondes)': 'Searching your network… (about ten seconds)',
+  'Appareil interrogé : {n}. Cochez ce que vous voulez suivre.': 'Device checked: {n}. Tick what you want to follow.',
+  'Appareils interrogés : {n}. Cochez ce que vous voulez suivre.': 'Devices checked: {n}. Tick what you want to follow.',
+  'Dans le dossier de configuration de Homepage, ouvrez le fichier services.yaml, copiez tout son contenu et collez-le ici, ou choisissez le fichier.':
+    'In Homepage’s configuration folder, open services.yaml, copy all of its content and paste it here, or choose the file.',
+  'Contenu de services.yaml': 'Content of services.yaml',
+  'Choisir le fichier': 'Choose the file',
+  'Lire': 'Read',
+  'Applications trouvées dans services.yaml. Cochez celles à suivre dans Melo.': 'Apps found in services.yaml. Tick the ones to follow in Melo.',
+  'Autre fichier': 'Another file',
+  'Disponibilité seulement': 'Availability only',
+  'Aucune application trouvée. Vos applications sont peut-être sur d’autres ports : ajoutez-les à la main dans « Configurer ».':
+    'No apps found. Your apps may be on other ports: add them manually in “Configure”.',
+  'Processeur, mémoire et disques de la machine du serveur Melo': 'CPU, memory and disks of the Melo server’s machine',
+  'Déjà ajouté': 'Already added',
+  'Les statistiques demandent sa clé API (à saisir ensuite dans « Configurer »).': 'Statistics need its API key (to enter later in “Configure”).',
+  'Clé à saisir': 'Key needed',
+  'Ajouter {n} élément': 'Add {n} item',
+  'Ajouter {n} éléments': 'Add {n} items',
+  'Ce texte n’est pas un fichier YAML valide (ligne {line}).': 'This text is not a valid YAML file (line {line}).',
+  'Ce texte n’est pas un fichier YAML valide.': 'This text is not a valid YAML file.',
+  'Aucune application dans ce texte. Collez le contenu de services.yaml (pas celui de settings.yaml ou bookmarks.yaml).':
+    'No apps in this text. Paste the content of services.yaml (not settings.yaml or bookmarks.yaml).',
+  'Tous vos agendas au même endroit': 'All your calendars in one place',
+  'Un agenda Google, Outlook, Apple, de l’école ou du travail : son adresse iCal, votre compte Google, ou un fichier .ics.':
+    'A Google, Outlook, Apple, school or work calendar: its iCal address, your Google account, or an .ics file.',
+  'Signez et remplissez vos PDF': 'Sign and fill in your PDFs',
+  'Un serveur Melo (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.': 'A Melo server (yours or a friend’s): it keeps your PDF files.',
+  'Signer, remplir un formulaire, annoter, réorganiser les pages ou assembler plusieurs PDF, et transformer des photos en PDF.':
+    'Sign, fill in a form, annotate, reorder pages or merge several PDFs, and turn photos into a PDF.',
 };
 
 export const EN: Record<string, string> = { ...EN_SERVER, ...UI };

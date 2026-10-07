@@ -23,6 +23,8 @@ export type AppContextValue = {
   openSmartHome?: () => void;
   /** Ouvre la vue Caméras (propriétaire uniquement). */
   openCameras?: () => void;
+  /** Rejoindre un serveur Melo (appareil seul : maison, caméras, homelab et PDF en ont besoin). */
+  joinServer?: () => void;
   /** Vrai si au moins une application ou un appareil est configuré. */
   homelabConfigured?: boolean;
   /** Document de l'espace de travail (configuration du homelab, tailles des modules). */

@@ -58,14 +58,16 @@ function defaultServerUrl(): string | null {
   return null;
 }
 
+/** Arrivée par un lien reçu : page partagée, invitation, liaison d'un appareil. */
+const arrivedByLink = () => ['shared', 'invite', 'pair', 'join'].includes(parseRoute(location.hash).name);
+
 /**
- * Langue d'une nouvelle installation : l'anglais, sauf pour une personne qui arrive par un lien reçu (page partagée,
- * invitation, liaison d'un appareil) : la langue de son navigateur, si c'est le français.
+ * Langue d'une nouvelle installation : l'anglais, sauf pour une personne qui arrive par un lien reçu : la langue de son
+ * navigateur, si c'est le français.
  */
 function firstLang(): Lang {
-  const linked = ['shared', 'invite', 'pair', 'join'].includes(parseRoute(location.hash).name);
   const browser = (navigator.languages?.[0] ?? navigator.language ?? '').toLowerCase();
-  return linked && browser.startsWith('fr') ? 'fr' : 'en';
+  return arrivedByLink() && browser.startsWith('fr') ? 'fr' : 'en';
 }
 
 function defaults(lang: Lang = 'en'): Settings {
@@ -112,6 +114,9 @@ function load(): Settings {
     /* stockage indisponible */
   }
   const s = defaults(firstLang());
+  // Navigateur qui découvre Melo (nouvel espace) : bienvenue (langue, prénom, sections utiles), comme dans les
+  // applications. Pas pour qui arrive par un lien reçu : ces parcours ont le leur.
+  if (isStandaloneWeb() && !isDesktopLocal() && !arrivedByLink()) s.firstRun = true;
   persist(s);
   return s;
 }

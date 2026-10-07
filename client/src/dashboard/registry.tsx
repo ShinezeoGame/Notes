@@ -1,6 +1,7 @@
 // Catalogue des widgets : nom, icône, description, barre de titre par défaut, contenu et réglages de chaque type.
 import type { ComponentType } from 'react';
 import type { IconName } from '../icons/registry';
+import type { SectionId } from '../lib/appearance';
 import type { WidgetType } from './model';
 import type { SettingsProps, WidgetProps } from './types';
 import { ClockSettings, ClockWidget } from './widgets/Clock';
@@ -33,6 +34,10 @@ export type WidgetDef = {
   setupFirst?: boolean;
   /** Couleur de fond propre au widget (post-it). */
   tint?: (config: Record<string, unknown>) => string | undefined;
+  /** Section dont le widget montre le contenu : absent du catalogue quand elle est masquée (pas utilisée). */
+  section?: SectionId;
+  /** Fonctionne seulement avec un serveur Melo : absent du catalogue sur un appareil seul. */
+  needsServer?: boolean;
 };
 
 export const WIDGETS: Record<WidgetType, WidgetDef> = {
@@ -122,6 +127,8 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     group: 'Maison',
     Body: CamerasWidget,
     Settings: CamerasSettings,
+    section: 'cameras',
+    needsServer: true,
   },
   smarthome: {
     label: t('Maison'),
@@ -132,6 +139,8 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     Body: SmartHomeWidget,
     Settings: SmartHomeSettings,
     defaults: { favoritesOnly: true },
+    section: 'smarthome',
+    needsServer: true,
   },
   homelab: {
     label: t('Homelab'),
@@ -140,6 +149,8 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     showTitle: true,
     group: 'Maison',
     Body: HomelabWidget,
+    section: 'homelab',
+    needsServer: true,
   },
   wol: {
     label: t('Allumer un PC'),
@@ -150,6 +161,7 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     Body: WolWidget,
     Settings: WolSettings,
     setupFirst: true,
+    needsServer: true,
   },
   links: {
     label: t('Raccourcis'),

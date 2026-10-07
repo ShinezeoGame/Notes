@@ -31,12 +31,12 @@ export function LanguageSwitch({ className, short }: { className?: string; short
 }
 
 /**
- * Premier passage dans un navigateur (sans écran de bienvenue) : la langue se choisit dès l'ouverture. Les
- * applications Android et Windows la proposent sur leur premier écran.
+ * Navigateur dont la langue n'est pas encore choisie, hors bienvenue (qui la propose elle-même) : la langue se choisit
+ * dès l'ouverture. Les applications Android et Windows la proposent sur leur premier écran.
  */
 export function LanguageHint() {
   const settings = useSettings();
-  if (settings.langChosen || isNative() || isDesktop() || !settings.onboarded) return null;
+  if (settings.langChosen || settings.firstRun || isNative() || isDesktop() || !settings.onboarded) return null;
   return (
     <div className="nb-lang-hint" role="dialog" aria-label={'Language / Langue' /* i18n-ignore */}>
       <LanguageSwitch />

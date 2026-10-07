@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type * as Y from 'yjs';
 import { api, serverBase } from '../lib/api';
 import {
@@ -54,6 +54,8 @@ import { Icon } from '../icons/Icon';
 import { Modal } from './Modal';
 import { SmartHomeConfigDialog } from './SmartHomeConfigDialog';
 import { SmartHomeGroupDialog } from './SmartHomeGroupDialog';
+import { NeedsServerIntro, SectionIntro, hideSection } from './SectionIntro';
+import { AppContext } from '../editor/context';
 import { toast } from './Toast';
 import { t, tn, tx, tServer, locale } from '../lib/i18n';
 
@@ -953,7 +955,21 @@ function TileGrid({ items, compact, onReorder, render }: { items: Item[]; compac
   );
 }
 
-export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, canConfigure = true }: { doc: Y.Doc | null; compact?: boolean; favoritesOnly?: boolean; canConfigure?: boolean }) {
+export function SmartHomePanel({
+  doc,
+  compact = false,
+  favoritesOnly = false,
+  canConfigure = true,
+  onHide,
+}: {
+  doc: Y.Doc | null;
+  compact?: boolean;
+  favoritesOnly?: boolean;
+  canConfigure?: boolean;
+  /** Section : « Je n'en ai pas besoin » (masque la section). */
+  onHide?: () => void;
+}) {
+  const ctx = useContext(AppContext);
   const cfg = useHomeConfig(doc);
   const hasServer = Boolean(serverBase());
   const configured = isHomeConfigured(cfg);
@@ -1001,12 +1017,54 @@ export function SmartHomePanel({ doc, compact = false, favoritesOnly = false, ca
   const live = liveId ? byId.get(liveId) ?? null : null;
   const group = groupId ? groups.find((it) => it.id === groupId) ?? null : null;
 
+  const pitch = t('Lumières, prises, volets, chauffage, capteurs et caméras de presque toutes les marques, pièce par pièce, sur l’ordinateur comme sur le téléphone.');
+  if (!hasServer && !compact) {
+    return (
+      <NeedsServerIntro icon="bulb" title={t('Pilotez votre maison')} onJoin={ctx?.joinServer} onHide={onHide}>
+        {pitch}
+      </NeedsServerIntro>
+    );
+  }
   if (!hasServer) {
     return (
       <div className="nb-notice">
         <p>{t('La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.')}</p>
         <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
+    );
+  }
+  if (!configured && !compact) {
+    return (
+      <>
+        <SectionIntro
+          icon="bulb"
+          title={t('Pilotez votre maison')}
+          needs={[
+            tx(
+              '<b>Home Assistant</b>, une application gratuite qui relie les objets connectés de presque toutes les marques (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).',
+              { b: (s) => <b>{s}</b> },
+            ),
+            t('Installée chez vous, sur le même réseau que le serveur Melo : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.'),
+          ]}
+          actions={
+            <>
+              {onConfigure ? (
+                <button type="button" className="nb-btn nb-btn--primary" onClick={onConfigure}>
+                  {t('Connecter Home Assistant')}
+                </button>
+              ) : null}
+              <a className="nb-btn" href="https://www.home-assistant.io/installation/" target="_blank" rel="noopener noreferrer">
+                <Icon name="externalLink" size={14} /> {t('Découvrir Home Assistant')}
+              </a>
+            </>
+          }
+          note={t('Pour allumer un ordinateur à distance, pas besoin de Home Assistant : widget « Allumer un PC » de l’accueil.')}
+          onHide={onHide}
+        >
+          {pitch}
+        </SectionIntro>
+        {configDialog}
+      </>
     );
   }
   if (!configured) {
@@ -1218,7 +1276,7 @@ export function SmartHomeView({ doc }: { doc: Y.Doc }) {
       <h1 className="nb-page-title-static">
         <Icon name="bulb" size={34} /> {t('Objets connectés')}
       </h1>
-      <SmartHomePanel doc={doc} />
+      <SmartHomePanel doc={doc} onHide={() => hideSection(doc, 'smarthome')} />
     </div>
   );
 }

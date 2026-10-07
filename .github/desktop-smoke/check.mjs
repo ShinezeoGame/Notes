@@ -147,7 +147,7 @@ try {
     await win.getByRole('button', { name: /Commencer/ }).click();
     await win.locator('.nb-modal', { hasText: 'Bienvenue !' }).waitFor({ timeout: 30_000 });
     await win.screenshot({ path: path.join(OUT, '2-premier-lancement.png') });
-    await win.getByRole('button', { name: 'Plus tard' }).click();
+    await win.getByRole('button', { name: 'Passer la visite' }).click();
     await win.locator('.dash-grid .dash-widget').first().waitFor({ timeout: 30_000 });
     await win.screenshot({ path: path.join(OUT, '3-accueil.png') });
   });

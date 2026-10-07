@@ -952,6 +952,8 @@ select.nb-input { appearance: auto; }
   display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: var(--text-muted);
 }
 .nb-welcome-section--on { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.nb-welcome-section--off { opacity: 0.55; cursor: default; }
+.nb-welcome-group-note { margin: 0 2px 2px; font-size: calc(12px * var(--ui-scale)); color: var(--text-muted); line-height: 1.4; }
 .nb-welcome-section > span { display: flex; flex-direction: column; min-width: 0; font-size: calc(13px * var(--ui-scale)); }
 .nb-welcome-section b { color: var(--text-strong); font-size: calc(14px * var(--ui-scale)); font-weight: 600; }
 .nb-welcome-slide { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 8px 4px; }
@@ -1455,6 +1457,52 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .w-wol-details > summary { cursor: pointer; color: var(--accent); margin-bottom: 8px; }
 .w-wol-details:not([open]) > summary { margin-bottom: 0; }
 .w-wol-details ol { margin: 0 0 4px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; color: var(--text); }
+
+/* ---------- Section pas encore réglée : présentation (SectionIntro.tsx) ---------- */
+.nb-intro {
+  max-width: 640px; margin: 8px auto 24px; padding: 28px 28px 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-elevated);
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
+}
+.nb-intro-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--accent);
+}
+.nb-intro h2 { margin: 2px 0 0; font-size: calc(20px * var(--ui-scale)); color: var(--text-strong); }
+.nb-intro-text { margin: 0; max-width: 34em; color: var(--text); line-height: 1.5; }
+.nb-intro-needs { align-self: stretch; text-align: left; padding: 12px 14px; border-radius: 10px; background: var(--bg-hover); font-size: calc(13px * var(--ui-scale)); }
+.nb-intro-needs > b { display: block; margin-bottom: 6px; color: var(--text-strong); }
+.nb-intro-needs ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.nb-intro-needs li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.45; color: var(--text); }
+.nb-intro-needs li > .nb-svg-icon { flex: none; margin-top: 2px; color: var(--success); }
+.nb-intro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 2px; }
+.nb-intro-note { margin: 0; max-width: 36em; font-size: calc(12.5px * var(--ui-scale)); color: var(--text-muted); line-height: 1.45; }
+.nb-intro-note a { color: var(--accent); }
+.nb-intro-hide {
+  margin-top: 4px; border: none; background: none; color: var(--text-muted); font: inherit; font-size: calc(12.5px * var(--ui-scale)); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px;
+}
+.nb-intro-hide:hover { color: var(--text-strong); background: var(--bg-hover); }
+@media (max-width: 600px) { .nb-intro { padding: 22px 16px 18px; margin-top: 0; } }
+
+/* Homelab : recherche des applications, import de Homepage (HomelabSetup.tsx) */
+.hl-discover-wait { display: flex; align-items: center; gap: 10px; padding: 18px 4px; color: var(--text-muted); }
+.hl-spin { animation: w-wol-spin 0.9s linear infinite; }
+.hl-picker-intro { margin: 0 0 10px; color: var(--text-muted); font-size: calc(13px * var(--ui-scale)); line-height: 1.45; }
+.hl-picker-list { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+.hl-cand { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+.hl-cand:hover { background: var(--bg-hover); }
+.hl-cand--exists { opacity: 0.6; cursor: default; }
+.hl-cand-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hl-cand-text b { color: var(--text-strong); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hl-cand-text small { color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hl-cand-tag { flex: none; font-size: calc(11px * var(--ui-scale)); padding: 1px 8px; border-radius: 999px; background: var(--bg-active); color: var(--text-muted); }
+.hl-cand-tag--warn { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); }
+.hl-picker-actions { margin-top: 12px; flex-wrap: wrap; }
+.hl-import-help { margin: 0 0 10px; color: var(--text-muted); font-size: calc(13px * var(--ui-scale)); line-height: 1.45; }
+.hl-import-text {
+  width: 100%; min-height: 160px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: calc(12.5px * var(--ui-scale));
+}
+.hl-import-actions { margin-top: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.hl-preset-actions { flex-wrap: wrap; }
 
 /* ---------- Section Agenda ---------- */
 .ag-page { max-width: 1240px; }

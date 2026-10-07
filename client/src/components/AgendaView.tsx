@@ -20,6 +20,7 @@ import {
 } from '../lib/agenda';
 import { dayKey, formatDay, formatTimeRange } from '../lib/ics';
 import { Icon } from '../icons/Icon';
+import { SectionIntro, hideSection } from './SectionIntro';
 import { t, tn, tx, locale } from '../lib/i18n';
 
 const WEEKDAYS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
@@ -185,18 +186,22 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
         <h1 className="nb-page-title-static">
           <Icon name="calendar" size={34} /> {t('Agenda')}
         </h1>
-        <div className="nb-notice sh-empty ag-empty">
-          <Icon name="calendar" size={28} />
-          <p>
-            {tx(
-              'Réunissez vos agendas <b>Google</b> et vos adresses <b>iCal</b> (Outlook, Apple, école, travail…) : vue du mois, prochains événements, et widget sur l’accueil.',
-              { b: (s) => <b>{s}</b> },
-            )}
-          </p>
-          <button type="button" className="nb-btn nb-btn--primary" onClick={() => void add()}>
-            <Icon name="plus" size={15} /> {t('Ajouter un agenda')}
-          </button>
-        </div>
+        <SectionIntro
+          icon="calendar"
+          title={t('Tous vos agendas au même endroit')}
+          needs={[t('Un agenda Google, Outlook, Apple, de l’école ou du travail : son adresse iCal, votre compte Google, ou un fichier .ics.')]}
+          actions={
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => void add()}>
+              <Icon name="plus" size={15} /> {t('Ajouter un agenda')}
+            </button>
+          }
+          onHide={() => hideSection(doc, 'agenda')}
+        >
+          {tx(
+            'Réunissez vos agendas <b>Google</b> et vos adresses <b>iCal</b> (Outlook, Apple, école, travail…) : vue du mois, prochains événements, et widget sur l’accueil.',
+            { b: (s) => <b>{s}</b> },
+          )}
+        </SectionIntro>
       </div>
     );
   }

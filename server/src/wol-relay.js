@@ -1,8 +1,8 @@
-// Relais réseau du widget « Allumer un PC » (Wake-on-LAN). Le serveur Melo tourne dans Docker sur un réseau à part,
-// d'où le signal de réveil n'atteint pas le réseau de la maison ; ce relais tourne sur le réseau de la machine hôte
-// (docker-compose.yml, service « wol ») et envoie le signal, vérifie les ordinateurs et cherche les appareils à sa
-// place. Il n'écoute que sur un socket Unix partagé avec le serveur (WOL_RELAY) : rien n'est ouvert sur le réseau, et
-// il n'a pas accès aux données de Melo.
+// Relais réseau (widget « Allumer un PC », recherche des applications du homelab). Le serveur Melo tourne dans Docker
+// sur un réseau à part, qui n'atteint pas tout le réseau de la maison ; ce relais tourne sur le réseau de la machine
+// hôte (docker-compose.yml, service « wol ») et envoie le signal de réveil, vérifie les ordinateurs, cherche les
+// appareils et les applications à sa place. Il n'écoute que sur un socket Unix partagé avec le serveur (WOL_RELAY) :
+// rien n'est ouvert sur le réseau, et il n'a pas accès aux données de Melo.
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';

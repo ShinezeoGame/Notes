@@ -12,7 +12,7 @@ services:
       # 1 = seul votre espace peut exister sur ce serveur (recommandé s'il est accessible depuis Internet)
       - MAX_WORKSPACES=${MAX_WORKSPACES:-1}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
-      # Widget « Allumer un PC » : passe par le relais réseau (service wol ci-dessous)
+      # Réveil des ordinateurs et recherche des applications : par le relais réseau (service wol ci-dessous)
       - WOL_RELAY=/run/melo-wol/relay.sock
     volumes:
       # Toutes les données (pages, fichiers importés, liens de partage) : dossier ./data à sauvegarder
@@ -22,9 +22,10 @@ services:
       # - /mnt/media:/mnt/media:ro
     restart: unless-stopped
 
-  # Relais réseau du widget « Allumer un PC » (Wake-on-LAN) : depuis le réseau Docker du serveur, le signal de réveil
-  # n'atteint pas le réseau de la maison. Ce petit service tourne sur le réseau de la machine (network_mode: host),
-  # sans port ouvert ni accès aux données : il ne parle qu'au serveur, par un fichier partagé (volume wol-relay).
+  # Relais réseau (widget « Allumer un PC », recherche des applications du homelab) : depuis le réseau Docker du
+  # serveur, ni le signal de réveil ni la recherche n'atteignent tout le réseau de la maison. Ce petit service tourne sur
+  # le réseau de la machine (network_mode: host), sans port ouvert ni accès aux données : il ne parle qu'au serveur, par
+  # un fichier partagé (volume wol-relay).
   wol:
     build: .
     command: ['node', 'server/src/wol-relay.js']

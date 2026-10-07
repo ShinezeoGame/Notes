@@ -1,6 +1,9 @@
 // Atelier PDF (menu du bas « PDF ») : bibliothèque et éditeur. Chargé seulement à l'ouverture de l'atelier.
+import { useContext } from 'react';
 import type * as Y from 'yjs';
 import { serverBase } from '../lib/api';
+import { AppContext } from '../editor/context';
+import { NeedsServerIntro, hideSection } from '../components/SectionIntro';
 import { Icon } from '../icons/Icon';
 import { PdfLibrary } from './model';
 import { PdfLibraryView } from './PdfLibraryView';
@@ -21,19 +24,26 @@ export function libraryFor(doc: Y.Doc): PdfLibrary {
 }
 
 export default function PdfApp({ doc, pdfId }: { doc: Y.Doc; pdfId: string | null }) {
+  const ctx = useContext(AppContext);
   const library = libraryFor(doc);
+  const hide = () => hideSection(doc, 'pdf');
   if (!serverBase()) {
     return (
       <div className="nb-page">
         <h1 className="nb-page-title-static">
           <Icon name="filePdf" size={34} /> {t('Atelier PDF')}
         </h1>
-        <div className="nb-notice">
-          <p>{t('L’atelier PDF garde vos fichiers sur votre serveur Melo.')}</p>
-          <p className="nb-muted">{t('Ajoutez l’adresse de votre serveur dans les réglages pour l’utiliser.')}</p>
-        </div>
+        <NeedsServerIntro
+          icon="filePdf"
+          title={t('Signez et remplissez vos PDF')}
+          need={t('Un serveur Melo (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.')}
+          onJoin={ctx?.joinServer}
+          onHide={hide}
+        >
+          {t('Signer, remplir un formulaire, annoter, réorganiser les pages ou assembler plusieurs PDF, et transformer des photos en PDF.')}
+        </NeedsServerIntro>
       </div>
     );
   }
-  return pdfId ? <PdfEditor key={pdfId} library={library} id={pdfId} /> : <PdfLibraryView library={library} />;
+  return pdfId ? <PdfEditor key={pdfId} library={library} id={pdfId} /> : <PdfLibraryView library={library} onHide={hide} />;
 }

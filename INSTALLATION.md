@@ -239,7 +239,7 @@ La section **Caméras** se connecte directement à vos caméras IP et enregistre
 
 ### Allumer un ordinateur (Wake-on-LAN)
 
-Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ordinateur de votre réseau (réglages de l’ordinateur : voir le [mode d’emploi](docs/GUIDE.md#allumer-un-ordinateur)). Depuis son conteneur, Melo ne peut pas envoyer ce signal à tout le réseau de la box : `docker-compose.yml` lance donc à côté un petit relais, le service `wol`, branché sur le réseau de la machine (`network_mode: host`). Il n’ouvre aucun port et n’a pas accès à vos données : il ne communique qu’avec Melo, par un fichier partagé (volume `wol-relay`). Rien à faire : `docker compose up -d` (et la mise à jour automatique) le démarre, et `docker compose logs wol` affiche « relais réseau du réveil des ordinateurs prêt ».
+Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ordinateur de votre réseau (réglages de l’ordinateur : voir le [mode d’emploi](docs/GUIDE.md#allumer-un-ordinateur)), et **Rechercher mes applications** (section Homelab) interroge les appareils du réseau. Depuis son conteneur, Melo n’atteint pas tout le réseau de la box : `docker-compose.yml` lance donc à côté un petit relais, le service `wol`, branché sur le réseau de la machine (`network_mode: host`). Il n’ouvre aucun port et n’a pas accès à vos données : il ne communique qu’avec Melo, par un fichier partagé (volume `wol-relay`). Rien à faire : `docker compose up -d` (et la mise à jour automatique) le démarre, et `docker compose logs wol` affiche « relais réseau du réveil des ordinateurs prêt ».
 
 - Pour ne pas l’utiliser, ajoutez à `docker-compose.override.yml` les lignes ci-dessous, puis lancez `docker compose rm -sf wol` :
 

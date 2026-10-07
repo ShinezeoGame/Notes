@@ -13,7 +13,6 @@ import {
   isImageIcon,
   serviceVisual,
   defaultUrl,
-  mediaStackPreset,
   newDevice,
   newService,
   saveHomelabConfig,
@@ -26,11 +25,12 @@ import {
 } from '../lib/homelab';
 import { toast } from './Toast';
 import { useAppCtx } from '../editor/context';
+import { DiscoverDialog, HomepageImportDialog } from './HomelabSetup';
 import { prepareImage } from '../lib/images';
 import { ImageCropDialog, renderCrop, type CropState } from './ImageCropDialog';
 import { AppTile, Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
-import { t, tn, tx, tServer } from '../lib/i18n';
+import { t, tx, tServer } from '../lib/i18n';
 
 type Props = { doc: Y.Doc; onClose: () => void };
 type Tab = 'services' | 'devices' | 'general';
@@ -48,7 +48,7 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('services');
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
-  const [presetHost, setPresetHost] = useState(() => hostOf(cfg.services[0]?.url ?? '') || '');
+  const [finder, setFinder] = useState<'discover' | 'homepage' | null>(null);
   const [testResult, setTestResult] = useState<TestResult>(null);
   const [testing, setTesting] = useState(false);
 
@@ -74,22 +74,6 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
     return next;
   };
 
-  const addPreset = () => {
-    const host = presetHost.trim();
-    if (!host) return toast(t('Indiquez l’adresse IP ou le nom d’hôte de votre serveur.'), 'error');
-    const existing = new Set(cfg.services.map((s) => s.type));
-    const added = mediaStackPreset(host).filter((s) => !existing.has(s.type));
-    if (!added.length) return toast(t('Toutes les applications de la stack sont déjà présentes.'));
-    save({ services: [...cfg.services, ...added] });
-    toast(
-      tn(
-        added.length,
-        '{n} application ajoutée. Renseignez sa clé API pour afficher les statistiques.',
-        '{n} applications ajoutées. Renseignez leurs clés API pour afficher les statistiques.',
-      ),
-    );
-  };
-
   const runTest = async (payload: { service?: Service; device?: Device }) => {
     setTesting(true);
     setTestResult(null);
@@ -113,6 +97,8 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
 
   return (
     <Modal title={t('Configurer le homelab')} onClose={onClose} width={720}>
+      {finder === 'discover' ? <DiscoverDialog doc={doc} onClose={() => setFinder(null)} /> : null}
+      {finder === 'homepage' ? <HomepageImportDialog doc={doc} onClose={() => setFinder(null)} /> : null}
       <div className="nb-tabs">
         <button type="button" className={tab === 'services' ? 'active' : ''} onClick={() => setTab('services')}>
           {t('Applications ({n})', { n: cfg.services.length })}
@@ -128,18 +114,13 @@ export function HomelabConfigDialog({ doc, onClose }: Props) {
       {tab === 'services' && !editingService ? (
         <div className="nb-tab-panel">
           <div className="hl-preset">
-            <span className="nb-muted">
-              {t('Ajouter rapidement la stack multimédia (Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent) :')}
-            </span>
-            <div className="nb-row nb-gap">
-              <input
-                className="nb-input"
-                placeholder={t('IP ou nom d’hôte, ex. 192.168.1.10')}
-                value={presetHost}
-                onChange={(e) => setPresetHost(e.target.value)}
-              />
-              <button type="button" className="nb-btn" onClick={addPreset}>
-                {t('Ajouter la stack')}
+            <span className="nb-muted">{t('Ajouter d’un coup les applications de votre réseau :')}</span>
+            <div className="nb-row nb-gap hl-preset-actions">
+              <button type="button" className="nb-btn" onClick={() => setFinder('discover')}>
+                <Icon name="search" size={15} /> {t('Rechercher mes applications')}
+              </button>
+              <button type="button" className="nb-btn" onClick={() => setFinder('homepage')}>
+                <Icon name="upload" size={15} /> {t('Importer depuis Homepage')}
               </button>
             </div>
           </div>

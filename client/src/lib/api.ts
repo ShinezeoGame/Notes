@@ -4,6 +4,7 @@ import type { Device, DeviceStatus, HomelabStatus, Service, ServiceStatus } from
 import type { HomeEntity, HomeStates } from './smarthome';
 import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
 import type { WolScan, WolStatus, WolWake } from './wol';
+import type { DiscoverResult } from './homelabImport';
 import { t, tServer } from './i18n';
 
 export class ApiError extends Error {
@@ -106,6 +107,8 @@ export const api = {
   /** Le site accepte-t-il d'être affiché dans une page de Melo ? (null : le serveur ne l'a pas joint) */
   frameCheck: (url: string) => request<{ allowed: boolean | null }>(`/api/frame-check?url=${encodeURIComponent(url)}`, { auth: ownerAuth() }),
   homelabStatus: (force = false) => request<HomelabStatus>(`/api/homelab/status${force ? '?force=1' : ''}`, { auth: ownerAuth() }),
+  /** Applications et appareils du réseau local, cherchés par le serveur (une dizaine de secondes). */
+  homelabDiscover: () => request<DiscoverResult>('/api/homelab/discover', { method: 'POST', auth: ownerAuth() }),
   homelabTest: (payload: { service?: Service; device?: Device }) =>
     request<ServiceStatus | DeviceStatus>('/api/homelab/test', { method: 'POST', body: JSON.stringify(payload), auth: ownerAuth() }),
   pairStart: () => request<{ code: string; expiresAt: number }>('/api/pair/start', { method: 'POST', auth: ownerAuth() }),

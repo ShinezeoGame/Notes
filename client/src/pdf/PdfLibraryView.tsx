@@ -29,7 +29,7 @@ const baseName = (name: string) => name.replace(/\.pdf$/i, '').trim() || t('Docu
 const photosName = () => t('Photos du {date}', { date: dateFmt.format(new Date()) });
 
 /** Bibliothèque de l'atelier PDF : import de PDF et de photos, assemblage, export, suppression. */
-export function PdfLibraryView({ library }: { library: PdfLibrary }) {
+export function PdfLibraryView({ library, onHide }: { library: PdfLibrary; onHide?: () => void }) {
   const all = useLibrary(library);
   const entries = all.filter((e) => !e.deleted);
   const [busy, setBusy] = useState<string | null>(null);
@@ -277,6 +277,11 @@ export function PdfLibraryView({ library }: { library: PdfLibrary }) {
           <Icon name="filePdf" size={44} />
           <p>{t('Aucun PDF pour l’instant.')}</p>
           <p className="nb-muted">{t('Importez un PDF, créez-en un à partir de photos, ou déposez des fichiers ici.')}</p>
+          {onHide ? (
+            <button type="button" className="nb-intro-hide" onClick={onHide}>
+              <Icon name="eyeOff" size={14} /> {t('Je n’en ai pas besoin : masquer cette section')}
+            </button>
+          ) : null}
         </div>
       ) : (
         <ul className="pdf-grid" aria-label={t('Vos PDF')}>

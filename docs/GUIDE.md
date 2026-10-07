@@ -57,10 +57,11 @@ Depuis Edge, Chrome ou Brave, le bouton **Installer l’application** (en bas de
 
 ## Premiers pas
 
-1. Au premier lancement, Melo s’affiche en anglais : touchez **Français** en haut de l’écran, il redémarre aussitôt en français. Puis **Commencer** : Melo fonctionne tout de suite, sur cet appareil. Vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**.
-2. Indiquez votre prénom et cochez ce que vous allez utiliser : seules ces sections s’affichent (**Personnaliser → Sections** pour changer d’avis).
-3. Une courte présentation montre l’essentiel ; revoyez‑la quand vous voulez : **Réglages → Revoir la présentation**.
-4. La barre de gauche réunit les sections par usage : **Accueil** ; **Organisation** (Notes, Agenda) ; **Maison** (Objets connectés, Caméras, Homelab) ; **Outils** (Atelier PDF). Sur ordinateur, elle se replie en icônes avec la flèche du haut. Sur téléphone : onglets en bas de l’écran, le reste dans **Plus**.
+1. Au premier lancement, Melo s’affiche en anglais : touchez **Français** en haut de l’écran, il redémarre aussitôt en français. Dans l’application : **Commencer**, et Melo fonctionne tout de suite, sur cet appareil ; vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**. Dans un navigateur, sur un serveur Melo, la bienvenue s’ouvre directement.
+2. Indiquez votre prénom et cochez ce que vous allez utiliser : seules ces sections s’affichent (**Personnaliser → Sections** pour changer d’avis). La maison (objets connectés, caméras, homelab) est décochée d’office : elle sert seulement à qui a ce matériel. Sans serveur Melo, ce qui en a besoin (maison, atelier PDF) est grisé.
+3. Une courte présentation montre l’essentiel (**Passer la visite** pour aller droit au but) ; revoyez‑la quand vous voulez : **Réglages → Revoir la présentation**.
+4. Une section pas encore réglée (objets connectés, caméras, homelab, agenda) dit à quoi elle sert, ce qu’il faut pour s’en servir et comment commencer. Elle ne vous sert pas ? **Je n’en ai pas besoin : masquer cette section** la retire de la barre (elle se réaffiche dans **Personnaliser → Sections**), et ses widgets quittent le catalogue.
+5. La barre de gauche réunit les sections par usage : **Accueil** ; **Organisation** (Notes, Agenda) ; **Maison** (Objets connectés, Caméras, Homelab) ; **Outils** (Atelier PDF). Sur ordinateur, elle se replie en icônes avec la flèche du haut. Sur téléphone : onglets en bas de l’écran, le reste dans **Plus**.
 
 Tout est stocké sur l’appareil (hors ligne d’abord) et synchronisé dès qu’un serveur est joignable ; plusieurs appareils peuvent être reliés au même espace.
 
@@ -184,9 +185,17 @@ Tapez `/Caméra` dans une page pour y placer le direct d’une caméra (ou de to
 
 État et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Melo lui-même : section **Homelab**, widget de l’accueil, ou bloc `/Homelab` dans une page. Glissez un module pour changer sa place. Bouton **Disposition** : tirez le bord d’un module pour l’agrandir, et décochez **Ranger par catégorie** pour placer applications et appareils librement, côte à côte (Jellyfin ou qBittorrent à côté du NAS, par exemple) ; cochée, chaque catégorie (Appareils, Médias, Téléchargements…) a sa rubrique.
 
+Pour commencer, trois façons (dans la section vide, ou dans **Configurer**) :
+
+- **Rechercher mes applications** : le serveur Melo interroge sa machine et les appareils allumés du réseau (une dizaine de secondes), reconnaît les applications ci-dessus à leur page d’accueil et propose aussi les autres sous leur nom (Homepage, Vaultwarden, Paperless…, vérifiées en ligne / hors ligne). Cochez ce que vous voulez suivre, puis **Ajouter**.
+- **Importer depuis Homepage** : collez le contenu du fichier `services.yaml` de Homepage (ou choisissez le fichier). Applications, adresses, clés API et identifiants sont repris ; une clé laissée en variable de Homepage (`{{HOMEPAGE_VAR_…}}`) est signalée « Clé à saisir ».
+- **Ajouter à la main**, une application ou un appareil à la fois.
+
+Vous avez déjà un tableau de bord (Homepage, Homarr, Dashy…) ? Affichez-le aussi sur l’accueil avec le widget **Site web**.
+
 Section **Homelab** → **Configurer** :
 
-- **Applications** : « Ajouter la stack » pré-remplit Jellyfin, Jellyseerr, Sonarr, Radarr, Prowlarr, Bazarr et qBittorrent avec leurs ports par défaut à partir de l’adresse de votre serveur ; renseignez ensuite la clé API (ou les identifiants) de chacune pour obtenir les statistiques (file d’attente, éléments manquants, lectures en cours, demandes en attente, vitesses de téléchargement, requêtes bloquées, conteneurs actifs…). Sans clé, seule la disponibilité (en ligne / hors ligne, latence) est vérifiée. L’« URL interne » permet d’indiquer une adresse Docker (ex. `http://sonarr:8989`) différente de l’URL ouverte au clic.
+- **Applications** : renseignez la clé API (ou les identifiants) de chacune pour obtenir les statistiques (file d’attente, éléments manquants, lectures en cours, demandes en attente, vitesses de téléchargement, requêtes bloquées, conteneurs actifs…). Sans clé, seule la disponibilité (en ligne / hors ligne, latence) est vérifiée. L’« URL interne » permet d’indiquer une adresse Docker (ex. `http://sonarr:8989`) différente de l’URL ouverte au clic.
 - **Appareils** : *Hôte de ce serveur Melo* (aucune configuration ; en Docker, montez les volumes à surveiller et listez leurs points de montage), *Glances* (`glances -w` ou l’image Docker `nicolargo/glances`, port 61208 : le plus simple pour un NAS ou un serveur Linux), *Proxmox VE* (jeton API), *Synology DSM* (compte sans 2FA), *TrueNAS* (clé API).
 - Le bouton **Tester** de chaque formulaire valide la connexion depuis le serveur. Toutes les requêtes sont faites par le serveur Melo (accès au réseau local sans CORS) ; les secrets ne sont jamais renvoyés au navigateur. L’actualisation est automatique (30 s par défaut).
 

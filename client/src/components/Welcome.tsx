@@ -2,7 +2,7 @@
 // quelques écrans. La présentation se revoit depuis les Réglages.
 import { useState, type ReactNode } from 'react';
 import type * as Y from 'yjs';
-import { canShareLinks } from '../lib/api';
+import { canShareLinks, serverBase } from '../lib/api';
 import { changeAppearance, type Appearance, type SectionId } from '../lib/appearance';
 import { isDesktopLocal } from '../lib/desktop';
 import { isDefaultUserName, updateSettings, useSettings } from '../lib/settings';
@@ -15,6 +15,9 @@ import { t, tx } from '../lib/i18n';
 
 /** Sections reliées au réseau du serveur (matériel à la maison) : proposées décochées aux nouveaux venus. */
 const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab'];
+
+/** Sections qui ne fonctionnent qu'avec un serveur Melo : indisponibles sur un appareil seul. */
+export const NEEDS_SERVER: SectionId[] = ['smarthome', 'cameras', 'homelab', 'pdf'];
 
 type Slide = { icon: IconName; title: string; text: ReactNode };
 
@@ -101,9 +104,13 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
   const guest = settings.guest;
   const [step, setStep] = useState(tourOnly ? 0 : -1);
   const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
+  // Appareil seul (sans serveur) : maison, caméras, homelab et atelier PDF ne peuvent pas fonctionner.
+  const unavailable = (id: SectionId) => (guest && HOUSE.includes(id)) || (!serverBase() && NEEDS_SERVER.includes(id));
   // Premier lancement : organisation et outils cochés, matériel de la maison décoché.
-  const [hidden, setHidden] = useState<SectionId[]>(() => (tourOnly ? appearance.hidden : [...new Set([...appearance.hidden, ...HOUSE])]));
-  const shown = (id: SectionId) => !hidden.includes(id) && !(guest && HOUSE.includes(id));
+  const [hidden, setHidden] = useState<SectionId[]>(() =>
+    tourOnly ? appearance.hidden : [...new Set([...appearance.hidden, ...HOUSE, ...NEEDS_SERVER.filter(unavailable)])],
+  );
+  const shown = (id: SectionId) => !hidden.includes(id) && !unavailable(id);
   const list = slides(shown, guest);
 
   const finish = () => {
@@ -111,10 +118,12 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
     onClose();
   };
 
-  const confirmSetup = () => {
+  /** Prénom et sections enregistrés ; puis la présentation, ou rien (« Passer la visite »). */
+  const confirmSetup = (tour: boolean) => {
     updateSettings({ langChosen: true, ...(name.trim() ? { userName: name.trim() } : {}) });
     changeAppearance(doc, () => ({ hidden }));
-    setStep(0);
+    if (tour) setStep(0);
+    else finish();
   };
 
   if (step < 0) {
@@ -122,14 +131,15 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
     return (
       <Modal
         title={t('Bienvenue !')}
-        onClose={finish}
+        // Fermée sans répondre : les sections cochées d'office (sans la maison) s'appliquent quand même.
+        onClose={() => confirmSetup(false)}
         width={560}
         footer={
           <>
-            <button type="button" className="nb-btn" onClick={finish}>
-              {t('Plus tard')}
+            <button type="button" className="nb-btn" onClick={() => confirmSetup(false)}>
+              {t('Passer la visite')}
             </button>
-            <button type="button" className="nb-btn nb-btn--primary" onClick={confirmSetup}>
+            <button type="button" className="nb-btn nb-btn--primary" onClick={() => confirmSetup(true)}>
               {t('Continuer')}
             </button>
           </>
@@ -159,17 +169,28 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
                 return (
                   <div key={g.id} className="nb-welcome-group" role="group" aria-label={g.label}>
                     <div className="nb-nav-group-label">{g.label}</div>
+                    {g.id === 'house' && ids.some((id) => !unavailable(id)) ? (
+                      <p className="nb-welcome-group-note">
+                        {t('Pour du matériel chez vous (Home Assistant, caméras, serveur maison) : rien à cocher si vous n’en avez pas.')}
+                      </p>
+                    ) : null}
                     {ids.map((id) => (
-                      <label key={id} className={`nb-welcome-section${shown(id) ? ' nb-welcome-section--on' : ''}`}>
+                      <label
+                        key={id}
+                        className={`nb-welcome-section${shown(id) ? ' nb-welcome-section--on' : ''}${unavailable(id) ? ' nb-welcome-section--off' : ''}`}
+                      >
                         <input
                           type="checkbox"
                           checked={shown(id)}
+                          disabled={unavailable(id)}
                           onChange={(e) => setHidden((h) => (e.target.checked ? h.filter((x) => x !== id) : [...h, id]))}
                         />
                         <Icon name={SECTIONS[id].icon} size={18} />
                         <span>
                           <b>{SECTIONS[id].label}</b>
-                          <span className="nb-muted">{SECTIONS[id].hint}</span>
+                          <span className="nb-muted">
+                            {unavailable(id) ? t('Nécessite un serveur Melo') : SECTIONS[id].hint}
+                          </span>
                         </span>
                       </label>
                     ))}
