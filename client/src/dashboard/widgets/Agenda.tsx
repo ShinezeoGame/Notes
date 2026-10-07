@@ -1,5 +1,6 @@
-// Widget Agenda : prochains événements des agendas de l'espace (liste par jour), ou mois en miniature.
-import { useEffect, useMemo, useState } from 'react';
+// Widget Agenda : prochains événements des agendas de l'espace (liste par jour), ou mois en miniature ; jours fériés et
+// vacances scolaires compris.
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useAppCtx } from '../../editor/context';
 import { addCalendar, autoRefreshIcs, eventsOnDay, monthDays, upcomingByDay, useAgenda } from '../../lib/agenda';
 import { dayKey, formatDay } from '../../lib/ics';
@@ -50,14 +51,29 @@ function MiniMonth({ events }: { events: ReturnType<typeof useAgenda>['events'] 
         ))}
         {days.map((d) => {
           const k = keyOf(d);
-          const evs = byDay.get(k) ?? [];
+          const all = byDay.get(k) ?? [];
+          // Vacances scolaires : fond teinté ; jour férié : numéro en couleur.
+          const school = all.find((ev) => ev.kind === 'school');
+          const holiday = all.find((ev) => ev.kind === 'holiday');
+          const evs = all.filter((ev) => ev.kind !== 'school');
+          const cls = [
+            'w-month-day',
+            d.getMonth() !== month.getMonth() ? 'w-month-day--out' : '',
+            k === today ? 'w-month-day--today' : '',
+            k === selected ? 'w-month-day--selected' : '',
+            school ? 'w-month-day--school' : '',
+            holiday ? 'w-month-day--holiday' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
           return (
             <button
               key={k}
               type="button"
-              className={`w-month-day${d.getMonth() !== month.getMonth() ? ' w-month-day--out' : ''}${k === today ? ' w-month-day--today' : ''}${k === selected ? ' w-month-day--selected' : ''}`}
+              className={cls}
+              style={{ '--c': school?.color, '--h': holiday?.color } as CSSProperties}
               onClick={() => setSelected(k)}
-              aria-label={formatDay(d.toISOString())}
+              aria-label={[formatDay(d.toISOString()), holiday?.title, school?.title].filter(Boolean).join(' · ')}
             >
               {d.getDate()}
               {evs.length ? <span className="w-month-dot" style={{ background: evs[0].color }} /> : null}
@@ -86,11 +102,12 @@ export function AgendaWidget({ widget, doc, editing }: WidgetProps) {
 
   useEffect(() => autoRefreshIcs(doc, ctx.fetchIcs), [doc, ctx.fetchIcs]);
 
-  if (!calendars.length) {
-    const add = async () => {
-      const res = await ctx.importCalendar();
-      if (res) addCalendar(doc, res);
-    };
+  const add = async () => {
+    const res = await ctx.importCalendar();
+    if (res) addCalendar(doc, res);
+  };
+  // Ni agenda ni jours fériés : invitation à ajouter un agenda.
+  if (!calendars.length && !events.length) {
     return (
       <div className="w-empty">
         <Icon name="calendar" size={26} />
@@ -116,9 +133,16 @@ export function AgendaWidget({ widget, doc, editing }: WidgetProps) {
       ) : (
         <p className="w-muted">{t('Aucun événement dans les {days} prochains jours.', { days })}</p>
       )}
-      <button type="button" className="w-link-btn" onClick={() => navigate('#/agenda')}>
-        {t('Ouvrir l’agenda')} <Icon name="chevronRight" size={14} />
-      </button>
+      <div className="w-agenda-foot">
+        {!calendars.length ? (
+          <button type="button" className="w-link-btn" onClick={() => void add()} disabled={editing}>
+            <Icon name="plus" size={14} /> {t('Ajouter un agenda')}
+          </button>
+        ) : null}
+        <button type="button" className="w-link-btn" onClick={() => navigate('#/agenda')}>
+          {t('Ouvrir l’agenda')} <Icon name="chevronRight" size={14} />
+        </button>
+      </div>
     </div>
   );
 }

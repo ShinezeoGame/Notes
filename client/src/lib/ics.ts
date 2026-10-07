@@ -104,6 +104,7 @@ export function parseEventsJson(json: string): CalEvent[] {
 }
 
 const dayFmt = new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const shortDayFmt = new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
 const timeFmt = new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' });
 
 export function dayKey(iso: string): string {
@@ -118,8 +119,12 @@ export function formatDay(iso: string): string {
 
 export function formatTimeRange(ev: CalEvent): string {
   if (ev.allDay) {
-    const days = Math.round((new Date(ev.end).getTime() - new Date(ev.start).getTime()) / DAY);
-    return days > 1 ? t('Journée entière · {days} jours', { days }) : t('Journée entière');
+    const start = new Date(ev.start);
+    const end = new Date(ev.end);
+    if (Math.round((end.getTime() - start.getTime()) / DAY) < 2) return t('Journée entière');
+    // Dernier jour : la veille de la fin (en jours du calendrier, pour les changements d'heure).
+    end.setDate(end.getDate() - 1);
+    return t('Du {start} au {end}', { start: shortDayFmt.format(start), end: shortDayFmt.format(end) });
   }
   return `${timeFmt.format(new Date(ev.start))} – ${timeFmt.format(new Date(ev.end))}`;
 }

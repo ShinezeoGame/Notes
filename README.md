@@ -35,7 +35,7 @@ Tapez `/tableau` dans une page : formules en français (`SOMME`, `SI`, `RECHERCH
 
 ## 📅 Tous vos agendas au même endroit
 
-Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section.
+Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section. Les jours fériés et les vacances scolaires s’y ajoutent tout seuls.
 
 <img src="docs/captures/agenda.webp" width="100%" alt="Le mois d’octobre avec les agendas Personnel, Travail et École">
 

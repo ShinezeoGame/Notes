@@ -139,6 +139,12 @@ Dans une page, tapez `/tableau` (ou `/tableur`, `/excel`) : une feuille de calcu
 
 Section **Agenda** : vos agendas Google et adresses iCal (Outlook, Apple, école, travail…) réunis, en vue du mois ou en liste, chacun avec sa couleur, masquable et actualisable ; widget sur l’accueil.
 
+**Jours fériés et vacances scolaires** : ajoutés tout seuls, sans rien importer (colonne *Ajoutés tout seuls* de la section Agenda).
+
+- **Jours fériés** : ceux du pays de l’appareil, reconnu à son fuseau horaire (France métropolitaine, Guadeloupe, Martinique, Guyane, La Réunion, Mayotte, Belgique, Luxembourg, Québec, Royaume-Uni, États-Unis). En Alsace et en Moselle, choisissez **Alsace et Moselle** dans les réglages (bouton ⚙) : Vendredi saint et Saint-Étienne s’ajoutent.
+- **Vacances scolaires** (France métropolitaine) : choisissez votre zone une fois (**Zone A**, **B** ou **C** ; **Quelle zone ?** liste les académies de chacune). Elles s’affichent en bandeau sous les jours du mois, et en un seul événement dans la liste et le widget (« Du samedi 17 octobre au dimanche 1 novembre »). Dates officielles du ministère de l’Éducation nationale, connues jusqu’à l’été 2028.
+- Comme les autres agendas : couleur (pastille), **Masquer** (œil), réglages communs à tous vos appareils.
+
 **Ajouter un agenda** (section Agenda), ou dans une page, tapez `/Agenda` (bloc de la page ; **Ajouter à l’Agenda** le reprend ensuite dans la section Agenda), puis :
 
 - **Fichier .ics** : Google Agenda (web) → *Paramètres* → *Importer et exporter* → *Exporter* → décompressez et choisissez l’agenda.

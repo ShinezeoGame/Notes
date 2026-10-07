@@ -1332,6 +1332,7 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .w-pages-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w-pages-foot { margin-top: auto; display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; }
 .w-agenda { display: flex; flex-direction: column; gap: 6px; }
+.w-agenda-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .w-agenda-day h4 { margin: 4px 0 0; font-size: calc(12px * var(--ui-scale)); font-weight: 600; color: var(--text-muted); }
 .w-agenda .ag-event, .w-month .ag-event { padding: 4px 0; }
 .w-month { display: flex; flex-direction: column; gap: 6px; height: 100%; }
@@ -1345,6 +1346,8 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .w-month-day:hover { background: var(--bg-hover); }
 .w-month-day--out { color: var(--text-faint); }
 .w-month-day--today { color: var(--accent); font-weight: 700; }
+.w-month-day--school:not(.w-month-day--selected) { background: color-mix(in srgb, var(--c) 18%, transparent); }
+.w-month-day--holiday:not(.w-month-day--selected):not(.w-month-day--today) { color: var(--h); font-weight: 700; }
 .w-month-day--selected { background: var(--accent); color: var(--on-accent); }
 .w-month-dot { position: absolute; bottom: 2px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; }
 .w-month-events { border-top: 1px solid var(--border); padding-top: 4px; }
@@ -1528,6 +1531,7 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ag-day--out { color: var(--text-faint); background: color-mix(in srgb, var(--bg) 70%, var(--bg-sidebar)); }
 .ag-day--selected { box-shadow: inset 0 0 0 2px var(--accent); }
 .ag-daynum { font-size: calc(13px * var(--ui-scale)); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; flex-shrink: 0; }
+.ag-day--holiday .ag-daynum { color: var(--h); font-weight: 700; }
 .ag-day--today .ag-daynum { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .ag-chips { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ag-chip {
@@ -1537,6 +1541,15 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ag-more { font-size: calc(11px * var(--ui-scale)); color: var(--text-muted); padding-left: 4px; }
 .ag-dots { display: none; gap: 3px; justify-content: center; }
 .ag-dots span { width: 6px; height: 6px; border-radius: 50%; }
+/* Vacances scolaires : bandeau en bas du jour, d'un bord à l'autre ; le nom s'écrit par-dessus les jours suivants */
+.ag-band {
+  position: relative; margin: auto -5px -4px; min-height: calc(16px * var(--ui-scale)); border-top: 2px solid var(--c);
+  background: color-mix(in srgb, var(--c) 22%, transparent); align-self: stretch;
+}
+.ag-band-label {
+  position: relative; z-index: 1; display: block; padding: 1px 6px 0; font-size: calc(11px * var(--ui-scale)); line-height: 1.3; color: var(--text-strong);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
 .ag-dayview { margin-top: 16px; }
 .ag-dayview h3, .ag-listday h3 { font-size: calc(14px * var(--ui-scale)); color: var(--text-strong); margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
 .ag-event { display: flex; gap: 10px; padding: 6px 0; min-width: 0; }
@@ -1554,17 +1567,52 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ag-cal-dot { width: 14px; height: 14px; border-radius: 4px; border: none; cursor: pointer; flex-shrink: 0; padding: 0; }
 .ag-cal-name { flex: 1; min-width: 0; font-size: calc(14px * var(--ui-scale)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ag-cal-colors { display: flex; gap: 6px; width: 100%; padding: 6px 0 2px 20px; }
+.ag-cal-name small { display: block; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); }
 .ag-hint { font-size: calc(12px * var(--ui-scale)); margin-top: 10px; }
 .ag-empty { max-width: 560px; }
+/* Jours fériés et vacances scolaires ajoutés tout seuls */
+.ag-auto { margin-top: 18px; }
+.ag-auto h3 {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 6px 0 8px; font-size: calc(12px * var(--ui-scale)); text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-muted);
+}
+.ag-auto-alone { max-width: 640px; margin: 0 auto; }
+.ag-ask {
+  display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated);
+  font-size: calc(13px * var(--ui-scale)); color: var(--text);
+}
+.ag-ask b { color: var(--text-strong); }
+.ag-ask-zones { display: flex; gap: 6px; flex-wrap: wrap; }
+.ag-ask-more { display: flex; gap: 14px; }
+.ag-linkbtn { border: none; background: none; padding: 2px 0; color: var(--accent); font: inherit; font-size: calc(13px * var(--ui-scale)); cursor: pointer; text-align: left; }
+.ag-linkbtn:hover { text-decoration: underline; }
+.ag-auto-intro { margin: 0 0 12px; }
+.ag-zones { border: none; padding: 0; margin: 4px 0 6px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ag-zones legend { padding: 0; margin-bottom: 6px; font-size: calc(13px * var(--ui-scale)); color: var(--text-muted); }
+.ag-zone { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.ag-zone input { margin-top: 3px; }
+.ag-zone--on { border-color: var(--accent); background: var(--accent-soft); }
+.ag-zone span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ag-zone b { color: var(--text-strong); font-weight: 600; }
+.ag-zone small { color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); line-height: 1.4; }
+/* Sans agenda : présentation compacte dans la colonne */
+.ag-side-intro .nb-intro { margin: 0 0 8px; padding: 18px 14px 14px; gap: 10px; }
+.ag-side-intro .nb-intro-icon { width: 44px; height: 44px; border-radius: 12px; }
+.ag-side-intro .nb-intro h2 { font-size: calc(16px * var(--ui-scale)); }
+.ag-side-intro .nb-intro-text { font-size: calc(13px * var(--ui-scale)); }
 @media (max-width: 900px) {
   .ag-layout { grid-template-columns: 1fr; }
   .ag-side { order: -1; }
+  /* Sans agenda : le mois d'abord, la présentation ensuite */
+  .ag-side--intro { order: 0; }
 }
 @media (max-width: 640px) {
   .ag-day { min-height: 48px; align-items: center; padding: 3px 2px; }
   .ag-chips { display: none; }
   .ag-dots { display: flex; }
   .ag-month { min-width: 0; font-size: calc(16px * var(--ui-scale)); }
+  .ag-band { margin: auto -2px -3px; min-height: 0; height: 5px; border-top: none; background: var(--c); }
+  .ag-band-label { display: none; }
 }
 
 /* ---------- Personnaliser ---------- */
