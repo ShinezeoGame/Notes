@@ -16,6 +16,7 @@ import { LinksSettings, LinksWidget } from './widgets/Links';
 import { ImageSettings, ImageWidget, WebSettings, WebWidget } from './widgets/Media';
 import { SearchSettings, SearchWidget } from './widgets/Search';
 import { WolSettings, WolWidget } from './widgets/Wol';
+import { WifiSettings, WifiWidget } from './widgets/Wifi';
 import { t } from '../lib/i18n';
 
 export type WidgetDef = {
@@ -162,6 +163,16 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     Settings: WolSettings,
     setupFirst: true,
     needsServer: true,
+  },
+  wifi: {
+    label: t('Wi-Fi invités'),
+    icon: 'wifi',
+    description: t('Un QR code à scanner pour rejoindre votre Wi-Fi, sans dicter le mot de passe.'),
+    showTitle: false,
+    group: 'Maison',
+    Body: WifiWidget,
+    Settings: WifiSettings,
+    setupFirst: true,
   },
   links: {
     label: t('Raccourcis'),

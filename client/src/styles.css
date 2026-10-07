@@ -1808,3 +1808,41 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 @media (max-width: 560px) {
   .bk-row { grid-template-columns: 1fr; gap: 6px; }
 }
+
+/* Widget « Wi-Fi invités » : QR code carré le plus grand possible, texte dessous (ou à droite si le widget est large) */
+.w-wifi { height: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px; text-align: center; }
+.w-wifi-code { flex: 1 1 0; min-height: 0; align-self: stretch; container-type: size; display: grid; place-items: center; }
+.w-wifi-qr { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); padding: 0; border: none; background: none; cursor: zoom-in; border-radius: 10px; }
+.w-wifi-qr .nb-qr { width: 100%; height: 100%; }
+.w-wifi-qr:disabled { cursor: inherit; }
+.w-wifi-info { flex: none; max-width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.w-wifi-hint { display: none; color: var(--text-muted); font-size: calc(12px * var(--ui-scale)); }
+.w-wifi-ssid { color: var(--text-strong); font-size: calc(16px * var(--ui-scale)); overflow-wrap: anywhere; }
+.w-wifi-pass { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--text); font-size: calc(14px * var(--ui-scale)); overflow-wrap: anywhere; }
+.w-wifi-help { font-size: calc(12.5px * var(--ui-scale)); margin: -4px 0 12px; }
+.w-wifi-big { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.w-wifi-big .nb-qr { width: min(360px, 72vw); height: auto; }
+.w-wifi-big p { margin: 0; color: var(--text-muted); }
+.w-wifi-big-pass { display: flex; flex-direction: column; gap: 4px; font-size: calc(20px * var(--ui-scale)); color: var(--text-strong); overflow-wrap: anywhere; }
+.w-wifi-big-pass .nb-muted { font-size: calc(12px * var(--ui-scale)); }
+/* Widget haut : la consigne a sa place sous le code */
+@container (max-aspect-ratio: 3/4) {
+  .w-wifi-hint { display: block; }
+}
+/* Widget étroit : le nom du réseau seul sous le code ; widget bas : le code seul */
+@container (max-width: 140px) {
+  .w-wifi-hint, .w-wifi-pass { display: none; }
+}
+@container (max-height: 150px) {
+  .w-wifi-info { display: none; }
+}
+/* Widget large : QR code à gauche sur toute la hauteur, texte à droite */
+@container (min-aspect-ratio: 7/5) and (min-width: 260px) {
+  .w-wifi { flex-direction: row; gap: 14px; text-align: start; }
+  .w-wifi-code { flex: none; width: min(100cqh - 8px, 55cqw); }
+  .w-wifi-info { display: flex; flex: 1 1 0; align-items: flex-start; gap: 4px; }
+  .w-wifi-hint { display: block; }
+}
+@container (min-aspect-ratio: 7/5) and (min-width: 260px) and (max-width: 360px) {
+  .w-wifi-hint { display: none; }
+}

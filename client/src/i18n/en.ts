@@ -1465,6 +1465,26 @@ const UI: Record<string, string> = {
   'Votre texte': 'Your text',
   'Texte à ajouter sur la page': 'Text to add on the page',
 
+  // dashboard/widgets/Wifi.tsx
+  'Wi-Fi invités': 'Guest Wi-Fi',
+  'Un QR code à scanner pour rejoindre votre Wi-Fi, sans dicter le mot de passe.': 'A QR code to scan to join your Wi-Fi, no need to spell out the password.',
+  'Mot de passe copié.': 'Password copied.',
+  'Copie impossible : sélectionnez le mot de passe à la main.': 'Couldn’t copy: select the password by hand.',
+  'Indiquez le nom du réseau Wi-Fi et son mot de passe.': 'Enter the Wi-Fi network name and its password.',
+  'Afficher en grand': 'Show large',
+  'QR code du Wi-Fi « {name} »': 'QR code for the “{name}” Wi-Fi',
+  'Scannez avec l’appareil photo pour vous connecter': 'Scan with the camera to connect',
+  'Copier le mot de passe': 'Copy the password',
+  'Ouvrez l’appareil photo du téléphone, visez le code, puis touchez « Se connecter ».': 'Open the phone’s camera, point it at the code, then tap “Connect”.',
+  'Nom du réseau (SSID)': 'Network name (SSID)',
+  'Sécurité': 'Security',
+  'WPA / WPA2 / WPA3 (le plus courant)': 'WPA / WPA2 / WPA3 (most common)',
+  'WEP (ancien)': 'WEP (old)',
+  'Aucune (réseau ouvert)': 'None (open network)',
+  'Le nom et le mot de passe sont souvent écrits sous la box, ou dans son application.': 'The name and password are often written under the router, or in its app.',
+  'Afficher le mot de passe sous le QR code': 'Show the password under the QR code',
+  'Réseau masqué (son nom n’apparaît pas dans la liste des Wi-Fi)': 'Hidden network (its name doesn’t show in the Wi-Fi list)',
+
   // components/BackupDialog.tsx
   'Téléchargement impossible.': 'Download failed.',
   'Sauvegarde d’Ostal': 'Ostal backup',
