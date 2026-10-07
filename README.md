@@ -11,13 +11,13 @@ Gratuite, sans compte, sur Windows, Android et dans le navigateur.
 &nbsp;
 [![Télécharger pour Android](https://img.shields.io/badge/T%C3%A9l%C3%A9charger%20pour%20Android-2eaf7d?style=for-the-badge)](https://github.com/ShinezeoGame/Notes/releases/download/latest/Ostal-Android.apk)
 
-<img src="docs/captures/accueil.webp" width="100%" alt="L’accueil d’Ostal sur un ordinateur et sur un téléphone : heure, météo, agenda, tâches, note rapide, lumières de la maison et pages récentes">
+<img src="docs/captures/accueil.webp" width="100%" alt="L’accueil d’Ostal sur un ordinateur et sur un téléphone : heure, météo, Wi-Fi des invités en QR code, tâches, papiers à renouveler, agenda et lumières de la maison">
 
 </div>
 
 ## 🏠 Un accueil qui vous ressemble
 
-Météo, agenda, tâches, post-it, raccourcis, lumières du salon… Glissez vos widgets où vous voulez, choisissez un fond d’écran et un thème : en deux minutes, Ostal est chez vous.
+Météo, agenda, tâches, post-it, raccourcis, lumières du salon, Wi-Fi des invités en QR code… Glissez vos widgets où vous voulez, choisissez un fond d’écran et un thème : en deux minutes, Ostal est chez vous.
 
 <img src="docs/captures/themes.webp" width="100%" alt="Le même accueil en trois apparences : thème forêt, thème clair et thème lavande">
 
@@ -37,11 +37,13 @@ Tapez `/tableau` dans une page : formules en français (`SOMME`, `SI`, `RECHERCH
 
 Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section. Les jours fériés et les vacances scolaires s’y ajoutent tout seuls.
 
-<img src="docs/captures/agenda.webp" width="100%" alt="Le mois d’octobre avec les agendas Personnel, Travail et École">
+<img src="docs/captures/agenda.webp" width="100%" alt="Le mois d’octobre avec les agendas Personnel, Travail et École, les vacances de la Toussaint (zone C) et le 1er novembre, ajoutés tout seuls">
 
 ## 🗂️ Vos papiers, et un rappel avant chaque échéance
 
 Carte d’identité, passeport, carte grise, assurances, garanties : photographiez-les, retrouvez-les en un instant, même au guichet. Ostal vous prévient avant qu’ils expirent, et rappelle aussi les événements de vos agendas, sur le téléphone et l’ordinateur. Vos papiers restent sur votre serveur.
+
+<img src="docs/captures/papiers.webp" width="100%" alt="Les papiers de la maison rangés par catégorie, avec « À renouveler » en tête ; sur le téléphone, la notification « Contrôle technique · Clio : expire dans 30 jours »">
 
 ## 💡 La maison sous la main
 
