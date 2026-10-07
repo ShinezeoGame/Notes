@@ -38,14 +38,11 @@ const crashLog = () => {
 /** L'application s'est fermée : inutile d'attendre davantage. */
 class Closed extends Error {}
 
-/** Dernier processus connu de l'application (pour retrouver pourquoi Android l'a arrêtée). */
-let lastPid = '';
-
 /** Processus de l'application ; plusieurs essais (une commande adb peut échouer ponctuellement). */
 async function alivePid() {
   for (let i = 0; i < 3; i++) {
     const p = pid();
-    if (p) return (lastPid = p);
+    if (p) return p;
     await sleep(1000);
   }
   return '';
@@ -54,12 +51,34 @@ async function alivePid() {
 /**
  * Arrêt décidé par Android pour une cause extérieure à l'application : sur l'émulateur, Google Play Services
  * redémarre parfois, et Android arrête alors les applications qui utilisent l'un de ses services (polices de la
- * WebView) : « am_kill … depends on provider … in dying proc … ».
+ * WebView) : « am_kill … depends on provider … in dying proc … ». Cherché pour le dernier processus de
+ * l'application lancé par Android.
  */
-function externalKill(p) {
+function externalKill() {
+  const events = adb('logcat', '-d', '-b', 'events', '-t', '2000').split('\n');
+  const start = events.findLast((l) => l.includes('am_proc_start') && l.includes(`,${PKG},`));
+  const p = start?.match(/am_proc_start\s*:\s*\[\d+,(\d+),/)?.[1];
   if (!p) return '';
-  const events = adb('logcat', '-d', '-b', 'events', '-t', '2000');
-  return events.split('\n').find((l) => l.includes('am_kill') && l.includes(`,${p},${PKG},`) && l.includes('in dying proc')) ?? '';
+  return events.find((l) => l.includes('am_kill') && l.includes(`,${p},${PKG},`) && l.includes('in dying proc')) ?? '';
+}
+
+/** Relances après un arrêt extérieur (limitées : un arrêt qui se répète n'est plus un hasard). */
+let relaunches = 0;
+
+/** Application arrêtée pour une cause extérieure : relancée (vrai), sinon faux. */
+async function relaunchAfterExternalKill(when) {
+  const kill = externalKill();
+  if (!kill || relaunches >= 3) return false;
+  relaunches++;
+  // Rien à voir avec Ostal : relancée, puis vérifiée de nouveau.
+  const note = `   ⚠️ arrêtée par Android ${when}, cause extérieure (${kill.replace(/^.*am_kill\s*:\s*/, '')}) : relancée`;
+  report.push(note);
+  console.log(note);
+  client?.close();
+  client = null;
+  adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
+  await sleep(8000);
+  return true;
 }
 
 /** État du système au moment d'un échec : processus, arrêts décidés par Android, extrait du journal. */
@@ -84,20 +103,7 @@ function diagnostics() {
 
 async function assertAlive(when, relaunched = false) {
   const crash = crashLog();
-  if (!crash && !relaunched && !(await alivePid())) {
-    const kill = externalKill(lastPid);
-    if (kill) {
-      // Rien à voir avec Ostal : relancée, puis vérifiée de nouveau (une fois).
-      const note = `   ⚠️ arrêtée par Android ${when}, cause extérieure (${kill.replace(/^.*am_kill\s*:\s*/, '')}) : relancée`;
-      report.push(note);
-      console.log(note);
-      client?.close();
-      client = null;
-      adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
-      await sleep(8000);
-      return assertAlive(when, true);
-    }
-  }
+  if (!crash && !relaunched && !(await alivePid()) && (await relaunchAfterExternalKill(when))) return assertAlive(when, true);
   if (!(await alivePid()) || crash) {
     diagnostics();
     throw new Closed(`l’application s’est fermée ${when}${crash ? `\n${crash.split('\n').slice(0, 40).join('\n')}` : ''}`);
@@ -203,7 +209,7 @@ async function connect() {
 /** Évalue du JavaScript dans l'application (reconnexion si le processus a changé). */
 async function js(expression, timeout = 30_000) {
   if (!client || client.closed) {
-    if (!(await alivePid())) {
+    if (!(await alivePid()) && !(crashLog() === '' && (await relaunchAfterExternalKill(`pendant « ${current} »`)))) {
       diagnostics();
       throw new Closed('l’application s’est fermée');
     }
