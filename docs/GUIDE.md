@@ -1,8 +1,10 @@
-# Mode d’emploi de Melo
+# Mode d’emploi d’Ostal
 
-Tout ce que fait Melo, section par section. Pour une présentation rapide, voir le [README](../README.md) ; pour installer votre propre serveur (partage, synchronisation), voir [INSTALLATION.md](../INSTALLATION.md).
+Tout ce que fait Ostal, section par section. Pour une présentation rapide, voir le [README](../README.md) ; pour installer votre propre serveur (partage, synchronisation), voir [INSTALLATION.md](../INSTALLATION.md).
 
-- [Installer Melo](#installer-melo)
+Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom. Les applications déjà installées gardent vos données et vos réglages en se mettant à jour.
+
+- [Installer Ostal](#installer-ostal)
 - [Premiers pas](#premiers-pas)
 - [Partager](#partager)
 - [Accueil et widgets](#accueil-et-widgets)
@@ -16,13 +18,13 @@ Tout ce que fait Melo, section par section. Pour une présentation rapide, voir 
 - [Allumer un ordinateur](#allumer-un-ordinateur)
 - [Atelier PDF](#atelier-pdf)
 
-## Installer Melo
+## Installer Ostal
 
 | Appareil | Fichier | Installation |
 | --- | --- | --- |
-| **Ordinateur Windows** | [Melo-Windows.exe](https://github.com/ShinezeoGame/Notes/releases/download/latest/Melo-Windows.exe) | Ouvrez le fichier. Si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires**, puis **Exécuter quand même**. Melo s’installe tout seul (sans droits d’administrateur) et s’ouvre ; il se retrouve ensuite sur le bureau et dans le menu Démarrer. |
-| **Téléphone Android** | [Melo-Android.apk](https://github.com/ShinezeoGame/Notes/releases/download/latest/Melo-Android.apk) | Ouvrez le fichier sur le téléphone, autorisez l’installation depuis cette source si on vous le demande, puis **Installer**. |
-| **Navigateur** (tout appareil) | aucun | Ouvrez l’adresse d’un serveur Melo (le vôtre ou celui d’un proche). Sur ordinateur, **Installer l’application** en bas de la barre de gauche en fait une application. |
+| **Ordinateur Windows** | [Ostal-Windows.exe](https://github.com/ShinezeoGame/Notes/releases/download/latest/Ostal-Windows.exe) | Ouvrez le fichier. Si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires**, puis **Exécuter quand même**. Ostal s’installe tout seul (sans droits d’administrateur) et s’ouvre ; il se retrouve ensuite sur le bureau et dans le menu Démarrer. |
+| **Téléphone Android** | [Ostal-Android.apk](https://github.com/ShinezeoGame/Notes/releases/download/latest/Ostal-Android.apk) | Ouvrez le fichier sur le téléphone, autorisez l’installation depuis cette source si on vous le demande, puis **Installer**. |
+| **Navigateur** (tout appareil) | aucun | Ouvrez l’adresse d’un serveur Ostal (le vôtre ou celui d’un proche). Sur ordinateur, **Installer l’application** en bas de la barre de gauche en fait une application. |
 
 Toutes les versions, avec ces instructions : **[page de téléchargement](https://github.com/ShinezeoGame/Notes/releases/tag/latest)** (rubrique *Assets*). Une nouvelle version s’installe par‑dessus l’ancienne : vos pages sont gardées.
 
@@ -30,21 +32,21 @@ Toutes les versions, avec ces instructions : **[page de téléchargement](https:
 
 ### Application Windows
 
-`Melo-Windows.exe` installe Melo pour l’utilisateur de l’ordinateur, sans droits d’administrateur : raccourcis sur le bureau et dans le menu Démarrer, **Ouvrir avec → Melo** pour les PDF (importés dans l’atelier PDF), désinstallation par *Paramètres Windows → Applications*.
+`Ostal-Windows.exe` installe Ostal pour l’utilisateur de l’ordinateur, sans droits d’administrateur : raccourcis sur le bureau et dans le menu Démarrer, **Ouvrir avec → Ostal** pour les PDF (importés dans l’atelier PDF), désinstallation par *Paramètres Windows → Applications*.
 
-- **Sur cet ordinateur** (**Commencer**) : Melo embarque son propre serveur, lancé en arrière-plan et joignable de cet ordinateur seulement. Toutes les sections fonctionnent sans serveur ni compte, y compris l’atelier PDF, la maison connectée, le homelab et les caméras (celles-ci demandent [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) dans le PATH, sauf les caméras à images ou MJPEG). Les données sont dans `%APPDATA%\Melo\data` : c’est ce dossier qu’il faut sauvegarder.
+- **Sur cet ordinateur** (**Commencer**) : Ostal embarque son propre serveur, lancé en arrière-plan et joignable de cet ordinateur seulement. Toutes les sections fonctionnent sans serveur ni compte, y compris l’atelier PDF, la maison connectée, le homelab et les caméras (celles-ci demandent [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) dans le PATH, sauf les caméras à images ou MJPEG). Les données sont dans `%APPDATA%\Ostal\data` : c’est ce dossier qu’il faut sauvegarder.
 - **Sur un serveur** (**J’ai une invitation ou un code**, ou *Réglages → Rejoindre un serveur*) : la fenêtre affiche le serveur choisi, toujours à jour, comme l’application installée depuis le navigateur. *Réglages → Revenir à l’espace de cet ordinateur* y ramène ; les deux espaces restent séparés. Serveur injoignable au démarrage : une page propose de réessayer ou de revenir à l’espace de l’ordinateur.
-- **Mises à jour** : si le dépôt GitHub est public, Melo télécharge les nouvelles versions en arrière-plan et les installe à la fermeture (bandeau **Redémarrer** pour le faire tout de suite). Sinon, installez la nouvelle version par-dessus l’ancienne : les données sont gardées.
+- **Mises à jour** : si le dépôt GitHub est public, Ostal télécharge les nouvelles versions en arrière-plan et les installe à la fermeture (bandeau **Redémarrer** pour le faire tout de suite). Sinon, installez la nouvelle version par-dessus l’ancienne : les données sont gardées.
 
 ### Application Android
 
-1. Sur le téléphone, téléchargez `Melo-Android.apk` ([dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest)), autorisez l’installation depuis des sources inconnues, installez.
-2. Au premier lancement, touchez **Français** en haut de l’écran pour passer Melo en français, puis choisissez **Commencer** (Melo sur ce téléphone seul, sans serveur) ou **J’ai une invitation ou un code** : collez le lien reçu (invitation, ou liaison affichée par *Réglages → Relier un autre appareil* sur un appareil déjà relié), ou saisissez l’adresse du serveur puis le **code à 6 chiffres**, pour retrouver exactement les mêmes pages. Une application déjà installée se relie depuis *Réglages → Saisir un lien ou un code*.
+1. Sur le téléphone, téléchargez `Ostal-Android.apk` ([dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest)), autorisez l’installation depuis des sources inconnues, installez.
+2. Au premier lancement, touchez **Français** en haut de l’écran pour passer Ostal en français, puis choisissez **Commencer** (Ostal sur ce téléphone seul, sans serveur) ou **J’ai une invitation ou un code** : collez le lien reçu (invitation, ou liaison affichée par *Réglages → Relier un autre appareil* sur un appareil déjà relié), ou saisissez l’adresse du serveur puis le **code à 6 chiffres**, pour retrouver exactement les mêmes pages. Une application déjà installée se relie depuis *Réglages → Saisir un lien ou un code*.
 
 **Mises à jour, sans retélécharger l’APK** :
 
 1. Le serveur se met à jour : automatiquement toutes les 15 minutes après `sh scripts/install-auto-update.sh` (une fois), ou à la main avec `git pull && docker compose up -d --build` (voir [INSTALLATION.md](../INSTALLATION.md)).
-2. Le téléphone vérifie la version du serveur toutes les heures et affiche la notification **Mise à jour de Melo disponible** (autorisation demandée au premier lancement ; option dans *Réglages → Application et mises à jour*).
+2. Le téléphone vérifie la version du serveur toutes les heures et affiche la notification **Mise à jour d’Ostal disponible** (autorisation demandée au premier lancement ; option dans *Réglages → Application et mises à jour*).
 3. Touchez la notification, ou le bouton **Mettre à jour** du bandeau affiché dans l’application : la nouvelle version (environ 6 Mo) est téléchargée depuis le serveur, vérifiée fichier par fichier (SHA-256), puis l’application redémarre dessus. Vos notes restent sur l’appareil.
 
 Si la nouvelle version ne démarre pas, l’application revient à la précédente au lancement suivant. Seules les évolutions de la partie native Android (rares) demandent d’installer un nouvel APK : l’application le signale alors avec un lien de téléchargement. Dans un navigateur, un bandeau **Recharger** apparaît quand le serveur a été mis à jour.
@@ -53,19 +55,19 @@ Quand une version apporte un nouveau type de bloc (les colonnes, les caméras…
 
 ### Navigateur (Windows, Mac, Linux)
 
-Depuis Edge, Chrome ou Brave, le bouton **Installer l’application** (en bas de la barre des sections) fait de Melo une application : fenêtre à part, icône dans le menu Démarrer, ouverture même sans réseau, mises à jour automatiques depuis le serveur.
+Depuis Edge, Chrome ou Brave, le bouton **Installer l’application** (en bas de la barre des sections) fait d’Ostal une application : fenêtre à part, icône dans le menu Démarrer, ouverture même sans réseau, mises à jour automatiques depuis le serveur.
 
 ## Premiers pas
 
-1. Au premier lancement, Melo s’affiche en anglais : touchez **Français** en haut de l’écran, il redémarre aussitôt en français. Dans l’application : **Commencer**, et Melo fonctionne tout de suite, sur cet appareil ; vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**. Dans un navigateur, sur un serveur Melo, la bienvenue s’ouvre directement.
-2. Indiquez votre prénom et cochez ce que vous allez utiliser : seules ces sections s’affichent (**Personnaliser → Sections** pour changer d’avis). La maison (objets connectés, caméras, homelab) est décochée d’office : elle sert seulement à qui a ce matériel. Sans serveur Melo, ce qui en a besoin (maison, atelier PDF) est grisé.
+1. Au premier lancement, Ostal s’affiche en anglais : touchez **Français** en haut de l’écran, il redémarre aussitôt en français. Dans l’application : **Commencer**, et Ostal fonctionne tout de suite, sur cet appareil ; vous avez reçu un lien ou un code ? **J’ai une invitation ou un code**. Dans un navigateur, sur un serveur Ostal, la bienvenue s’ouvre directement.
+2. Indiquez votre prénom et cochez ce que vous allez utiliser : seules ces sections s’affichent (**Personnaliser → Sections** pour changer d’avis). La maison (objets connectés, caméras, homelab) est décochée d’office : elle sert seulement à qui a ce matériel. Sans serveur Ostal, ce qui en a besoin (maison, atelier PDF) est grisé.
 3. Une courte présentation montre l’essentiel (**Passer la visite** pour aller droit au but) ; revoyez‑la quand vous voulez : **Réglages → Revoir la présentation**.
 4. Une section pas encore réglée (objets connectés, caméras, homelab, agenda) dit à quoi elle sert, ce qu’il faut pour s’en servir et comment commencer. Elle ne vous sert pas ? **Je n’en ai pas besoin : masquer cette section** la retire de la barre (elle se réaffiche dans **Personnaliser → Sections**), et ses widgets quittent le catalogue.
 5. La barre de gauche réunit les sections par usage : **Accueil** ; **Organisation** (Notes, Agenda) ; **Maison** (Objets connectés, Caméras, Homelab) ; **Outils** (Atelier PDF). Sur ordinateur, elle se replie en icônes avec la flèche du haut. Sur téléphone : onglets en bas de l’écran, le reste dans **Plus**.
 
 Tout est stocké sur l’appareil (hors ligne d’abord) et synchronisé dès qu’un serveur est joignable ; plusieurs appareils peuvent être reliés au même espace.
 
-**Langue** (anglais ou français) : propre à chaque appareil, elle se change à tout moment dans **Réglages → Vous → Langue de l’interface**. Dans un navigateur, une petite carte en bas de l’écran la propose à la première visite ; sur une page partagée, **EN / FR** en haut à droite. Une personne qui ouvre un de vos liens (page partagée, invitation, liaison d’un appareil) pour la première fois voit Melo dans la langue de son navigateur, en français ou en anglais. Une installation de Melo d’avant le choix de la langue reste en français. Le contenu (pages, titres, widgets) n’est pas traduit.
+**Langue** (anglais ou français) : propre à chaque appareil, elle se change à tout moment dans **Réglages → Vous → Langue de l’interface**. Dans un navigateur, une petite carte en bas de l’écran la propose à la première visite ; sur une page partagée, **EN / FR** en haut à droite. Une personne qui ouvre un de vos liens (page partagée, invitation, liaison d’un appareil) pour la première fois voit Ostal dans la langue de son navigateur, en français ou en anglais. Une installation d’Ostal d’avant le choix de la langue reste en français. Le contenu (pages, titres, widgets) n’est pas traduit.
 
 ## Partager
 
@@ -73,7 +75,7 @@ Tout est stocké sur l’appareil (hors ligne d’abord) et synchronisé dès qu
 - **Vos appareils** (téléphone, autre ordinateur) : **Réglages → Relier un autre appareil** → scannez le QR code avec l’appareil photo du téléphone, ou collez le lien dans l’application (**J’ai une invitation ou un code**). Valable 10 minutes, une seule fois.
 - **Une personne** : **Réglages → Inviter une personne** → envoyez le lien (valable 7 jours, pour une personne). Elle obtient son propre espace, privé, sur votre serveur, le retrouve sur tous ses appareils, et vous pouvez vous partager des pages. Elle n’a accès ni à votre maison, ni à vos caméras, ni à votre homelab. **Retirer** (même rubrique) supprime son espace du serveur.
 
-Le partage passe par un serveur Melo joignable par les autres : le vôtre (**[INSTALLATION.md](../INSTALLATION.md)**), ou celui de la personne qui vous invite. Melo utilisé seul sur un appareil (application Windows ou Android, sans serveur) garde tout sur cet appareil ; **Réglages → Rejoindre un serveur** le relie plus tard.
+Le partage passe par un serveur Ostal joignable par les autres : le vôtre (**[INSTALLATION.md](../INSTALLATION.md)**), ou celui de la personne qui vous invite. Ostal utilisé seul sur un appareil (application Windows ou Android, sans serveur) garde tout sur cet appareil ; **Réglages → Rejoindre un serveur** le relie plus tard.
 
 ## Accueil et widgets
 
@@ -121,7 +123,7 @@ Dans une page, tapez `/tableau` (ou `/tableur`, `/excel`) : une feuille de calcu
 - **Saisir** : cliquez sur une cellule et tapez. **Entrée** valide et descend, **Tab** passe à droite (après une suite de Tab, Entrée revient à la première colonne de la ligne suivante, comme dans Excel), **Échap** annule, **F2** ou un double-clic modifie le contenu existant, **Alt+Entrée** va à la ligne dans la cellule. Sur téléphone : touchez une cellule pour la choisir, touchez-la une deuxième fois pour écrire. Les nombres (`2,5`), pourcentages (`15 %`), montants (`12,50 €`), dates (`12/03/2025`) et heures (`8:30`) sont reconnus et mis en forme.
 - **Formules** : commencez par `=`, avec les noms de fonctions d’Excel dans la langue de l’interface : `=SOMME(B2:B5)`, `=SI(A1>10;"cher";"ok")`, `=RECHERCHEV(…)` en français, `=SUM(B2:B5)` en anglais (le fichier exporté s’ouvre dans un Excel de n’importe quelle langue). Pendant la frappe, une liste propose les fonctions (Tab ou un clic pour choisir). Cliquez ou glissez sur des cellules pendant la saisie pour insérer leur référence (`A1`, `B2:B5`) ; cliquez sur l’onglet d’une autre feuille pour y désigner des cellules. Plus de 100 fonctions : sommes, moyennes et comptages (avec conditions : `SOMME.SI`, `NB.SI.ENS`…), recherches (`RECHERCHEV`, `RECHERCHEX`, `INDEX` et `EQUIV`), texte, dates, logique, arrondis, finances (`VPM`)… Une erreur (`#DIV/0!`, `#NOM?`…) est expliquée dans la barre en bas du tableur quand on choisit la cellule. **Σ** propose la somme des nombres au-dessus (ou à gauche).
 - **Sélectionner et se déplacer** : glissez à la souris, Maj+clic ou Maj+flèches pour agrandir la sélection, clic sur une lettre de colonne ou un numéro de ligne pour la prendre entière, Ctrl+flèches pour aller au bout des données, Ctrl+A pour tout sélectionner. La zone d’adresse, à gauche de la barre de formule, montre la sélection et accepte une adresse (`C10`, `A1:D20`). La barre du bas donne la somme, la moyenne et le nombre de cellules sélectionnées.
-- **Copier, couper, coller** : Ctrl+C, Ctrl+X, Ctrl+V (ou clic droit, appui long sur téléphone), entre les tableurs de Melo (formules et mise en forme gardées) et avec Excel, LibreOffice ou Google Sheets dans les deux sens. Couper-coller déplace les cellules, et les formules qui les citent suivent. Un bloc collé sur une sélection plus grande s’y répète.
+- **Copier, couper, coller** : Ctrl+C, Ctrl+X, Ctrl+V (ou clic droit, appui long sur téléphone), entre les tableurs d’Ostal (formules et mise en forme gardées) et avec Excel, LibreOffice ou Google Sheets dans les deux sens. Couper-coller déplace les cellules, et les formules qui les citent suivent. Un bloc collé sur une sélection plus grande s’y répète.
 - **Poignée de recopie** (petit carré en bas à droite de la sélection) : glissez-la pour prolonger une suite (1, 2, 3… ; dates ; lundi, mardi… ; janvier, février… ; « Semaine 1 », « Semaine 2 »…) ou recopier des formules, vers le bas, le haut, la droite ou la gauche. **Ctrl+D** et **Ctrl+R** recopient vers le bas et vers la droite.
 - **Mise en forme** (barre d’outils) : gras, italique, souligné, barré, couleur du texte et du fond, alignement, retour à la ligne automatique, format des nombres (nombre, monnaie, pourcentage, date, heure, texte) et nombre de décimales.
 - **Lignes et colonnes** (clic droit sur les cellules ou les en-têtes) : insérer, supprimer, trier de A à Z ou de Z à A (la ligne d’en-tête reste en haut), recopier, effacer le contenu ou la mise en forme. Largeur des colonnes et hauteur des lignes : tirez la bordure de l’en-tête ; double-clic sur la bordure pour l’ajuster au contenu.
@@ -151,9 +153,9 @@ Lumières (marche/arrêt, luminosité, couleur, température de blanc), prises e
 
 Section **Objets connectés** → **Connecter Home Assistant** :
 
-1. Installez Home Assistant (par exemple l’application « Home Assistant » de la boutique CasaOS) et ajoutez‑y vos appareils : il découvre automatiquement la plupart d’entre eux. Rangez‑les par pièce, Melo reprend ce classement.
+1. Installez Home Assistant (par exemple l’application « Home Assistant » de la boutique CasaOS) et ajoutez‑y vos appareils : il découvre automatiquement la plupart d’entre eux. Rangez‑les par pièce, Ostal reprend ce classement.
 2. Dans Home Assistant : votre nom (en bas à gauche) → onglet **Sécurité** → **Jetons d’accès longue durée** → **Créer un jeton**.
-3. Dans Melo : adresse de Home Assistant vue depuis le serveur Melo (par ex. `http://192.168.1.10:8123`, jamais `localhost` si les deux tournent en Docker sur la même machine) et jeton → **Tester la connexion** → **Enregistrer**.
+3. Dans Ostal : adresse de Home Assistant vue depuis le serveur Ostal (par ex. `http://192.168.1.10:8123`, jamais `localhost` si les deux tournent en Docker sur la même machine) et jeton → **Tester la connexion** → **Enregistrer**.
 
 Touchez l’icône d’un appareil pour l’allumer ou l’éteindre, son nom pour ouvrir sa fiche (luminosité, couleur, consigne, position, volume, favoris, masquer). Les caméras s’ouvrent en direct. Les états se mettent à jour toutes les quatre secondes.
 
@@ -161,11 +163,11 @@ Touchez l’icône d’un appareil pour l’allumer ou l’éteindre, son nom po
 
 **Ordre** : glissez un appareil pour changer sa place dans sa pièce, un groupe parmi les groupes, un favori parmi les favoris (sur téléphone : appui long, puis glisser). L’ordre est le même sur tous vos appareils.
 
-Sécurité : l’adresse et le jeton restent sur le serveur Melo ; seules les commandes courantes sont autorisées (pas de redémarrage de Home Assistant, pas d’automatisations) ; les images des caméras passent par des adresses signées qui expirent ; les invités d’une page partagée n’ont pas accès à la maison.
+Sécurité : l’adresse et le jeton restent sur le serveur Ostal ; seules les commandes courantes sont autorisées (pas de redémarrage de Home Assistant, pas d’automatisations) ; les images des caméras passent par des adresses signées qui expirent ; les invités d’une page partagée n’ont pas accès à la maison.
 
 ## Caméras de surveillance
 
-Direct de vos caméras IP et enregistreurs reliés directement au serveur Melo, sans Home Assistant (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam, Uniview, Axis, ou toute caméra avec un flux RTSP ou MJPEG), en grille ou en grand : section **Caméras**, widget de l’accueil, ou bloc `/Caméra` dans une page.
+Direct de vos caméras IP et enregistreurs reliés directement au serveur Ostal, sans Home Assistant (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam, Uniview, Axis, ou toute caméra avec un flux RTSP ou MJPEG), en grille ou en grand : section **Caméras**, widget de l’accueil, ou bloc `/Caméra` dans une page.
 
 Section **Caméras** → **Ajouter une caméra** :
 
@@ -176,18 +178,18 @@ Section **Caméras** → **Ajouter une caméra** :
 Tapez `/Caméra` dans une page pour y placer le direct d’une caméra (ou de toutes), par exemple dans une colonne à côté de vos notes, ou ajoutez le widget **Caméras** sur l’accueil.
 
 - Tapo : créez d’abord un « compte de la caméra » dans l’application Tapo. Ezviz : identifiant « admin », mot de passe = code de vérification inscrit sous la caméra.
-- Les miniatures utilisent le flux secondaire de la caméra (plus léger), la vue agrandie le flux principal. La vidéo arrive avec une à deux secondes de décalage, sans le son. Quand Melo passe derrière une autre fenêtre ou est réduit, le direct continue 30 minutes (1 minute sur téléphone) : au retour, l’image est là tout de suite. Au-delà, ou quand la caméra n’est plus à l’écran depuis 30 secondes, il s’arrête pour ménager le réseau ; pendant la reprise, la dernière image reste affichée.
+- Les miniatures utilisent le flux secondaire de la caméra (plus léger), la vue agrandie le flux principal. La vidéo arrive avec une à deux secondes de décalage, sans le son. Quand Ostal passe derrière une autre fenêtre ou est réduit, le direct continue 30 minutes (1 minute sur téléphone) : au retour, l’image est là tout de suite. Au-delà, ou quand la caméra n’est plus à l’écran depuis 30 secondes, il s’arrête pour ménager le réseau ; pendant la reprise, la dernière image reste affichée.
 - Glissez une caméra pour changer sa place (l’ordre est le même dans la section, le widget et les pages).
 - Une caméra réglée en H.265 est lue telle quelle par la plupart des téléphones ; pour les autres appareils, le serveur convertit la vidéo, ce qui sollicite son processeur : réglez la caméra en H.264 si possible.
 - Sécurité : adresses et mots de passe des caméras restent dans votre espace et sur le serveur ; les navigateurs ne reçoivent que la vidéo, par des adresses signées qui expirent. Les invités d’une page partagée ne voient pas les caméras.
 
 ## Homelab
 
-État et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Melo lui-même : section **Homelab**, widget de l’accueil, ou bloc `/Homelab` dans une page. Glissez un module pour changer sa place. Bouton **Disposition** : tirez le bord d’un module pour l’agrandir, et décochez **Ranger par catégorie** pour placer applications et appareils librement, côte à côte (Jellyfin ou qBittorrent à côté du NAS, par exemple) ; cochée, chaque catégorie (Appareils, Médias, Téléchargements…) a sa rubrique.
+État et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Ostal lui-même : section **Homelab**, widget de l’accueil, ou bloc `/Homelab` dans une page. Glissez un module pour changer sa place. Bouton **Disposition** : tirez le bord d’un module pour l’agrandir, et décochez **Ranger par catégorie** pour placer applications et appareils librement, côte à côte (Jellyfin ou qBittorrent à côté du NAS, par exemple) ; cochée, chaque catégorie (Appareils, Médias, Téléchargements…) a sa rubrique.
 
 Pour commencer, trois façons (dans la section vide, ou dans **Configurer**) :
 
-- **Rechercher mes applications** : le serveur Melo interroge sa machine et les appareils allumés du réseau (une dizaine de secondes), reconnaît les applications ci-dessus à leur page d’accueil et propose aussi les autres sous leur nom (Homepage, Vaultwarden, Paperless…, vérifiées en ligne / hors ligne). Cochez ce que vous voulez suivre, puis **Ajouter**.
+- **Rechercher mes applications** : le serveur Ostal interroge sa machine et les appareils allumés du réseau (une dizaine de secondes), reconnaît les applications ci-dessus à leur page d’accueil et propose aussi les autres sous leur nom (Homepage, Vaultwarden, Paperless…, vérifiées en ligne / hors ligne). Cochez ce que vous voulez suivre, puis **Ajouter**.
 - **Importer depuis Homepage** : collez le contenu du fichier `services.yaml` de Homepage (ou choisissez le fichier). Applications, adresses, clés API et identifiants sont repris ; une clé laissée en variable de Homepage (`{{HOMEPAGE_VAR_…}}`) est signalée « Clé à saisir ».
 - **Ajouter à la main**, une application ou un appareil à la fois.
 
@@ -196,16 +198,16 @@ Vous avez déjà un tableau de bord (Homepage, Homarr, Dashy…) ? Affichez-le a
 Section **Homelab** → **Configurer** :
 
 - **Applications** : renseignez la clé API (ou les identifiants) de chacune pour obtenir les statistiques (file d’attente, éléments manquants, lectures en cours, demandes en attente, vitesses de téléchargement, requêtes bloquées, conteneurs actifs…). Sans clé, seule la disponibilité (en ligne / hors ligne, latence) est vérifiée. L’« URL interne » permet d’indiquer une adresse Docker (ex. `http://sonarr:8989`) différente de l’URL ouverte au clic.
-- **Appareils** : *Hôte de ce serveur Melo* (aucune configuration ; en Docker, montez les volumes à surveiller et listez leurs points de montage), *Glances* (`glances -w` ou l’image Docker `nicolargo/glances`, port 61208 : le plus simple pour un NAS ou un serveur Linux), *Proxmox VE* (jeton API), *Synology DSM* (compte sans 2FA), *TrueNAS* (clé API).
-- Le bouton **Tester** de chaque formulaire valide la connexion depuis le serveur. Toutes les requêtes sont faites par le serveur Melo (accès au réseau local sans CORS) ; les secrets ne sont jamais renvoyés au navigateur. L’actualisation est automatique (30 s par défaut).
+- **Appareils** : *Hôte de ce serveur Ostal* (aucune configuration ; en Docker, montez les volumes à surveiller et listez leurs points de montage), *Glances* (`glances -w` ou l’image Docker `nicolargo/glances`, port 61208 : le plus simple pour un NAS ou un serveur Linux), *Proxmox VE* (jeton API), *Synology DSM* (compte sans 2FA), *TrueNAS* (clé API).
+- Le bouton **Tester** de chaque formulaire valide la connexion depuis le serveur. Toutes les requêtes sont faites par le serveur Ostal (accès au réseau local sans CORS) ; les secrets ne sont jamais renvoyés au navigateur. L’actualisation est automatique (30 s par défaut).
 
 ## Allumer un ordinateur
 
-Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à distance un ordinateur de la maison, depuis le téléphone ou de n’importe où : le serveur Melo envoie sur son réseau le signal de réveil (Wake-on-LAN) que la carte réseau de l’ordinateur guette, même éteint. Le widget montre aussi si l’ordinateur est allumé : après un appui sur le bouton, il suit le démarrage (« Démarrage… 0:42 ») jusqu’à **Allumé**.
+Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à distance un ordinateur de la maison, depuis le téléphone ou de n’importe où : le serveur Ostal envoie sur son réseau le signal de réveil (Wake-on-LAN) que la carte réseau de l’ordinateur guette, même éteint. Le widget montre aussi si l’ordinateur est allumé : après un appui sur le bouton, il suit le démarrage (« Démarrage… 0:42 ») jusqu’à **Allumé**.
 
 **Choisir l’ordinateur** :
 
-1. Allumez l’ordinateur, branché à la même box que le serveur Melo.
+1. Allumez l’ordinateur, branché à la même box que le serveur Ostal.
 2. Ajoutez le widget (bouton **+** en bas à droite de l’accueil → **Allumer un PC**), puis **Chercher sur le réseau** : les appareils allumés s’affichent, avec leur nom quand il est connu. *Cet appareil* désigne celui sur lequel vous faites la recherche ; la box est à la fin. Choisissez l’ordinateur : son adresse MAC (celle de sa carte réseau) et son adresse IP se remplissent.
 3. Absent de la liste ? Saisissez son adresse MAC : sous Windows, **Paramètres → Réseau et Internet → Ethernet** → *Adresse physique (MAC)*, ou `ipconfig /all` dans l’invite de commandes. L’adresse IP (facultative) sert à savoir s’il est allumé.
 4. **Titre** (en bas des réglages) : le nom affiché dans le widget, par exemple « PC du bureau ».
@@ -220,9 +222,9 @@ Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à 
 
 **Bon à savoir** :
 
-- Le serveur Melo, qui envoie le signal, doit rester allumé sur le même réseau que l’ordinateur. Avec l’application Windows (serveur intégré), c’est l’ordinateur où elle tourne qui envoie le signal : il ne peut pas se réveiller lui-même.
+- Le serveur Ostal, qui envoie le signal, doit rester allumé sur le même réseau que l’ordinateur. Avec l’application Windows (serveur intégré), c’est l’ordinateur où elle tourne qui envoie le signal : il ne peut pas se réveiller lui-même.
 - L’état vient de la carte réseau de l’ordinateur, qui répond même pare-feu fermé. Si la box donne son adresse IP à un autre appareil, le widget l’indique : choisissez de nouveau l’ordinateur dans les réglages, ou réservez-lui son adresse dans la box (bail DHCP fixe).
-- Serveur installé avec Docker : le signal part d’un petit relais réseau installé avec Melo (voir [INSTALLATION.md](../INSTALLATION.md#allumer-un-ordinateur-wake-on-lan)). Le widget prévient s’il ne répond pas.
+- Serveur installé avec Docker : le signal part d’un petit relais réseau installé avec Ostal (voir [INSTALLATION.md](../INSTALLATION.md#allumer-un-ordinateur-wake-on-lan)). Le widget prévient s’il ne répond pas.
 - Les personnes invitées sur votre serveur n’ont pas ce widget : il se sert de votre réseau.
 
 ## Atelier PDF
@@ -234,6 +236,6 @@ Section **Atelier PDF** (groupe Outils). L’original n’est jamais modifié et
 3. Vue **Annoter** : **Texte** (touchez la page puis écrivez), **Surligneur**, **Stylo**, **Masquer** (rectangle blanc, noir ou crème), **Coche** (✓, ✗ ou point), **Signature** (dessinée une fois, gardée pour les fois suivantes), **Image** (tampon, logo), **Gomme**. Outil **Sélection** : déplacez une annotation, agrandissez-la avec sa poignée, changez sa couleur ou sa taille, dupliquez-la, supprimez-la (touche Suppr). Les champs des formulaires (cases à remplir, à cocher, listes) se remplissent directement sur la page. Zoom : boutons, Ctrl + molette, ou deux doigts sur téléphone (le stylo dessine avec un doigt, deux doigts font défiler). **Annuler / Rétablir** (Ctrl+Z / Ctrl+Y) en haut à droite.
 4. **Exporter** : nom du fichier, toutes les pages ou seulement la sélection, puis **Enregistrer…** (ordinateur : fenêtre « Enregistrer sous » ; application Android : dossier de votre choix) ou **Partager…** (application Android : WhatsApp, e-mail, Drive…). Les formulaires remplis sont figés dans le PDF exporté ; un formulaire laissé vide reste modifiable.
 
-Sur Android, **Ouvrir avec Melo** (depuis Gmail, WhatsApp, Fichiers…) et **Partager → Melo** (PDF ou photos) importent directement dans l’atelier. Sur ordinateur, l’application installée apparaît dans **Ouvrir avec** pour les fichiers PDF.
+Sur Android, **Ouvrir avec Ostal** (depuis Gmail, WhatsApp, Fichiers…) et **Partager → Ostal** (PDF ou photos) importent directement dans l’atelier. Sur ordinateur, l’application installée apparaît dans **Ouvrir avec** pour les fichiers PDF.
 
 Bon à savoir : le texte déjà écrit dans un PDF ne se modifie pas (un PDF n’est pas un document Word) ; cachez-le avec **Masquer** et écrivez par-dessus avec **Texte**. Un masque cache à l’affichage et à l’impression, mais le texte couvert reste présent dans le fichier : ne l’utilisez pas pour une information confidentielle. Les signatures dessinées sont gardées dans votre espace (synchronisées sur vos appareils) ; supprimez-les depuis la fenêtre **Signature**.

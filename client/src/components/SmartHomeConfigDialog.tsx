@@ -72,16 +72,16 @@ export function SmartHomeConfigDialog({ doc, entities, onClose }: { doc: Y.Doc; 
     >
       <p className="nb-muted sh-intro">
         {tx(
-          'Melo pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Melo : le jeton n’est jamais envoyé au navigateur.',
+          'Ostal pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Ostal : le jeton n’est jamais envoyé au navigateur.',
           { b: (s) => <b>{s}</b> },
         )}
       </p>
 
       <label className="nb-field">
-        <span>{t('Adresse de Home Assistant, vue depuis le serveur Melo')}</span>
+        <span>{t('Adresse de Home Assistant, vue depuis le serveur Ostal')}</span>
         <input className="nb-input" placeholder={t('http://192.168.1.10:8123')} value={url} onChange={(ev) => setUrl(ev.target.value)} />
         <span className="nb-muted sh-hint">
-          {t('Même machine que Melo ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».')}
+          {t('Même machine qu’Ostal ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».')}
         </span>
       </label>
       <div className="nb-field">
@@ -121,7 +121,7 @@ export function SmartHomeConfigDialog({ doc, entities, onClose }: { doc: Y.Doc; 
         <ol>
           <li>{t('Ouvrez Home Assistant dans un navigateur.')}</li>
           <li>{t('Cliquez sur votre nom, en bas à gauche, puis sur l’onglet « Sécurité ».')}</li>
-          <li>{t('Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Melo ».')}</li>
+          <li>{t('Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Ostal ».')}</li>
           <li>{t('Copiez le jeton affiché (il ne sera plus montré ensuite) et collez‑le ci‑dessus.')}</li>
         </ol>
         <p className="nb-muted">

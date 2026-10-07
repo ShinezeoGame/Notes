@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Melo</string>
-    <string name="title_activity_main">Melo</string>
+    <string name="app_name">Ostal</string>
+    <string name="title_activity_main">Ostal</string>
     <string name="package_name">com.shinezeo.notes</string>
     <string name="custom_url_scheme">com.shinezeo.notes</string>
 </resources>

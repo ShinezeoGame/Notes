@@ -1,7 +1,7 @@
 {
-  "name": "Melo",
-  "short_name": "Melo",
-  "description": "L’application à tout faire : accueil personnalisable, notes, agenda, maison connectée, caméras, homelab et atelier PDF, synchronisés avec votre serveur Melo.",
+  "name": "Ostal",
+  "short_name": "Ostal",
+  "description": "L’application à tout faire : accueil personnalisable, notes, agenda, maison connectée, caméras, homelab et atelier PDF, synchronisés avec votre serveur Ostal.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -11,9 +11,9 @@
   "dir": "ltr",
   "categories": ["productivity"],
   "icons": [
-    { "src": "icons/melo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/melo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/melo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [

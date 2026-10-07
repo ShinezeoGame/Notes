@@ -1,5 +1,5 @@
 #!/bin/sh
-# Mise à jour automatique du serveur Melo, lancée régulièrement par cron (voir scripts/install-auto-update.sh) :
+# Mise à jour automatique du serveur Ostal, lancée régulièrement par cron (voir scripts/install-auto-update.sh) :
 # récupère les nouveautés du dépôt Git et reconstruit le conteneur seulement s'il y en a. Si la construction
 # échoue, l'ancienne version continue de tourner et la même version n'est pas retentée.
 #

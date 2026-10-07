@@ -308,12 +308,12 @@ export const DEVICE_TYPES: Record<
   }
 > = {
   local: {
-    label: t('Hôte de ce serveur Melo'),
+    label: t('Hôte de ce serveur Ostal'),
     icon: 'server',
     color: '#60a5fa',
     auth: 'none',
     help: t(
-      'Statistiques de la machine qui exécute le serveur Melo (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.',
+      'Statistiques de la machine qui exécute le serveur Ostal (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.',
     ),
   },
   glances: {

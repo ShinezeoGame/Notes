@@ -36,7 +36,7 @@ import { Dashboard } from './dashboard/Dashboard';
 import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, setCardsGrouped, saveCardSize, useHomelabConfig } from './lib/homelab';
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
-import { MeloLogo } from './components/Logo';
+import { OstalLogo } from './components/Logo';
 import { t } from './lib/i18n';
 
 // Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
@@ -53,6 +53,12 @@ export default function App() {
   else if (!settings.onboarded) content = <Onboarding />;
   else content = <OwnerApp />;
   useEffect(() => startUpdateChecks(), []);
+  useEffect(() => {
+    // Installation d'avant le nouveau nom : annoncé une fois.
+    if (getSettings().knowsNewName) return;
+    updateSettings({ knowsNewName: true });
+    if (getSettings().onboarded) toast(t('Melo s’appelle désormais Ostal : même application, nouveau nom.'));
+  }, []);
   return (
     <>
       {content}
@@ -81,7 +87,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
   return (
     <div className="nb-center">
       <div className="nb-card">
-        <MeloLogo size={48} className="nb-logo" />
+        <OstalLogo size={48} className="nb-logo" />
         <h1>{t('Lier cet appareil')}</h1>
         <p className="nb-muted">
           {t('Ce lien connecte cet appareil à un espace de travail existant. Les pages locales actuelles ne seront plus affichées ici.')}
@@ -359,7 +365,7 @@ function OwnerApp() {
           {status === 'outdated' ? (
             <div className="nb-banner nb-banner--error">
               {t(
-                'Cette page utilise une nouveauté de Melo (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent sur l’appareil en attendant.',
+                'Cette page utilise une nouveauté d’Ostal (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent sur l’appareil en attendant.',
               )}
               <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
                 {t('Mettre à jour')}
@@ -418,7 +424,7 @@ function OwnerApp() {
 function NotesEmpty({ store, onCreate }: { store: WorkspaceStore; onCreate: () => void }) {
   useWorkspacePages(store);
   useEffect(() => {
-    document.title = 'Notes – Melo';
+    document.title = 'Notes – Ostal';
   }, []);
   return (
     <div className="nb-center-pane">
@@ -581,7 +587,7 @@ function OwnerPage({ store, pageId, onOpenPage }: { store: WorkspaceStore; pageI
   const { handle, ready } = useDocHandle(pgRoom(settings.workspaceId, pageId), ownerAuth(), true);
 
   useEffect(() => {
-    document.title = page ? `${page.title || t('Sans titre')} – Melo` : 'Melo';
+    document.title = page ? `${page.title || t('Sans titre')} – Ostal` : 'Ostal';
   }, [page?.title, page]);
 
   // Les invités d'un lien de partage lisent la largeur dans le document de la page.
@@ -691,7 +697,7 @@ function HomelabSection({ doc, onConfigure }: { doc: import('yjs').Doc; onConfig
   const cfg = useHomelabConfig(doc);
   const configured = cfg.services.length > 0 || cfg.devices.length > 0;
   useEffect(() => {
-    document.title = 'Homelab – Melo';
+    document.title = 'Homelab – Ostal';
   }, []);
   return (
     <div className="nb-page hl-page">

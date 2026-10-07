@@ -32,12 +32,14 @@ export type Settings = {
   pagesHidden: boolean;
   /** Astuce de l'accueil (glisser, tirer un coin) déjà vue sur cet appareil. */
   dashTipSeen: boolean;
-  /** Premier lancement pas encore terminé : prénom, sections, présentation de Melo. */
+  /** Premier lancement pas encore terminé : prénom, sections, présentation d'Ostal. */
   firstRun: boolean;
   /** Espace créé par une invitation sur le serveur de quelqu'un d'autre (sans maison, caméras ni homelab). */
   guest: boolean;
   /** Nom de la personne qui a invité (serveur utilisé). */
   hostName: string;
+  /** Nouveau nom de l'application (Melo → Ostal, octobre 2026) déjà annoncé sur cet appareil. */
+  knowsNewName: boolean;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -92,6 +94,7 @@ function defaults(lang: Lang = 'en'): Settings {
     firstRun: false,
     guest: false,
     hostName: '',
+    knowsNewName: true,
   };
 }
 
@@ -105,6 +108,8 @@ function load(): Settings {
         parsed.lang !== 'en' && parsed.lang !== 'fr'
           ? { ...defaults('fr'), ...parsed, lang: 'fr', langChosen: true }
           : { ...defaults(parsed.lang), ...parsed };
+      // Installation d'avant le nouveau nom : il sera annoncé une fois (App.tsx).
+      if (!('knowsNewName' in parsed)) s.knowsNewName = false;
       // Réglages apparus depuis le dernier enregistrement (langue…) : enregistrés aussitôt, pour rester les mêmes
       // d'un lancement à l'autre.
       if (Object.keys(s).some((k) => !(k in parsed))) persist(s);
@@ -114,7 +119,7 @@ function load(): Settings {
     /* stockage indisponible */
   }
   const s = defaults(firstLang());
-  // Navigateur qui découvre Melo (nouvel espace) : bienvenue (langue, prénom, sections utiles), comme dans les
+  // Navigateur qui découvre Ostal (nouvel espace) : bienvenue (langue, prénom, sections utiles), comme dans les
   // applications. Pas pour qui arrive par un lien reçu : ces parcours ont le leur.
   if (isStandaloneWeb() && !isDesktopLocal() && !arrivedByLink()) s.firstRun = true;
   persist(s);

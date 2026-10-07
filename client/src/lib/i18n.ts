@@ -62,7 +62,7 @@ export function tx(fr: string, parts: Record<string, (content: string) => ReactN
 }
 
 /**
- * Message venant du serveur Melo (erreur, état d'un appareil…), écrit en français : traduit par le dictionnaire,
+ * Message venant du serveur Ostal (erreur, état d'un appareil…), écrit en français : traduit par le dictionnaire,
  * ou par un des modèles de EN_PATTERNS pour les messages qui contiennent un nombre ou un nom.
  */
 export function tServer(message: string): string {

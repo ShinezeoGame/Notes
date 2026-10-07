@@ -262,7 +262,7 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
           </li>
           <li>
             {tx(
-              'Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Melo doit être sur le même réseau que la caméra.',
+              'Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Ostal doit être sur le même réseau que la caméra.',
               { b: (s) => <b>{s}</b> },
             )}
           </li>
@@ -272,7 +272,7 @@ export function CameraConfigDialog({ doc, camera, onClose }: { doc: Y.Doc; camer
             )}
           </li>
         </ul>
-        <p className="nb-muted">{t('Les identifiants restent sur votre serveur Melo et vos appareils ; la vidéo passe par le serveur.')}</p>
+        <p className="nb-muted">{t('Les identifiants restent sur votre serveur Ostal et vos appareils ; la vidéo passe par le serveur.')}</p>
       </details>
     </Modal>
   );

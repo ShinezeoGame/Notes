@@ -63,7 +63,7 @@ export function SectionIntro({ icon, title, children, needs, actions, note, onHi
   );
 }
 
-/** Section qui passe par un serveur Melo, sur un appareil qui n'en a pas : ce qu'il faut, et comment en rejoindre un. */
+/** Section qui passe par un serveur Ostal, sur un appareil qui n'en a pas : ce qu'il faut, et comment en rejoindre un. */
 export function NeedsServerIntro({
   icon,
   title,
@@ -85,7 +85,7 @@ export function NeedsServerIntro({
       icon={icon}
       title={title}
       needs={[
-        need ?? t('Un serveur Melo chez vous, sur le même réseau que votre matériel : c’est lui qui fait le lien, cet appareil ne peut pas le faire seul.'),
+        need ?? t('Un serveur Ostal chez vous, sur le même réseau que votre matériel : c’est lui qui fait le lien, cet appareil ne peut pas le faire seul.'),
       ]}
       actions={
         onJoin ? (
@@ -96,7 +96,7 @@ export function NeedsServerIntro({
       }
       note={
         <a href={`${DOCS_BASE}INSTALLATION.md`} target="_blank" rel="noopener noreferrer">
-          {t('Installer un serveur Melo chez vous (guide pas à pas)')}
+          {t('Installer un serveur Ostal chez vous (guide pas à pas)')}
         </a>
       }
       onHide={onHide}

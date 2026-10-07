@@ -14,7 +14,7 @@ function DesktopUpdateBanner() {
   return (
     <div className="nb-update" role="status">
       <Icon name="sparkles" size={18} className="nb-update-icon" />
-      <span className="nb-update-body">{t('Nouvelle version de Melo pour ordinateur prête : elle s’installe en redémarrant Melo.')}</span>
+      <span className="nb-update-body">{t('Nouvelle version d’Ostal pour ordinateur prête : elle s’installe en redémarrant Ostal.')}</span>
       <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => desktop()?.installUpdate()}>
         {t('Redémarrer')}
       </button>
@@ -77,8 +77,8 @@ export function UpdateBanner() {
         {newApp
           ? t('Cette mise à jour demande une version plus récente de l’application Android.')
           : native
-            ? t('Une mise à jour de Melo est disponible.')
-            : t('Une nouvelle version de Melo est disponible.')}
+            ? t('Une mise à jour d’Ostal est disponible.')
+            : t('Une nouvelle version d’Ostal est disponible.')}
       </span>
       <button type="button" className="nb-btn nb-btn--sm nb-btn--primary" onClick={() => void applyUpdate()}>
         {newApp ? t('Télécharger l’APK') : native ? t('Mettre à jour') : t('Recharger')}

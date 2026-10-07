@@ -274,7 +274,7 @@ export function setDeviceAppearance(a: Appearance | null) {
 
 function subscribeDevice(listener: () => void) {
   deviceListeners.add(listener);
-  // Melo ouvert dans un autre onglet du même navigateur (même appareil).
+  // Ostal ouvert dans un autre onglet du même navigateur (même appareil).
   const onStorage = (e: StorageEvent) => {
     if (e.key !== DEVICE_KEY) return;
     deviceLook = readDeviceAppearance();

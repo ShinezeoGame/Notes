@@ -1028,7 +1028,7 @@ export function SmartHomePanel({
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>{t('La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.')}</p>
+        <p>{t('La maison connectée passe par le serveur Ostal, qui dialogue avec Home Assistant sur votre réseau local.')}</p>
         <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
     );
@@ -1044,7 +1044,7 @@ export function SmartHomePanel({
               '<b>Home Assistant</b>, une application gratuite qui relie les objets connectés de presque toutes les marques (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).',
               { b: (s) => <b>{s}</b> },
             ),
-            t('Installée chez vous, sur le même réseau que le serveur Melo : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.'),
+            t('Installée chez vous, sur le même réseau que le serveur Ostal : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.'),
           ]}
           actions={
             <>
@@ -1269,7 +1269,7 @@ export function SmartHomePanel({
 /** Vue « Maison » (barre latérale). */
 export function SmartHomeView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = t('Objets connectés – Melo');
+    document.title = t('Objets connectés – Ostal');
   }, []);
   return (
     <div className="nb-page hl-page sh-page">

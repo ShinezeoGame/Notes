@@ -1,9 +1,9 @@
 // Test de l'application Windows installée (lancé par .github/workflows/apps.yml, après l'installation silencieuse) :
-// premier lancement (serveur intégré, écran de bienvenue), accueil, PDF ouvert avec Melo (deuxième lancement),
+// premier lancement (serveur intégré, écran de bienvenue), accueil, PDF ouvert avec Ostal (deuxième lancement),
 // fermeture puis réouverture, arrêt propre. Captures d'écran, rapport et journaux dans smoke-out/.
-// Melo est lancé comme par un utilisateur, sans débogueur au démarrage : le test ne s'y connecte (protocole de
+// Ostal est lancé comme par un utilisateur, sans débogueur au démarrage : le test ne s'y connecte (protocole de
 // débogage de Chromium) qu'une fois la page de l'application chargée.
-// Usage : node check.mjs <chemin de Melo.exe>
+// Usage : node check.mjs <chemin d'Ostal.exe>
 import { chromium } from 'playwright-core';
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -23,12 +23,12 @@ const EXTRA = process.platform === 'linux' && process.getuid?.() === 0 ? ['--no-
 fs.mkdirSync(OUT, { recursive: true });
 
 const report = [];
-/** Melo en cours : { proc, exited, output, browser } ; win : sa page. */
+/** Ostal en cours : { proc, exited, output, browser } ; win : sa page. */
 let app;
 let win;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Processus Melo encore présents (Windows : tous ceux de l'exécutable, y compris les processus enfants). */
+/** Processus Ostal encore présents (Windows : tous ceux de l'exécutable, y compris les processus enfants). */
 function meloProcesses() {
   if (process.platform !== 'win32') return [];
   try {
@@ -47,7 +47,7 @@ const readText = (file) => {
   }
 };
 
-/** Lignes du journal de Melo (melo.log). */
+/** Lignes du journal d'Ostal (melo.log). */
 const logLines = () => {
   try {
     return fs.readFileSync(path.join(DATA, 'melo.log'), 'utf8').split('\n').filter(Boolean);
@@ -57,8 +57,8 @@ const logLines = () => {
 };
 
 /**
- * Lance Melo comme un utilisateur, attend que la page de l'application soit chargée (melo.log), puis s'y connecte
- * par le protocole de débogage de Chromium (port choisi par Melo, annoncé sur sa sortie d'erreur).
+ * Lance Ostal comme un utilisateur, attend que la page de l'application soit chargée (melo.log), puis s'y connecte
+ * par le protocole de débogage de Chromium (port choisi par Ostal, annoncé sur sa sortie d'erreur).
  */
 async function launch() {
   const before = logLines().length;
@@ -80,9 +80,9 @@ async function launch() {
   const running = () => proc.exitCode === null && proc.signalCode === null;
   const t = Date.now();
   while (!loaded() && running() && Date.now() - t < 90_000) await sleep(250);
-  if (!running()) throw new Error(`Melo s’est arrêté au démarrage (code ${proc.exitCode ?? proc.signalCode})`);
+  if (!running()) throw new Error(`Ostal s’est arrêté au démarrage (code ${proc.exitCode ?? proc.signalCode})`);
   const ws = await Promise.race([endpoint, sleep(10_000).then(() => null)]);
-  if (!ws) throw new Error('Melo n’annonce pas son port de débogage');
+  if (!ws) throw new Error('Ostal n’annonce pas son port de débogage');
   if (!loaded()) {
     // Fenêtres, pages et service workers vus par Chromium (liste simple : rien ne s'y attache).
     const targets = await fetch(`http://${new URL(ws).host}/json/list`)
@@ -99,12 +99,12 @@ async function launch() {
   console.log(report.at(-1));
 }
 
-/** Ferme la fenêtre comme un utilisateur (bouton ✕), puis attend la fin de Melo et de ses processus. */
+/** Ferme la fenêtre comme un utilisateur (bouton ✕), puis attend la fin d'Ostal et de ses processus. */
 async function closeLikeUser() {
   const { proc, exited, browser } = app;
   await win.evaluate(() => window.close()).catch(() => {});
   await Promise.race([exited, sleep(20_000)]);
-  if (proc.exitCode === null && proc.signalCode === null) throw new Error('Melo ne s’est pas fermé après la fermeture de sa fenêtre');
+  if (proc.exitCode === null && proc.signalCode === null) throw new Error('Ostal ne s’est pas fermé après la fermeture de sa fenêtre');
   await browser.close().catch(() => {});
   app = null;
   win = null;
@@ -125,9 +125,9 @@ async function step(name, fn) {
 
 let ok = false;
 try {
-  await step('Lancement : serveur intégré démarré, écran « Welcome to Melo » (anglais par défaut)', async () => {
+  await step('Lancement : serveur intégré démarré, écran « Welcome to Ostal » (anglais par défaut)', async () => {
     await launch();
-    await win.getByText('Welcome to Melo').waitFor({ timeout: 90_000 });
+    await win.getByText('Welcome to Ostal').waitFor({ timeout: 90_000 });
     const info = await win.evaluate(() => ({ mode: window.meloDesktop?.mode, version: window.meloDesktop?.version, url: location.href }));
     if (info.mode !== 'local' || !info.url.startsWith(`${LOCAL}/`)) throw new Error(JSON.stringify(info));
     const health = await (await fetch(`${LOCAL}/api/health`)).json();
@@ -136,9 +136,9 @@ try {
     await win.screenshot({ path: path.join(OUT, '1-bienvenue.png') });
   });
 
-  await step('Choix de la langue : « Français » relance Melo en français', async () => {
+  await step('Choix de la langue : « Français » relance Ostal en français', async () => {
     await win.locator('.nb-onboarding-lang button[lang="fr"]').click();
-    await win.getByText('Bienvenue dans Melo').waitFor({ timeout: 60_000 });
+    await win.getByText('Bienvenue dans Ostal').waitFor({ timeout: 60_000 });
     const lang = await win.evaluate(() => document.documentElement.lang);
     if (lang !== 'fr') throw new Error(`langue de la page : ${lang}`);
   });
@@ -152,7 +152,7 @@ try {
     await win.screenshot({ path: path.join(OUT, '3-accueil.png') });
   });
 
-  await step('PDF ouvert avec Melo (deuxième lancement) : importé dans l’atelier PDF', async () => {
+  await step('PDF ouvert avec Ostal (deuxième lancement) : importé dans l’atelier PDF', async () => {
     const pdf = path.join(DATA, 'Recu Windows.pdf');
     fs.writeFileSync(pdf, Buffer.from(TINY_PDF, 'base64'));
     // Deuxième instance : elle passe le fichier à la fenêtre ouverte, puis se ferme.
@@ -172,7 +172,7 @@ try {
     await win.locator('.nb-rail').waitFor({ timeout: 90_000 });
     const controlled = await win.evaluate(() => Boolean(navigator.serviceWorker?.controller));
     report.push(`   réouverture servie par le service worker : ${controlled ? 'oui' : 'non'}`);
-    if (await win.getByText(/Bienvenue dans Melo|Welcome to Melo/).count()) throw new Error('écran de bienvenue réaffiché');
+    if (await win.getByText(/Bienvenue dans Ostal|Welcome to Ostal/).count()) throw new Error('écran de bienvenue réaffiché');
     if ((await win.evaluate(() => document.documentElement.lang)) !== 'fr') throw new Error('langue choisie perdue');
     await win.evaluate(() => {
       location.hash = '#/pdf';
@@ -199,12 +199,12 @@ try {
     ]).catch((e) => e.message);
     console.log('--- page :\n' + JSON.stringify(state));
   }
-  if (app) console.log('--- sortie de Melo :\n' + app.output.join('\n'));
-  console.log('--- processus Melo :\n' + (meloProcesses().join('\n') || '(aucun)'));
+  if (app) console.log('--- sortie d’Ostal :\n' + app.output.join('\n'));
+  console.log('--- processus Ostal :\n' + (meloProcesses().join('\n') || '(aucun)'));
   console.log('--- melo.log :\n' + readText(path.join(DATA, 'melo.log')));
   console.log('--- serveur.log :\n' + readText(path.join(DATA, 'serveur.log')));
 } finally {
-  // Melo encore ouvert (échec) : arrêté, pour que la désinstallation puisse suivre.
+  // Ostal encore ouvert (échec) : arrêté, pour que la désinstallation puisse suivre.
   await app?.browser?.close().catch(() => {});
   if (app && app.proc.exitCode === null && app.proc.signalCode === null) {
     app.proc.kill();

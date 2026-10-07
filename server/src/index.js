@@ -102,7 +102,7 @@ function requireOwner(req, res, next) {
  * personne) n'accède pas au réseau du serveur (maison, caméras, homelab) et n'invite personne à son tour.
  */
 function requireHost(req, res, next) {
-  if (isGuest(req.wsId)) return res.status(403).json({ error: 'Réservé au propriétaire de ce serveur Melo.' });
+  if (isGuest(req.wsId)) return res.status(403).json({ error: 'Réservé au propriétaire de ce serveur Ostal.' });
   next();
 }
 
@@ -338,7 +338,7 @@ app.post('/api/homelab/discover', requireOwner, requireHost, async (req, res) =>
 });
 
 // ---------- Widget « Site web » ----------
-// Le site accepte-t-il d'être affiché dans une page de Melo ? Sinon l'application propose de l'ouvrir (au lieu d'un
+// Le site accepte-t-il d'être affiché dans une page d'Ostal ? Sinon l'application propose de l'ouvrir (au lieu d'un
 // cadre vide). Réservé au propriétaire du serveur : la requête part du réseau du serveur.
 app.get('/api/frame-check', requireOwner, requireHost, async (req, res) => {
   res.json(await checkFrame(req.query.url));
@@ -486,7 +486,7 @@ app.post('/api/ics/fetch', requireEditor, async (req, res) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
   try {
-    const r = await fetch(parsed, { signal: controller.signal, redirect: 'follow', headers: { 'user-agent': 'Melo/1.0' } });
+    const r = await fetch(parsed, { signal: controller.signal, redirect: 'follow', headers: { 'user-agent': 'Ostal/1.0' } });
     if (!r.ok) return res.status(502).json({ error: `Le serveur distant a répondu ${r.status}.` });
     const len = Number(r.headers.get('content-length') || 0);
     if (len > 10 * 1024 * 1024) return res.status(413).json({ error: 'Flux trop volumineux.' });
@@ -539,7 +539,7 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {
-  app.get('/', (_req, res) => res.type('text').send('Serveur Melo actif. Le client n’est pas construit (npm run build).'));
+  app.get('/', (_req, res) => res.type('text').send('Serveur Ostal actif. Le client n’est pas construit (npm run build).'));
 }
 
 app.use((req, res) => res.status(404).json({ error: 'Introuvable.' }));
@@ -583,16 +583,16 @@ server.on('upgrade', (req, socket, head) => {
   });
 });
 
-// `process.parentPort` : serveur lancé par l'application Melo pour ordinateur (desktop/main.cjs), prévenue quand il
+// `process.parentPort` : serveur lancé par l'application Ostal pour ordinateur (desktop/main.cjs), prévenue quand il
 // est prêt et qui demande son arrêt ; absent quand le serveur tourne seul.
 server.on('error', (err) => {
-  console.error(`Melo : démarrage impossible (${err.code === 'EADDRINUSE' ? `port ${PORT} déjà utilisé` : err.message}).`);
+  console.error(`Ostal : démarrage impossible (${err.code === 'EADDRINUSE' ? `port ${PORT} déjà utilisé` : err.message}).`);
   process.parentPort?.postMessage({ type: 'error', code: err.code || 'ERROR' });
   process.exit(1);
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Melo : serveur démarré sur http://${HOST}:${PORT}`);
+  console.log(`Ostal : serveur démarré sur http://${HOST}:${PORT}`);
   process.parentPort?.postMessage({ type: 'ready' });
 });
 

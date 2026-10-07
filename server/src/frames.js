@@ -42,7 +42,7 @@ export async function checkFrame(rawUrl) {
     const res = await fetch(key, {
       redirect: 'follow',
       signal: ctrl.signal,
-      headers: { 'user-agent': 'Mozilla/5.0 (Melo) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140 Safari/537.36', accept: 'text/html,*/*' },
+      headers: { 'user-agent': 'Mozilla/5.0 (Ostal) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140 Safari/537.36', accept: 'text/html,*/*' },
     });
     allowed = !refusesFraming(res.headers);
     res.body?.cancel().catch(() => {});

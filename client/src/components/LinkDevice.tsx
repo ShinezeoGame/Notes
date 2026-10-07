@@ -12,13 +12,13 @@ import {
   joinWithKey,
   linkWithCode,
   pairLink,
-  parseMeloLink,
-  type MeloLink,
+  parseOstalLink,
+  type OstalLink,
 } from '../lib/pairing';
 import { navigate } from '../lib/router';
 import { getSettings, isDefaultUserName, isNative, isStandaloneWeb, normalizeServerUrl, updateSettings, useSettings } from '../lib/settings';
 import { Icon } from '../icons/Icon';
-import { MeloLogo } from './Logo';
+import { OstalLogo } from './Logo';
 import { Modal } from './Modal';
 import { QrCode } from './QrCode';
 import { toast } from './Toast';
@@ -100,7 +100,7 @@ function useCountdown(expiresAt: number | null): number {
 
 /**
  * Relier un autre appareil de la même personne : un code valable 10 minutes, présenté en QR code (appareil photo du
- * téléphone), en lien et en chiffres (application Melo).
+ * téléphone), en lien et en chiffres (application Ostal).
  */
 export function DevicesPanel({ onJoin }: { onJoin: () => void }) {
   const settings = useSettings();
@@ -114,9 +114,9 @@ export function DevicesPanel({ onJoin }: { onJoin: () => void }) {
     return (
       <div className="nb-devices">
         <p className="nb-muted">
-          {isDesktopLocal() ? t('Melo fonctionne seul sur cet ordinateur.') : t('Melo fonctionne seul sur cet appareil.')}{' '}
+          {isDesktopLocal() ? t('Ostal fonctionne seul sur cet ordinateur.') : t('Ostal fonctionne seul sur cet appareil.')}{' '}
           {t(
-            'Pour le retrouver sur votre téléphone, synchroniser plusieurs appareils ou partager des pages, rejoignez un serveur Melo : le vôtre, ou celui d’une personne qui vous invite.',
+            'Pour le retrouver sur votre téléphone, synchroniser plusieurs appareils ou partager des pages, rejoignez un serveur Ostal : le vôtre, ou celui d’une personne qui vous invite.',
           )}
         </p>
         <div>
@@ -145,18 +145,18 @@ export function DevicesPanel({ onJoin }: { onJoin: () => void }) {
       {settings.guest && settings.hostName ? (
         <p className="nb-muted">
           <Icon name="cloud" size={14} />{' '}
-          {tx('Votre espace est sur le serveur Melo de <b>{host}</b>.', { b: (s) => <b>{s}</b> }, { host: settings.hostName })}
+          {tx('Votre espace est sur le serveur Ostal de <b>{host}</b>.', { b: (s) => <b>{s}</b> }, { host: settings.hostName })}
         </p>
       ) : null}
       {pairing && left > 0 ? (
         <LinkCard
           url={pairLink(server, pairing.code)}
-          title={t('Relier un appareil à Melo')}
-          text={t('Ouvrez ce lien pour retrouver mon espace Melo sur cet appareil :')}
+          title={t('Relier un appareil à Ostal')}
+          text={t('Ouvrez ce lien pour retrouver mon espace Ostal sur cet appareil :')}
         >
           <p className="nb-linkcard-help">
             {tx(
-              '<b>Téléphone :</b> scannez ce QR code avec l’appareil photo. <b>Application Melo :</b> « J’ai une invitation ou un code », puis collez le lien (ou l’adresse <s>{server}</s> et le code <c>{code}</c>).',
+              '<b>Téléphone :</b> scannez ce QR code avec l’appareil photo. <b>Application Ostal :</b> « J’ai une invitation ou un code », puis collez le lien (ou l’adresse <s>{server}</s> et le code <c>{code}</c>).',
               { b: (s) => <b>{s}</b>, s: (s) => <span className="nb-mono">{s}</span>, c: (s) => <b className="nb-mono">{s}</b> },
               { server, code: formatPairingCode(pairing.code) },
             )}
@@ -251,14 +251,14 @@ export function InvitePanel() {
     <div className="nb-invite">
       <p className="nb-muted">
         {t(
-          'Donnez à un proche son propre espace Melo sur votre serveur : ses pages restent à lui, il les retrouve sur tous ses appareils, et vous pouvez vous partager des pages. Il n’a pas accès à votre maison, vos caméras ni votre homelab.',
+          'Donnez à un proche son propre espace Ostal sur votre serveur : ses pages restent à lui, il les retrouve sur tous ses appareils, et vous pouvez vous partager des pages. Il n’a pas accès à votre maison, vos caméras ni votre homelab.',
         )}
       </p>
       {fresh ? (
         <LinkCard
           url={fresh.url}
-          title={t('Invitation à Melo')}
-          text={fresh.name ? t('{name} t’invite à utiliser Melo :', { name: fresh.name }) : t('Je t’invite à utiliser Melo :')}
+          title={t('Invitation à Ostal')}
+          text={fresh.name ? t('{name} t’invite à utiliser Ostal :', { name: fresh.name }) : t('Je t’invite à utiliser Ostal :')}
         >
           <p className="nb-linkcard-help">
             {t(
@@ -332,7 +332,7 @@ function codeServer(): string | null {
 }
 
 /** Adresse (#/…) à ouvrir sur le serveur du lien pour qu'il s'en occupe : invitation, liaison, ou page d'accueil. */
-function serverRoute(link: MeloLink, code: string): string {
+function serverRoute(link: OstalLink, code: string): string {
   if (link.kind === 'invite') return `#/invite/${link.token}`;
   if (link.kind === 'pair') return `#/pair/${link.code}`;
   if (link.kind === 'join') return `#/join/${link.wsId}/${link.key}`;
@@ -364,7 +364,7 @@ export function JoinForm({
   const [error, setError] = useState('');
   const here = codeServer();
   const onlyCode = asPairingCode(input);
-  const link = parseMeloLink(input);
+  const link = parseOstalLink(input);
   const server = link?.server ?? (onlyCode ? here : null);
   const pairCode = link?.kind === 'pair' ? link.code : (onlyCode ?? code);
   // Lien d'un autre serveur que celui de la page : ouvert tel quel (navigateur) ou dans la fenêtre (ordinateur), qui s'en
@@ -469,7 +469,7 @@ export function JoinForm({
         <div className="nb-join-invite">
           <p>
             <Icon name="sparkles" size={15} /> {inviteHost.host ? <b>{inviteHost.host}</b> : t('Quelqu’un')}{' '}
-            {t('vous invite : vous aurez votre propre espace Melo, privé, sur son serveur.')}
+            {t('vous invite : vous aurez votre propre espace Ostal, privé, sur son serveur.')}
           </p>
           <label className="nb-field">
             <span>{t('Votre prénom (affiché quand vous modifiez une page à plusieurs)')}</span>
@@ -529,7 +529,7 @@ export function PairView({ code }: { code: string }) {
   return (
     <div className="nb-center">
       <div className="nb-card">
-        <MeloLogo size={48} className="nb-logo" />
+        <OstalLogo size={48} className="nb-logo" />
         <h1>{t('Relier cet appareil')}</h1>
         <p className="nb-muted">
           {tx(
@@ -579,14 +579,14 @@ export function InviteView({ token }: { token: string }) {
   return (
     <div className="nb-center nb-onboarding">
       <div className="nb-card">
-        <MeloLogo size={48} className="nb-logo" />
-        <h1>{t('Bienvenue dans Melo')}</h1>
+        <OstalLogo size={48} className="nb-logo" />
+        <h1>{t('Bienvenue dans Ostal')}</h1>
         {!info && !error ? <p className="nb-muted">{t('Vérification de l’invitation…')}</p> : null}
         {info ? (
           <>
             <p className="nb-lead">
               {info.name ? <b>{info.name}</b> : t('Quelqu’un')}{' '}
-              {t('vous invite à utiliser Melo : votre accueil, vos notes, votre agenda et des outils pour vos PDF, sur tous vos appareils.')}
+              {t('vous invite à utiliser Ostal : votre accueil, vos notes, votre agenda et des outils pour vos PDF, sur tous vos appareils.')}
             </p>
             <p className="nb-muted">
               {t('Vous aurez votre propre espace, privé, sur le serveur de {name} : vous pourrez vous partager des pages quand vous le voudrez.', {
@@ -611,7 +611,7 @@ export function InviteView({ token }: { token: string }) {
         <div className="nb-row nb-gap nb-end">
           {error && !info ? (
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => navigate('#/')}>
-              {t('Ouvrir Melo')}
+              {t('Ouvrir Ostal')}
             </button>
           ) : (
             <button type="button" className="nb-btn nb-btn--primary" onClick={() => void accept()} disabled={busy || !info}>

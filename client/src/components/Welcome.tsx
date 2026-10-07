@@ -1,4 +1,4 @@
-// Premier lancement : prénom et sections utiles (une navigation réduite à ce qui sert), puis présentation de Melo en
+// Premier lancement : prénom et sections utiles (une navigation réduite à ce qui sert), puis présentation d'Ostal en
 // quelques écrans. La présentation se revoit depuis les Réglages.
 import { useState, type ReactNode } from 'react';
 import type * as Y from 'yjs';
@@ -16,7 +16,7 @@ import { t, tx } from '../lib/i18n';
 /** Sections reliées au réseau du serveur (matériel à la maison) : proposées décochées aux nouveaux venus. */
 const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab'];
 
-/** Sections qui ne fonctionnent qu'avec un serveur Melo : indisponibles sur un appareil seul. */
+/** Sections qui ne fonctionnent qu'avec un serveur Ostal : indisponibles sur un appareil seul. */
 export const NEEDS_SERVER: SectionId[] = ['smarthome', 'cameras', 'homelab', 'pdf'];
 
 type Slide = { icon: IconName; title: string; text: ReactNode };
@@ -76,12 +76,12 @@ function slides(visible: (id: SectionId) => boolean, guest: boolean): Slide[] {
       </>
     ) : isDesktopLocal() ? (
       tx(
-        'Melo fonctionne seul sur cet ordinateur. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
+        'Ostal fonctionne seul sur cet ordinateur. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
         { b },
       )
     ) : (
       tx(
-        'Melo fonctionne seul sur cet appareil. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
+        'Ostal fonctionne seul sur cet appareil. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.',
         { b },
       )
     ),
@@ -189,7 +189,7 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
                         <span>
                           <b>{SECTIONS[id].label}</b>
                           <span className="nb-muted">
-                            {unavailable(id) ? t('Nécessite un serveur Melo') : SECTIONS[id].hint}
+                            {unavailable(id) ? t('Nécessite un serveur Ostal') : SECTIONS[id].hint}
                           </span>
                         </span>
                       </label>
@@ -208,7 +208,7 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
   const last = step >= list.length - 1;
   return (
     <Modal
-      title={t('Découvrir Melo')}
+      title={t('Découvrir Ostal')}
       onClose={finish}
       width={520}
       footer={

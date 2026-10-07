@@ -1,12 +1,12 @@
 // Tableur : copier-coller compatible avec Excel, LibreOffice et Google Sheets (texte séparé par des tabulations et
-// tableau HTML), et entre les tableurs de Melo (formules et mises en forme conservées).
+// tableau HTML), et entre les tableurs d'Ostal (formules et mises en forme conservées).
 import type { Lang } from '../lib/i18n';
 import { parseInput } from './format';
 import type { CellStyle } from './model';
 import { cleanStyle } from './model';
 import { isFormula, storeText, type CellValue } from './values';
 
-/** Type du presse-papiers réservé aux tableurs de Melo. */
+/** Type du presse-papiers réservé aux tableurs d'Ostal. */
 export const SHEET_MIME = 'application/x-melo-sheet';
 
 export type ClipCell = { v: CellValue; st?: CellStyle };
@@ -19,7 +19,7 @@ export type ClipData = { rows: number; cols: number; cells: ClipCell[][]; from?:
 /** Cellule à copier : valeur enregistrée, mise en forme et texte affiché. */
 export type CopyCell = { v: CellValue; st: CellStyle; text: string };
 
-/** Dernière copie faite dans Melo : sert quand le presse-papiers du système ne garde que le texte (téléphone). */
+/** Dernière copie faite dans Ostal : sert quand le presse-papiers du système ne garde que le texte (téléphone). */
 let last: { text: string; data: ClipData } | null = null;
 
 const sameText = (a: string, b: string) => a.replace(/\r\n?/g, '\n').replace(/\n$/, '') === b.replace(/\r\n?/g, '\n').replace(/\n$/, '');
@@ -343,7 +343,7 @@ const fromCells = (cells: ClipCell[][], plain = false): ClipData => ({
   ...(plain ? { plain: true } : {}),
 });
 
-/** Ce qu'il y a à coller : cellules de Melo, tableau HTML, ou texte. */
+/** Ce qu'il y a à coller : cellules d'Ostal, tableau HTML, ou texte. */
 export function readPaste(get: (type: string) => string, lang: Lang): ClipData | null {
   const json = get(SHEET_MIME);
   if (json) {
@@ -361,5 +361,5 @@ export function readPaste(get: (type: string) => string, lang: Lang): ClipData |
   return fromCells(cellsFromText(text, lang), true);
 }
 
-/** Dernière copie de Melo (bouton « Coller » quand le presse-papiers du système est illisible). */
+/** Dernière copie d'Ostal (bouton « Coller » quand le presse-papiers du système est illisible). */
 export const lastCopy = (): ClipData | null => last?.data ?? null;

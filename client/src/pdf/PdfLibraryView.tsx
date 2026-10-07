@@ -48,7 +48,7 @@ export function PdfLibraryView({ library, onHide }: { library: PdfLibrary; onHid
   const incoming = useIncomingCount();
 
   useEffect(() => {
-    document.title = t('Atelier PDF – Melo');
+    document.title = t('Atelier PDF – Ostal');
     purgeStale(library);
   }, [library]);
 

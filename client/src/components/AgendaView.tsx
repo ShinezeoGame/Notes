@@ -129,7 +129,7 @@ export function AgendaView({ doc }: { doc: Y.Doc }) {
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Agenda – Melo';
+    document.title = 'Agenda – Ostal';
     autoRefreshIcs(doc, ctx.fetchIcs);
   }, [doc, ctx.fetchIcs]);
 

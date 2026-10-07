@@ -10,7 +10,7 @@ import { useMediaQuery } from '../lib/hooks';
 import { isDesktopLocal } from '../lib/desktop';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
-import { MeloLogo } from './Logo';
+import { OstalLogo } from './Logo';
 import { t } from '../lib/i18n';
 
 export type SectionGroupId = 'main' | 'organize' | 'house' | 'tools';
@@ -99,7 +99,7 @@ export const STATUS_LABEL: Record<ConnStatus, string> = {
   connected: t('Synchronisé'),
   disconnected: t('Déconnecté – nouvelle tentative…'),
   denied: t('Accès refusé par le serveur'),
-  outdated: t('Mise à jour de Melo nécessaire'),
+  outdated: t('Mise à jour d’Ostal nécessaire'),
 };
 
 /** État de la synchronisation en mots ; l'espace de l'application pour ordinateur reste sur cet ordinateur. */
@@ -184,7 +184,7 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
                 </div>
               ))}
               <div className="nb-sheet-group">
-                <div className="nb-nav-group-label">{t('Melo')}</div>
+                <div className="nb-nav-group-label">{t('Ostal')}</div>
                 <div className="nb-sheet-grid">
                   <button type="button" className="nb-nav-item nb-nav-item--tile" onClick={() => (setMoreOpen(false), onSearch())}>
                     <Icon name="search" size={22} />
@@ -213,8 +213,8 @@ export function AppNav({ active, sections, hidden, status, mobile, onNavigate, o
   return (
     <nav className={`nb-rail${collapsed ? ' nb-rail--collapsed' : ''}`} aria-label={t('Sections')}>
       <div className="nb-rail-head">
-        <MeloLogo size={22} className="nb-workspace-avatar" />
-        <span className="nb-rail-name">{t('Melo')}</span>
+        <OstalLogo size={22} className="nb-workspace-avatar" />
+        <span className="nb-rail-name">{t('Ostal')}</span>
         <span className={`nb-status nb-status--${status}`} title={statusLabel(status)} />
         <button
           type="button"

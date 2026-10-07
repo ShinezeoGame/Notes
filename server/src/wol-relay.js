@@ -1,8 +1,8 @@
-// Relais réseau (widget « Allumer un PC », recherche des applications du homelab). Le serveur Melo tourne dans Docker
+// Relais réseau (widget « Allumer un PC », recherche des applications du homelab). Le serveur Ostal tourne dans Docker
 // sur un réseau à part, qui n'atteint pas tout le réseau de la maison ; ce relais tourne sur le réseau de la machine
 // hôte (docker-compose.yml, service « wol ») et envoie le signal de réveil, vérifie les ordinateurs, cherche les
 // appareils et les applications à sa place. Il n'écoute que sur un socket Unix partagé avec le serveur (WOL_RELAY) :
-// rien n'est ouvert sur le réseau, et il n'a pas accès aux données de Melo.
+// rien n'est ouvert sur le réseau, et il n'a pas accès aux données d'Ostal.
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -42,7 +42,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(SOCKET, () => {
   fs.chmodSync(SOCKET, 0o660);
-  console.log(`Melo : relais réseau du réveil des ordinateurs prêt (${SOCKET}).`);
+  console.log(`Ostal : relais réseau du réveil des ordinateurs prêt (${SOCKET}).`);
 });
 
 function stop() {

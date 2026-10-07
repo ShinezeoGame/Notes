@@ -1,5 +1,5 @@
-// Application Melo pour ordinateur (Windows) : fenêtre Electron qui affiche soit l'espace de cet ordinateur (serveur
-// Melo intégré, adresse 127.0.0.1), soit un serveur Melo distant. Le pont `window.meloDesktop` est fourni par
+// Application Ostal pour ordinateur (Windows) : fenêtre Electron qui affiche soit l'espace de cet ordinateur (serveur
+// Ostal intégré, adresse 127.0.0.1), soit un serveur Ostal distant. Le pont `window.meloDesktop` est fourni par
 // l'application (desktop/preload.cjs) ; il n'existe pas dans un navigateur ni sur Android.
 
 export type DesktopFile = { name: string; type: string; data: Uint8Array<ArrayBuffer> };
@@ -16,11 +16,11 @@ type DesktopBridge = {
   serverUrl: string | null;
   /** Niveau 2 : tout site s'affiche dans le widget « Site web » (en-têtes d'interdiction levés, http permis). */
   embedsAnySite?: boolean;
-  /** Ouvre un serveur Melo dans la fenêtre (et le retient), éventuellement à une adresse précise (#/invite/…). */
+  /** Ouvre un serveur Ostal dans la fenêtre (et le retient), éventuellement à une adresse précise (#/invite/…). */
   useServer: (url: string, route?: string) => Promise<void>;
   /** Revient à l'espace de cet ordinateur. */
   useLocal: () => Promise<void>;
-  /** Fichiers ouverts avec Melo (« Ouvrir avec », glisser sur l'icône). */
+  /** Fichiers ouverts avec Ostal (« Ouvrir avec », glisser sur l'icône). */
   onOpenFiles: (callback: (files: DesktopFile[]) => void) => () => void;
   /** Mise à jour de l'application téléchargée en arrière-plan. */
   onUpdate: (callback: (update: DesktopUpdate) => void) => () => void;

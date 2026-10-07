@@ -36,7 +36,7 @@ export type WidgetDef = {
   tint?: (config: Record<string, unknown>) => string | undefined;
   /** Section dont le widget montre le contenu : absent du catalogue quand elle est masquée (pas utilisée). */
   section?: SectionId;
-  /** Fonctionne seulement avec un serveur Melo : absent du catalogue sur un appareil seul. */
+  /** Fonctionne seulement avec un serveur Ostal : absent du catalogue sur un appareil seul. */
   needsServer?: boolean;
 };
 

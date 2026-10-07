@@ -529,7 +529,7 @@ function readStyles(xml: string | undefined, theme: string[]): XfInfo[] {
       if (on('u')) st.u = 1;
       if (on('strike')) st.st = 1;
       const color = colorOf(kid(font, 'color'), theme);
-      // Noir (couleur par défaut d'Excel) : couleur du thème de Melo, lisible en sombre comme en clair.
+      // Noir (couleur par défaut d'Excel) : couleur du thème d'Ostal, lisible en sombre comme en clair.
       if (color && color !== '#000000') st.c = color;
     }
     const pattern = kid(fills[Number(xf.attrs.fillId ?? 0)], 'patternFill');
@@ -900,6 +900,6 @@ export async function importFile(file: File, lang: Lang, sheetName: string): Pro
 
 /** Nom de fichier propre (sans caractères interdits), avec son extension. */
 export function sheetFileName(base: string, ext: 'xlsx' | 'csv'): string {
-  const clean = base.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').trim() || 'Melo';
+  const clean = base.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').trim() || 'Ostal';
   return `${clean.slice(0, 120)}.${ext}`;
 }

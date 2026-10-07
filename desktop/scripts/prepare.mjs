@@ -1,4 +1,4 @@
-// Prépare l'application pour ordinateur : copie le serveur Melo et le client construit (npm run build à la racine)
+// Prépare l'application pour ordinateur : copie le serveur Ostal et le client construit (npm run build à la racine)
 // dans desktop/server et desktop/client (dossiers non versionnés), avec la même disposition que dans le dépôt.
 import fs from 'node:fs';
 import path from 'node:path';

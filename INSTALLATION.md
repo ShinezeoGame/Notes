@@ -1,8 +1,8 @@
-# Installer Melo sur votre serveur et y accéder depuis partout
+# Installer Ostal sur votre serveur et y accéder depuis partout
 
-Ce guide installe Melo sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, invite vos proches et partage des pages en **modification en direct**.
+Ce guide installe Ostal sur un serveur de votre homelab avec Docker, le rend accessible en **HTTPS depuis Internet**, relie vos appareils (ordinateur, téléphone) au même espace, invite vos proches et partage des pages en **modification en direct**.
 
-> Pas de serveur ? L’application Windows (`Melo-Windows.exe`, voir le [README](README.md#télécharger-melo)) fonctionne seule sur l’ordinateur, avec son propre serveur intégré : ce guide n’est utile que pour synchroniser plusieurs appareils et partager.
+> Pas de serveur ? L’application Windows (`Ostal-Windows.exe`, voir le [README](README.md#télécharger-ostal)) fonctionne seule sur l’ordinateur, avec son propre serveur intégré : ce guide n’est utile que pour synchroniser plusieurs appareils et partager.
 
 **Prérequis** : un serveur Linux (ou un NAS avec Docker : Unraid, TrueNAS SCALE, Synology Container Manager, Proxmox LXC…) avec `git`, Docker et le plugin Docker Compose. Vérifiez :
 
@@ -125,7 +125,7 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
    tailscale version
    ```
 
-2. Publiez le port de Melo (3000, ou la valeur de `NOTES_PORT`) :
+2. Publiez le port d’Ostal (3000, ou la valeur de `NOTES_PORT`) :
 
    ```bash
    sudo tailscale funnel --bg 3000
@@ -161,7 +161,7 @@ Si le serveur est déjà sur votre réseau Tailscale, Funnel publie l’applicat
 
 ### Créer votre espace (une seule fois)
 
-1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Melo », en haut à gauche, indique que la synchronisation fonctionne.
+1. Sur votre ordinateur, ouvrez **`https://notes.mondomaine.fr`**. Ce premier navigateur crée **votre** espace de travail. Le point vert à côté de « Ostal », en haut à gauche, indique que la synchronisation fonctionne.
 2. Facultatif : **Réglages → Réglages avancés → Lien permanent pour relier vos propres appareils** est la clé de secours de votre espace. Rangez‑le dans votre gestionnaire de mots de passe et ne le donnez à personne.
 
 Avec `MAX_WORKSPACES=1`, personne d’autre ne peut créer d’espace sur votre serveur sans une invitation de votre part : un inconnu qui ouvre l’adresse ne voit rien de vos notes et ne peut ni téléverser de fichiers ni utiliser le homelab.
@@ -171,7 +171,7 @@ Avec `MAX_WORKSPACES=1`, personne d’autre ne peut créer d’espace sur votre 
 Sur un appareil déjà relié : **Réglages → Vos appareils → Relier un autre appareil**. Un **QR code**, un **lien** et un **code à 6 chiffres** s’affichent, valables 10 minutes et utilisables une seule fois. Puis, sur le nouvel appareil :
 
 - **Téléphone, navigateur** : scannez le QR code avec l’appareil photo, puis **Relier cet appareil**.
-- **Application Android** : installez `Melo-Android.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **J’ai une invitation ou un code**, collez le lien (ou saisissez l’adresse du serveur, puis le code). Si l’application est déjà installée : **Réglages → Saisir un lien ou un code**.
+- **Application Android** : installez `Ostal-Android.apk` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest), lancez‑la, choisissez **J’ai une invitation ou un code**, collez le lien (ou saisissez l’adresse du serveur, puis le code). Si l’application est déjà installée : **Réglages → Saisir un lien ou un code**.
 - **Application Windows** : au premier lancement, **J’ai une invitation ou un code** (ou, plus tard, **Réglages → Rejoindre un serveur**), puis collez le lien.
 - **Navigateur d’un autre ordinateur** : ouvrez le lien ; ou ouvrez l’adresse du serveur, le bandeau rouge « Cet appareil n’est pas relié » propose **Saisir un code**.
 
@@ -185,26 +185,26 @@ Les pages créées sur un appareil avant de le relier ne sont pas transférées.
 
 Une personne invitée n’a accès ni à votre maison, ni à vos caméras, ni à votre homelab, et ne peut pas inviter à son tour. Ses pages sont enregistrées sur votre serveur (et dans vos sauvegardes). La même rubrique liste les invitations en attente (**Annuler**) et les personnes invitées (**Retirer** : son espace et ses fichiers sont supprimés du serveur, ses appareils ne se synchronisent plus).
 
-### Installer Melo sur Windows (ou Mac, Linux)
+### Installer Ostal sur Windows (ou Mac, Linux)
 
-**Application Windows** : installez `Melo-Windows.exe` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest) (si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires** → **Exécuter quand même**). Au premier lancement, **J’ai une invitation ou un code**, puis collez le lien affiché par **Réglages → Relier un autre appareil** sur un appareil déjà relié : la fenêtre affiche alors votre serveur, et les PDF s’ouvrent avec Melo depuis l’Explorateur.
+**Application Windows** : installez `Ostal-Windows.exe` depuis [la dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest) (si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires** → **Exécuter quand même**). Au premier lancement, **J’ai une invitation ou un code**, puis collez le lien affiché par **Réglages → Relier un autre appareil** sur un appareil déjà relié : la fenêtre affiche alors votre serveur, et les PDF s’ouvrent avec Ostal depuis l’Explorateur.
 
-**Depuis le navigateur** : Melo s’installe aussi comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
+**Depuis le navigateur** : Ostal s’installe aussi comme une application depuis **Microsoft Edge**, **Google Chrome** ou **Brave**, sans fichier à télécharger :
 
 1. Ouvrez l’adresse de votre serveur (par exemple `https://pc-nas.tail85eb5c.ts.net`) et reliez cet ordinateur si ce n’est pas déjà fait (bandeau rouge → **Saisir un code**).
-2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Melo sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
+2. Cliquez sur **Installer l’application** en bas de la barre des sections, à gauche (ou **Réglages → Installer Ostal sur cet ordinateur**, ou l’icône d’installation à droite de la barre d’adresse), puis sur **Installer**.
 
-Melo s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Melo** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
+Ostal s’ouvre alors dans sa propre fenêtre, avec son icône dans le menu Démarrer (épinglez‑la à la barre des tâches si vous le souhaitez ; un clic droit sur l’icône donne accès à **Maison**, **Homelab** et à l’**Atelier PDF**). Dans l’Explorateur, un clic droit sur un fichier PDF → **Ouvrir avec** → **Ostal** l’importe directement dans l’atelier PDF. Elle se met à jour toute seule avec le serveur, s’ouvre même quand le serveur est injoignable (vos pages déjà chargées restent consultables et modifiables, la synchronisation reprend au retour du réseau) et se désinstalle comme n’importe quelle application (Paramètres Windows → Applications). L’installation depuis le navigateur demande une adresse en `https://` (comme celle de Tailscale Funnel ou de votre nom de domaine).
 
 **Ancienne icône « Notes » ou simple raccourci vers le site ?** Un raccourci garde l’image du jour où il a été créé. Remplacez‑le :
 
 1. Clic droit sur l’ancienne icône de la barre des tâches → **Désépingler de la barre des tâches** (supprimez aussi le raccourci du bureau s’il y en a un).
 2. Si une application **Notes** figure dans le menu Démarrer : clic droit dessus → **Désinstaller**. Dans la fenêtre de confirmation, **ne cochez pas** « Effacer aussi les données » : sinon il faudra relier l’ordinateur à nouveau avec un code.
-3. Dans le navigateur, ouvrez l’adresse du serveur et appuyez sur **Ctrl+F5** : l’onglet doit afficher « Melo » et le nouveau logo. Installez ensuite Melo comme ci‑dessus (choisissez bien **Installer**, pas « Créer un raccourci »), puis clic droit sur son icône dans la barre des tâches → **Épingler à la barre des tâches**.
+3. Dans le navigateur, ouvrez l’adresse du serveur et appuyez sur **Ctrl+F5** : l’onglet doit afficher « Ostal » et le nouveau logo. Installez ensuite Ostal comme ci‑dessus (choisissez bien **Installer**, pas « Créer un raccourci »), puis clic droit sur son icône dans la barre des tâches → **Épingler à la barre des tâches**.
 
 ### Atelier PDF sur le téléphone
 
-L’atelier PDF (entrée **Atelier PDF** du groupe Outils) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Melo les PDF reçus (**Ouvrir avec Melo**, **Partager → Melo**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `Melo-Android.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
+L’atelier PDF (entrée **Atelier PDF** du groupe Outils) fonctionne dès la mise à jour du serveur. Pour **enregistrer** un PDF exporté dans le dossier de votre choix, le **partager** (WhatsApp, e‑mail, Drive…) et ouvrir dans Ostal les PDF reçus (**Ouvrir avec Ostal**, **Partager → Ostal**), installez **une fois** la dernière version de l’application : https://github.com/ShinezeoGame/Notes/releases/tag/latest (fichier `Ostal-Android.apk`, installé par‑dessus l’ancien, vos notes sont conservées). Sans cette mise à jour, **Exporter** ouvre le PDF dans le navigateur du téléphone, d’où vous pouvez le télécharger.
 
 Pour scanner un document papier : **Atelier PDF** → **Scanner un document** (l’appareil photo s’ouvre), puis, dans la vue **Pages**, **Photo** pour ajouter les pages suivantes.
 
@@ -231,15 +231,15 @@ Appliquez avec `docker compose up -d`, puis listez `/mnt/media` dans les points 
 
 ### Maison connectée (Home Assistant)
 
-La section **Objets connectés** (groupe Maison) pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Melo → **Objets connectés** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Melo tourne dans son propre conteneur).
+La section **Objets connectés** (groupe Maison) pilote vos lumières, prises, volets, chauffage, caméras… à travers Home Assistant. Si vous ne l’avez pas encore, installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la sur le port 8123 et ajoutez vos appareils. Créez ensuite un jeton (votre nom → **Sécurité** → **Jetons d’accès longue durée**) et saisissez‑le dans Ostal → **Objets connectés** → **Connecter Home Assistant**, avec l’adresse `http://IP-DU-SERVEUR:8123` (l’adresse IP locale, pas `localhost` : Ostal tourne dans son propre conteneur).
 
 ### Caméras de surveillance
 
-La section **Caméras** se connecte directement à vos caméras IP et enregistreurs (flux RTSP, images ou flux MJPEG) : rien à installer, le lecteur vidéo (ffmpeg) est inclus dans l’image Docker de Melo. Les caméras doivent être joignables depuis le serveur (même réseau local) : donnez‑leur une adresse IP fixe dans votre box (réservation DHCP), puis ajoutez‑les dans Melo → **Caméras** → **Ajouter une caméra** et cliquez sur **Tester**. Sans Docker, installez ffmpeg sur le serveur (`sudo apt install ffmpeg`).
+La section **Caméras** se connecte directement à vos caméras IP et enregistreurs (flux RTSP, images ou flux MJPEG) : rien à installer, le lecteur vidéo (ffmpeg) est inclus dans l’image Docker d’Ostal. Les caméras doivent être joignables depuis le serveur (même réseau local) : donnez‑leur une adresse IP fixe dans votre box (réservation DHCP), puis ajoutez‑les dans Ostal → **Caméras** → **Ajouter une caméra** et cliquez sur **Tester**. Sans Docker, installez ffmpeg sur le serveur (`sudo apt install ffmpeg`).
 
 ### Allumer un ordinateur (Wake-on-LAN)
 
-Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ordinateur de votre réseau (réglages de l’ordinateur : voir le [mode d’emploi](docs/GUIDE.md#allumer-un-ordinateur)), et **Rechercher mes applications** (section Homelab) interroge les appareils du réseau. Depuis son conteneur, Melo n’atteint pas tout le réseau de la box : `docker-compose.yml` lance donc à côté un petit relais, le service `wol`, branché sur le réseau de la machine (`network_mode: host`). Il n’ouvre aucun port et n’a pas accès à vos données : il ne communique qu’avec Melo, par un fichier partagé (volume `wol-relay`). Rien à faire : `docker compose up -d` (et la mise à jour automatique) le démarre, et `docker compose logs wol` affiche « relais réseau du réveil des ordinateurs prêt ».
+Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ordinateur de votre réseau (réglages de l’ordinateur : voir le [mode d’emploi](docs/GUIDE.md#allumer-un-ordinateur)), et **Rechercher mes applications** (section Homelab) interroge les appareils du réseau. Depuis son conteneur, Ostal n’atteint pas tout le réseau de la box : `docker-compose.yml` lance donc à côté un petit relais, le service `wol`, branché sur le réseau de la machine (`network_mode: host`). Il n’ouvre aucun port et n’a pas accès à vos données : il ne communique qu’avec Ostal, par un fichier partagé (volume `wol-relay`). Rien à faire : `docker compose up -d` (et la mise à jour automatique) le démarre, et `docker compose logs wol` affiche « relais réseau du réveil des ordinateurs prêt ».
 
 - Pour ne pas l’utiliser, ajoutez à `docker-compose.override.yml` les lignes ci-dessous, puis lancez `docker compose rm -sf wol` :
 
@@ -249,7 +249,7 @@ Le widget **Allumer un PC** de l’accueil envoie le signal de réveil à un ord
       profiles: [desactive]
   ```
 
-- Docker Desktop (Windows, Mac) n’a pas d’accès direct au réseau de la box : pour ce widget, préférez l’[application Windows](#installer-melo-sur-windows-ou-mac-linux) sur un ordinateur qui reste allumé.
+- Docker Desktop (Windows, Mac) n’a pas d’accès direct au réseau de la box : pour ce widget, préférez l’[application Windows](#installer-ostal-sur-windows-ou-mac-linux) sur un ordinateur qui reste allumé.
 - Sans Docker (`npm start`), le serveur envoie le signal lui-même. Pour savoir si un ordinateur Windows est allumé (il ne répond pas au ping), installez `arping` : `sudo apt install iputils-arping`.
 
 ### Mise à jour automatique (recommandé)
@@ -280,4 +280,4 @@ tar czf ~/notes-$(date +%F).tar.gz data      # sauvegarder toutes les données
 
 Restaurer une sauvegarde : arrêtez (`docker compose down`), remplacez le dossier `data` par celui de l’archive, relancez (`docker compose up -d`).
 
-Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour de Melo disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.
+Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour d’Ostal disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.

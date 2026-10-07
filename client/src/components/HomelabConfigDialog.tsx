@@ -453,7 +453,7 @@ function ServiceForm({ value, onChange, onCancel, onSave, onTest, testing, testR
           />
         </label>
         <label className="nb-field hl-span2">
-          <span>{t('URL interne (optionnel : adresse vue par le serveur Melo si différente, ex. http://sonarr:8989)')}</span>
+          <span>{t('URL interne (optionnel : adresse vue par le serveur Ostal si différente, ex. http://sonarr:8989)')}</span>
           <input className="nb-input" value={value.internalUrl ?? ''} onChange={(e) => set({ internalUrl: e.target.value || undefined })} />
         </label>
         {meta.auth === 'apiKey' || meta.auth === 'token' ? (

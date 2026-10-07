@@ -59,7 +59,7 @@ export function ShareDialog({ pageId, pageTitle, onClose, onJoin }: Props) {
 
   const send = async () => {
     const s = await ensure();
-    if (s) await sendLink(s.url, title, t('Voici la page « {title} » sur Melo :', { title }));
+    if (s) await sendLink(s.url, title, t('Voici la page « {title} » sur Ostal :', { title }));
   };
 
   const revoke = async (token: string) => {
@@ -78,8 +78,8 @@ export function ShareDialog({ pageId, pageTitle, onClose, onJoin }: Props) {
           <p>
             {isDesktopLocal()
               ? t('Vos pages sont sur cet ordinateur : les autres ne peuvent pas les ouvrir.')
-              : t('Melo fonctionne seul sur cet appareil.')}{' '}
-            {t('Pour partager une page, rejoignez un serveur Melo : le vôtre, ou celui d’une personne qui vous invite.')}
+              : t('Ostal fonctionne seul sur cet appareil.')}{' '}
+            {t('Pour partager une page, rejoignez un serveur Ostal : le vôtre, ou celui d’une personne qui vous invite.')}
           </p>
           <button type="button" className="nb-btn nb-btn--primary" onClick={onJoin}>
             <Icon name="link" size={15} /> {t('Rejoindre un serveur')}

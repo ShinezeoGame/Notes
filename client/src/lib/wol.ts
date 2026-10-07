@@ -39,7 +39,7 @@ export type WolScan = RelayInfo & { devices: WolDevice[]; networks: string[] };
 
 /** Avertissement quand le signal risque de ne pas atteindre le réseau local (serveur dans Docker sans son relais). */
 export function relayWarning(r: RelayInfo): string {
-  if (r.relay === 'down') return t('Le relais réseau du serveur Melo ne répond pas : le signal risque de ne pas atteindre l’ordinateur.');
-  if (r.isolated) return t('Le serveur Melo tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.');
+  if (r.relay === 'down') return t('Le relais réseau du serveur Ostal ne répond pas : le signal risque de ne pas atteindre l’ordinateur.');
+  if (r.isolated) return t('Le serveur Ostal tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.');
   return '';
 }

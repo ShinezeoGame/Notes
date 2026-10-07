@@ -32,7 +32,7 @@ function DesktopUpdates() {
     <section className="nb-settings-section">
       <h3>{t('Application et mises à jour')}</h3>
       <p className="nb-muted nb-update-version">
-        {t('Application Melo pour ordinateur, version {version} (Melo {build} du {date})', {
+        {t('Application Ostal pour ordinateur, version {version} (Ostal {build} du {date})', {
           version: app.version,
           build: BUILD.id,
           date: formatBuildDate(BUILD.builtAt),
@@ -50,7 +50,7 @@ function DesktopUpdates() {
       ) : (
         <p className="nb-muted">
           {t(
-            'Melo cherche lui-même ses nouvelles versions (si le dépôt GitHub de Melo est public). Sinon, téléchargez la dernière version et installez-la par-dessus celle-ci : vos pages restent.',
+            'Ostal cherche lui-même ses nouvelles versions (si le dépôt GitHub d’Ostal est public). Sinon, téléchargez la dernière version et installez-la par-dessus celle-ci : vos pages restent.',
           )}{' '}
           <a href={APK_PAGE} target="_blank" rel="noreferrer">
             {t('Page de téléchargement')}
@@ -71,7 +71,7 @@ function UpdatesSection() {
   const available = isUpdateAvailable(u);
   const busy = u.checking || u.progress !== null;
   let status: string;
-  if (!settings.serverUrl) status = t('Les mises à jour sont distribuées par votre serveur Melo : configurez-le ci-dessus.');
+  if (!settings.serverUrl) status = t('Les mises à jour sont distribuées par votre serveur Ostal : configurez-le ci-dessus.');
   else if (u.checking) status = t('Recherche d’une mise à jour…');
   else if (!u.remote) status = t('Version du serveur inconnue (serveur injoignable ?).');
   else if (!available) status = t('L’application est à jour.');
@@ -112,7 +112,7 @@ function UpdatesSection() {
       ) : null}
       {app ? (
         <p className="nb-muted nb-install-note">
-          <Icon name="laptop" size={15} /> {t('Application Melo pour ordinateur, version {version}.', { version: app.version })}
+          <Icon name="laptop" size={15} /> {t('Application Ostal pour ordinateur, version {version}.', { version: app.version })}
         </p>
       ) : !native && isStandaloneWeb() ? (
         <InstallBlock />
@@ -121,14 +121,14 @@ function UpdatesSection() {
   );
 }
 
-/** Navigateur : installer Melo comme une application (menu Démarrer, barre des tâches, fenêtre à part). */
+/** Navigateur : installer Ostal comme une application (menu Démarrer, barre des tâches, fenêtre à part). */
 function InstallBlock() {
   const { canInstall, installed } = useInstallState();
   if (isInstalledApp()) {
     return (
       <p className="nb-muted nb-install-note">
         <Icon name="checkCircle" size={15} />{' '}
-        {t('Application Melo installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.')}
+        {t('Application Ostal installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.')}
       </p>
     );
   }
@@ -136,7 +136,7 @@ function InstallBlock() {
     return (
       <div className="nb-install">
         <button type="button" className="nb-btn nb-btn--primary" onClick={() => void promptInstall()}>
-          <Icon name="download" size={15} /> {t('Installer Melo sur cet ordinateur')}
+          <Icon name="download" size={15} /> {t('Installer Ostal sur cet ordinateur')}
         </button>
         <span className="nb-muted">{t('Dans sa propre fenêtre, depuis le menu Démarrer ou la barre des tâches, même sans réseau.')}</span>
       </div>
@@ -145,14 +145,14 @@ function InstallBlock() {
   if (installed) {
     return (
       <p className="nb-muted nb-install-note">
-        <Icon name="checkCircle" size={15} /> {t('Melo est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.')}
+        <Icon name="checkCircle" size={15} /> {t('Ostal est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.')}
       </p>
     );
   }
   return (
     <p className="nb-muted nb-install-note">
       {t(
-        'Installer Melo comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite de la barre d’adresse (ou menu ⋯ → Applications → Installer Melo). Déjà installée ? Ouvrez-la depuis le menu Démarrer.',
+        'Installer Ostal comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite de la barre d’adresse (ou menu ⋯ → Applications → Installer Ostal). Déjà installée ? Ouvrez-la depuis le menu Démarrer.',
       )}
     </p>
   );
@@ -342,7 +342,7 @@ export function SettingsDialog({ onClose, onTour }: Props) {
       <UpdatesSection />
 
       <section className="nb-settings-section">
-        <h3>{t('Découvrir Melo')}</h3>
+        <h3>{t('Découvrir Ostal')}</h3>
         <p className="nb-muted">{t('Les sections, l’accueil et les gestes utiles, en quelques écrans.')}</p>
         <div>
           <button type="button" className="nb-btn" onClick={onTour}>
@@ -439,7 +439,7 @@ export function SettingsDialog({ onClose, onTour }: Props) {
         </div>
       </details>
       <p className="nb-muted nb-version">
-        {t('Melo ·')} {getSettings().serverUrl ? (isDesktopLocal() ? t('espace de cet ordinateur') : t('mode synchronisé')) : t('mode hors ligne')}
+        {t('Ostal ·')} {getSettings().serverUrl ? (isDesktopLocal() ? t('espace de cet ordinateur') : t('mode synchronisé')) : t('mode hors ligne')}
       </p>
       {joinOpen ? (
         <JoinDialog server={testResult?.pairable ? (parseJoinLink(server)?.serverUrl ?? normalizeServerUrl(server)) : undefined} onClose={() => setJoinOpen(false)} />

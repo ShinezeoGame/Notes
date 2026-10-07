@@ -28,7 +28,7 @@ import org.json.JSONObject;
 
 /**
  * Mise à jour de l'application sans réinstaller l'APK : le client web (HTML, JS, CSS) est téléchargé depuis le
- * serveur Melo dans le stockage de l'application, puis le JavaScript bascule la WebView dessus (plugin WebView de
+ * serveur Ostal dans le stockage de l'application, puis le JavaScript bascule la WebView dessus (plugin WebView de
  * Capacitor). Une tâche périodique ({@link UpdateCheckJob}) prévient par une notification quand une version est
  * disponible.
  *

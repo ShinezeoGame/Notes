@@ -1,4 +1,4 @@
-// Mises à jour de l'application. Le serveur Melo annonce la version de son client (/api/app/version) :
+// Mises à jour de l'application. Le serveur Ostal annonce la version de son client (/api/app/version) :
 // - navigateur : un rechargement de la page suffit ;
 // - application Android : la nouvelle version est téléchargée depuis le serveur (plugin natif AppUpdate) puis la
 //   WebView bascule dessus (plugin WebView de Capacitor), sans réinstaller l'APK. Une vérification en arrière-plan
@@ -203,7 +203,7 @@ async function bootNative() {
     /* ignore */
   }
   if (pending?.version === BUILD.id)
-    toast(t('Melo a été mis à jour : version {version} du {date}.', { version: BUILD.id, date: formatBuildDate(BUILD.builtAt) }));
+    toast(t('Ostal a été mis à jour : version {version} du {date}.', { version: BUILD.id, date: formatBuildDate(BUILD.builtAt) }));
   else if (pending?.version) toast(t('La nouvelle version n’a pas pu démarrer : la version précédente est conservée.'), 'error');
 
   await callNative('AppUpdate', 'cleanup', { keep: bundle }).catch(() => {});

@@ -126,7 +126,7 @@ export function localPageHost(hostname: string): string | undefined {
 
 // ---------- Homepage (services.yaml) ----------
 
-/** Types de widget de Homepage → types du homelab de Melo (les autres : vérification de disponibilité). */
+/** Types de widget de Homepage → types du homelab d'Ostal (les autres : vérification de disponibilité). */
 const HOMEPAGE_SERVICES: Record<string, ServiceType> = {
   sonarr: 'sonarr',
   radarr: 'radarr',
@@ -157,7 +157,7 @@ const httpUrl = (v: unknown): string | undefined => (typeof v === 'string' && /^
 /** Valeur secrète utilisable : pas une variable de Homepage ({{HOMEPAGE_VAR_…}}), restée dans son environnement. */
 const secret = (v: unknown): string | undefined =>
   (typeof v === 'string' || typeof v === 'number') && String(v).trim() && !/\{\{\s*HOMEPAGE_/i.test(String(v)) ? String(v).trim() : undefined;
-/** Adresse que Melo peut joindre : IP ou nom avec domaine (pas un nom de conteneur Docker de Homepage). */
+/** Adresse qu'Ostal peut joindre : IP ou nom avec domaine (pas un nom de conteneur Docker de Homepage). */
 const reachable = (url: string | undefined) => {
   try {
     const h = new URL(url ?? '').hostname;
@@ -215,7 +215,7 @@ function walk(node: unknown, out: Candidate[], depth = 0) {
 
 /**
  * Applications du fichier services.yaml de Homepage. `parse` : lecteur YAML (bibliothèque chargée à la demande).
- * Les clés laissées en variables de Homepage ({{HOMEPAGE_VAR_…}}) sont à saisir ensuite dans Melo.
+ * Les clés laissées en variables de Homepage ({{HOMEPAGE_VAR_…}}) sont à saisir ensuite dans Ostal.
  */
 export function fromHomepage(text: string, cfg: HomelabConfig, parse: (s: string) => unknown): { candidates: Candidate[]; error?: string } {
   let data: unknown;

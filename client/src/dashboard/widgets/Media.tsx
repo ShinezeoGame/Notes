@@ -179,7 +179,7 @@ function webUrl(url: string): string {
 
 /**
  * Affichage du site : « ok » (cadre), ou raison pour laquelle le cadre resterait vide : site qui interdit d'être
- * affiché dans une autre page (« refused »), ou site en http dans Melo ouvert en https (« insecure »).
+ * affiché dans une autre page (« refused »), ou site en http dans Ostal ouvert en https (« insecure »).
  */
 type FrameState = 'checking' | 'ok' | 'refused' | 'insecure';
 
@@ -228,17 +228,17 @@ export function WebWidget({ widget, openSettings, editing }: WidgetProps) {
     const host = new URL(url).host;
     // Application Windows ancienne (pont sans embedsAnySite) : sa mise à jour affiche le site.
     const elsewhere = desktop()
-      ? t('La nouvelle version de Melo pour Windows l’affiche ici.')
+      ? t('La nouvelle version d’Ostal pour Windows l’affiche ici.')
       : isNative()
         ? ''
-        : t('Il s’affiche dans l’application Melo pour Windows.');
+        : t('Il s’affiche dans l’application Ostal pour Windows.');
     return (
       <div className="w-empty w-web-blocked">
         <Icon name="globe" size={26} />
         <b className="w-web-host">{host}</b>
         <span className="w-muted">
           {state === 'insecure'
-            ? [t('Ce site en http ne peut pas s’afficher dans Melo ouvert en https.'), elsewhere].filter(Boolean).join(' ')
+            ? [t('Ce site en http ne peut pas s’afficher dans Ostal ouvert en https.'), elsewhere].filter(Boolean).join(' ')
             : [t('Ce site refuse de s’afficher dans une autre application.'), elsewhere].filter(Boolean).join(' ')}
         </span>
         <button type="button" className="nb-btn nb-btn--sm" onClick={() => window.open(url, '_blank', 'noopener')} disabled={editing}>
@@ -283,7 +283,7 @@ export function WebSettings({ config, set }: SettingsProps) {
       </label>
       <p className="nb-muted w-settings-hint">
         {t(
-          'Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Melo propose alors de les ouvrir. Dans l’application Melo pour Windows, tous les sites s’affichent.',
+          'Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Ostal propose alors de les ouvrir. Dans l’application Ostal pour Windows, tous les sites s’affichent.',
         )}
       </p>
     </>

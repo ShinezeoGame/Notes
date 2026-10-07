@@ -11,7 +11,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 
 /**
- * Notification « Mise à jour de Melo disponible » (dans la langue choisie dans l'application) ; la toucher ouvre
+ * Notification « Mise à jour d'Ostal disponible » (dans la langue choisie dans l'application) ; la toucher ouvre
  * l'application et lance la mise à jour.
  */
 final class UpdateNotifier {
@@ -37,7 +37,7 @@ final class UpdateNotifier {
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, fr ? "Mises à jour" : "Updates", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(fr ? "Nouvelle version de Melo disponible" : "New version of Melo available");
+            channel.setDescription(fr ? "Nouvelle version d’Ostal disponible" : "New version of Ostal available");
             nm.createNotificationChannel(channel);
             builder = new Notification.Builder(context, CHANNEL_ID);
         } else {
@@ -52,7 +52,7 @@ final class UpdateNotifier {
         builder
             .setSmallIcon(R.drawable.ic_stat_notes)
             .setColor(0xFF2383E2)
-            .setContentTitle(fr ? "Mise à jour de Melo disponible" : "Melo update available")
+            .setContentTitle(fr ? "Mise à jour d’Ostal disponible" : "Ostal update available")
             .setContentText(fr ? "Touchez pour installer la nouvelle version." : "Tap to install the new version.")
             .setContentIntent(pending)
             .setAutoCancel(true);

@@ -323,7 +323,7 @@ export function HomelabPanel({
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>{t('Le tableau de bord interroge vos applications depuis le serveur Melo (accès au réseau local, pas de problème de CORS).')}</p>
+        <p>{t('Le tableau de bord interroge vos applications depuis le serveur Ostal (accès au réseau local, pas de problème de CORS).')}</p>
         <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages, idéalement un serveur hébergé dans votre homelab.')}</p>
       </div>
     );

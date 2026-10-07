@@ -1,5 +1,5 @@
 // Maison connectée : appareils de Home Assistant (lumières, prises, volets, chauffage, caméras, capteurs…)
-// affichés et pilotés via le serveur Melo, qui détient l'adresse et le jeton de Home Assistant.
+// affichés et pilotés via le serveur Ostal, qui détient l'adresse et le jeton de Home Assistant.
 import { useEffect, useState } from 'react';
 import type * as Y from 'yjs';
 import { isIconName, type IconName } from '../icons/registry';
@@ -18,7 +18,7 @@ export type HomeEntity = {
   deviceClass: string;
   changedAt: string;
   attrs: Record<string, unknown>;
-  /** Caméras : adresses signées (relatives au serveur Melo) de l'image et du flux vidéo. */
+  /** Caméras : adresses signées (relatives au serveur Ostal) de l'image et du flux vidéo. */
   snapshot?: string;
   stream?: string;
 };

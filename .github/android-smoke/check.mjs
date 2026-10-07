@@ -1,6 +1,6 @@
 // Pilote l'application installée sur l'émulateur par le débogage de sa WebView (APK debug) et vérifie chaque
 // étape sensible côté Android : liaison à un serveur, vérification en arrière-plan, notification, mise à jour.
-// Lancé par run.sh (serveur Melo du runner joignable depuis l'émulateur en 10.0.2.2:3000).
+// Lancé par run.sh (serveur Ostal du runner joignable depuis l'émulateur en 10.0.2.2:3000).
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -84,7 +84,7 @@ async function assertAlive(when, relaunched = false) {
   if (!crash && !relaunched && !(await alivePid())) {
     const kill = externalKill(lastPid);
     if (kill) {
-      // Rien à voir avec Melo : relancée, puis vérifiée de nouveau (une fois).
+      // Rien à voir avec Ostal : relancée, puis vérifiée de nouveau (une fois).
       const note = `   ⚠️ arrêtée par Android ${when}, cause extérieure (${kill.replace(/^.*am_kill\s*:\s*/, '')}) : relancée`;
       report.push(note);
       console.log(note);
@@ -226,7 +226,7 @@ let ok = false;
 try {
   await step('Premier lancement : l’application s’ouvre et reste ouverte', async () => {
     adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
-    await until('écran « Welcome to Melo » (anglais par défaut)', () => js("document.body?.innerText.includes('Welcome to Melo')"), 120_000, 2000);
+    await until('écran « Welcome to Ostal » (anglais par défaut)', () => js("document.body?.innerText.includes('Welcome to Ostal')"), 120_000, 2000);
     const ua = await js('navigator.userAgent');
     report.push(`   WebView : ${ua}`);
     console.log(`   WebView : ${ua}`);
@@ -239,7 +239,7 @@ try {
     // Clic différé : l'application se recharge aussitôt, après la réponse à cette évaluation.
     await js("setTimeout(() => document.querySelector('.nb-onboarding-lang button[lang=\"fr\"]').click(), 200); true");
     await sleep(2000);
-    await until('écran « Bienvenue dans Melo »', () => js("document.body?.innerText.includes('Bienvenue dans Melo')"), 60_000, 1000);
+    await until('écran « Bienvenue dans Ostal »', () => js("document.body?.innerText.includes('Bienvenue dans Ostal')"), 60_000, 1000);
     await assertAlive('après le choix de la langue');
   });
 
@@ -274,7 +274,7 @@ try {
   });
 
   let v2 = '';
-  await step('Nouvelle version sur le serveur : notification « Mise à jour de Melo disponible »', async () => {
+  await step('Nouvelle version sur le serveur : notification « Mise à jour d’Ostal disponible »', async () => {
     fs.rmSync('client/dist', { recursive: true, force: true });
     fs.cpSync(DIST_V2, 'client/dist', { recursive: true });
     v2 = JSON.parse(fs.readFileSync('client/dist/version.json', 'utf8')).version;
@@ -283,7 +283,7 @@ try {
     adb('shell', 'cmd', 'jobscheduler', 'run', '-f', PKG, JOB_ID);
     await until(
       'notification affichée',
-      () => adb('shell', 'dumpsys', 'notification', '--noredact').includes('Mise à jour de Melo disponible'),
+      () => adb('shell', 'dumpsys', 'notification', '--noredact').includes('Mise à jour d’Ostal disponible'),
       60_000,
       2000,
     );
@@ -294,7 +294,7 @@ try {
     // Même intention que la notification (application déjà ouverte : onNewIntent).
     adb('shell', 'am', 'start', '-n', `${PKG}/.MainActivity`, '--ez', 'com.shinezeo.notes.UPDATE', 'true');
     await until(`version ${v2} chargée`, async () => (await loadedVersion()) === v2, 180_000, 2000);
-    // La nouvelle version confirme son démarrage (message « Melo a été mis à jour »).
+    // La nouvelle version confirme son démarrage (message « Ostal a été mis à jour »).
     await until('démarrage confirmé', () => js("localStorage.getItem('notes.update.pending') === null"), 30_000);
     await sleep(5000);
     await assertAlive('pendant la mise à jour');
@@ -369,7 +369,7 @@ try {
       }
     });
 
-  await pdfStep('Atelier PDF : « Ouvrir avec Melo » importe un PDF reçu d’une autre application', async () => {
+  await pdfStep('Atelier PDF : « Ouvrir avec Ostal » importe un PDF reçu d’une autre application', async () => {
     const id = await nativePdf('recu.pdf');
     // Adresse de notre propre FileProvider : l'application lit ce fichier comme un PDF envoyé par une autre.
     const uri = `content://${PKG}.fileprovider/my_cache_images/exports/${id}/recu.pdf`;

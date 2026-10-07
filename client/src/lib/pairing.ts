@@ -1,4 +1,4 @@
-// Rejoindre un espace sur un serveur Melo : lien ou code à 6 chiffres pour relier un autre appareil de la même
+// Rejoindre un espace sur un serveur Ostal : lien ou code à 6 chiffres pour relier un autre appareil de la même
 // personne, invitation qui donne à une autre personne son propre espace, ancien lien « Lier un appareil ».
 import { getSettings, isDefaultUserName, normalizeServerUrl, resetWorkspace, updateSettings } from './settings';
 import { clearLocalDocs } from './yjs';
@@ -10,8 +10,8 @@ export function formatPairingCode(code: string): string {
   return digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits;
 }
 
-/** Lien Melo reçu (collé, scanné) : ce qu'il permet de faire, et sur quel serveur. */
-export type MeloLink =
+/** Lien Ostal reçu (collé, scanné) : ce qu'il permet de faire, et sur quel serveur. */
+export type OstalLink =
   | { kind: 'invite'; server: string; token: string }
   | { kind: 'pair'; server: string; code: string }
   | { kind: 'join'; server: string; wsId: string; key: string }
@@ -25,7 +25,7 @@ export function asPairingCode(input: string): string | null {
 }
 
 /** Reconnaît un lien d'invitation, de liaison, de partage, ou une simple adresse de serveur. */
-export function parseMeloLink(input: string): MeloLink | null {
+export function parseOstalLink(input: string): OstalLink | null {
   const text = input.trim();
   if (!text || asPairingCode(text) || /\s/.test(text)) return null;
   const explicit = /^https?:\/\//i.test(text);

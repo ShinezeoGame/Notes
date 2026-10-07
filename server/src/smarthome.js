@@ -1,5 +1,5 @@
 // Maison connectée : pilotage des appareils (lumières, prises, volets, chauffage, caméras…) via Home Assistant.
-// Le serveur Melo interroge Home Assistant avec un jeton d'accès longue durée ; le jeton et l'adresse ne sont
+// Le serveur Ostal interroge Home Assistant avec un jeton d'accès longue durée ; le jeton et l'adresse ne sont
 // jamais renvoyés aux navigateurs. Les images des caméras passent par des adresses signées et temporaires.
 import http from 'node:http';
 import https from 'node:https';
@@ -78,7 +78,7 @@ function friendly(err, status) {
   const msg = err?.message || String(err || '');
   if (/ECONNREFUSED/.test(msg)) return 'Home Assistant ne répond pas à cette adresse (connexion refusée).';
   if (/ENOTFOUND|EAI_AGAIN/.test(msg)) return 'Adresse de Home Assistant introuvable.';
-  if (/EHOSTUNREACH|ENETUNREACH|Délai dépassé|ETIMEDOUT/.test(msg)) return 'Home Assistant injoignable depuis le serveur Melo.';
+  if (/EHOSTUNREACH|ENETUNREACH|Délai dépassé|ETIMEDOUT/.test(msg)) return 'Home Assistant injoignable depuis le serveur Ostal.';
   if (/self.signed|certificate|CERT_/i.test(msg)) return 'Certificat HTTPS non reconnu (cochez « ignorer le certificat »).';
   return msg ? msg.slice(0, 160) : `Home Assistant a répondu ${status}.`;
 }

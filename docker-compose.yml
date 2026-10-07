@@ -1,4 +1,4 @@
-# Déploiement de Melo. Voir INSTALLATION.md pour le guide complet.
+# Déploiement d'Ostal. Voir INSTALLATION.md pour le guide complet.
 # Les réglages se font dans un fichier .env (copier .env.example).
 services:
   notes:

@@ -1,8 +1,8 @@
-// Logo de Melo : « m » blanc et point jaune sur une tuile en dégradé (même dessin que client/public/icon.svg et les
-// icônes de l'application).
+// Logo d'Ostal : maison blanche au toit débordant et fenêtre ronde allumée (jaune) sur une tuile en dégradé (même
+// dessin que client/public/icon.svg et les icônes de l'application).
 import { useId } from 'react';
 
-export function MeloLogo({ size = 24, className }: { size?: number; className?: string }) {
+export function OstalLogo({ size = 24, className }: { size?: number; className?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" focusable="false">
@@ -20,14 +20,14 @@ export function MeloLogo({ size = 24, className }: { size?: number; className?: 
       <rect width="512" height="512" rx="116" fill={`url(#${id}g)`} />
       <rect width="512" height="512" rx="116" fill={`url(#${id}h)`} />
       <path
-        d="M134 357V233a54 54 0 0 1 108 0v124M242 233a54 54 0 0 1 108 0v124"
+        d="M100 252L256 116L412 252M152 226V388H360V226"
         fill="none"
         stroke="#fff"
-        strokeWidth="56"
+        strokeWidth="52"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="404" cy="146" r="32" fill="#FFD166" />
+      <circle cx="256" cy="306" r="42" fill="#FFD166" />
     </svg>
   );
 }

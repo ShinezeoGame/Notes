@@ -1,4 +1,4 @@
-// Traductions anglaises des messages envoyés par le serveur Melo (erreurs, états des appareils et des applications),
+// Traductions anglaises des messages envoyés par le serveur Ostal (erreurs, états des appareils et des applications),
 // écrits en français côté serveur et traduits à l'affichage par tServer() (voir lib/i18n.ts). Un message ajouté au
 // serveur sans traduction ici s'affiche en français.
 
@@ -7,7 +7,7 @@ export const EN_SERVER: Record<string, string> = {
   'Accès refusé.': 'Access denied.',
   'Requête invalide.': 'Invalid request.',
   'Identifiants d’espace de travail invalides.': 'Invalid workspace credentials.',
-  'Réservé au propriétaire de ce serveur Melo.': 'Only the owner of this Melo server can do this.',
+  'Réservé au propriétaire de ce serveur Ostal.': 'Only the owner of this Ostal server can do this.',
   'Ce serveur n’accepte pas de nouvel espace. Pour retrouver vos pages, reliez cet appareil avec le code affiché dans les réglages d’un appareil déjà relié ; pour avoir votre propre espace, demandez une invitation au propriétaire du serveur.':
     'This server does not accept new workspaces. To get your pages back, link this device with the code shown in the settings of a device that is already linked; to get your own workspace, ask the server’s owner for an invitation.',
   'Cette clé ne correspond pas à cet espace de travail.': 'This key does not match this workspace.',
@@ -37,7 +37,7 @@ export const EN_SERVER: Record<string, string> = {
   'Ce lien ne renvoie pas un calendrier iCal.': 'This link does not return an iCal calendar.',
   'Impossible de récupérer ce calendrier.': 'Could not fetch this calendar.',
   'Client non construit.': 'Client not built.',
-  'Serveur Melo actif. Le client n’est pas construit (npm run build).': 'Melo server running. The client is not built (npm run build).',
+  'Serveur Ostal actif. Le client n’est pas construit (npm run build).': 'Ostal server running. The client is not built (npm run build).',
   'Introuvable.': 'Not found.',
 
   // homelab.js : applications et appareils
@@ -120,7 +120,7 @@ export const EN_SERVER: Record<string, string> = {
   'Jeton refusé par Home Assistant (créez un jeton d’accès longue durée).': 'Token refused by Home Assistant (create a long-lived access token).',
   'Home Assistant ne répond pas à cette adresse (connexion refusée).': 'Home Assistant does not respond at this address (connection refused).',
   'Adresse de Home Assistant introuvable.': 'Home Assistant address not found.',
-  'Home Assistant injoignable depuis le serveur Melo.': 'Home Assistant cannot be reached from the Melo server.',
+  'Home Assistant injoignable depuis le serveur Ostal.': 'Home Assistant cannot be reached from the Ostal server.',
   'Certificat HTTPS non reconnu (cochez « ignorer le certificat »).': 'HTTPS certificate not recognized (tick “ignore the certificate”).',
   'Réponse inattendue de Home Assistant.': 'Unexpected response from Home Assistant.',
   'Renseignez l’adresse et le jeton.': 'Enter the address and the token.',
@@ -135,8 +135,8 @@ export const EN_SERVER: Record<string, string> = {
   'Adresse de caméra expirée ou invalide.': 'Camera address expired or invalid.',
   'Cette caméra n’existe plus.': 'This camera no longer exists.',
   'Vidéo indisponible.': 'Video unavailable.',
-  'ffmpeg n’est pas installé sur le serveur Melo (il est inclus dans l’image Docker ; sinon : sudo apt install ffmpeg).':
-    'ffmpeg is not installed on the Melo server (it is included in the Docker image; otherwise: sudo apt install ffmpeg).',
+  'ffmpeg n’est pas installé sur le serveur Ostal (il est inclus dans l’image Docker ; sinon : sudo apt install ffmpeg).':
+    'ffmpeg is not installed on the Ostal server (it is included in the Docker image; otherwise: sudo apt install ffmpeg).',
   'Identifiant ou mot de passe refusé par la caméra.': 'Username or password refused by the camera.',
   'La caméra refuse l’accès à ce flux (droits de l’utilisateur ?).': 'The camera refuses access to this stream (user permissions?).',
   'Flux introuvable à cette adresse : vérifiez la marque, le canal ou le chemin du flux.':
@@ -144,8 +144,8 @@ export const EN_SERVER: Record<string, string> = {
   'La caméra refuse la connexion sur ce port : vérifiez le port et que le flux RTSP est activé dans ses réglages.':
     'The camera refuses connections on this port: check the port and that the RTSP stream is enabled in its settings.',
   'Adresse de la caméra introuvable.': 'Camera address not found.',
-  'Caméra injoignable depuis le serveur Melo : vérifiez son adresse IP.': 'The camera cannot be reached from the Melo server: check its IP address.',
-  'Caméra injoignable depuis le serveur Melo : vérifiez son adresse.': 'The camera cannot be reached from the Melo server: check its address.',
+  'Caméra injoignable depuis le serveur Ostal : vérifiez son adresse IP.': 'The camera cannot be reached from the Ostal server: check its IP address.',
+  'Caméra injoignable depuis le serveur Ostal : vérifiez son adresse.': 'The camera cannot be reached from the Ostal server: check its address.',
   'Type d’adresse non pris en charge (rtsp://, rtsps://, rtmp:// ou http(s)://).':
     'Unsupported address type (rtsp://, rtsps://, rtmp:// or http(s)://).',
   'Aucune vidéo lisible à cette adresse.': 'No playable video at this address.',
@@ -156,7 +156,7 @@ export const EN_SERVER: Record<string, string> = {
   'Flux vidéo illisible.': 'Unreadable video stream.',
   'Flux vidéo interrompu.': 'Video stream interrupted.',
   'Trop de spectateurs pour cette caméra.': 'Too many viewers for this camera.',
-  'Trop de flux vidéo ouverts en même temps sur le serveur Melo.': 'Too many video streams open at the same time on the Melo server.',
+  'Trop de flux vidéo ouverts en même temps sur le serveur Ostal.': 'Too many video streams open at the same time on the Ostal server.',
   'Adresse de la caméra manquante.': 'Camera address missing.',
   'Cet appareil ne sait pas lire la vidéo de cette caméra.': 'This device cannot play this camera’s video.',
   'Format vidéo de la caméra instable.': 'The camera’s video format is unstable.',

@@ -1,4 +1,4 @@
-// Jeu d'icônes SVG de l'application, dessiné pour Melo (grille 24×24, trait arrondi, couleur héritée).
+// Jeu d'icônes SVG de l'application, dessiné pour Ostal (grille 24×24, trait arrondi, couleur héritée).
 // Chaque icône est une liste de formes simples ; le composant <Icon> les transforme en SVG.
 
 export type Shape =

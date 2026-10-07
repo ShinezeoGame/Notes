@@ -1,5 +1,5 @@
 // Application installable depuis le navigateur (Edge, Chrome, Brave… sur Windows, Mac ou Linux) : service worker
-// pour l'ouverture sans réseau, et proposition d'installation (« Installer Melo ») depuis l'application.
+// pour l'ouverture sans réseau, et proposition d'installation (« Installer Ostal ») depuis l'application.
 import { useSyncExternalStore } from 'react';
 import { isStandaloneWeb } from './settings';
 import { toast } from '../components/Toast';
@@ -39,7 +39,7 @@ export function startPwa() {
     deferred = null;
     installed = true;
     emit();
-    toast('Melo est installée : retrouvez-la dans le menu Démarrer (épinglez-la à la barre des tâches si vous voulez).');
+    toast('Ostal est installée : retrouvez-la dans le menu Démarrer (épinglez-la à la barre des tâches si vous voulez).');
   });
   if (import.meta.env.DEV || !('serviceWorker' in navigator)) return;
   const register = () => void navigator.serviceWorker.register('sw.js').catch(() => {});

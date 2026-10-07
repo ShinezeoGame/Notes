@@ -33,7 +33,7 @@ export function HomelabIntro({ doc, onConfigure, onHide }: { doc: Y.Doc; onConfi
         icon="server"
         title={t('Votre serveur maison d’un coup d’œil')}
         needs={[
-          t('Un serveur chez vous (NAS, mini-PC, Raspberry Pi…) sur le même réseau que Melo.'),
+          t('Un serveur chez vous (NAS, mini-PC, Raspberry Pi…) sur le même réseau qu’Ostal.'),
           t('Des applications web : Jellyfin, Plex, Nextcloud, Pi-hole, Home Assistant, la suite *arr… ou n’importe laquelle.'),
         ]}
         actions={
@@ -81,8 +81,8 @@ function useAdd(doc: Y.Doc, onClose: () => void) {
 
 /** Recherche faite dans Docker sans le relais réseau : seule la machine du serveur a pu être interrogée. */
 function discoverWarning(r: DiscoverResult): string {
-  if (r.relay === 'down') return t('Le relais réseau du serveur Melo ne répond pas : la recherche s’est limitée à la machine du serveur.');
-  if (r.isolated) return t('Le serveur Melo tourne dans Docker sans son relais réseau : la recherche s’est limitée à la machine du serveur.');
+  if (r.relay === 'down') return t('Le relais réseau du serveur Ostal ne répond pas : la recherche s’est limitée à la machine du serveur.');
+  if (r.isolated) return t('Le serveur Ostal tourne dans Docker sans son relais réseau : la recherche s’est limitée à la machine du serveur.');
   return '';
 }
 
@@ -193,7 +193,7 @@ export function HomepageImportDialog({ doc, onClose }: { doc: Y.Doc; onClose: ()
       ) : (
         <CandidatePicker
           candidates={parsed.candidates}
-          intro={t('Applications trouvées dans services.yaml. Cochez celles à suivre dans Melo.')}
+          intro={t('Applications trouvées dans services.yaml. Cochez celles à suivre dans Ostal.')}
           onAdd={add}
           onRetry={() => setParsed(null)}
           retryLabel={t('Autre fichier')}
@@ -255,7 +255,7 @@ function CandidatePicker({
               <b>{c.name}</b>
               <small>
                 {c.type === 'local'
-                  ? t('Processeur, mémoire et disques de la machine du serveur Melo')
+                  ? t('Processeur, mémoire et disques de la machine du serveur Ostal')
                   : [typeLabel(c) !== c.name ? typeLabel(c) : '', c.url].filter(Boolean).join(' · ')}
               </small>
             </span>

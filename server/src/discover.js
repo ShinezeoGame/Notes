@@ -16,7 +16,7 @@ export const PORTS = [
 // Ports où l'on essaie d'abord HTTPS.
 const TLS_FIRST = new Set([443, 5001, 8006, 8443, 8920, 9443]);
 
-// Applications et appareils reconnus : type (celui du homelab de Melo) et motif cherché dans le titre de la page, ou
+// Applications et appareils reconnus : type (celui du homelab d'Ostal) et motif cherché dans le titre de la page, ou
 // dans les en-têtes. L'ordre compte : le premier motif trouvé l'emporte.
 const RULES = [
   { kind: 'device', type: 'proxmox', title: /Proxmox/i },
@@ -92,7 +92,7 @@ function peek(url, redirects = 3, timeout = 3000) {
     const lib = target.protocol === 'https:' ? https : http;
     const req = lib.request(
       target,
-      { method: 'GET', timeout, rejectUnauthorized: false, headers: { 'user-agent': 'Melo-Homelab/1.0', accept: 'text/html,*/*' } },
+      { method: 'GET', timeout, rejectUnauthorized: false, headers: { 'user-agent': 'Ostal-Homelab/1.0', accept: 'text/html,*/*' } },
       (res) => {
         const status = res.statusCode || 0;
         const location = res.headers.location;
@@ -147,8 +147,8 @@ export function recognize({ title = '', headers = {} }) {
   for (const r of RULES) {
     if ((r.header && headers[r.header] !== undefined) || r.title.test(title)) return { kind: r.kind, type: r.type, name: '' };
   }
-  // L'interface de Melo elle-même n'est pas à surveiller.
-  if (!title || /^Melo\b/.test(title) || NOT_AN_APP.test(title)) return null;
+  // L'interface d'Ostal elle-même (ou d'un serveur pas encore mis à jour, encore nommé Melo) n'est pas à surveiller.
+  if (!title || /^(Ostal|Melo)\b/.test(title) || NOT_AN_APP.test(title)) return null;
   return { kind: 'service', type: 'generic', name: title.slice(0, 48) };
 }
 

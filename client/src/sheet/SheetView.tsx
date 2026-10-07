@@ -1036,7 +1036,7 @@ export function SheetView(props: SheetViewProps) {
         ]);
       } else await navigator.clipboard?.writeText(out.text);
     } catch {
-      /* presse-papiers du système refusé : la copie reste disponible dans Melo */
+      /* presse-papiers du système refusé : la copie reste disponible dans Ostal */
     }
   };
 
@@ -1056,7 +1056,7 @@ export function SheetView(props: SheetViewProps) {
         if (data) return pasteData(data);
       }
     } catch {
-      /* lecture refusée : dernière copie faite dans Melo */
+      /* lecture refusée : dernière copie faite dans Ostal */
     }
     const data = lastCopy();
     if (data) pasteData(data);

@@ -1,4 +1,4 @@
-// Widget « Allumer un PC » : réveille un ordinateur du réseau local (Wake-on-LAN : le serveur Melo envoie le signal
+// Widget « Allumer un PC » : réveille un ordinateur du réseau local (Wake-on-LAN : le serveur Ostal envoie le signal
 // sur son réseau) et montre s'il est allumé. Réglages : l'ordinateur choisi parmi les appareils trouvés sur le réseau,
 // ou ses adresses saisies.
 import { useCallback, useEffect, useState } from 'react';
@@ -172,7 +172,7 @@ function DeviceList({ scan, selected, onChoose }: { scan: WolScan; selected: str
   if (!scan.devices.length) {
     return (
       <div className="nb-error w-wol-scan-note">
-        {warning || t('Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Melo.')}
+        {warning || t('Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Ostal.')}
       </div>
     );
   }
@@ -229,7 +229,7 @@ export function WolSettings({ config, set }: SettingsProps) {
       <div className="nb-field">
         <span>{t('Ordinateur à allumer')}</span>
         <p className="w-wol-help">
-          {t('Le serveur Melo envoie le signal de réveil sur son réseau : l’ordinateur doit y être branché. Allumez-le, puis cherchez-le ici.')}
+          {t('Le serveur Ostal envoie le signal de réveil sur son réseau : l’ordinateur doit y être branché. Allumez-le, puis cherchez-le ici.')}
         </p>
         <div>
           <button type="button" className="nb-btn" onClick={() => void search()} disabled={scanning}>
@@ -308,7 +308,7 @@ export function WolSettings({ config, set }: SettingsProps) {
         </label>
         {broadcastText.trim() && !isHost(broadcastText.trim()) ? <div className="nb-error w-wol-field-error">{t('Adresse IP ou nom invalide.')}</div> : null}
         <p className="w-wol-help">
-          {t('Seulement si l’ordinateur est sur un autre réseau que le serveur Melo : le signal y est aussi envoyé.')}
+          {t('Seulement si l’ordinateur est sur un autre réseau que le serveur Ostal : le signal y est aussi envoyé.')}
         </p>
       </details>
     </>

@@ -1,6 +1,6 @@
-# Melo : repères pour Claude Code
+# Ostal : repères pour Claude Code
 
-Melo (anciennement « Notes », nom resté dans le dépôt, les identifiants et la section des pages) : application à tout faire (accueil en tableau de bord de widgets, notes, agenda, maison connectée…), web + Android, collaboration en direct. Code commenté en français ; textes
+Ostal (anciennement « Melo », et à l'origine « Notes », nom resté dans le dépôt, les identifiants et la section des pages ; les identifiants techniques en `melo` sont gardés aussi) : application à tout faire (accueil en tableau de bord de widgets, notes, agenda, maison connectée…), web + Android, collaboration en direct. Code commenté en français ; textes
 de l'interface et messages de commit en français. Architecture : section « Architecture » de `docs/DEVELOPPEMENT.md`.
 
 ## Style des réponses (caveman)

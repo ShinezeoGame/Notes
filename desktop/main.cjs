@@ -1,7 +1,7 @@
-// Melo pour ordinateur (Windows) : une fenêtre qui affiche l'espace de cet ordinateur, servi par le serveur Melo
-// intégré (lancé en arrière-plan, joignable de cet ordinateur seulement), ou le serveur Melo d'un proche ou le vôtre.
+// Ostal pour ordinateur (Windows) : une fenêtre qui affiche l'espace de cet ordinateur, servi par le serveur Ostal
+// intégré (lancé en arrière-plan, joignable de cet ordinateur seulement), ou le serveur Ostal d'un proche ou le vôtre.
 // Le pont `window.meloDesktop` (preload.cjs) permet à l'application de passer de l'un à l'autre, lui transmet les PDF
-// ouverts avec Melo et les mises à jour téléchargées.
+// ouverts avec Ostal et les mises à jour téléchargées.
 const { app, BrowserWindow, Menu, ipcMain, session, shell, utilityProcess } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -11,18 +11,24 @@ const PORT = 47821;
 const LOCAL = `http://127.0.0.1:${PORT}`;
 /** Fonctions offertes par le pont (voir client/src/lib/desktop.ts) : augmenter à chaque ajout. */
 const BRIDGE_API = 3;
-/** Taille maximale d'un PDF ouvert avec Melo. */
+/** Taille maximale d'un PDF ouvert avec Ostal. */
 const MAX_OPEN_BYTES = 200 * 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
 
 app.setAppUserModelId('com.shinezeo.melo');
 // Tests : dossier de données à part.
 if (process.env.MELO_USER_DATA) app.setPath('userData', process.env.MELO_USER_DATA);
+else {
+  // L'application s'appelait Melo jusqu'en octobre 2026 : ses données (espace de cet ordinateur, réglages) restent
+  // dans %APPDATA%\Melo plutôt que d'apparaître perdues dans %APPDATA%\Ostal.
+  const legacy = path.join(app.getPath('appData'), 'Melo');
+  if (fs.existsSync(legacy)) app.setPath('userData', legacy);
+}
 const USER_DATA = app.getPath('userData');
 const CONFIG_FILE = path.join(USER_DATA, 'melo-ordinateur.json');
 const LOG_FILE = path.join(USER_DATA, 'melo.log');
 
-/** Journal de l'application (%APPDATA%\Melo\melo.log), pour comprendre un problème après coup. */
+/** Journal de l'application (%APPDATA%\Ostal\melo.log, ou %APPDATA%\Melo\melo.log), pour comprendre un problème après coup. */
 function log(...parts) {
   const line = `${new Date().toISOString()} ${parts.join(' ')}`;
   console.log(line);
@@ -37,7 +43,7 @@ function log(...parts) {
 
 /**
  * { server: adresse du serveur distant affiché (null : espace de cet ordinateur), bounds, maximized, lang: langue
- * choisie dans Melo ('en', 'fr' ; null : pas encore connue) }
+ * choisie dans Ostal ('en', 'fr' ; null : pas encore connue) }
  */
 let config = readConfig();
 let win = null;
@@ -63,12 +69,12 @@ function readConfig() {
   }
 }
 
-/** Textes de l'application elle-même (menus, erreurs du serveur intégré), dans la langue choisie dans Melo. */
+/** Textes de l'application elle-même (menus, erreurs du serveur intégré), dans la langue choisie dans Ostal. */
 const TEXTS = {
   en: {
     reload: 'Reload',
     devTools: 'Developer tools',
-    quit: 'Quit Melo',
+    quit: 'Quit Ostal',
     view: 'View',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
@@ -81,7 +87,7 @@ const TEXTS = {
   fr: {
     reload: 'Recharger',
     devTools: 'Outils de développement',
-    quit: 'Quitter Melo',
+    quit: 'Quitter Ostal',
     view: 'Affichage',
     zoomIn: 'Zoom avant',
     zoomOut: 'Zoom arrière',
@@ -93,7 +99,7 @@ const TEXTS = {
   },
 };
 
-/** Langue choisie dans Melo (pont : setLanguage) ; avant que Melo ne l'indique, celle de Windows. */
+/** Langue choisie dans Ostal (pont : setLanguage) ; avant qu'Ostal ne l'indique, celle de Windows. */
 function uiLang() {
   return config.lang ?? (/^fr\b/i.test(app.getLocale()) ? 'fr' : 'en');
 }
@@ -109,7 +115,7 @@ function saveConfig() {
   }
 }
 
-/** Adresse d'un serveur Melo (http ou https, sans / final), sinon null. */
+/** Adresse d'un serveur Ostal (http ou https, sans / final), sinon null. */
 function normalizeServer(input) {
   try {
     const u = new URL(String(input));
@@ -143,7 +149,7 @@ function startServer() {
   }
   const serverLog = fs.createWriteStream(logFile, { flags: 'a' });
   const child = utilityProcess.fork(path.join(__dirname, 'server', 'src', 'index.js'), [], {
-    serviceName: 'Serveur Melo',
+    serviceName: 'Serveur Ostal',
     stdio: 'pipe',
     env: {
       ...process.env,
@@ -226,7 +232,7 @@ function createWindow() {
     minWidth: 360,
     minHeight: 480,
     show: false,
-    title: 'Melo',
+    title: 'Ostal',
     backgroundColor: '#191919',
     autoHideMenuBar: true,
     icon: ICON,
@@ -236,7 +242,7 @@ function createWindow() {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: true,
-      // Widget « Site web » : un site du réseau local en http (Jellyfin, routeur…) s'affiche aussi quand Melo vient
+      // Widget « Site web » : un site du réseau local en http (Jellyfin, routeur…) s'affiche aussi quand Ostal vient
       // d'un serveur en https (le navigateur le bloquerait).
       allowRunningInsecureContent: true,
     },
@@ -279,7 +285,7 @@ function createWindow() {
 /**
  * Widget « Site web » et intégrations : les sites qui interdisent d'être affichés dans le cadre d'une autre page
  * (en-têtes X-Frame-Options et Content-Security-Policy frame-ancestors : Google, YouTube…) s'affichent quand même dans
- * la fenêtre de Melo. Seuls les cadres sont concernés, jamais les pages elles-mêmes.
+ * la fenêtre d'Ostal. Seuls les cadres sont concernés, jamais les pages elles-mêmes.
  */
 function allowAnyFrame() {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -302,10 +308,10 @@ function allowAnyFrame() {
   });
 }
 
-/** Liens : les pages de Melo restent dans l'application, le reste s'ouvre dans le navigateur. */
+/** Liens : les pages d'Ostal restent dans l'application, le reste s'ouvre dans le navigateur. */
 function secure(wc) {
   wc.setWindowOpenHandler(({ url }) => {
-    // Connexion à Google (agendas) : fenêtre de l'application, qui renvoie le résultat à Melo.
+    // Connexion à Google (agendas) : fenêtre de l'application, qui renvoie le résultat à Ostal.
     if (/^https:\/\/accounts\.google\.com\//.test(url)) return { action: 'allow' };
     if (originOf(url) === appOrigin() || url.startsWith('blob:')) {
       return { action: 'allow', overrideBrowserWindowOptions: { autoHideMenuBar: true, icon: ICON } };
@@ -337,7 +343,7 @@ function showProblem(kind, detail) {
 }
 
 async function openLocal() {
-  // Melo rouvert aussitôt après sa fermeture : l'ancien serveur libère encore le port, quelques secondes d'attente.
+  // Ostal rouvert aussitôt après sa fermeture : l'ancien serveur libère encore le port, quelques secondes d'attente.
   for (let attempt = 1; ; attempt++) {
     try {
       await startServer();
@@ -363,7 +369,7 @@ async function openCurrent(route = '') {
   }
 }
 
-// ---------- Fichiers ouverts avec Melo ----------
+// ---------- Fichiers ouverts avec Ostal ----------
 
 function filesFromArgv(argv) {
   return argv.slice(app.isPackaged ? 1 : 2).filter((a) => /\.pdf$/i.test(a) && fs.existsSync(a));
@@ -382,7 +388,7 @@ function openFiles(paths) {
   flushFiles();
 }
 
-/** Remet les fichiers en attente à l'application, une fois la page de Melo chargée. */
+/** Remet les fichiers en attente à l'application, une fois la page d'Ostal chargée. */
 function flushFiles() {
   if (!win || !pendingFiles.length || win.webContents.isLoading()) return;
   if (originOf(win.webContents.getURL()) !== appOrigin()) return;
@@ -428,7 +434,7 @@ function send(channel, payload) {
 
 // ---------- Pont avec l'application (preload.cjs) ----------
 
-/** Seules les pages de Melo (serveur intégré, serveur choisi, page d'erreur) utilisent le pont. */
+/** Seules les pages d'Ostal (serveur intégré, serveur choisi, page d'erreur) utilisent le pont. */
 function trusted(e) {
   const url = e.senderFrame?.url ?? '';
   return url.startsWith('file:') || [originOf(LOCAL), config.server ? originOf(config.server) : ''].includes(originOf(url));
@@ -472,7 +478,7 @@ ipcMain.on('melo:install-update', (e) => {
   if (trusted(e) && updater && updateReady) updater.quitAndInstall(true, true);
 });
 
-// Niveau 3 : langue de l'interface, indiquée par Melo à chaque ouverture (menus, page d'erreur).
+// Niveau 3 : langue de l'interface, indiquée par Ostal à chaque ouverture (menus, page d'erreur).
 ipcMain.on('melo:lang', (e, lang) => {
   if (!trusted(e) || (lang !== 'en' && lang !== 'fr') || config.lang === lang) return;
   config.lang = lang;
@@ -487,7 +493,7 @@ function buildMenu() {
   const tx = text();
   return Menu.buildFromTemplate([
     {
-      label: 'Melo',
+      label: 'Ostal',
       submenu: [
         { label: tx.reload, accelerator: 'CmdOrCtrl+R', click: () => win?.webContents.reload() },
         { role: 'toggleDevTools', label: tx.devTools },
@@ -508,9 +514,9 @@ function buildMenu() {
   ]);
 }
 
-log(`Melo ${app.getVersion()} : lancement (${process.argv.slice(1).join(' ') || 'sans argument'})`);
+log(`Ostal ${app.getVersion()} : lancement (${process.argv.slice(1).join(' ') || 'sans argument'})`);
 if (!app.requestSingleInstanceLock()) {
-  // Melo est déjà ouvert : cette deuxième instance lui passe ses fichiers (voir « second-instance ») et s'arrête.
+  // Ostal est déjà ouvert : cette deuxième instance lui passe ses fichiers (voir « second-instance ») et s'arrête.
   log('déjà ouvert : fichiers transmis à la fenêtre existante');
   app.quit();
 } else {
@@ -543,7 +549,7 @@ if (!app.requestSingleInstanceLock()) {
     if (quitting) return;
     quitting = true;
     log('fermeture');
-    // Melo rouvert pendant sa fermeture : la nouvelle fenêtre s'ouvre (et attend que le port se libère).
+    // Ostal rouvert pendant sa fermeture : la nouvelle fenêtre s'ouvre (et attend que le port se libère).
     app.releaseSingleInstanceLock();
     if (!server) return;
     // Laisse au serveur intégré le temps d'enregistrer les documents.

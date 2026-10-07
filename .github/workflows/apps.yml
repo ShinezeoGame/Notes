@@ -1,5 +1,5 @@
-# Applications Melo : APK Android (testé sur un émulateur Android 14) et installateur Windows (testé sur Windows :
-# installation silencieuse, lancement, PDF ouvert avec Melo, désinstallation), publiés ensemble dans une Release GitHub
+# Applications Ostal : APK Android (testé sur un émulateur Android 14) et installateur Windows (testé sur Windows :
+# installation silencieuse, lancement, PDF ouvert avec Ostal, désinstallation), publiés ensemble dans une Release GitHub
 # (« latest » pour la branche principale).
 name: Applications (Android, Windows)
 
@@ -195,7 +195,7 @@ jobs:
       - name: Numéro de version
         run: echo "MELO_VERSION=1.$(date -u +%y%m%d).$((10#$(date -u +%H%M)))" >> "$GITHUB_ENV"
 
-      - name: Construire l'installateur (Melo-Windows.exe)
+      - name: Construire l'installateur (Ostal-Windows.exe)
         working-directory: desktop
         run: |
           npm ci
@@ -203,16 +203,16 @@ jobs:
           npx electron-builder --win nsis --publish never -c.extraMetadata.version="$MELO_VERSION"
           ls -la dist
 
-      - name: Installer Melo sans fenêtre, comme un utilisateur
+      - name: Installer Ostal sans fenêtre, comme un utilisateur
         shell: pwsh
         run: |
-          Start-Process -FilePath desktop\dist\Melo-Windows.exe -ArgumentList '/S' -Wait
-          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Melo.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { throw "Melo.exe introuvable après l'installation" }
+          Start-Process -FilePath desktop\dist\Ostal-Windows.exe -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Ostal.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw "Ostal.exe introuvable après l'installation" }
           "MELO_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Installé : $($exe.FullName)"
 
-      - name: "Tester l'application installée : lancement, accueil, PDF ouvert avec Melo"
+      - name: "Tester l'application installée : lancement, accueil, PDF ouvert avec Ostal"
         run: |
           mkdir -p "$RUNNER_TEMP/smoke"
           cp .github/desktop-smoke/check.mjs "$RUNNER_TEMP/smoke/"
@@ -230,7 +230,7 @@ jobs:
           Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait
           # Le programme de désinstallation se relance depuis un dossier temporaire : attente de la fin.
           for ($i = 0; $i -lt 60 -and (Test-Path $env:MELO_EXE); $i++) { Start-Sleep -Seconds 1 }
-          if (Test-Path $env:MELO_EXE) { throw "Melo.exe toujours présent après la désinstallation" }
+          if (Test-Path $env:MELO_EXE) { throw "Ostal.exe toujours présent après la désinstallation" }
 
       - name: Journaux du test
         if: always()
@@ -245,8 +245,8 @@ jobs:
         with:
           name: melo-windows
           path: |
-            desktop/dist/Melo-Windows.exe
-            desktop/dist/Melo-Windows.exe.blockmap
+            desktop/dist/Ostal-Windows.exe
+            desktop/dist/Ostal-Windows.exe.blockmap
             desktop/dist/latest.yml
           if-no-files-found: error
 
@@ -283,44 +283,45 @@ jobs:
             SAFE="$(echo "$GITHUB_REF_NAME" | sed 's#[^A-Za-z0-9._-]#-#g')"
             TAG="apk-$SAFE"; PRE="--prerelease"
           fi
-          cp notes-debug.apk Melo-Android.apk
-          FILES="Melo-Android.apk"
-          if [ -f notes-release.apk ]; then cp notes-release.apk Melo-Android-signe.apk; FILES="$FILES Melo-Android-signe.apk"; fi
+          cp notes-debug.apk Ostal-Android.apk
+          FILES="Ostal-Android.apk"
+          if [ -f notes-release.apk ]; then cp notes-release.apk Ostal-Android-signe.apk; FILES="$FILES Ostal-Android-signe.apk"; fi
           # Application Windows : celle de cette construction, sinon celle déjà publiée.
           WINDOWS_NOTE=""
           if [ "$WINDOWS_OK" != "true" ]; then
             mkdir -p windows
-            gh release download "$TAG" -D windows -p 'Melo-Windows.exe' -p 'Melo-Windows.exe.blockmap' -p 'latest.yml' 2>/dev/null || true
+            # Nom d'avant le passage à Ostal (Melo-Windows.exe) accepté aussi : latest.yml désigne le bon fichier.
+            gh release download "$TAG" -D windows -p '*-Windows.exe' -p '*-Windows.exe.blockmap' -p 'latest.yml' 2>/dev/null || true
             WINDOWS_NOTE="(Application Windows : la construction de ce commit a échoué, la version précédente est gardée.)"
           fi
-          for f in windows/Melo-Windows.exe windows/Melo-Windows.exe.blockmap windows/latest.yml; do
+          for f in windows/*-Windows.exe windows/*-Windows.exe.blockmap windows/latest.yml; do
             if [ -f "$f" ]; then FILES="$FILES $f"; fi
           done
           if [[ "$TAG" != v* ]]; then
             gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           fi
           {
-            echo "Applications Melo construites automatiquement depuis la branche \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA). $WINDOWS_NOTE"
+            echo "Applications Ostal construites automatiquement depuis la branche \`$GITHUB_REF_NAME\` (commit $GITHUB_SHA). $WINDOWS_NOTE"
             echo
-            echo "## Ordinateur Windows : Melo-Windows.exe"
+            echo "## Ordinateur Windows : Ostal-Windows.exe"
             echo
-            echo "1. Téléchargez **Melo-Windows.exe** (en bas de cette page, rubrique *Assets*). Si le navigateur hésite, choisissez **Conserver**."
+            echo "1. Téléchargez **Ostal-Windows.exe** (en bas de cette page, rubrique *Assets*). Si le navigateur hésite, choisissez **Conserver**."
             echo "2. Ouvrez le fichier. Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur **Informations complémentaires**, puis **Exécuter quand même** : l'application n'est simplement pas signée par un éditeur payant."
-            echo "3. Melo s'installe tout seul, sans droits d'administrateur, puis s'ouvre. Il se retrouve ensuite sur le bureau et dans le menu Démarrer."
-            echo "4. Au premier lancement, Melo s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer** pour utiliser Melo seul sur cet ordinateur, ou **J'ai une invitation ou un code** pour rejoindre le serveur Melo d'un proche."
+            echo "3. Ostal s'installe tout seul, sans droits d'administrateur, puis s'ouvre. Il se retrouve ensuite sur le bureau et dans le menu Démarrer."
+            echo "4. Au premier lancement, Ostal s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer** pour utiliser Ostal seul sur cet ordinateur, ou **J'ai une invitation ou un code** pour rejoindre le serveur Ostal d'un proche."
             echo
             echo "Nouvelle version : installez-la par-dessus l'ancienne, vos pages sont gardées."
             echo
-            echo "## Téléphone Android : Melo-Android.apk"
+            echo "## Téléphone Android : Ostal-Android.apk"
             echo
-            echo "1. Sur le téléphone, téléchargez **Melo-Android.apk**."
+            echo "1. Sur le téléphone, téléchargez **Ostal-Android.apk**."
             echo "2. Ouvrez-le ; autorisez l'installation d'applications de cette source si le téléphone le demande, puis **Installer**."
-            echo "3. Au premier lancement, Melo s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer**, ou **J'ai une invitation ou un code**."
+            echo "3. Au premier lancement, Ostal s'affiche en anglais : touchez **Français** en haut de l'écran pour le passer en français. Puis **Commencer**, ou **J'ai une invitation ou un code**."
             echo
-            echo "*Melo-Android-signe.apk* n'apparaît que si une clé de signature est configurée dans les secrets du dépôt."
+            echo "*Ostal-Android-signe.apk* n'apparaît que si une clé de signature est configurée dans les secrets du dépôt."
           } > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" $FILES $PRE \
             --target "$GITHUB_SHA" \
-            --title "Melo – applications Windows et Android ($TAG)" \
+            --title "Ostal – applications Windows et Android ($TAG)" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             || gh release upload "$TAG" $FILES --clobber

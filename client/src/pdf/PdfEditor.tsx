@@ -28,7 +28,7 @@ export function PdfEditor({ library, id }: { library: PdfLibrary; id: string }) 
   useEffect(() => () => cache.destroy(), [cache]);
 
   useEffect(() => {
-    document.title = `${entry?.name ?? 'PDF'} – Melo`;
+    document.title = `${entry?.name ?? 'PDF'} – Ostal`;
   }, [entry?.name]);
 
   if (!entry || entry.deleted) {

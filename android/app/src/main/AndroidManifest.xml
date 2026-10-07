@@ -19,14 +19,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Atelier PDF : « Ouvrir avec Melo » pour un PDF (Gmail, WhatsApp, Fichiers…) -->
+            <!-- Atelier PDF : « Ouvrir avec Ostal » pour un PDF (Gmail, WhatsApp, Fichiers…) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="content" />
                 <data android:mimeType="application/pdf" />
             </intent-filter>
-            <!-- « Partager » un ou plusieurs PDF ou photos vers Melo -->
+            <!-- « Partager » un ou plusieurs PDF ou photos vers Ostal -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />

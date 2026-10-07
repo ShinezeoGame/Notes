@@ -1,4 +1,4 @@
-// Caméras de surveillance reliées directement au serveur Melo (flux RTSP des caméras IP et enregistreurs, images ou
+// Caméras de surveillance reliées directement au serveur Ostal (flux RTSP des caméras IP et enregistreurs, images ou
 // flux MJPEG) : configuration dans le document de l'espace, adresses du direct signées par le serveur.
 import { useEffect, useState } from 'react';
 import type * as Y from 'yjs';

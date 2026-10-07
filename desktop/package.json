@@ -1,8 +1,8 @@
 {
-  "name": "melo-desktop",
-  "productName": "Melo",
+  "name": "ostal-desktop",
+  "productName": "Ostal",
   "version": "1.0.0",
-  "description": "Melo pour ordinateur : accueil, notes, agenda, maison connectée et atelier PDF",
+  "description": "Ostal pour ordinateur : accueil, notes, agenda, maison connectée et atelier PDF",
   "author": "ShinezeoGame",
   "private": true,
   "main": "main.cjs",
@@ -27,8 +27,8 @@
   },
   "build": {
     "appId": "com.shinezeo.melo",
-    "productName": "Melo",
-    "copyright": "Melo",
+    "productName": "Ostal",
+    "copyright": "Ostal",
     "asar": false,
     "directories": {
       "output": "dist",
@@ -53,7 +53,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "Melo-Windows.${ext}"
+      "artifactName": "Ostal-Windows.${ext}"
     },
     "nsis": {
       "oneClick": true,
@@ -61,9 +61,9 @@
       "runAfterFinish": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Melo",
+      "shortcutName": "Ostal",
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Melo-Windows.${ext}"
+      "artifactName": "Ostal-Windows.${ext}"
     },
     "fileAssociations": [
       {

@@ -231,7 +231,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
   if (!hasServer) {
     return (
       <div className="nb-notice">
-        <p>{t('Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.')}</p>
+        <p>{t('Les caméras passent par le serveur Ostal, qui s’y connecte sur votre réseau local.')}</p>
         <p className="nb-muted">{t('Configurez l’adresse du serveur dans les réglages.')}</p>
       </div>
     );
@@ -243,8 +243,8 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
           icon="cctv"
           title={t('Vos caméras en direct')}
           needs={[
-            t('Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Melo.'),
-            t('Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Melo vous guide ensuite.'),
+            t('Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Ostal.'),
+            t('Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Ostal vous guide ensuite.'),
           ]}
           actions={
             canConfigure && doc ? (
@@ -299,7 +299,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
         <div className="nb-error cam-problem">
           <Icon name="alert" size={15} />{' '}
           {t(
-            'ffmpeg n’est pas installé sur le serveur Melo : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur Docker, ou installez ffmpeg).',
+            'ffmpeg n’est pas installé sur le serveur Ostal : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur Docker, ou installez ffmpeg).',
           )}
         </div>
       ) : null}
@@ -356,7 +356,7 @@ export function CamerasPanel({ doc, cameraId, compact = false, canConfigure = tr
 /** Vue « Caméras » (barre latérale). */
 export function CamerasView({ doc }: { doc: Y.Doc }) {
   useEffect(() => {
-    document.title = t('Caméras – Melo');
+    document.title = t('Caméras – Ostal');
   }, []);
   return (
     <div className="nb-page hl-page cam-page">

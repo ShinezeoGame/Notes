@@ -5,7 +5,7 @@ import { isDesktopLocal } from '../lib/desktop';
 import { updateSettings } from '../lib/settings';
 import { Icon } from '../icons/Icon';
 import { JoinForm } from './LinkDevice';
-import { MeloLogo } from './Logo';
+import { OstalLogo } from './Logo';
 import { LanguageSwitch } from './LanguageSwitch';
 import { t } from '../lib/i18n';
 
@@ -22,8 +22,8 @@ export function Onboarding() {
         <div className="nb-onboarding-lang">
           <LanguageSwitch />
         </div>
-        <MeloLogo size={48} className="nb-logo" />
-        <h1>{t('Bienvenue dans Melo')}</h1>
+        <OstalLogo size={48} className="nb-logo" />
+        <h1>{t('Bienvenue dans Ostal')}</h1>
         <p className="nb-muted">{t('Votre accueil, vos notes, votre agenda, vos outils PDF et votre maison au même endroit.')}</p>
         {mode === 'choose' ? (
           <div className="nb-choices">
@@ -35,10 +35,10 @@ export function Onboarding() {
               <span className="nb-muted">
                 {computer
                   ? t(
-                      'Tout reste sur cet ordinateur. Vous pourrez rejoindre un serveur plus tard, pour retrouver Melo sur votre téléphone ou partager des pages.',
+                      'Tout reste sur cet ordinateur. Vous pourrez rejoindre un serveur plus tard, pour retrouver Ostal sur votre téléphone ou partager des pages.',
                     )
                   : t(
-                      'Tout reste sur cet appareil. Vous pourrez rejoindre un serveur plus tard, pour retrouver Melo ailleurs ou partager des pages.',
+                      'Tout reste sur cet appareil. Vous pourrez rejoindre un serveur plus tard, pour retrouver Ostal ailleurs ou partager des pages.',
                     )}
               </span>
             </button>
@@ -48,7 +48,7 @@ export function Onboarding() {
               </span>
               <span className="nb-choice-title">{t('J’ai une invitation ou un code')}</span>
               <span className="nb-muted">
-                {t('Rejoindre le serveur Melo d’un proche, ou le vôtre : vos pages sur tous vos appareils, partage en direct.')}
+                {t('Rejoindre le serveur Ostal d’un proche, ou le vôtre : vos pages sur tous vos appareils, partage en direct.')}
               </span>
             </button>
           </div>

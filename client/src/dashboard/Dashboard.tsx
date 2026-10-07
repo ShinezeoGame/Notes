@@ -301,7 +301,7 @@ export function Dashboard({ doc, store, synced, gap }: Props) {
   const breakpoint = getBreakpointFromWidth(BREAKPOINTS, width) as Breakpoint;
 
   useEffect(() => {
-    document.title = 'Accueil – Melo';
+    document.title = 'Accueil – Ostal';
   }, []);
 
   useEffect(() => {

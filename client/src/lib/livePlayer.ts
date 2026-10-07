@@ -164,7 +164,7 @@ export class LivePlayer {
     try {
       res = await fetch(`${this.url()}&accept=${accept.join(',')}`, { signal: abort.signal, cache: 'no-store' });
     } catch {
-      return this.retry(session, t('Serveur Melo injoignable.'));
+      return this.retry(session, t('Serveur Ostal injoignable.'));
     }
     if (session !== this.session) return;
     if (!res.ok || !res.body) {

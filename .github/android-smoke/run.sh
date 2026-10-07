@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test de l'APK sur un émulateur Android (lancé par .github/workflows/apps.yml) :
-# installation, liaison à un serveur Melo, vérification des mises à jour en arrière-plan,
+# installation, liaison à un serveur Ostal, vérification des mises à jour en arrière-plan,
 # notification et mise à jour sans réinstaller. Échoue si l'application se ferme.
 # Usage : run.sh <apk> <dossier du client « nouvelle version »>
 set -uo pipefail
@@ -10,7 +10,7 @@ export DIST_V2="$2"
 export SMOKE_OUT="${SMOKE_OUT:-smoke-out}"
 mkdir -p "$SMOKE_OUT"
 
-# Serveur Melo du runner, joignable depuis l'émulateur à l'adresse 10.0.2.2
+# Serveur Ostal du runner, joignable depuis l'émulateur à l'adresse 10.0.2.2
 DATA="$(mktemp -d)"
 PORT=3000 HOST=0.0.0.0 DATA_DIR="$DATA" node server/src/index.js >"$SMOKE_OUT/server.log" 2>&1 &
 SERVER_PID=$!

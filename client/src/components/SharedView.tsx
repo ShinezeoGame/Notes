@@ -46,7 +46,7 @@ export function SharedView({ token, pageId }: Props) {
   const icon = meta.icon || pageInfo?.icon || '';
 
   useEffect(() => {
-    document.title = t('{title} – Melo (partagé)', { title: title || t('Sans titre') });
+    document.title = t('{title} – Ostal (partagé)', { title: title || t('Sans titre') });
   }, [title]);
 
   const importCalendar = useCallback(
@@ -168,7 +168,7 @@ export function SharedView({ token, pageId }: Props) {
           </header>
           {status === 'denied' ? <div className="nb-banner">{t('Le serveur a refusé l’accès à cette page (lien révoqué ?).')}</div> : null}
           {status === 'outdated' ? (
-            <div className="nb-banner">{t('Rechargez la page : une version plus récente de Melo est nécessaire pour l’afficher.')}</div>
+            <div className="nb-banner">{t('Rechargez la page : une version plus récente d’Ostal est nécessaire pour l’afficher.')}</div>
           ) : null}
           <div className="nb-content">
             <PageEditorPane

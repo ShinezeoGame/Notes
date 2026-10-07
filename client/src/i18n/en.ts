@@ -16,8 +16,8 @@ const UI: Record<string, string> = {
     'File too large in offline mode (15 MB max). Set up a server for larger files.',
   'Chargement de votre espace…': 'Loading your workspace…',
   'Chargement de l’atelier PDF…': 'Loading the PDF workshop…',
-  'Cette page utilise une nouveauté de Melo (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent sur l’appareil en attendant.':
-    'This page uses a newer Melo feature (columns, cameras…): update the app to sync it. Your changes stay on the device in the meantime.',
+  'Cette page utilise une nouveauté d’Ostal (colonnes, caméras…) : mettez l’application à jour pour la synchroniser. Vos modifications restent sur l’appareil en attendant.':
+    'This page uses a newer Ostal feature (columns, cameras…): update the app to sync it. Your changes stay on the device in the meantime.',
   'Mettre à jour': 'Update',
   'Cet appareil n’est pas relié à l’espace de ce serveur : vos modifications restent sur l’appareil. Reliez‑le avec le code à 6 chiffres affiché dans les réglages d’un appareil déjà connecté.':
     'This device is not linked to this server’s workspace: your changes stay on the device. Link it with the 6‑digit code shown in the settings of a device that is already connected.',
@@ -98,11 +98,12 @@ const UI: Record<string, string> = {
   'Synchronisé': 'Synced',
   'Déconnecté – nouvelle tentative…': 'Disconnected – retrying…',
   'Accès refusé par le serveur': 'Access denied by the server',
-  'Mise à jour de Melo nécessaire': 'Melo update required',
+  'Mise à jour d’Ostal nécessaire': 'Ostal update required',
+  'Melo s’appelle désormais Ostal : même application, nouveau nom.': 'Melo is now called Ostal: same app, new name.',
   'Enregistré sur cet ordinateur': 'Saved on this computer',
   'Sections': 'Sections',
   'Plus': 'More',
-  'Melo': 'Melo',
+  'Ostal': 'Ostal',
   'Rechercher': 'Search',
   'Personnaliser': 'Customize',
   'Réglages': 'Settings',
@@ -236,12 +237,12 @@ const UI: Record<string, string> = {
     '<b>IP address</b>: in the camera’s app (device information) or in your router’s list of connected devices. Give it a fixed address in the router (DHCP reservation) so it doesn’t change.',
   '<b>Identifiant et mot de passe</b> : ceux de la caméra (ou de l’enregistreur), souvent « admin » et le mot de passe choisi à l’installation.':
     '<b>Username and password</b>: those of the camera (or recorder), often “admin” and the password chosen during setup.',
-  'Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Melo doit être sur le même réseau que la caméra.':
-    'The <b>RTSP</b> stream must be enabled in the camera’s settings (network section, sometimes “RTSP” or “ONVIF”). The Melo server must be on the same network as the camera.',
+  'Le flux <b>RTSP</b> doit être activé dans les réglages de la caméra (rubrique réseau, parfois « RTSP » ou « ONVIF »). Le serveur Ostal doit être sur le même réseau que la caméra.':
+    'The <b>RTSP</b> stream must be enabled in the camera’s settings (network section, sometimes “RTSP” or “ONVIF”). The Ostal server must be on the same network as the camera.',
   'Les miniatures utilisent le flux secondaire de la caméra (plus léger) ; la vue agrandie, le flux principal. La vidéo est transmise sans le son.':
     'Thumbnails use the camera’s sub-stream (lighter); the enlarged view uses the main stream. Video is sent without sound.',
-  'Les identifiants restent sur votre serveur Melo et vos appareils ; la vidéo passe par le serveur.':
-    'Credentials stay on your Melo server and your devices; video goes through the server.',
+  'Les identifiants restent sur votre serveur Ostal et vos appareils ; la vidéo passe par le serveur.':
+    'Credentials stay on your Ostal server and your devices; video goes through the server.',
 
   // components/CamerasView.tsx
   '{name} en direct': '{name} live',
@@ -250,17 +251,17 @@ const UI: Record<string, string> = {
   'Reconnexion…': 'Reconnecting…',
   'Vidéo indisponible.': 'Video unavailable.',
   'Plein écran': 'Full screen',
-  'Les caméras passent par le serveur Melo, qui s’y connecte sur votre réseau local.':
-    'Cameras go through the Melo server, which connects to them on your local network.',
+  'Les caméras passent par le serveur Ostal, qui s’y connecte sur votre réseau local.':
+    'Cameras go through the Ostal server, which connects to them on your local network.',
   'Configurez l’adresse du serveur dans les réglages.': 'Set the server address in the settings.',
   'Ajoutez vos <b>caméras de surveillance</b> (Hikvision, Dahua, Reolink, Tapo, Ezviz… ou toute caméra avec un flux RTSP) pour les regarder en direct ici et dans vos pages.':
     'Add your <b>security cameras</b> (Hikvision, Dahua, Reolink, Tapo, Ezviz… or any camera with an RTSP stream) to watch them live here and in your pages.',
   'Cette caméra a été supprimée.': 'This camera was deleted.',
-  'ffmpeg n’est pas installé sur le serveur Melo : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur Docker, ou installez ffmpeg).':
-    'ffmpeg isn’t installed on the Melo server: video streams can’t be played (update the Docker server, or install ffmpeg).',
+  'ffmpeg n’est pas installé sur le serveur Ostal : les flux vidéo ne peuvent pas être lus (mettez à jour le serveur Docker, ou installez ffmpeg).':
+    'ffmpeg isn’t installed on the Ostal server: video streams can’t be played (update the Docker server, or install ffmpeg).',
   'Agrandir {name}': 'Enlarge {name}',
   'Réglages de {name}': '{name} settings',
-  'Caméras – Melo': 'Cameras – Melo',
+  'Caméras – Ostal': 'Cameras – Ostal',
 
   // components/HomelabConfigDialog.tsx
   '{label} : {value}': '{label}: {value}',
@@ -295,8 +296,8 @@ const UI: Record<string, string> = {
   'Nom affiché': 'Display name',
   'URL (ouverte au clic, et utilisée pour la vérification)': 'URL (opened on click, and used for the check)',
   'https://…': 'https://…',
-  'URL interne (optionnel : adresse vue par le serveur Melo si différente, ex. http://sonarr:8989)':
-    'Internal URL (optional: address seen by the Melo server if different, e.g. http://sonarr:8989)',
+  'URL interne (optionnel : adresse vue par le serveur Ostal si différente, ex. http://sonarr:8989)':
+    'Internal URL (optional: address seen by the Ostal server if different, e.g. http://sonarr:8989)',
   'Jeton d’accès': 'Access token',
   'Clé API': 'API key',
   'Mot de passe / jeton': 'Password / token',
@@ -333,8 +334,8 @@ const UI: Record<string, string> = {
   'Réseau': 'Network',
   'Indisponible': 'Unavailable',
   'Erreur': 'Error',
-  'Le tableau de bord interroge vos applications depuis le serveur Melo (accès au réseau local, pas de problème de CORS).':
-    'The dashboard queries your apps from the Melo server (local network access, no CORS issues).',
+  'Le tableau de bord interroge vos applications depuis le serveur Ostal (accès au réseau local, pas de problème de CORS).':
+    'The dashboard queries your apps from the Ostal server (local network access, no CORS issues).',
   'Configurez l’adresse du serveur dans les réglages, idéalement un serveur hébergé dans votre homelab.':
     'Set the server address in the settings, ideally a server hosted in your homelab.',
   'Aucune application ni appareil configuré pour l’instant.': 'No apps or devices set up yet.',
@@ -402,17 +403,17 @@ const UI: Record<string, string> = {
   'Lien': 'Link',
   'Copier le lien': 'Copy link',
   'Envoyer…': 'Send…',
-  'Melo fonctionne seul sur cet ordinateur.': 'Melo works on its own on this computer.',
-  'Melo fonctionne seul sur cet appareil.': 'Melo works on its own on this device.',
-  'Pour le retrouver sur votre téléphone, synchroniser plusieurs appareils ou partager des pages, rejoignez un serveur Melo : le vôtre, ou celui d’une personne qui vous invite.':
-    'To use it on your phone, sync several devices or share pages, join a Melo server: your own, or that of someone who invites you.',
+  'Ostal fonctionne seul sur cet ordinateur.': 'Ostal works on its own on this computer.',
+  'Ostal fonctionne seul sur cet appareil.': 'Ostal works on its own on this device.',
+  'Pour le retrouver sur votre téléphone, synchroniser plusieurs appareils ou partager des pages, rejoignez un serveur Ostal : le vôtre, ou celui d’une personne qui vous invite.':
+    'To use it on your phone, sync several devices or share pages, join an Ostal server: your own, or that of someone who invites you.',
   'Rejoindre un serveur (lien ou code)': 'Join a server (link or code)',
   'Code indisponible.': 'Code unavailable.',
-  'Votre espace est sur le serveur Melo de <b>{host}</b>.': 'Your space is on <b>{host}</b>’s Melo server.',
-  'Relier un appareil à Melo': 'Link a device to Melo',
-  'Ouvrez ce lien pour retrouver mon espace Melo sur cet appareil :': 'Open this link to get my Melo space on this device:',
-  '<b>Téléphone :</b> scannez ce QR code avec l’appareil photo. <b>Application Melo :</b> « J’ai une invitation ou un code », puis collez le lien (ou l’adresse <s>{server}</s> et le code <c>{code}</c>).':
-    '<b>Phone:</b> scan this QR code with the camera. <b>Melo app:</b> “I have an invitation or a code”, then paste the link (or the address <s>{server}</s> and the code <c>{code}</c>).',
+  'Votre espace est sur le serveur Ostal de <b>{host}</b>.': 'Your space is on <b>{host}</b>’s Ostal server.',
+  'Relier un appareil à Ostal': 'Link a device to Ostal',
+  'Ouvrez ce lien pour retrouver mon espace Ostal sur cet appareil :': 'Open this link to get my Ostal space on this device:',
+  '<b>Téléphone :</b> scannez ce QR code avec l’appareil photo. <b>Application Ostal :</b> « J’ai une invitation ou un code », puis collez le lien (ou l’adresse <s>{server}</s> et le code <c>{code}</c>).':
+    '<b>Phone:</b> scan this QR code with the camera. <b>Ostal app:</b> “I have an invitation or a code”, then paste the link (or the address <s>{server}</s> and the code <c>{code}</c>).',
   'Valable encore {min} min {sec} s, une seule fois : ne l’envoyez qu’à vous-même.':
     'Valid for {min} min {sec} s more, once only: send it only to yourself.',
   'Retrouvez les mêmes pages, le même accueil et les mêmes réglages sur votre téléphone ou un autre ordinateur.':
@@ -429,11 +430,11 @@ const UI: Record<string, string> = {
     'Remove {who}? Their space (pages, files) will be deleted from your server; their devices will no longer sync.',
   '{name} n’a plus accès à votre serveur.': '{name} no longer has access to your server.',
   'La personne n’a plus accès à votre serveur.': 'This person no longer has access to your server.',
-  'Donnez à un proche son propre espace Melo sur votre serveur : ses pages restent à lui, il les retrouve sur tous ses appareils, et vous pouvez vous partager des pages. Il n’a pas accès à votre maison, vos caméras ni votre homelab.':
-    'Give someone close their own Melo space on your server: their pages stay theirs, they get them on all their devices, and you can share pages with each other. They have no access to your home, your cameras or your homelab.',
-  'Invitation à Melo': 'Invitation to Melo',
-  '{name} t’invite à utiliser Melo :': '{name} invites you to use Melo:',
-  'Je t’invite à utiliser Melo :': 'I’m inviting you to use Melo:',
+  'Donnez à un proche son propre espace Ostal sur votre serveur : ses pages restent à lui, il les retrouve sur tous ses appareils, et vous pouvez vous partager des pages. Il n’a pas accès à votre maison, vos caméras ni votre homelab.':
+    'Give someone close their own Ostal space on your server: their pages stay theirs, they get them on all their devices, and you can share pages with each other. They have no access to your home, your cameras or your homelab.',
+  'Invitation à Ostal': 'Invitation to Ostal',
+  '{name} t’invite à utiliser Ostal :': '{name} invites you to use Ostal:',
+  'Je t’invite à utiliser Ostal :': 'I’m inviting you to use Ostal:',
   'Envoyez ce lien à la personne invitée (message, e-mail), ou faites-lui scanner le QR code : elle crée son espace en un clic. Valable 7 jours, pour une seule personne.':
     'Send this link to the person you’re inviting (message, email), or have them scan the QR code: they create their space in one click. Valid for 7 days, for one person.',
   'Votre prénom, affiché dans l’invitation': 'Your first name, shown in the invitation',
@@ -462,8 +463,8 @@ const UI: Record<string, string> = {
   'Code à 6 chiffres (Réglages d’un appareil déjà relié → Relier un autre appareil). Premier appareil sur ce serveur : laissez vide.':
     '6-digit code (Settings on a device that’s already linked → Link another device). First device on this server: leave empty.',
   'Quelqu’un': 'Someone',
-  'vous invite : vous aurez votre propre espace Melo, privé, sur son serveur.':
-    'invites you: you’ll have your own private Melo space on their server.',
+  'vous invite : vous aurez votre propre espace Ostal, privé, sur son serveur.':
+    'invites you: you’ll have your own private Ostal space on their server.',
   'Votre prénom (affiché quand vous modifiez une page à plusieurs)': 'Your first name (shown when you edit a page with others)',
   'Cet appareil affichera l’espace de l’appareil qui a donné ce code. Les pages créées ici avant ne seront plus affichées.':
     'This device will show the space of the device that gave this code. Pages created here before will no longer be shown.',
@@ -477,26 +478,26 @@ const UI: Record<string, string> = {
     'This device will show the same pages, home screen and settings as the device that gave this link (code <c>{code}</c>). Pages created here before will no longer be shown.',
   'Liaison…': 'Linking…',
   'Création impossible.': 'Couldn’t create it.',
-  'Bienvenue dans Melo': 'Welcome to Melo',
+  'Bienvenue dans Ostal': 'Welcome to Ostal',
   'Vérification de l’invitation…': 'Checking the invitation…',
-  'vous invite à utiliser Melo : votre accueil, vos notes, votre agenda et des outils pour vos PDF, sur tous vos appareils.':
-    'invites you to use Melo: your home screen, notes, calendar and PDF tools, on all your devices.',
+  'vous invite à utiliser Ostal : votre accueil, vos notes, votre agenda et des outils pour vos PDF, sur tous vos appareils.':
+    'invites you to use Ostal: your home screen, notes, calendar and PDF tools, on all your devices.',
   'Vous aurez votre propre espace, privé, sur le serveur de {name} : vous pourrez vous partager des pages quand vous le voudrez.':
     'You’ll have your own private space on {name}’s server: you can share pages with each other whenever you like.',
-  'Ouvrir Melo': 'Open Melo',
+  'Ouvrir Ostal': 'Open Ostal',
   'Création…': 'Creating…',
 
   // components/Onboarding.tsx
   'Votre accueil, vos notes, votre agenda, vos outils PDF et votre maison au même endroit.':
     'Your home screen, notes, calendar, PDF tools and smart home in one place.',
   'Commencer': 'Get started',
-  'Tout reste sur cet ordinateur. Vous pourrez rejoindre un serveur plus tard, pour retrouver Melo sur votre téléphone ou partager des pages.':
-    'Everything stays on this computer. You can join a server later to use Melo on your phone too or to share pages.',
-  'Tout reste sur cet appareil. Vous pourrez rejoindre un serveur plus tard, pour retrouver Melo ailleurs ou partager des pages.':
-    'Everything stays on this device. You can join a server later to use Melo elsewhere or to share pages.',
+  'Tout reste sur cet ordinateur. Vous pourrez rejoindre un serveur plus tard, pour retrouver Ostal sur votre téléphone ou partager des pages.':
+    'Everything stays on this computer. You can join a server later to use Ostal on your phone too or to share pages.',
+  'Tout reste sur cet appareil. Vous pourrez rejoindre un serveur plus tard, pour retrouver Ostal ailleurs ou partager des pages.':
+    'Everything stays on this device. You can join a server later to use Ostal elsewhere or to share pages.',
   'J’ai une invitation ou un code': 'I have an invitation or a code',
-  'Rejoindre le serveur Melo d’un proche, ou le vôtre : vos pages sur tous vos appareils, partage en direct.':
-    'Join a friend’s Melo server, or your own: your pages on all your devices, live sharing.',
+  'Rejoindre le serveur Ostal d’un proche, ou le vôtre : vos pages sur tous vos appareils, partage en direct.':
+    'Join a friend’s Ostal server, or your own: your pages on all your devices, live sharing.',
 
   // components/PageCover.tsx
   'Aurore': 'Dawn',
@@ -553,14 +554,14 @@ const UI: Record<string, string> = {
 
   // components/SettingsDialog.tsx
   'Application et mises à jour': 'App and updates',
-  'Application Melo pour ordinateur, version {version} (Melo {build} du {date})': 'Melo desktop app, version {version} (Melo {build} of {date})',
+  'Application Ostal pour ordinateur, version {version} (Ostal {build} du {date})': 'Ostal desktop app, version {version} (Ostal {build} of {date})',
   'Version {version} prête.': 'Version {version} is ready.',
   'Redémarrer pour l’installer': 'Restart to install it',
-  'Melo cherche lui-même ses nouvelles versions (si le dépôt GitHub de Melo est public). Sinon, téléchargez la dernière version et installez-la par-dessus celle-ci : vos pages restent.':
-    'Melo looks for new versions by itself (if Melo’s GitHub repository is public). Otherwise, download the latest version and install it over this one: your pages stay.',
+  'Ostal cherche lui-même ses nouvelles versions (si le dépôt GitHub d’Ostal est public). Sinon, téléchargez la dernière version et installez-la par-dessus celle-ci : vos pages restent.':
+    'Ostal looks for new versions by itself (if Ostal’s GitHub repository is public). Otherwise, download the latest version and install it over this one: your pages stay.',
   'Page de téléchargement': 'Download page',
-  'Les mises à jour sont distribuées par votre serveur Melo : configurez-le ci-dessus.':
-    'Updates are delivered by your Melo server: set it up above.',
+  'Les mises à jour sont distribuées par votre serveur Ostal : configurez-le ci-dessus.':
+    'Updates are delivered by your Ostal server: set it up above.',
   'Recherche d’une mise à jour…': 'Looking for an update…',
   'Version du serveur inconnue (serveur injoignable ?).': 'Server version unknown (server unreachable?).',
   'L’application est à jour.': 'The app is up to date.',
@@ -575,15 +576,15 @@ const UI: Record<string, string> = {
   'Recharger la page': 'Reload the page',
   'Rechercher une mise à jour': 'Check for updates',
   'Me prévenir par une notification quand une mise à jour est disponible': 'Notify me when an update is available',
-  'Application Melo pour ordinateur, version {version}.': 'Melo desktop app, version {version}.',
-  'Application Melo installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.':
-    'Melo app installed on this computer: it updates by itself with your server.',
-  'Installer Melo sur cet ordinateur': 'Install Melo on this computer',
+  'Application Ostal pour ordinateur, version {version}.': 'Ostal desktop app, version {version}.',
+  'Application Ostal installée sur cet ordinateur : elle se met à jour toute seule avec votre serveur.':
+    'Ostal app installed on this computer: it updates by itself with your server.',
+  'Installer Ostal sur cet ordinateur': 'Install Ostal on this computer',
   'Dans sa propre fenêtre, depuis le menu Démarrer ou la barre des tâches, même sans réseau.':
     'In its own window, from the Start menu or the taskbar, even offline.',
-  'Melo est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.': 'Melo is installed: open it from the Start menu or the taskbar.',
-  'Installer Melo comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite de la barre d’adresse (ou menu ⋯ → Applications → Installer Melo). Déjà installée ? Ouvrez-la depuis le menu Démarrer.':
-    'Install Melo as an app: in Microsoft Edge, Google Chrome or Brave, click the install icon on the right of the address bar (or menu ⋯ → Apps → Install Melo). Already installed? Open it from the Start menu.',
+  'Ostal est installée : ouvrez-la depuis le menu Démarrer ou la barre des tâches.': 'Ostal is installed: open it from the Start menu or the taskbar.',
+  'Installer Ostal comme une application : dans Microsoft Edge, Google Chrome ou Brave, cliquez sur l’icône d’installation à droite de la barre d’adresse (ou menu ⋯ → Applications → Installer Ostal). Déjà installée ? Ouvrez-la depuis le menu Démarrer.':
+    'Install Ostal as an app: in Microsoft Edge, Google Chrome or Brave, click the install icon on the right of the address bar (or menu ⋯ → Apps → Install Ostal). Already installed? Open it from the Start menu.',
   'Le serveur a répondu {status}.': 'The server answered {status}.',
   'Le serveur a refusé l’espace de travail ({status}).': 'The server refused the workspace ({status}).',
   'Serveur injoignable. Vérifiez l’adresse (https://…) et votre connexion.': 'Server unreachable. Check the address (https://…) and your connection.',
@@ -606,7 +607,7 @@ const UI: Record<string, string> = {
   'Cette fenêtre affiche un serveur distant.': 'This window shows a remote server.',
   'Revenir à l’espace de cet ordinateur': 'Back to this computer’s space',
   'Inviter une personne': 'Invite someone',
-  'Découvrir Melo': 'Discover Melo',
+  'Découvrir Ostal': 'Discover Ostal',
   'Les sections, l’accueil et les gestes utiles, en quelques écrans.': 'The sections, the home screen and useful gestures, in a few screens.',
   'Revoir la présentation': 'Replay the tour',
   'Réglages avancés': 'Advanced settings',
@@ -624,7 +625,7 @@ const UI: Record<string, string> = {
     'Without a client ID, you can still import an .ics file or the secret iCal address of your Google calendar.',
   'Zone sensible': 'Danger zone',
   'Réinitialiser cet appareil': 'Reset this device',
-  'Melo ·': 'Melo ·',
+  'Ostal ·': 'Ostal ·',
   'espace de cet ordinateur': 'this computer’s space',
   'mode synchronisé': 'synced mode',
   'mode hors ligne': 'offline mode',
@@ -632,11 +633,11 @@ const UI: Record<string, string> = {
   // components/ShareDialog.tsx
   'Lien impossible à créer.': 'Could not create the link.',
   'Lien copié : envoyez-le à qui vous voulez.': 'Link copied: send it to anyone you like.',
-  'Voici la page « {title} » sur Melo :': 'Here is the page “{title}” on Melo:',
+  'Voici la page « {title} » sur Ostal :': 'Here is the page “{title}” on Ostal:',
   'Partager « {title} »': 'Share “{title}”',
   'Vos pages sont sur cet ordinateur : les autres ne peuvent pas les ouvrir.': 'Your pages are on this computer: other people cannot open them.',
-  'Pour partager une page, rejoignez un serveur Melo : le vôtre, ou celui d’une personne qui vous invite.':
-    'To share a page, join a Melo server: your own, or that of someone who invites you.',
+  'Pour partager une page, rejoignez un serveur Ostal : le vôtre, ou celui d’une personne qui vous invite.':
+    'To share a page, join an Ostal server: your own, or that of someone who invites you.',
   'Rejoindre un serveur': 'Join a server',
   'La personne qui reçoit le lien ouvre cette page et ses sous-pages dans son navigateur, sans compte ni installation.':
     'The person who receives the link opens this page and its subpages in their browser, with no account and nothing to install.',
@@ -655,7 +656,7 @@ const UI: Record<string, string> = {
 
   // components/SharedView.tsx
   'Lien indisponible.': 'Link unavailable.',
-  '{title} – Melo (partagé)': '{title} – Melo (shared)',
+  '{title} – Ostal (partagé)': '{title} – Ostal (shared)',
   'Lien indisponible': 'Link unavailable',
   'Ouvrir mes notes': 'Open my notes',
   'Chargement de la page partagée…': 'Loading the shared page…',
@@ -667,8 +668,8 @@ const UI: Record<string, string> = {
   'Créer mon propre espace de notes': 'Create my own notes workspace',
   'Mes notes': 'My notes',
   'Le serveur a refusé l’accès à cette page (lien révoqué ?).': 'The server denied access to this page (link revoked?).',
-  'Rechargez la page : une version plus récente de Melo est nécessaire pour l’afficher.':
-    'Reload the page: a newer version of Melo is needed to show it.',
+  'Rechargez la page : une version plus récente d’Ostal est nécessaire pour l’afficher.':
+    'Reload the page: a newer version of Ostal is needed to show it.',
 
   // components/SmartHomeConfigDialog.tsx
   'Home Assistant est relié.': 'Home Assistant is connected.',
@@ -676,20 +677,20 @@ const UI: Record<string, string> = {
     'Disconnect Home Assistant? Your favorites and hidden devices are kept.',
   'Maison connectée': 'Smart home',
   'Déconnecter': 'Disconnect',
-  'Melo pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Melo : le jeton n’est jamais envoyé au navigateur.':
-    'Melo controls your devices through <b>Home Assistant</b>, which supports most brands: Philips Hue, IKEA, Tapo and Kasa, Tuya and Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, ONVIF cameras and many more. Everything goes through the Melo server: the token is never sent to the browser.',
-  'Adresse de Home Assistant, vue depuis le serveur Melo': 'Home Assistant address, as seen from the Melo server',
+  'Ostal pilote vos appareils à travers <b>Home Assistant</b>, qui prend en charge la plupart des marques : Philips Hue, IKEA, Tapo et Kasa, Tuya et Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, caméras ONVIF et bien d’autres. Les échanges passent par le serveur Ostal : le jeton n’est jamais envoyé au navigateur.':
+    'Ostal controls your devices through <b>Home Assistant</b>, which supports most brands: Philips Hue, IKEA, Tapo and Kasa, Tuya and Smart Life, Shelly, Xiaomi, Sonoff, Netatmo, Somfy, ONVIF cameras and many more. Everything goes through the Ostal server: the token is never sent to the browser.',
+  'Adresse de Home Assistant, vue depuis le serveur Ostal': 'Home Assistant address, as seen from the Ostal server',
   'http://192.168.1.10:8123': 'http://192.168.1.10:8123',
-  'Même machine que Melo ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».':
-    'Same machine as Melo? Enter its local IP address (e.g. http://192.168.1.10:8123), not “localhost”.',
+  'Même machine qu’Ostal ? Indiquez son adresse IP locale (ex. http://192.168.1.10:8123), pas « localhost ».':
+    'Same machine as Ostal? Enter its local IP address (e.g. http://192.168.1.10:8123), not “localhost”.',
   'Jeton d’accès longue durée': 'Long-lived access token',
   'eyJhbGciOi…': 'eyJhbGciOi…',
   'Tester la connexion': 'Test connection',
   'Comment obtenir le jeton ?': 'How do I get the token?',
   'Ouvrez Home Assistant dans un navigateur.': 'Open Home Assistant in a browser.',
   'Cliquez sur votre nom, en bas à gauche, puis sur l’onglet « Sécurité ».': 'Click your name at the bottom left, then the “Security” tab.',
-  'Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Melo ».':
-    'At the very bottom, under “Long-lived access tokens”, click “Create token” and name it “Melo”.',
+  'Tout en bas, dans « Jetons d’accès longue durée », cliquez sur « Créer un jeton » et nommez‑le « Ostal ».':
+    'At the very bottom, under “Long-lived access tokens”, click “Create token” and name it “Ostal”.',
   'Copiez le jeton affiché (il ne sera plus montré ensuite) et collez‑le ci‑dessus.':
     'Copy the token shown (it won’t be shown again) and paste it above.',
   'Pas encore de Home Assistant ? Installez l’application « Home Assistant » depuis la boutique de CasaOS, ouvrez‑la (port 8123) et laissez‑la découvrir vos appareils. Les pièces définies dans Home Assistant servent à regrouper les appareils ici.':
@@ -791,8 +792,8 @@ const UI: Record<string, string> = {
   'Ne plus afficher cet appareil dans la liste': 'Hide this device from the list',
   'Prêt': 'Ready',
   'modifié {ago}': 'changed {ago}',
-  'La maison connectée passe par le serveur Melo, qui dialogue avec Home Assistant sur votre réseau local.':
-    'The smart home goes through the Melo server, which talks to Home Assistant on your local network.',
+  'La maison connectée passe par le serveur Ostal, qui dialogue avec Home Assistant sur votre réseau local.':
+    'The smart home goes through the Ostal server, which talks to Home Assistant on your local network.',
   'Reliez <b>Home Assistant</b> pour voir et piloter vos lumières, prises, volets, chauffage, caméras et capteurs, pièce par pièce.':
     'Connect <b>Home Assistant</b> to see and control your lights, plugs, blinds, heating, cameras and sensors, room by room.',
   'Connecter Home Assistant': 'Connect Home Assistant',
@@ -809,7 +810,7 @@ const UI: Record<string, string> = {
   '« {name} » est masqué (réaffichage : Configurer).': '“{name}” is hidden (to show it again: Configure).',
   'Supprimer le groupe « {name} » ? Ses appareils ne sont pas modifiés.': 'Delete the group “{name}”? Its devices are not changed.',
   'Groupe « {name} » supprimé.': 'Group “{name}” deleted.',
-  'Objets connectés – Melo': 'Smart home – Melo',
+  'Objets connectés – Ostal': 'Smart home – Ostal',
 
   // components/TrashView.tsx
   'Les pages supprimées (et leurs sous-pages) restent ici jusqu’à suppression définitive.':
@@ -820,8 +821,8 @@ const UI: Record<string, string> = {
   'Vider la corbeille': 'Empty trash',
 
   // components/UpdateBanner.tsx
-  'Nouvelle version de Melo pour ordinateur prête : elle s’installe en redémarrant Melo.':
-    'A new version of Melo for computers is ready: it installs when Melo restarts.',
+  'Nouvelle version d’Ostal pour ordinateur prête : elle s’installe en redémarrant Ostal.':
+    'A new version of Ostal for computers is ready: it installs when Ostal restarts.',
   'Redémarrer': 'Restart',
   'Plus tard': 'Later',
   'Plus tard (installée à la fermeture)': 'Later (installed when you quit)',
@@ -830,8 +831,8 @@ const UI: Record<string, string> = {
   'La mise à jour a échoué :': 'The update failed:',
   'Réessayer': 'Try again',
   'Cette mise à jour demande une version plus récente de l’application Android.': 'This update requires a newer version of the Android app.',
-  'Une mise à jour de Melo est disponible.': 'A Melo update is available.',
-  'Une nouvelle version de Melo est disponible.': 'A new version of Melo is available.',
+  'Une mise à jour d’Ostal est disponible.': 'An Ostal update is available.',
+  'Une nouvelle version d’Ostal est disponible.': 'A new version of Ostal is available.',
   'Recharger': 'Reload',
 
   // components/Welcome.tsx
@@ -853,10 +854,10 @@ const UI: Record<string, string> = {
     '<b>Settings → Link another device</b>: scan the QR code with your phone to find the same pages there.',
   '<b>Inviter une personne</b> donne à un proche son propre espace sur votre serveur.':
     '<b>Invite someone</b> gives a friend or relative their own workspace on your server.',
-  'Melo fonctionne seul sur cet ordinateur. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.':
-    'Melo runs on its own on this computer. To use it on your phone too or to share pages: <b>Settings → Join a server</b>, with the link or code you received.',
-  'Melo fonctionne seul sur cet appareil. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.':
-    'Melo runs on its own on this device. To use it on your phone too or to share pages: <b>Settings → Join a server</b>, with the link or code you received.',
+  'Ostal fonctionne seul sur cet ordinateur. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.':
+    'Ostal runs on its own on this computer. To use it on your phone too or to share pages: <b>Settings → Join a server</b>, with the link or code you received.',
+  'Ostal fonctionne seul sur cet appareil. Pour le retrouver sur votre téléphone ou partager des pages : <b>Réglages → Rejoindre un serveur</b>, avec le lien ou le code reçu.':
+    'Ostal runs on its own on this device. To use it on your phone too or to share pages: <b>Settings → Join a server</b>, with the link or code you received.',
   'À votre goût': 'Make it yours',
   '<b>Personnaliser</b> change le thème, la couleur, le fond d’écran et les sections affichées. La barre de gauche se replie avec la petite flèche en haut, et <m>Ctrl K</m> cherche dans vos pages.':
     '<b>Customize</b> changes the theme, the color, the wallpaper and the sections shown. The left sidebar collapses with the small arrow at the top, and <m>Ctrl K</m> searches your pages.',
@@ -970,15 +971,15 @@ const UI: Record<string, string> = {
   'Remplir le widget (image recadrée)': 'Fill the widget (image cropped)',
   'Lien à l’appui (facultatif)': 'Link when tapped (optional)',
   'Choisir un site': 'Choose a site',
-  'La nouvelle version de Melo pour Windows l’affiche ici.': 'The new version of Melo for Windows shows it here.',
-  'Il s’affiche dans l’application Melo pour Windows.': 'It is shown in the Melo app for Windows.',
-  'Ce site en http ne peut pas s’afficher dans Melo ouvert en https.': 'This http site cannot be shown in Melo opened over https.',
+  'La nouvelle version d’Ostal pour Windows l’affiche ici.': 'The new version of Ostal for Windows shows it here.',
+  'Il s’affiche dans l’application Ostal pour Windows.': 'It is shown in the Ostal app for Windows.',
+  'Ce site en http ne peut pas s’afficher dans Ostal ouvert en https.': 'This http site cannot be shown in Ostal opened over https.',
   'Ce site refuse de s’afficher dans une autre application.': 'This site refuses to be shown inside another app.',
   'Ouvrir le site': 'Open the site',
   'Adresse du site': 'Site address',
   'Zoom : {pct} %': 'Zoom: {pct}%',
-  'Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Melo propose alors de les ouvrir. Dans l’application Melo pour Windows, tous les sites s’affichent.':
-    'Dashboards on your network (Jellyfin, Grafana, Home Assistant, router…), YouTube or Vimeo videos (paste the video link): they are shown in the widget. Some sites (Google, banks…) refuse to be shown inside another app: Melo then offers to open them. In the Melo app for Windows, all sites are shown.',
+  'Tableaux de bord de votre réseau (Jellyfin, Grafana, Home Assistant, routeur…), vidéo YouTube ou Vimeo (collez le lien de la vidéo) : ils s’affichent dans le widget. Certains sites (Google, banques…) refusent de s’afficher dans une autre application : Ostal propose alors de les ouvrir. Dans l’application Ostal pour Windows, tous les sites s’affichent.':
+    'Dashboards on your network (Jellyfin, Grafana, Home Assistant, router…), YouTube or Vimeo videos (paste the video link): they are shown in the widget. Some sites (Google, banks…) refuse to be shown inside another app: Ostal then offers to open them. In the Ostal app for Windows, all sites are shown.',
 
   // dashboard/widgets/Note.tsx
   'Aucune': 'None',
@@ -1213,7 +1214,7 @@ const UI: Record<string, string> = {
   // lib/agenda.ts
   'Agenda importé d’un fichier : importez le fichier à nouveau pour le mettre à jour.':
     'Calendar imported from a file: import the file again to update it.',
-  'Un serveur Melo est nécessaire pour actualiser un agenda iCal.': 'A Melo server is needed to refresh an iCal calendar.',
+  'Un serveur Ostal est nécessaire pour actualiser un agenda iCal.': 'An Ostal server is needed to refresh an iCal calendar.',
 
   // lib/api.ts
   'Aucun serveur configuré. Ajoutez un serveur dans les réglages.': 'No server set up. Add a server in the settings.',
@@ -1274,9 +1275,9 @@ const UI: Record<string, string> = {
   'Utilisateur + mot de passe d’application (Paramètres → Sécurité)': 'User + app password (Settings → Security)',
   'Paramètres du compte → Clés API': 'Account settings → API Keys',
   'Autre application (vérification de disponibilité)': 'Other app (availability check)',
-  'Hôte de ce serveur Melo': 'Host of this Melo server',
-  'Statistiques de la machine qui exécute le serveur Melo (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.':
-    'Statistics of the machine running the Melo server (CPU, RAM, disks, temperatures). With Docker, mount the volumes to watch and list their mount points.',
+  'Hôte de ce serveur Ostal': 'Host of this Ostal server',
+  'Statistiques de la machine qui exécute le serveur Ostal (CPU, RAM, disques, températures). En Docker, montez les volumes à surveiller et listez leurs points de montage.':
+    'Statistics of the machine running the Ostal server (CPU, RAM, disks, temperatures). With Docker, mount the volumes to watch and list their mount points.',
   'Fonctionne sur n’importe quel Linux/NAS : lancez Glances en mode web (glances -w) ou son image Docker, puis indiquez http://hote:61208.':
     'Works on any Linux/NAS: run Glances in web mode (glances -w) or its Docker image, then enter http://host:61208.',
   'Créez un jeton API (Datacenter → Permissions → API Tokens) avec le rôle PVEAuditor. Identifiant au format utilisateur@pam!nom-du-jeton.':
@@ -1304,7 +1305,7 @@ const UI: Record<string, string> = {
 
   // lib/livePlayer.ts
   'Cet appareil ne sait pas lire la vidéo en direct.': 'This device can’t play live video.',
-  'Serveur Melo injoignable.': 'Melo server unreachable.',
+  'Serveur Ostal injoignable.': 'Ostal server unreachable.',
   'Format vidéo non pris en charge par cet appareil.': 'Video format not supported by this device.',
   'Lecture de la vidéo interrompue.': 'Video playback interrupted.',
   'La caméra n’envoie plus d’images.': 'The camera stopped sending images.',
@@ -1403,7 +1404,7 @@ const UI: Record<string, string> = {
   // lib/updates.ts
   'Cette version demande une application Android plus récente.': 'This version requires a newer Android app.',
   'Mise à jour impossible.': 'Update failed.',
-  'Melo a été mis à jour : version {version} du {date}.': 'Melo has been updated: version {version} of {date}.',
+  'Ostal a été mis à jour : version {version} du {date}.': 'Ostal has been updated: version {version} of {date}.',
   'La nouvelle version n’a pas pu démarrer : la version précédente est conservée.':
     'The new version could not start: the previous version has been kept.',
 
@@ -1542,7 +1543,7 @@ const UI: Record<string, string> = {
   'hier, {time}': 'yesterday, {time}',
   'Document': 'Document',
   'Photos du {date}': 'Photos from {date}',
-  'Atelier PDF – Melo': 'PDF workshop – Melo',
+  'Atelier PDF – Ostal': 'PDF workshop – Ostal',
   'Fichier ignoré : {files} (seuls les PDF et les photos sont acceptés).': 'File skipped: {files} (only PDFs and photos are accepted).',
   'Import impossible.': 'Import failed.',
   '{n} PDF importés.': '{n} PDFs imported.',
@@ -1744,13 +1745,13 @@ const UI: Record<string, string> = {
     'Still off after 3 minutes: check how the computer is set up (widget settings).',
   'Choisissez de nouveau l’ordinateur dans les réglages du widget.': 'Choose the computer again in the widget settings.',
   'Allumer {name}': 'Turn on {name}',
-  'Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Melo.':
-    'No device found: check that the computer is on and connected to the same network as the Melo server.',
+  'Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Ostal.':
+    'No device found: check that the computer is on and connected to the same network as the Ostal server.',
   'Cet appareil': 'This device',
   'Box': 'Router',
   'Ordinateur à allumer': 'Computer to turn on',
-  'Le serveur Melo envoie le signal de réveil sur son réseau : l’ordinateur doit y être branché. Allumez-le, puis cherchez-le ici.':
-    'The Melo server sends the wake-up signal on its network: the computer must be connected to it. Turn it on, then look for it here.',
+  'Le serveur Ostal envoie le signal de réveil sur son réseau : l’ordinateur doit y être branché. Allumez-le, puis cherchez-le ici.':
+    'The Ostal server sends the wake-up signal on its network: the computer must be connected to it. Turn it on, then look for it here.',
   'Chercher de nouveau': 'Search again',
   'Chercher sur le réseau': 'Search the network',
   'Adresse MAC (adresse physique)': 'MAC address (physical address)',
@@ -1769,46 +1770,46 @@ const UI: Record<string, string> = {
   'Éteignez l’ordinateur normalement (Démarrer › Arrêter), puis essayez le bouton du widget.': 'Shut the computer down normally (Start › Shut down), then try the widget’s button.',
   'Options avancées': 'Advanced options',
   'Adresse de diffusion (facultatif)': 'Broadcast address (optional)',
-  'Seulement si l’ordinateur est sur un autre réseau que le serveur Melo : le signal y est aussi envoyé.':
-    'Only if the computer is on a different network from the Melo server: the signal is sent there too.',
-  'Le relais réseau du serveur Melo ne répond pas : le signal risque de ne pas atteindre l’ordinateur.':
-    'The Melo server’s network relay is not responding: the signal may not reach the computer.',
-  'Le serveur Melo tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.':
-    'The Melo server runs in Docker without its network relay: the signal may not reach the computer.',
+  'Seulement si l’ordinateur est sur un autre réseau que le serveur Ostal : le signal y est aussi envoyé.':
+    'Only if the computer is on a different network from the Ostal server: the signal is sent there too.',
+  'Le relais réseau du serveur Ostal ne répond pas : le signal risque de ne pas atteindre l’ordinateur.':
+    'The Ostal server’s network relay is not responding: the signal may not reach the computer.',
+  'Le serveur Ostal tourne dans Docker sans son relais réseau : le signal risque de ne pas atteindre l’ordinateur.':
+    'The Ostal server runs in Docker without its network relay: the signal may not reach the computer.',
   // Nouveaux venus : bienvenue, présentation des sections (SectionIntro), homelab (recherche, import de Homepage)
   'Passer la visite': 'Skip the tour',
   'Pour du matériel chez vous (Home Assistant, caméras, serveur maison) : rien à cocher si vous n’en avez pas.':
     'For equipment at home (Home Assistant, cameras, home server): nothing to tick if you don’t have any.',
-  'Nécessite un serveur Melo': 'Needs a Melo server',
+  'Nécessite un serveur Ostal': 'Needs an Ostal server',
   'Section masquée. Pour la retrouver : Personnaliser → Sections.': 'Section hidden. To bring it back: Customize → Sections.',
   'Ce qu’il vous faut': 'What you need',
   'Je n’en ai pas besoin : masquer cette section': 'I don’t need this: hide this section',
-  'Un serveur Melo chez vous, sur le même réseau que votre matériel : c’est lui qui fait le lien, cet appareil ne peut pas le faire seul.':
-    'A Melo server at home, on the same network as your equipment: it makes the connection, this device can’t do it alone.',
-  'Installer un serveur Melo chez vous (guide pas à pas)': 'Install a Melo server at home (step-by-step guide)',
+  'Un serveur Ostal chez vous, sur le même réseau que votre matériel : c’est lui qui fait le lien, cet appareil ne peut pas le faire seul.':
+    'An Ostal server at home, on the same network as your equipment: it makes the connection, this device can’t do it alone.',
+  'Installer un serveur Ostal chez vous (guide pas à pas)': 'Install an Ostal server at home (step-by-step guide)',
   'Pilotez votre maison': 'Control your home',
   'Lumières, prises, volets, chauffage, capteurs et caméras de presque toutes les marques, pièce par pièce, sur l’ordinateur comme sur le téléphone.':
     'Lights, plugs, blinds, heating, sensors and cameras from almost any brand, room by room, on your computer and your phone.',
   '<b>Home Assistant</b>, une application gratuite qui relie les objets connectés de presque toutes les marques (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).':
     '<b>Home Assistant</b>, a free app that connects smart devices from almost any brand (Philips Hue, IKEA, Tapo, Shelly, Xiaomi, Netatmo…).',
-  'Installée chez vous, sur le même réseau que le serveur Melo : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.':
-    'Installed at home, on the same network as the Melo server: Home Assistant Green box, Raspberry Pi, NAS or mini PC.',
+  'Installée chez vous, sur le même réseau que le serveur Ostal : boîtier Home Assistant Green, Raspberry Pi, NAS ou mini-PC.':
+    'Installed at home, on the same network as the Ostal server: Home Assistant Green box, Raspberry Pi, NAS or mini PC.',
   'Découvrir Home Assistant': 'Discover Home Assistant',
   'Pour allumer un ordinateur à distance, pas besoin de Home Assistant : widget « Allumer un PC » de l’accueil.':
     'To turn on a computer remotely, you don’t need Home Assistant: use the “Wake a PC” widget on the home screen.',
   'Vos caméras en direct': 'Your cameras, live',
   'Le direct de vos caméras de surveillance, ici, sur l’accueil et dans vos pages, sans ouvrir l’application de chaque marque.':
     'Live view of your security cameras, here, on the home screen and in your pages, without opening each brand’s app.',
-  'Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Melo.':
-    'IP cameras (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… or any camera with an RTSP stream) or a recorder, on the same network as the Melo server.',
-  'Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Melo vous guide ensuite.':
-    'Their IP address and login (the ones from the camera’s app): Melo guides you from there.',
+  'Des caméras IP (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… ou toute caméra avec un flux RTSP) ou un enregistreur, sur le même réseau que le serveur Ostal.':
+    'IP cameras (Hikvision, Dahua, Reolink, Tapo, Ezviz, Foscam… or any camera with an RTSP stream) or a recorder, on the same network as the Ostal server.',
+  'Leur adresse IP et leur identifiant (ceux de l’application de la caméra) : Ostal vous guide ensuite.':
+    'Their IP address and login (the ones from the camera’s app): Ostal guides you from there.',
   'Les caméras seulement « cloud » (Ring, Nest, Blink, Arlo…) ne se relient pas directement ; si Home Assistant les connaît, elles s’affichent dans Objets connectés.':
     'Cloud-only cameras (Ring, Nest, Blink, Arlo…) can’t be connected directly; if Home Assistant knows them, they show up in Smart home.',
   'Votre serveur maison d’un coup d’œil': 'Your home server at a glance',
   'En ligne ou pas, processeur, mémoire, disques, téléchargements et lectures en cours : votre serveur maison et ses applications, d’un coup d’œil.':
     'Online or not, CPU, memory, disks, downloads and playback in progress: your home server and its apps at a glance.',
-  'Un serveur chez vous (NAS, mini-PC, Raspberry Pi…) sur le même réseau que Melo.': 'A server at home (NAS, mini PC, Raspberry Pi…) on the same network as Melo.',
+  'Un serveur chez vous (NAS, mini-PC, Raspberry Pi…) sur le même réseau qu’Ostal.': 'A server at home (NAS, mini PC, Raspberry Pi…) on the same network as Ostal.',
   'Des applications web : Jellyfin, Plex, Nextcloud, Pi-hole, Home Assistant, la suite *arr… ou n’importe laquelle.':
     'Web apps: Jellyfin, Plex, Nextcloud, Pi-hole, Home Assistant, the *arr suite… or any other.',
   'Rechercher mes applications': 'Find my apps',
@@ -1821,10 +1822,10 @@ const UI: Record<string, string> = {
   '{n} éléments ajoutés. Ajoutez les clés API dans « Configurer » pour voir les statistiques.': '{n} items added. Add the API keys in “Configure” to see the statistics.',
   '{n} élément ajouté au homelab.': '{n} item added to the homelab.',
   '{n} éléments ajoutés au homelab.': '{n} items added to the homelab.',
-  'Le relais réseau du serveur Melo ne répond pas : la recherche s’est limitée à la machine du serveur.':
-    'The Melo server’s network relay is not responding: the search only covered the server’s own machine.',
-  'Le serveur Melo tourne dans Docker sans son relais réseau : la recherche s’est limitée à la machine du serveur.':
-    'The Melo server runs in Docker without its network relay: the search only covered the server’s own machine.',
+  'Le relais réseau du serveur Ostal ne répond pas : la recherche s’est limitée à la machine du serveur.':
+    'The Ostal server’s network relay is not responding: the search only covered the server’s own machine.',
+  'Le serveur Ostal tourne dans Docker sans son relais réseau : la recherche s’est limitée à la machine du serveur.':
+    'The Ostal server runs in Docker without its network relay: the search only covered the server’s own machine.',
   'Recherche sur votre réseau… (une dizaine de secondes)': 'Searching your network… (about ten seconds)',
   'Appareil interrogé : {n}. Cochez ce que vous voulez suivre.': 'Device checked: {n}. Tick what you want to follow.',
   'Appareils interrogés : {n}. Cochez ce que vous voulez suivre.': 'Devices checked: {n}. Tick what you want to follow.',
@@ -1833,12 +1834,12 @@ const UI: Record<string, string> = {
   'Contenu de services.yaml': 'Content of services.yaml',
   'Choisir le fichier': 'Choose the file',
   'Lire': 'Read',
-  'Applications trouvées dans services.yaml. Cochez celles à suivre dans Melo.': 'Apps found in services.yaml. Tick the ones to follow in Melo.',
+  'Applications trouvées dans services.yaml. Cochez celles à suivre dans Ostal.': 'Apps found in services.yaml. Tick the ones to follow in Ostal.',
   'Autre fichier': 'Another file',
   'Disponibilité seulement': 'Availability only',
   'Aucune application trouvée. Vos applications sont peut-être sur d’autres ports : ajoutez-les à la main dans « Configurer ».':
     'No apps found. Your apps may be on other ports: add them manually in “Configure”.',
-  'Processeur, mémoire et disques de la machine du serveur Melo': 'CPU, memory and disks of the Melo server’s machine',
+  'Processeur, mémoire et disques de la machine du serveur Ostal': 'CPU, memory and disks of the Ostal server’s machine',
   'Déjà ajouté': 'Already added',
   'Les statistiques demandent sa clé API (à saisir ensuite dans « Configurer »).': 'Statistics need its API key (to enter later in “Configure”).',
   'Clé à saisir': 'Key needed',
@@ -1852,7 +1853,7 @@ const UI: Record<string, string> = {
   'Un agenda Google, Outlook, Apple, de l’école ou du travail : son adresse iCal, votre compte Google, ou un fichier .ics.':
     'A Google, Outlook, Apple, school or work calendar: its iCal address, your Google account, or an .ics file.',
   'Signez et remplissez vos PDF': 'Sign and fill in your PDFs',
-  'Un serveur Melo (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.': 'A Melo server (yours or a friend’s): it keeps your PDF files.',
+  'Un serveur Ostal (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.': 'An Ostal server (yours or a friend’s): it keeps your PDF files.',
   'Signer, remplir un formulaire, annoter, réorganiser les pages ou assembler plusieurs PDF, et transformer des photos en PDF.':
     'Sign, fill in a form, annotate, reorder pages or merge several PDFs, and turn photos into a PDF.',
 };

@@ -36,7 +36,7 @@ export default function PdfApp({ doc, pdfId }: { doc: Y.Doc; pdfId: string | nul
         <NeedsServerIntro
           icon="filePdf"
           title={t('Signez et remplissez vos PDF')}
-          need={t('Un serveur Melo (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.')}
+          need={t('Un serveur Ostal (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.')}
           onJoin={ctx?.joinServer}
           onHide={hide}
         >
