@@ -4,7 +4,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import { wsBase, type Auth } from './api';
+import { serverBase, wsBase, type Auth } from './api';
 
 export const wsRoom = (wsId: string) => `ws_${wsId}`;
 export const pgRoom = (wsId: string, pageId: string) => `pg_${wsId}_${pageId}`;
@@ -84,7 +84,7 @@ export function acquireDoc(room: string, opts: { auth: Auth; persist: boolean })
   };
   if (base) {
     provider = new WebsocketProvider(base, room, doc, {
-      params: { ...(opts.auth as unknown as Record<string, string>), schema: String(DOC_SCHEMA) },
+      params: { ...(opts.auth as unknown as Record<string, string>), schema: String(DOC_SCHEMA), gen: dataGeneration() },
       maxBackoffTime: 15_000,
     });
     provider.on('status', ({ status }: { status: 'connected' | 'disconnected' | 'connecting' }) => {
@@ -96,6 +96,10 @@ export function acquireDoc(room: string, opts: { auth: Auth; persist: boolean })
       } else if (event && event.code === 4426) {
         // Serveur plus récent : ce client doit être mis à jour avant de synchroniser cette page.
         setStatus(handle, 'outdated');
+      } else if (event && event.code === 4409) {
+        // Données restaurées sur le serveur : la copie de cet appareil ne doit pas y revenir.
+        provider?.disconnect();
+        void forgetLocalCopy();
       }
     });
     handle.provider = provider;
@@ -174,4 +178,63 @@ export async function clearLocalDocs(): Promise<void> {
         ),
     );
   }
+}
+
+// ---------- Génération des données ----------
+// Le serveur change de « génération » quand une sauvegarde est restaurée ('0' : jamais restauré). Un appareil qui
+// se connecte avec une autre génération est refusé (4409) : il oublie sa copie locale (sinon elle reviendrait sur
+// le serveur, par la fusion des modifications) et recharge l'état restauré.
+
+const genKey = () => `notes.gen:${serverBase() ?? ''}`;
+
+export function dataGeneration(): string {
+  try {
+    return localStorage.getItem(genKey()) || '0';
+  } catch {
+    return '0';
+  }
+}
+
+export function setDataGeneration(gen: string) {
+  try {
+    localStorage.setItem(genKey(), gen);
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+let forgetting = false;
+
+/** Oublie la copie locale (documents de cet appareil) et recharge, avec la génération `gen` (sinon demandée au serveur). */
+export async function forgetLocalCopy(gen?: string): Promise<void> {
+  if (forgetting) return;
+  // Garde-fou : une fois par minute au plus (serveur qui répondrait mal).
+  let last = 0;
+  try {
+    last = Number(sessionStorage.getItem('notes.genReset') || 0);
+  } catch {
+    /* stockage indisponible */
+  }
+  if (!gen && Date.now() - last < 60_000) return;
+  try {
+    sessionStorage.setItem('notes.genReset', String(Date.now()));
+  } catch {
+    /* stockage indisponible */
+  }
+  forgetting = true;
+  let next = gen;
+  if (!next) {
+    try {
+      next = ((await (await fetch(`${serverBase()}/api/health`)).json()) as { gen?: string }).gen;
+    } catch {
+      next = undefined;
+    }
+  }
+  if (!next) {
+    forgetting = false;
+    return;
+  }
+  await clearLocalDocs();
+  setDataGeneration(next);
+  location.reload();
 }

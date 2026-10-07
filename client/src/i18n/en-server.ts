@@ -3,6 +3,26 @@
 // serveur sans traduction ici s'affiche en français.
 
 export const EN_SERVER: Record<string, string> = {
+  // backup.js : sauvegardes
+  'Mot de passe : 6 caractères au moins.': 'Password: at least 6 characters.',
+  'Le dossier des sauvegardes se règle sur le serveur.': 'The backup folder is set on the server.',
+  'Dossier invalide.': 'Invalid folder.',
+  'Impossible d’écrire dans ce dossier.': 'Cannot write to this folder.',
+  'Archive abîmée.': 'Damaged archive.',
+  'Archive refusée : chemin de fichier invalide.': 'Archive refused: invalid file path.',
+  'Archive incomplète.': 'Incomplete archive.',
+  'Cette sauvegarde est protégée par un mot de passe.': 'This backup is protected by a password.',
+  'Mot de passe incorrect.': 'Wrong password.',
+  'Ce fichier n’est pas une sauvegarde d’Ostal.': 'This file is not an Ostal backup.',
+  'Place insuffisante dans le dossier des sauvegardes.': 'Not enough space in the backup folder.',
+  'Une sauvegarde ou une restauration est déjà en cours.': 'A backup or restore is already in progress.',
+  'Sauvegarde impossible.': 'Backup failed.',
+  'Sauvegarde introuvable.': 'Backup not found.',
+  'Fichier trop volumineux.': 'File too large.',
+  'Mot de passe incorrect ou sauvegarde abîmée.': 'Wrong password or damaged backup.',
+  'Sauvegarde illisible ou abîmée.': 'Unreadable or damaged backup.',
+  'Restauration en cours : réessayez dans un instant.': 'Restore in progress: try again in a moment.',
+  'Opération impossible.': 'Operation failed.',
   // index.js, store.js, pairing.js : comptes, partage, fichiers
   'Accès refusé.': 'Access denied.',
   'Requête invalide.': 'Invalid request.',

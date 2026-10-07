@@ -106,7 +106,53 @@ export function authorizeWorkspace(wsId, key) {
     writeJsonAtomic(WS_FILE, workspaces);
     return true;
   }
-  return safeEqual(existing.keyHash, h);
+  // altKeyHashes : clés d'appareils qui ont rejoint cet espace en restaurant une sauvegarde (voir adoptWorkspace).
+  return safeEqual(existing.keyHash, h) || (existing.altKeyHashes ?? []).some((a) => safeEqual(a, h));
+}
+
+/** Espace du propriétaire du serveur : le plus ancien qui ne vient pas d'une invitation. */
+function hostWorkspace() {
+  return Object.entries(workspaces)
+    .filter(([, w]) => !w.guest)
+    .sort((a, b) => a[1].createdAt - b[1].createdAt)[0]?.[0] ?? null;
+}
+
+/**
+ * Gestion du serveur entier (sauvegardes, restauration) : propriétaire du serveur. Sur un serveur à un seul espace,
+ * ou joignable de cette machine seulement (application pour ordinateur), tout espace qui n'est pas invité.
+ */
+export function canManageServer(wsId) {
+  const w = workspaces[wsId];
+  if (!w || w.guest) return false;
+  if (MAX_WORKSPACES === 1 || /^(127\.0\.0\.1|::1|localhost)$/.test(process.env.HOST || '')) return true;
+  return hostWorkspace() === wsId;
+}
+
+/**
+ * Après une restauration : l'appareil qui l'a faite garde l'accès. Si son espace n'est pas dans la sauvegarde (serveur
+ * réinstallé), sa clé ouvre désormais l'espace du propriétaire restauré. Renvoie l'espace à utiliser.
+ */
+export function adoptWorkspace(wsId, key) {
+  if (workspaces[wsId]) return wsId;
+  const host = hostWorkspace();
+  if (!host || typeof key !== 'string' || key.length < 16) return null;
+  const w = workspaces[host];
+  const h = hashKey(key);
+  w.altKeyHashes = [...new Set([...(w.altKeyHashes ?? []), h])].slice(-20);
+  writeJsonAtomic(WS_FILE, workspaces);
+  return host;
+}
+
+/** Relit espaces, liens de partage et invitations (après une restauration). */
+export function reloadStore() {
+  for (const [target, file] of [
+    [workspaces, WS_FILE],
+    [shares, SHARES_FILE],
+    [invites, INVITES_FILE],
+  ]) {
+    for (const k of Object.keys(target)) delete target[k];
+    Object.assign(target, readJson(file, {}));
+  }
 }
 
 export function workspaceExists(wsId) {

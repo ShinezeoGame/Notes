@@ -4,6 +4,7 @@ import { toast } from '../components/Toast';
 import { Icon } from '../icons/Icon';
 import type { ExportSize } from './exporter';
 import { canShare, pdfFileName, saveFile, saveLabel, saveMode, shareFile } from './save';
+import { fileSize } from '../lib/format';
 import { getLang, t, tn } from '../lib/i18n';
 
 /** Choix faits dans la fenêtre d'export. */
@@ -28,13 +29,6 @@ type Props = {
   build: (choices: ExportChoices, onProgress: (fraction: number, label: string) => void) => Promise<Uint8Array>;
   onClose: () => void;
 };
-
-/** Taille d'un fichier : « 640 Ko », « 2,4 Mo ». */
-export function fileSize(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return t('{n} Mo', { n: mb.toLocaleString(getLang(), { maximumFractionDigits: 1 }) });
-  return t('{n} Ko', { n: Math.max(1, Math.round(bytes / 1024)) });
-}
 
 /** Fenêtre « Exporter le PDF » : nom du fichier, pages, filigrane, masques, taille, enregistrement ou partage. */
 export function ExportDialog({ name, pageCount, selectedCount = 0, hasMasks = false, build, onClose }: Props) {

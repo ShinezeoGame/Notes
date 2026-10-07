@@ -17,6 +17,7 @@ Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom
 - [Homelab](#homelab)
 - [Allumer un ordinateur](#allumer-un-ordinateur)
 - [Atelier PDF](#atelier-pdf)
+- [Sauvegardes](#sauvegardes)
 
 ## Installer Ostal
 
@@ -244,3 +245,15 @@ Section **Atelier PDF** (groupe Outils). L’original n’est jamais modifié et
 Sur Android, **Ouvrir avec Ostal** (depuis Gmail, WhatsApp, Fichiers…) et **Partager → Ostal** (PDF ou photos) importent directement dans l’atelier. Sur ordinateur, l’application installée apparaît dans **Ouvrir avec** pour les fichiers PDF.
 
 Bon à savoir : le texte déjà écrit dans un PDF ne se modifie pas (un PDF n’est pas un document Word) ; cachez-le avec **Masquer** et écrivez par-dessus avec **Texte**. À l’export, ce que couvre un masque est effacé pour de bon (sauf si vous décochez l’option) : sans cette option, le texte couvert resterait dans le fichier. Les signatures dessinées sont gardées dans votre espace (synchronisées sur vos appareils) ; supprimez-les depuis la fenêtre **Signature**.
+
+## Sauvegardes
+
+**Réglages → Sauvegardes** (propriétaire du serveur) : tout le serveur (pages, agenda, PDF, papiers, réglages de la maison, espaces des personnes invitées) copié dans une archive.
+
+- **Automatique** : chaque nuit sur un serveur, s’il y a eu des changements ; une fois par jour, quand elle est ouverte, sur l’application Windows. Les plus récentes sont gardées (7 par défaut, au choix 3, 14 ou 30).
+- **Sauvegarder maintenant**, **Télécharger** (copie sur l’appareil), **Supprimer**.
+- **Dossier** : sur un serveur, le dossier `sauvegardes` à côté de `data` (pour un disque USB ou un NAS, voir [INSTALLATION.md](../INSTALLATION.md#sauvegardes)). Sur l’application Windows, `Documents\Ostal\Sauvegardes`, ou un autre dossier avec **Choisir un autre dossier…** : un dossier OneDrive, Google Drive ou Dropbox les met aussi à l’abri en ligne.
+- **Protéger par un mot de passe** : les archives sont chiffrées (fichiers `.ostal`). Notez le mot de passe : sans lui, impossible de restaurer.
+- **Restaurer** (une sauvegarde de la liste) ou **Restaurer depuis un fichier…** : tout revient à l’état sauvegardé, sur tous vos appareils (ils rechargent tout seuls). L’état d’avant est d’abord sauvegardé (« avant une restauration ») : on peut y revenir. Restaurer un fichier sur un serveur tout neuf y ramène votre espace.
+
+Sur un téléphone seul (sans serveur), les données ne sont que sur le téléphone : rejoignez un serveur ou utilisez l’application Windows pour qu’elles soient sauvegardées.

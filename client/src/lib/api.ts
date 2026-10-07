@@ -25,6 +25,23 @@ export type GuestInfo = { wsId: string; name: string; createdAt: number };
 
 export type Auth = { key: string } | { share: string };
 
+/** Sauvegarde du serveur (voir server/src/backup.js). */
+export type BackupEntry = { name: string; size: number; createdAt: number; encrypted: boolean; beforeRestore: boolean };
+export type BackupStatus = {
+  auto: boolean;
+  keep: number;
+  keepChoices: number[];
+  encrypted: boolean;
+  dir: string;
+  /** docker : dossier « sauvegardes » de la machine ; server : chemin sur le serveur ; local / custom : application pour ordinateur. */
+  dirKind: 'docker' | 'server' | 'local' | 'custom';
+  dirChoice: boolean;
+  running: boolean;
+  lastError: { message: string; at: number } | null;
+  list: BackupEntry[];
+};
+export type RestoreResult = { ok: boolean; gen: string; wsId: string | null };
+
 export function serverBase(): string | null {
   const s = getSettings().serverUrl;
   return s ? s.replace(/\/$/, '') : null;
@@ -80,7 +97,14 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
 }
 
 export const api = {
-  health: () => request<{ ok: boolean }>('/api/health'),
+  health: () => request<{ ok: boolean; gen?: string }>('/api/health'),
+  backupStatus: () => request<BackupStatus>('/api/backup', { auth: ownerAuth() }),
+  backupSettings: (patch: { auto?: boolean; keep?: number; password?: string | null; dir?: string }) =>
+    request<BackupStatus>('/api/backup/settings', { method: 'PUT', body: JSON.stringify(patch), auth: ownerAuth() }),
+  backupRun: () => request<{ backup: BackupEntry | null; status: BackupStatus }>('/api/backup/run', { method: 'POST', auth: ownerAuth() }),
+  backupDelete: (name: string) => request<BackupStatus>(`/api/backup/files/${encodeURIComponent(name)}`, { method: 'DELETE', auth: ownerAuth() }),
+  backupRestore: (name: string, password: string) =>
+    request<RestoreResult>('/api/backup/restore', { method: 'POST', body: JSON.stringify({ name, password }), auth: ownerAuth() }),
   claim: (wsId: string, key: string) =>
     request<{ ok: boolean; guest?: boolean }>('/api/workspaces/claim', { method: 'POST', body: JSON.stringify({ wsId, key }) }),
   createInvite: (name: string) => request<InviteInfo>('/api/invites', { method: 'POST', body: JSON.stringify({ name }), auth: ownerAuth() }),

@@ -269,15 +269,32 @@ Toutes les 15 minutes, le serveur regarde si une nouvelle version est publiée s
 
 Si une nouvelle version ne se construit pas, l’ancienne continue de fonctionner et le journal indique l’erreur. Ne modifiez pas les fichiers du dépôt sur le serveur : vos réglages vont dans `.env` et `docker-compose.override.yml` (sinon le journal signale une « mise à jour bloquée »).
 
+### Sauvegardes
+
+Ostal sauvegarde tout le serveur (pages, agenda, PDF, papiers, réglages de la maison, espaces des personnes invitées) chaque nuit s’il y a eu des changements, dans le dossier `sauvegardes`, à côté de `data`. Les 7 dernières sont gardées. Dans l’application, **Réglages → Sauvegardes** (propriétaire du serveur) permet d’en faire une tout de suite, de changer le nombre gardé, d’ajouter un mot de passe (archives chiffrées), de télécharger ou de restaurer une sauvegarde.
+
+Le dossier `sauvegardes` est sur le même disque que vos données : copiez-le de temps en temps ailleurs, ou placez-le directement sur un disque USB ou un NAS monté sur le serveur. Pour cela, créez (ou complétez) le fichier `docker-compose.override.yml`, à côté de `docker-compose.yml` :
+
+```yaml
+services:
+  notes:
+    volumes:
+      - /media/disque-usb/ostal:/backups
+```
+
+Remplacez `/media/disque-usb/ostal` par le chemin du disque, puis lancez `docker compose up -d`.
+
+Restaurer : **Réglages → Sauvegardes**, puis **Restaurer** sur une sauvegarde de la liste, ou **Restaurer depuis un fichier…** (par exemple pour retrouver vos données sur un nouveau serveur : installez Ostal, ouvrez-le, puis restaurez le fichier). L’état actuel est d’abord sauvegardé, et tous vos appareils reprennent l’état restauré. Une archive sans mot de passe est un `.tar.gz` ordinaire : elle s’ouvre aussi avec 7-Zip ou `tar`.
+
 ### Entretien
 
 ```bash
 cd Notes
 git pull && docker compose up -d --build     # mettre à jour à la main
 docker compose logs -f notes                 # voir les journaux
-tar czf ~/notes-$(date +%F).tar.gz data      # sauvegarder toutes les données
+tar czf ~/notes-$(date +%F).tar.gz data      # copie à la main de toutes les données
 ```
 
-Restaurer une sauvegarde : arrêtez (`docker compose down`), remplacez le dossier `data` par celui de l’archive, relancez (`docker compose up -d`).
+Restaurer cette copie à la main : arrêtez (`docker compose down`), remplacez le dossier `data` par celui de l’archive, relancez (`docker compose up -d`).
 
 Après une mise à jour du serveur, l’application Android affiche dans l’heure une notification **Mise à jour d’Ostal disponible** : touchez‑la pour installer la nouvelle version, sans retélécharger l’APK. Les navigateurs ouverts proposent de recharger la page.

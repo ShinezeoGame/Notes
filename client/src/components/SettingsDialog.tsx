@@ -4,6 +4,7 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { getSettings, isDefaultUserName, isNative, isStandaloneWeb, normalizeServerUrl, parseJoinLink, resetWorkspace, updateSettings, useSettings } from '../lib/settings';
 import { canShareLinks } from '../lib/api';
 import { desktop, isDesktopLocal, type DesktopUpdate } from '../lib/desktop';
+import { BackupSection } from './BackupDialog';
 import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
@@ -338,6 +339,8 @@ export function SettingsDialog({ onClose, onTour }: Props) {
           <InvitePanel />
         </section>
       ) : null}
+
+      {!settings.guest ? <BackupSection /> : null}
 
       <UpdatesSection />
 

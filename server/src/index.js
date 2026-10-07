@@ -10,7 +10,9 @@ import multer from 'multer';
 import { WebSocketServer } from 'ws';
 import {
   UPLOADS_DIR,
+  adoptWorkspace,
   authorizeWorkspace,
+  canManageServer,
   claimInvite,
   cleanName,
   createInvite,
@@ -25,6 +27,7 @@ import {
   listInvites,
   listShares,
   registrationClosed,
+  reloadStore,
   removeAllUploads,
   removeGuest,
   removeUploads,
@@ -43,7 +46,9 @@ import {
   isPageRoom,
   MIN_PAGE_SCHEMA,
   pageInShare,
+  pauseDocs,
   pdfRoom,
+  resumeDocs,
   setupWSConnection,
   shareTree,
   wsRoom,
@@ -53,6 +58,19 @@ import { createAppUpdates } from './appUpdates.js';
 import { checkFrame } from './frames.js';
 import { claimPairing, startPairing } from './pairing.js';
 import { lanAction } from './wol.js';
+import {
+  BackupError,
+  backupFile,
+  backupStatus,
+  dataGeneration,
+  deleteBackup,
+  isRestoring,
+  receiveUpload,
+  restoreBackup,
+  runBackup,
+  startBackupSchedule,
+  updateBackupSettings,
+} from './backup.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 import {
   cameraKind,
@@ -78,6 +96,13 @@ app.set('trust proxy', true);
 app.disable('x-powered-by');
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '2mb' }));
+// Restauration en cours : le reste attend (quelques secondes).
+app.use((req, res, next) => {
+  if (isRestoring() && req.path.startsWith('/api/') && req.path !== '/api/health') {
+    return res.status(503).json({ error: 'Restauration en cours : réessayez dans un instant.' });
+  }
+  next();
+});
 
 const publicBase = (req) => PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
 
@@ -139,7 +164,8 @@ async function requireEditor(req, res, next) {
 
 // ---------- API ----------
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now() }));
+// gen : génération des données, changée par une restauration (les appareils oublient alors leur copie locale).
+app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now(), gen: dataGeneration() }));
 
 app.post('/api/workspaces/claim', (req, res) => {
   const { wsId, key } = req.body || {};
@@ -243,6 +269,119 @@ app.use(
     maxAge: '365d',
     immutable: true,
     setHeaders: (res) => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'),
+  }),
+);
+
+// ---------- Sauvegardes ----------
+// Réservées au propriétaire du serveur : elles contiennent toutes les données du serveur.
+
+function requireAdmin(req, res, next) {
+  if (!canManageServer(req.wsId)) return res.status(403).json({ error: 'Réservé au propriétaire de ce serveur Ostal.' });
+  next();
+}
+
+function backupRoute(fn) {
+  return async (req, res) => {
+    try {
+      await fn(req, res);
+    } catch (err) {
+      if (err instanceof BackupError) return res.status(err.status).json({ error: err.message });
+      console.error('[sauvegarde]', err);
+      res.status(500).json({ error: 'Opération impossible.' });
+    }
+  };
+}
+
+/** Après une restauration : l'appareil qui l'a demandée garde l'accès ; nouvelle génération et espace à utiliser. */
+function restored(req, gen) {
+  const key = req.get('x-ws-key');
+  return { ok: true, gen, wsId: adoptWorkspace(req.wsId, key) };
+}
+
+const restoreHooks = {
+  flush: flushAll,
+  pause: async () => {
+    stopCameras();
+    await pauseDocs();
+  },
+  reload: reloadStore,
+  resume: resumeDocs,
+};
+
+app.get('/api/backup', requireOwner, requireAdmin, backupRoute(async (_req, res) => res.json(await backupStatus())));
+
+app.put(
+  '/api/backup/settings',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (req, res) => {
+    const { auto, keep, password, dir } = req.body || {};
+    await updateBackupSettings({ auto, keep, password, dir });
+    res.json(await backupStatus());
+  }),
+);
+
+app.post(
+  '/api/backup/run',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (_req, res) => {
+    const made = await runBackup('manual', flushAll);
+    res.json({ backup: made, status: await backupStatus() });
+  }),
+);
+
+app.get(
+  '/api/backup/files/:name',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (req, res) => {
+    const file = backupFile(req.params.name);
+    res.setHeader('Cache-Control', 'no-store');
+    res.download(file, req.params.name);
+  }),
+);
+
+app.delete(
+  '/api/backup/files/:name',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (req, res) => {
+    await deleteBackup(req.params.name);
+    res.json(await backupStatus());
+  }),
+);
+
+app.post(
+  '/api/backup/restore',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (req, res) => {
+    const { name, password } = req.body || {};
+    const gen = await restoreBackup(backupFile(name), typeof password === 'string' ? password : '', restoreHooks);
+    res.json(restored(req, gen));
+  }),
+);
+
+// Restauration d'un fichier envoyé (corps brut) ; mot de passe éventuel dans l'en-tête x-backup-password (encodé).
+app.put(
+  '/api/backup/restore-file',
+  requireOwner,
+  requireAdmin,
+  backupRoute(async (req, res) => {
+    let password = '';
+    try {
+      password = decodeURIComponent(req.get('x-backup-password') || '');
+    } catch {
+      /* en-tête illisible : sans mot de passe */
+    }
+    const file = await receiveUpload(req, 20 * 1024 ** 3);
+    try {
+      const gen = await restoreBackup(file, password, restoreHooks);
+      res.json(restored(req, gen));
+    } finally {
+      fs.promises.unlink(file).catch(() => {});
+    }
   }),
 );
 
@@ -559,8 +698,14 @@ server.on('upgrade', (req, socket, head) => {
   const key = url.searchParams.get('key') || undefined;
   const share = url.searchParams.get('share') || undefined;
   const schema = Number(url.searchParams.get('schema')) || 1;
+  const gen = url.searchParams.get('gen');
   wss.handleUpgrade(req, socket, head, async (ws) => {
     try {
+      // Données restaurées depuis la dernière visite de cet appareil : sa copie locale ne doit pas revenir (4409).
+      if (gen !== null && gen !== dataGeneration()) {
+        ws.close(4409, 'restored');
+        return;
+      }
       const auth = await authorizeRoom(room, { key, share });
       if (!auth.ok) {
         ws.close(4401, auth.reason);
@@ -593,6 +738,7 @@ server.on('error', (err) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Ostal : serveur démarré sur http://${HOST}:${PORT}`);
+  startBackupSchedule(flushAll);
   process.parentPort?.postMessage({ type: 'ready' });
 });
 

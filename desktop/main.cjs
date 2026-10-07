@@ -2,7 +2,7 @@
 // intégré (lancé en arrière-plan, joignable de cet ordinateur seulement), ou le serveur Ostal d'un proche ou le vôtre.
 // Le pont `window.meloDesktop` (preload.cjs) permet à l'application de passer de l'un à l'autre, lui transmet les PDF
 // ouverts avec Ostal et les mises à jour téléchargées.
-const { app, BrowserWindow, Menu, ipcMain, session, shell, utilityProcess } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, session, shell, utilityProcess } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -10,7 +10,7 @@ const path = require('node:path');
 const PORT = 47821;
 const LOCAL = `http://127.0.0.1:${PORT}`;
 /** Fonctions offertes par le pont (voir client/src/lib/desktop.ts) : augmenter à chaque ajout. */
-const BRIDGE_API = 3;
+const BRIDGE_API = 4;
 /** Taille maximale d'un PDF ouvert avec Ostal. */
 const MAX_OPEN_BYTES = 200 * 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
@@ -160,6 +160,11 @@ function startServer() {
       PUBLIC_URL: LOCAL,
       // Joignable de cet ordinateur seulement : pas de limite d'espaces (« Réinitialiser cet appareil » en crée un neuf).
       MAX_WORKSPACES: '0',
+      // Sauvegardes : dans Documents\Ostal\Sauvegardes, ou un autre dossier choisi dans l'application (OneDrive…) ;
+      // l'ordinateur n'est pas forcément allumé la nuit, la sauvegarde du jour se fait à n'importe quelle heure.
+      BACKUP_DIR: path.join(app.getPath('documents'), 'Ostal', 'Sauvegardes'),
+      BACKUP_DIR_CHOICE: '1',
+      BACKUP_ANYTIME: '1',
     },
   });
   child.stdout?.pipe(serverLog);
@@ -472,6 +477,13 @@ ipcMain.handle('melo:use-local', async (e) => {
 
 ipcMain.handle('melo:retry', async (e) => {
   if (trusted(e)) await openCurrent();
+});
+
+// Niveau 4 : choix d'un dossier (sauvegardes).
+ipcMain.handle('melo:choose-folder', async (e, title) => {
+  if (!trusted(e)) return null;
+  const r = await dialog.showOpenDialog(win, { title: String(title || ''), properties: ['openDirectory', 'createDirectory', 'promptToCreate'] });
+  return r.canceled ? null : (r.filePaths[0] ?? null);
 });
 
 ipcMain.on('melo:install-update', (e) => {

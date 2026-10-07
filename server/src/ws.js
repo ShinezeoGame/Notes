@@ -94,7 +94,7 @@ class WSSharedDoc extends Y.Doc {
 
   async flush() {
     clearTimeout(this.saveTimer);
-    if (!this.dirty) return;
+    if (!this.dirty || paused) return;
     this.dirty = false;
     this.saving = saveDocUpdate(this.name, Y.encodeStateAsUpdate(this));
     try {
@@ -211,6 +211,10 @@ function messageListener(conn, doc, message, readOnly) {
  * Attache une connexion WebSocket (déjà autorisée) à une salle.
  */
 export async function setupWSConnection(conn, room, { readOnly = false } = {}) {
+  if (paused) {
+    conn.close(1013, 'restoring');
+    return;
+  }
   conn.binaryType = 'arraybuffer';
   const doc = getDoc(room);
   doc.conns.set(conn, new Set());
@@ -432,4 +436,28 @@ export async function deleteWorkspaceDocs(wsId) {
 
 export async function flushAll() {
   await Promise.all(Array.from(docs.values()).map((d) => d.flush()));
+}
+
+/** Restauration en cours : plus de connexion ni d'enregistrement. */
+let paused = false;
+export const docsPaused = () => paused;
+
+/**
+ * Restauration : connexions fermées, documents en mémoire oubliés sans être enregistrés (les fichiers vont être
+ * remplacés). Les appareils se reconnectent ensuite et découvrent la nouvelle génération des données.
+ */
+export async function pauseDocs() {
+  paused = true;
+  for (const doc of Array.from(docs.values())) {
+    clearTimeout(doc.saveTimer);
+    await doc.saving?.catch(() => {});
+    doc.dirty = false;
+    for (const conn of Array.from(doc.conns.keys())) closeConn(doc, conn);
+    doc.destroy();
+  }
+  docs.clear();
+}
+
+export function resumeDocs() {
+  paused = false;
 }

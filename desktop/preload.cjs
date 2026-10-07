@@ -1,5 +1,5 @@
 // Pont entre la page d'Ostal et l'application pour ordinateur (main.cjs) : informations, choix du serveur, fichiers
-// ouverts avec Ostal, mises à jour, langue de l'interface. Donné seulement aux pages d'Ostal (serveur intégré, serveur choisi, page d'erreur).
+// ouverts avec Ostal, mises à jour, langue de l'interface, choix d'un dossier. Donné seulement aux pages d'Ostal (serveur intégré, serveur choisi, page d'erreur).
 const { contextBridge, ipcRenderer } = require('electron');
 
 const info = ipcRenderer.sendSync('melo:info');
@@ -47,5 +47,6 @@ if (info) {
     },
     installUpdate: () => ipcRenderer.send('melo:install-update'),
     setLanguage: (lang) => ipcRenderer.send('melo:lang', String(lang)),
+    chooseFolder: (title) => ipcRenderer.invoke('melo:choose-folder', String(title || '')),
   });
 }

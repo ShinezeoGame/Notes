@@ -28,6 +28,8 @@ type DesktopBridge = {
   installUpdate: () => void;
   /** Niveau 3 : langue de l'interface, pour les menus et la page d'erreur de l'application. */
   setLanguage?: (lang: 'en' | 'fr') => void;
+  /** Niveau 4 : choix d'un dossier de l'ordinateur (sauvegardes) ; null si annulé. */
+  chooseFolder?: (title: string) => Promise<string | null>;
 };
 
 export function desktop(): DesktopBridge | null {

@@ -14,9 +14,15 @@ services:
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
       # Réveil des ordinateurs et recherche des applications : par le relais réseau (service wol ci-dessous)
       - WOL_RELAY=/run/melo-wol/relay.sock
+      # Sauvegardes (Réglages → Sauvegardes) : dans le dossier ./sauvegardes ci-dessous
+      - BACKUP_DIR=/backups
+      - BACKUP_DIR_KIND=docker
     volumes:
-      # Toutes les données (pages, fichiers importés, liens de partage) : dossier ./data à sauvegarder
+      # Toutes les données (pages, fichiers importés, liens de partage) : dossier ./data
       - ./data:/data
+      # Sauvegardes faites par Ostal (chaque nuit et à la demande). Pour les mettre sur un disque USB ou un NAS,
+      # remplacez ./sauvegardes par son chemin dans docker-compose.override.yml (voir INSTALLATION.md).
+      - ./sauvegardes:/backups
       - wol-relay:/run/melo-wol
       # Tableau de bord homelab : montez ici en lecture seule les disques à surveiller, par exemple :
       # - /mnt/media:/mnt/media:ro
