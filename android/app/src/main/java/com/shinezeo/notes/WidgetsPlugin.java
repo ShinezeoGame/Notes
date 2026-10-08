@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,6 +57,11 @@ public class WidgetsPlugin extends Plugin {
             if (list != null) WidgetStore.saveTaskList(ctx, list);
             JSObject data = call.getObject("data");
             if (data != null) WidgetStore.replaceData(ctx, new JSONObject(data.toString()));
+            // Couleurs : thème d'Ostal ou couleurs choisies ; null : celles du téléphone (absent : application plus ancienne).
+            if (call.getData().has("colors")) {
+                JSObject colors = call.getObject("colors");
+                WidgetStore.saveColors(ctx, colors == null ? null : new JSONObject(colors.toString()));
+            }
             applyLauncherShortcuts(ctx, WidgetStore.shortcuts(ctx));
             WidgetViews.updateAll(ctx);
             // Widget « Films et séries » posé : dernières demandes relues (Seerr a pu être relié entre-temps).
@@ -239,7 +245,15 @@ public class WidgetsPlugin extends Plugin {
                 FrameLayout parent = new FrameLayout(ctx);
                 JSObject ret = new JSObject();
                 ret.put("shortcuts", texts(WidgetViews.shortcuts(ctx, options).apply(ctx, parent)));
-                ret.put("tasks", texts(WidgetViews.tasks(ctx, options).apply(ctx, parent)));
+                View tasks = WidgetViews.tasks(ctx, options).apply(ctx, parent);
+                ret.put("tasks", texts(tasks));
+                // Couleurs appliquées (thème d'Ostal ou choisies) : fond et titre du widget Tâches.
+                JSObject colors = new JSObject();
+                ColorStateList tint = tasks.getBackgroundTintList();
+                colors.put("bg", tint == null ? "" : String.format("#%08X", tint.getDefaultColor()));
+                TextView title = tasks.findViewById(R.id.tk_title);
+                colors.put("title", title == null ? "" : String.format("#%08X", title.getCurrentTextColor()));
+                ret.put("colors", colors);
                 ret.put("wake", texts(WidgetViews.wake(ctx, options).apply(ctx, parent)));
                 ret.put("seerr", texts(WidgetViews.seerr(ctx, options).apply(ctx, parent)));
                 JSArray previews = new JSArray();
@@ -296,6 +310,8 @@ public class WidgetsPlugin extends Plugin {
         ret.put("placed", placed);
         ret.put("pinWidgets", pinWidgets);
         ret.put("pinShortcuts", pinShortcuts);
+        // Couleurs du thème d'Ostal ou choisies : Android 12 et suivants (WidgetTheme).
+        ret.put("colors", Build.VERSION.SDK_INT >= Build.VERSION_CODES.S);
         return ret;
     }
 

@@ -17,6 +17,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
         <ImageView
+            android:id="@+id/tk_icon"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_w_tasks"

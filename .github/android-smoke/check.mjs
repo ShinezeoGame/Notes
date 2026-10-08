@@ -518,7 +518,7 @@ try {
   const serverTasks = async (list) => (await serverWidgets()).tasks.find((l) => l.id === list)?.items ?? [];
   let listId = '';
 
-  await step('Widgets : Tâches, Allumer l’ordinateur et Raccourcis proposés par Android, affichés avec les tâches de l’accueil', async () => {
+  await step('Widgets : Tâches, Allumer l’ordinateur et Raccourcis proposés par Android, affichés avec les tâches et aux couleurs d’Ostal', async () => {
     if (!(await js("(window.Capacitor?.PluginHeaders ?? []).some((h) => h.name === 'Widgets')"))) throw new Error('plugin Widgets absent');
     // Widget refusé par Android (description XML invalide) : absent de cette liste.
     const providers = adb('shell', 'dumpsys', 'appwidget');
@@ -536,6 +536,8 @@ try {
       if (missing.length) throw new Error(`widget ${kind} : ${missing.join(', ')} absent (${JSON.stringify(views[kind])})`);
     }
     if (views.previews.some((p) => !p.length)) throw new Error(`aperçus vides : ${JSON.stringify(views.previews)}`);
+    // Couleurs du thème d'Ostal (sombre, fond des widgets à 88 %) appliquées par l'application (Android 12 et suivants).
+    if (views.colors?.bg !== '#E0252525' || views.colors?.title !== '#FFFFFFFF') throw new Error(`couleurs : ${JSON.stringify(views.colors)}`);
     // Raccourcis du lanceur (appui long sur l'icône) : les premiers choisis.
     await until('raccourcis du lanceur', () => ['sc_newPage', 'sc_agenda', 'sc_pdf'].every((id) => adb('shell', 'dumpsys', 'shortcut').includes(id)), 30_000, 2000);
     await assertAlive('après l’affichage des widgets');

@@ -76,6 +76,8 @@ final class WidgetViews {
         int width = options != null ? options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) : 0;
         int fit = width > 0 ? Math.max(1, width / SHORTCUT_WIDTH) : SLOTS.length;
         int count = Math.min(Math.min(list.length(), fit), SLOTS.length);
+        WidgetTheme theme = WidgetTheme.of(context);
+        if (theme != null) WidgetTheme.background(rv, R.id.sc_root, theme.bg);
         for (int i = 0; i < SLOTS.length; i++) {
             JSONObject s = i < count ? list.optJSONObject(i) : null;
             if (s == null) {
@@ -88,6 +90,11 @@ final class WidgetViews {
             rv.setTextViewText(LABELS[i], label);
             rv.setContentDescription(SLOTS[i], label);
             rv.setOnClickPendingIntent(SLOTS[i], open(context, s.optString("url", "#/"), 100 + i));
+            if (theme != null) {
+                WidgetTheme.background(rv, ICONS[i], theme.tile);
+                WidgetTheme.icon(rv, ICONS[i], theme.icon);
+                rv.setTextColor(LABELS[i], theme.text);
+            }
         }
         return rv;
     }
@@ -129,6 +136,16 @@ final class WidgetViews {
     static RemoteViews tasks(Context context, Bundle options) {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_tasks);
         rv.removeAllViews(R.id.tk_list);
+        WidgetTheme theme = WidgetTheme.of(context);
+        if (theme != null) {
+            WidgetTheme.background(rv, R.id.tk_root, theme.bg);
+            WidgetTheme.icon(rv, R.id.tk_icon, theme.icon);
+            WidgetTheme.icon(rv, R.id.tk_refresh, theme.icon);
+            WidgetTheme.background(rv, R.id.tk_add, theme.tile);
+            WidgetTheme.icon(rv, R.id.tk_add, theme.icon);
+            rv.setTextColor(R.id.tk_title, theme.text);
+            rv.setTextColor(R.id.tk_empty, theme.muted);
+        }
         rv.setOnClickPendingIntent(R.id.tk_title_bar, open(context, "#/", 200));
         rv.setOnClickPendingIntent(R.id.tk_refresh, broadcast(context, TasksWidget.class, TasksWidget.ACTION_REFRESH, "refresh"));
         rv.setContentDescription(R.id.tk_refresh, WidgetStore.tr(context, "Actualiser", "Refresh"));
@@ -165,7 +182,15 @@ final class WidgetViews {
             if (done && hideDone) continue;
             String text = t.optString("text", "");
             RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_task);
-            row.setImageViewResource(R.id.tk_check, done ? R.drawable.widget_check_on : R.drawable.widget_check_off);
+            // Case : pleine et cochée, ou vide (fond et coche recolorés selon le thème).
+            row.setInt(R.id.tk_check, "setBackgroundResource", done ? R.drawable.widget_check_box_on : R.drawable.widget_check_box_off);
+            row.setImageViewResource(R.id.tk_check, done ? R.drawable.ic_w_check : android.R.color.transparent);
+            if (theme != null) {
+                WidgetTheme.background(row, R.id.tk_check, done ? theme.accent : theme.check);
+                if (done) WidgetTheme.icon(row, R.id.tk_check, theme.onAccent);
+                row.setTextColor(R.id.tk_text, theme.text);
+                row.setTextColor(R.id.tk_text_done, theme.muted);
+            }
             if (done) {
                 SpannableString struck = new SpannableString(text);
                 struck.setSpan(new StrikethroughSpan(), 0, struck.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -198,6 +223,13 @@ final class WidgetViews {
     static RemoteViews wake(Context context, Bundle options) {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_wake);
         rv.removeAllViews(R.id.wk_list);
+        WidgetTheme theme = WidgetTheme.of(context);
+        if (theme != null) {
+            WidgetTheme.background(rv, R.id.wk_root, theme.bg);
+            WidgetTheme.icon(rv, R.id.wk_icon, theme.icon);
+            rv.setTextColor(R.id.wk_title, theme.text);
+            rv.setTextColor(R.id.wk_empty, theme.muted);
+        }
         rv.setTextViewText(R.id.wk_title, WidgetStore.tr(context, "Allumer l’ordinateur", "Turn on computer"));
         rv.setOnClickPendingIntent(R.id.wk_title_bar, open(context, "#/", 300));
         JSONArray computers = WidgetStore.data(context).optJSONArray("computers");
@@ -217,6 +249,12 @@ final class WidgetViews {
             if (name.isEmpty()) name = WidgetStore.tr(context, "Ordinateur", "Computer");
             String status = WidgetStore.status(context, id);
             RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_wake_row);
+            if (theme != null) {
+                WidgetTheme.background(row, R.id.wk_button, theme.accent);
+                WidgetTheme.icon(row, R.id.wk_button, theme.onAccent);
+                row.setTextColor(R.id.wk_name, theme.text);
+                row.setTextColor(R.id.wk_status, theme.muted);
+            }
             row.setTextViewText(R.id.wk_name, name);
             row.setTextViewText(R.id.wk_status, status.isEmpty() ? WidgetStore.tr(context, "Toucher pour allumer", "Tap to turn on") : status);
             row.setContentDescription(R.id.wk_row, WidgetStore.tr(context, "Allumer ", "Turn on ") + name);
@@ -241,6 +279,15 @@ final class WidgetViews {
     static RemoteViews seerr(Context context, Bundle options) {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_seerr);
         rv.removeAllViews(R.id.sr_list);
+        WidgetTheme theme = WidgetTheme.of(context);
+        if (theme != null) {
+            WidgetTheme.background(rv, R.id.sr_root, theme.bg);
+            WidgetTheme.background(rv, R.id.sr_bar, theme.tile);
+            WidgetTheme.icon(rv, R.id.sr_search_icon, theme.icon);
+            WidgetTheme.icon(rv, R.id.sr_mic, theme.icon);
+            rv.setTextColor(R.id.sr_hint, theme.muted);
+            rv.setTextColor(R.id.sr_empty, theme.muted);
+        }
         rv.setTextViewText(R.id.sr_hint, WidgetStore.tr(context, "Demander un film ou une série", "Request a movie or a show"));
         rv.setContentDescription(R.id.sr_bar, WidgetStore.tr(context, "Rechercher un film ou une série", "Search for a movie or a show"));
         rv.setContentDescription(R.id.sr_mic, WidgetStore.tr(context, "Dicter", "Speak"));
@@ -276,6 +323,11 @@ final class WidgetViews {
             String title = r.optString("title", "");
             String label = mediaState(context, r.optString("state", ""));
             RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_seerr_row);
+            if (theme != null) {
+                WidgetTheme.icon(row, R.id.sr_row_icon, theme.icon);
+                row.setTextColor(R.id.sr_title, theme.text);
+                row.setTextColor(R.id.sr_state, theme.icon);
+            }
             row.setTextViewText(R.id.sr_title, title);
             row.setTextViewText(R.id.sr_state, label);
             row.setContentDescription(R.id.sr_row, label.isEmpty() ? title : title + " : " + label);

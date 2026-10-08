@@ -18,6 +18,7 @@
         android:paddingEnd="4dp"
         android:background="@drawable/widget_search_bg">
         <ImageView
+            android:id="@+id/sr_search_icon"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_w_search"

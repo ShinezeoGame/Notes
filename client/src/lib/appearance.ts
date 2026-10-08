@@ -326,6 +326,19 @@ export function wallpaperCss(w: Wallpaper): string {
 }
 
 let currentBase: 'dark' | 'light' = 'dark';
+let applied: Appearance | null = null;
+const appliedListeners = new Set<() => void>();
+
+/** Apparence affichée en ce moment (celle de l'espace, ou celle propre à l'appareil). */
+export const appliedAppearance = (): Appearance => applied ?? cachedAppearance();
+
+/** Prévenu à chaque changement d'apparence appliqué (widgets du téléphone…). */
+export function onAppearanceApplied(fn: () => void) {
+  appliedListeners.add(fn);
+  return () => {
+    appliedListeners.delete(fn);
+  };
+}
 const baseListeners = new Set<() => void>();
 
 /** Thème clair ou sombre en cours (éditeur, fenêtres de BlockNote…). */
@@ -381,6 +394,8 @@ export function applyAppearance(a: Appearance) {
     baseListeners.forEach((l) => l());
   }
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', p.bg);
+  applied = a;
+  appliedListeners.forEach((l) => l());
   try {
     // Copie locale pour les couleurs du démarrage : sans une image de fond volumineuse (adresse data:) ni son original.
     const w = a.wallpaper;

@@ -217,7 +217,7 @@ export const EN_SERVER: Record<string, string> = {
   'Action impossible sur le réseau local.': 'Could not do this on the local network.',
   // Films et séries (Seerr)
   'Seerr n’est pas réglé : ajoutez-le au homelab, avec sa clé API.': 'Seerr isn’t set up: add it to the homelab, with its API key.',
-  'Certificat de Seerr non reconnu : cochez « Ignorer le certificat » dans le homelab.': 'Seerr’s certificate isn’t recognised: tick “Ignore the certificate” in the homelab.',
+  'Certificat de Seerr non reconnu : cochez « Ignorer le certificat » dans le homelab.': 'Seerr’s certificate isn’t recognized: tick “Ignore the certificate” in the homelab.',
   'Seerr ne répond pas : vérifiez son adresse dans le homelab.': 'Seerr isn’t responding: check its address in the homelab.',
   'Clé API refusée par Seerr : vérifiez-la dans le homelab.': 'Seerr refused the API key: check it in the homelab.',
   'Déjà demandé.': 'Already requested.',

@@ -47,6 +47,15 @@ export type Settings = {
    *  affichée (vide : la première de l'accueil). Voir lib/phoneWidgets.ts. */
   phoneShortcuts: string[];
   phoneTaskList: string;
+  /**
+   * Couleurs des widgets de l'écran d'accueil du téléphone : « app » (thème et accent d'Ostal), « phone » (clair ou sombre
+   * selon le téléphone) ou « custom » (fond et couleur choisis : `phoneWidgetBg`, `phoneWidgetAccent`, vides : ceux
+   * d'Ostal) ; `phoneWidgetOpacity` : opacité du fond (%).
+   */
+  phoneWidgetTheme: 'app' | 'phone' | 'custom';
+  phoneWidgetBg: string;
+  phoneWidgetAccent: string;
+  phoneWidgetOpacity: number;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -106,6 +115,10 @@ function defaults(lang: Lang = 'en'): Settings {
     remindersMode: '',
     phoneShortcuts: [],
     phoneTaskList: '',
+    phoneWidgetTheme: 'app',
+    phoneWidgetBg: '',
+    phoneWidgetAccent: '',
+    phoneWidgetOpacity: 92,
   };
 }
 

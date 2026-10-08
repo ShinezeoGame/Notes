@@ -13,6 +13,8 @@ import {
   pinShortcut,
   pinWidget,
   taskLists,
+  widgetBackgrounds,
+  widgetColors,
   widgetsInfo,
   type PhoneShortcut,
   type WidgetKind,
@@ -20,6 +22,7 @@ import {
 } from '../lib/phoneWidgets';
 import { updateSettings, useSettings } from '../lib/settings';
 import { useSeerr } from '../lib/seerr';
+import { ACCENTS, onAppearanceApplied } from '../lib/appearance';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { toast } from './Toast';
@@ -133,6 +136,8 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
         <p className="nb-muted pw-hint">{t('Pour le widget « Films et séries » : reliez d’abord Seerr, dans la section Films et séries.')}</p>
       ) : null}
 
+      <WidgetColors info={info} />
+
       <h4 className="pw-sub">{t('Raccourcis')}</h4>
       <p className="nb-muted pw-intro">
         {t('Cochez ceux du widget Raccourcis ({max} au plus) ; les {launcher} premiers apparaissent aussi en appui long sur l’icône d’Ostal.', {
@@ -164,5 +169,144 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
       </ul>
       {error ? <div className="nb-error">{error}</div> : null}
     </section>
+  );
+}
+
+/** Couleur Android (« #AARRGGBB ») en couleur CSS. */
+function css(argb: string): string {
+  const n = (i: number) => parseInt(argb.slice(i, i + 2), 16);
+  return `rgba(${n(3)}, ${n(5)}, ${n(7)}, ${(n(1) / 255).toFixed(3)})`;
+}
+
+/** Couleurs des widgets : thème d'Ostal (par défaut), couleurs du téléphone, ou fond et couleur choisis, avec aperçu. */
+function WidgetColors({ info }: { info: WidgetsInfo | null }) {
+  const settings = useSettings();
+  // Aperçu refait quand le thème d'Ostal change.
+  const [, setTick] = useState(0);
+  useEffect(() => onAppearanceApplied(() => setTick((n) => n + 1)), []);
+  if (!info) return null;
+  if (info.colors === undefined || !info.colors) {
+    return (
+      <>
+        <h4 className="pw-sub">{t('Couleurs des widgets')}</h4>
+        <p className="nb-muted pw-hint">
+          {info.colors === undefined
+            ? t('Installez la dernière application Android pour donner aux widgets les couleurs d’Ostal ou celles de votre choix.')
+            : t('Sur ce téléphone (Android 11 ou plus ancien), les widgets gardent les couleurs claires ou sombres du téléphone.')}
+        </p>
+      </>
+    );
+  }
+  const mode = settings.phoneWidgetTheme;
+  const colors = widgetColors();
+  const modes: { id: typeof mode; label: string }[] = [
+    { id: 'app', label: t('Comme Ostal') },
+    { id: 'phone', label: t('Comme le téléphone') },
+    { id: 'custom', label: t('Personnalisées') },
+  ];
+  return (
+    <>
+      <h4 className="pw-sub">{t('Couleurs des widgets')}</h4>
+      <div className="nb-segmented" role="radiogroup" aria-label={t('Couleurs des widgets')}>
+        {modes.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            role="radio"
+            aria-checked={mode === m.id}
+            className={mode === m.id ? 'nb-segmented--on' : ''}
+            onClick={() => updateSettings({ phoneWidgetTheme: m.id })}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <p className="nb-muted pw-intro">
+        {mode === 'app'
+          ? t('Le thème et la couleur d’accent d’Ostal (Personnaliser), suivis à chaque changement.')
+          : mode === 'phone'
+            ? t('Clair ou sombre, comme le téléphone.')
+            : t('Un fond et une couleur rien que pour les widgets.')}
+      </p>
+      {mode === 'custom' ? (
+        <div className="pw-colors">
+          <span className="pw-colors-label">{t('Fond')}</span>
+          <div className="ap-swatches">
+            {widgetBackgrounds().map((b) => (
+              <button
+                key={b.color || 'ostal'}
+                type="button"
+                className={`ap-swatch${b.color ? '' : ' pw-swatch--app'}${settings.phoneWidgetBg === b.color ? ' ap-swatch--on' : ''}`}
+                style={b.color ? { background: b.color } : undefined}
+                onClick={() => updateSettings({ phoneWidgetBg: b.color })}
+                title={b.label}
+                aria-label={b.label}
+                aria-pressed={settings.phoneWidgetBg === b.color}
+              />
+            ))}
+            <label className="ap-swatch ap-swatch--custom" title={t('Autre couleur')}>
+              <input type="color" value={settings.phoneWidgetBg || '#1c1c1f'} onChange={(e) => updateSettings({ phoneWidgetBg: e.target.value })} aria-label={t('Autre couleur de fond')} />
+              <Icon name="plus" size={14} />
+            </label>
+          </div>
+          <span className="pw-colors-label">{t('Couleur')}</span>
+          <div className="ap-swatches">
+            <button
+              type="button"
+              className={`ap-swatch pw-swatch--app${settings.phoneWidgetAccent ? '' : ' ap-swatch--on'}`}
+              onClick={() => updateSettings({ phoneWidgetAccent: '' })}
+              title={t('Comme Ostal')}
+              aria-label={t('Comme Ostal')}
+              aria-pressed={!settings.phoneWidgetAccent}
+            />
+            {ACCENTS.map((a) => (
+              <button
+                key={a.color}
+                type="button"
+                className={`ap-swatch${settings.phoneWidgetAccent === a.color ? ' ap-swatch--on' : ''}`}
+                style={{ background: a.color }}
+                onClick={() => updateSettings({ phoneWidgetAccent: a.color })}
+                title={a.label}
+                aria-label={a.label}
+                aria-pressed={settings.phoneWidgetAccent === a.color}
+              />
+            ))}
+            <label className="ap-swatch ap-swatch--custom" title={t('Autre couleur')}>
+              <input type="color" value={settings.phoneWidgetAccent || '#7c5cff'} onChange={(e) => updateSettings({ phoneWidgetAccent: e.target.value })} aria-label={t('Autre couleur')} />
+              <Icon name="plus" size={14} />
+            </label>
+          </div>
+          <label className="pw-colors-label" htmlFor="pw-opacity">
+            {t('Opacité du fond : {n} %', { n: settings.phoneWidgetOpacity })}
+          </label>
+          <input id="pw-opacity" type="range" min={30} max={100} step={1} value={settings.phoneWidgetOpacity} onChange={(e) => updateSettings({ phoneWidgetOpacity: Number(e.target.value) })} />
+        </div>
+      ) : null}
+      {colors ? (
+        <div className="pw-wall" aria-hidden="true">
+          <div className="pw-preview" style={{ background: css(colors.bg) }}>
+            <div className="pw-preview-title" style={{ color: css(colors.text) }}>
+              <span style={{ color: css(colors.icon) }}>
+                <Icon name="checkSquare" size={16} />
+              </span>
+              <b>{t('Tâches')}</b>
+              <span className="pw-preview-add" style={{ background: css(colors.tile), color: css(colors.icon) }}>
+                <Icon name="plus" size={14} />
+              </span>
+            </div>
+            <div className="pw-preview-row">
+              <span className="pw-preview-box" style={{ background: css(colors.accent), borderColor: css(colors.accent), color: css(colors.onAccent) }}>
+                <Icon name="check" size={12} />
+              </span>
+              <s style={{ color: css(colors.muted) }}>{t('Acheter du pain')}</s>
+            </div>
+            <div className="pw-preview-row">
+              <span className="pw-preview-box" style={{ borderColor: css(colors.check) }} />
+              <span style={{ color: css(colors.text) }}>{t('Arroser les plantes')}</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

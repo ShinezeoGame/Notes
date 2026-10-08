@@ -111,6 +111,8 @@ Avec l’application Android, Ostal se pose aussi sur l’écran d’accueil du 
 1. Dans Ostal : **Réglages → Widgets du téléphone**, puis **Ajouter** à côté du widget voulu. Le téléphone demande où le poser.
 2. Ou, sur l’écran d’accueil du téléphone : appui long sur un espace vide → **Widgets** → **Ostal**, puis faites glisser le widget à sa place. Un appui long sur un widget posé permet de l’agrandir.
 
+**Couleurs** (*Réglages → Widgets du téléphone → Couleurs des widgets*, Android 12 ou plus récent) : **Comme Ostal** (par défaut : le thème et la couleur d’accent choisis dans *Personnaliser*, suivis à chaque changement), **Comme le téléphone** (clair ou sombre selon le téléphone) ou **Personnalisées** : un fond, une couleur et l’opacité du fond rien que pour les widgets, avec un aperçu.
+
 **Réglages → Widgets du téléphone** permet aussi de choisir les raccourcis (cochez-les dans l’ordre voulu), la liste affichée par le widget Tâches s’il y en a plusieurs à l’accueil, et de poser **une icône seule** sur l’écran d’accueil (bouton **Icône** à côté d’un raccourci, par exemple « Atelier PDF »). Un appui long sur l’icône d’Ostal montre les 4 premiers raccourcis choisis.
 
 **Bon à savoir** :

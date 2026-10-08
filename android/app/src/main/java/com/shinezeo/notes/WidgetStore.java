@@ -29,6 +29,8 @@ final class WidgetStore {
     private static final String KEY_STATUS = "status:";
     /** Widget « Films et séries » : { state: "ok" | "notConfigured" | "noServer" | "error" | "offline", requests: [...] }. */
     private static final String KEY_SEERR = "seerr";
+    /** Couleurs des widgets choisies dans l'application (thème d'Ostal ou couleurs personnalisées) ; absentes : téléphone. */
+    private static final String KEY_COLORS = "colors";
 
     private WidgetStore() {}
 
@@ -315,6 +317,24 @@ final class WidgetStore {
 
     static String status(Context context, String computerId) {
         return prefs(context).getString(KEY_STATUS + computerId, "");
+    }
+
+    // ---------- Couleurs ----------
+
+    /** { bg, tile, text, muted, icon, accent, onAccent, check } en « #AARRGGBB », ou null (couleurs du téléphone). */
+    static JSONObject colors(Context context) {
+        String raw = prefs(context).getString(KEY_COLORS, "");
+        if (raw.isEmpty()) return null;
+        try {
+            return new JSONObject(raw);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static void saveColors(Context context, JSONObject colors) {
+        if (colors == null) prefs(context).edit().remove(KEY_COLORS).apply();
+        else prefs(context).edit().putString(KEY_COLORS, colors.toString()).apply();
     }
 
     // ---------- Films et séries (Seerr) : dernières demandes ----------

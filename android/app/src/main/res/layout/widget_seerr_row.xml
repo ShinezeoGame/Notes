@@ -8,6 +8,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical">
     <ImageView
+        android:id="@+id/sr_row_icon"
         android:layout_width="16dp"
         android:layout_height="16dp"
         android:src="@drawable/ic_w_media"

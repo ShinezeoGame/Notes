@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Case d'une tâche faite (widget Tâches) : pleine, couleur d'accent ; la coche est dessinée par-dessus (ic_w_check). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_accent" />
+    <corners android:radius="5dp" />
+</shape>
