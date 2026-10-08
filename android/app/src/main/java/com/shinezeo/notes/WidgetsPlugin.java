@@ -207,7 +207,9 @@ public class WidgetsPlugin extends Plugin {
         }
         activity.runOnUiThread(() -> {
             try {
-                Context ctx = getContext();
+                // Contexte de l'application, comme l'écran d'accueil : celui de l'activité (AppCompat) remplacerait les
+                // vues du widget par les siennes (AppCompatImageView), que RemoteViews refuse.
+                Context ctx = getContext().getApplicationContext();
                 Bundle options = new Bundle();
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 320);
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 220);
