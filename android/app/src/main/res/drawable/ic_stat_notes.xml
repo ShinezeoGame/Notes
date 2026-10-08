@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icône de notification (silhouette blanche) : la maison d'Ostal et sa fenêtre ronde. -->
+<!-- Icône de notification (silhouette blanche) : le logo d'Ostal, « O » sous une flèche en toit, point au centre. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,11 +8,16 @@
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="3.14"
+        android:strokeWidth="3.05"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M2.57,12.0L12.0,3.78L21.42,12.0M5.71,10.42V20.21H18.27V10.42" />
+        android:pathData="M4.50,8.50L12.00,2.53L19.50,8.50" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.31"
+        android:pathData="M6.15,15.50a5.85,5.85 0,1 0,11.70,0a5.85,5.85 0,1 0,-11.70,0" />
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M9.46,15.26a2.54,2.54 0,1 0,5.08,0a2.54,2.54 0,1 0,-5.08,0z" />
+        android:pathData="M10.09,15.50a1.91,1.91 0,1 0,3.82,0a1.91,1.91 0,1 0,-3.82,0z" />
 </vector>

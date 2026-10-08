@@ -1,5 +1,5 @@
-// Logo d'Ostal : maison blanche au toit débordant et fenêtre ronde allumée (jaune) sur une tuile en dégradé (même
-// dessin que client/public/icon.svg et les icônes de l'application).
+// Logo d'Ostal : un « O » (le foyer) sous une flèche en toit, point jaune allumé au centre, sur une tuile en dégradé
+// (même dessin que client/public/icon.svg et les icônes de l'application).
 import { useId } from 'react';
 
 export function OstalLogo({ size = 24, className }: { size?: number; className?: string }) {
@@ -19,15 +19,9 @@ export function OstalLogo({ size = 24, className }: { size?: number; className?:
       </defs>
       <rect width="512" height="512" rx="116" fill={`url(#${id}g)`} />
       <rect width="512" height="512" rx="116" fill={`url(#${id}h)`} />
-      <path
-        d="M100 252L256 116L412 252M152 226V388H360V226"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="52"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="256" cy="306" r="42" fill="#FFD166" />
+      <path d="M138 206L256 112L374 206" fill="none" stroke="#fff" strokeWidth="48" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="256" cy="316" r="92" fill="none" stroke="#fff" strokeWidth="52" />
+      <circle cx="256" cy="316" r="30" fill="#FFD166" />
     </svg>
   );
 }
