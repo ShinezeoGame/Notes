@@ -108,7 +108,7 @@ function placeEverywhere(layouts: Layouts, widget: Widget): Layouts {
 
 /**
  * Tableau de bord de départ : horloge, météo, agenda, pages, note rapide, tâches, puis ce qui est déjà configuré
- * (caméras, maison, homelab). Identifiants fixes : deux appareils qui le créent en même temps créent le même.
+ * (caméras, maison, homelab, Seerr). Identifiants fixes : deux appareils qui le créent en même temps créent le même.
  */
 export function defaultDashboard(doc: Y.Doc): DashboardData {
   const configured = (map: string, test: (cfg: Record<string, unknown>) => boolean) => {
@@ -142,6 +142,12 @@ export function defaultDashboard(doc: Y.Doc): DashboardData {
   if (configured('cameras', (c) => count(c.cameras) > 0)) extra.push(['cameras', {}]);
   if (configured('smarthome', (c) => Boolean(c.url && c.token))) extra.push(['smarthome', { favoritesOnly: true }]);
   if (configured('homelab', (c) => count(c.services) + count(c.devices) > 0)) extra.push(['homelab', {}]);
+  // Seerr relié (homelab, avec sa clé) : films et séries à demander.
+  const seerr = (s: unknown) => {
+    const svc = (s ?? {}) as Record<string, unknown>;
+    return ['seerr', 'jellyseerr', 'overseerr'].includes(String(svc.type)) && Boolean(svc.apiKey);
+  };
+  if (configured('homelab', (c) => Array.isArray(c.services) && c.services.some(seerr))) extra.push(['seerr', {}]);
   for (const [type, config] of extra) {
     const widget = w(type, config);
     data = { widgets: [...data.widgets, widget], layouts: placeEverywhere(data.layouts, widget) };

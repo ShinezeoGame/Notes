@@ -11,13 +11,17 @@ Gratuite, sans compte, sur Windows, Android et dans le navigateur.
 &nbsp;
 [![Télécharger pour Android](https://img.shields.io/badge/T%C3%A9l%C3%A9charger%20pour%20Android-2eaf7d?style=for-the-badge)](https://github.com/ShinezeoGame/Notes/releases/download/latest/Ostal-Android.apk)
 
-<img src="docs/captures/accueil.webp" width="100%" alt="L’accueil d’Ostal sur un ordinateur et sur un téléphone : heure, météo, Wi-Fi des invités en QR code, tâches, papiers à renouveler, agenda et lumières de la maison">
+<a href="docs/ostal-bande-annonce.mp4"><img src="docs/captures/bande-annonce.avif" width="100%" alt="Bande-annonce d’Ostal : l’accueil et ses widgets, les thèmes, les notes, les papiers et leurs rappels, l’atelier PDF, les sauvegardes, sur ordinateur et sur téléphone"></a>
+
+▶️ **[La bande-annonce avec le son](docs/ostal-bande-annonce.mp4)** (44 s)
 
 </div>
 
 ## 🏠 Un accueil qui vous ressemble
 
 Météo, agenda, tâches, post-it, raccourcis, lumières du salon, Wi-Fi des invités en QR code… Glissez vos widgets où vous voulez, choisissez un fond d’écran et un thème : en deux minutes, Ostal est chez vous.
+
+<img src="docs/captures/accueil.webp" width="100%" alt="L’accueil d’Ostal sur un ordinateur et sur un téléphone : heure, météo, Wi-Fi des invités en QR code, tâches, papiers à renouveler, agenda et lumières de la maison">
 
 <img src="docs/captures/themes.webp" width="100%" alt="Le même accueil en trois apparences : thème forêt, thème clair et thème lavande">
 

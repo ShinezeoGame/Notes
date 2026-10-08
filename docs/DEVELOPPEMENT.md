@@ -61,7 +61,7 @@ client/   React + Vite + BlockNote (éditeur) + Yjs (CRDT) + react-grid-layout (
 server/   Node.js : Express (API, uploads, proxy iCal, caméras, fichiers statiques) + WebSocket Yjs (synchronisation, droits, persistance)
 android/  Projet Capacitor Android (APK)
 desktop/  Application Windows (Electron) : fenêtre, serveur Ostal intégré, installateur (electron-builder)
-docs/     Mode d’emploi, développement, captures d’écran du README
+docs/     Mode d’emploi, développement, captures d’écran et bande-annonce du README
 .github/  Workflow de construction de l’APK et de l’installateur Windows, essayés (émulateur Android, Windows) avant publication
 CLAUDE.md Repères pour Claude Code, dont la carte du code (graphify) qui lui évite de relire tout le projet
 ```
