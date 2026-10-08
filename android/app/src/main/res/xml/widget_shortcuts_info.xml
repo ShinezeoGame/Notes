@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget « Raccourcis Ostal » (ShortcutsWidget) : une rangée de raccourcis, 4 cases de large au départ. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_shortcuts"
+    android:previewLayout="@layout/widget_shortcuts"
+    android:description="@string/widget_shortcuts_desc"
+    android:widgetCategory="home_screen" />

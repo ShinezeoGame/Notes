@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aperçu du widget « Tâches » dans le choix des widgets (contenu d'exemple). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tk_prev_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="10dp"
+    android:background="@drawable/widget_bg">
+    <LinearLayout
+        android:id="@+id/tk_prev_title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_w_tasks"
+            android:contentDescription="@null" />
+        <TextView
+            android:id="@+id/tk_prev_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text"
+            android:text="@string/widget_tasks_title" />
+        <ImageView
+            android:id="@+id/tk_prev_refresh"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_w_refresh"
+            android:contentDescription="@null" />
+        <ImageView
+            android:id="@+id/tk_prev_add"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="2dp"
+            android:padding="8dp"
+            android:background="@drawable/widget_tile"
+            android:src="@drawable/ic_w_add"
+            android:contentDescription="@null" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/tk_prev1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingEnd="6dp">
+        <ImageView
+            android:id="@+id/tk_prev_check1"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/widget_check_off"
+            android:contentDescription="@null" />
+        <TextView
+            android:id="@+id/tk_prev_text1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_text"
+            android:text="@string/widget_preview_task1" />
+        <TextView
+            android:id="@+id/tk_prev_done1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_muted"
+            android:visibility="gone" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/tk_prev2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingEnd="6dp">
+        <ImageView
+            android:id="@+id/tk_prev_check2"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/widget_check_off"
+            android:contentDescription="@null" />
+        <TextView
+            android:id="@+id/tk_prev_text2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_text"
+            android:text="@string/widget_preview_task2" />
+        <TextView
+            android:id="@+id/tk_prev_done2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_muted"
+            android:visibility="gone" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/tk_prev3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingEnd="6dp">
+        <ImageView
+            android:id="@+id/tk_prev_check3"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/widget_check_off"
+            android:contentDescription="@null" />
+        <TextView
+            android:id="@+id/tk_prev_text3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_text"
+            android:text="@string/widget_preview_task3" />
+        <TextView
+            android:id="@+id/tk_prev_done3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="14sp"
+            android:textColor="@color/widget_muted"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>

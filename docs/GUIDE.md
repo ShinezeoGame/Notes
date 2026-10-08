@@ -8,6 +8,7 @@ Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom
 - [Premiers pas](#premiers-pas)
 - [Partager](#partager)
 - [Accueil et widgets](#accueil-et-widgets)
+- [Widgets du téléphone](#widgets-du-téléphone)
 - [Personnaliser](#personnaliser)
 - [Notes](#notes)
 - [Tableur](#tableur)
@@ -94,6 +95,27 @@ L’accueil s’ouvre au démarrage. Un **accueil de départ** est proposé (hor
 Chaque taille d’écran a sa disposition : la première fois, celle de l’ordinateur est adaptée (un widget par ligne sur téléphone), puis vos changements sur ce type d’écran sont gardés. L’accueil est le même sur tous vos appareils, et le contenu des widgets (note rapide, tâches) est synchronisé en direct.
 
 Widgets : **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Météo** (Open-Meteo, gratuit et sans compte : l’appareil interroge directement open-meteo.com), **Agenda** (prochains événements ou mois), **Tâches**, **Recherche** (Google, DuckDuckGo, Qwant, Bing, Ecosia, Wikipédia, YouTube ou vos notes), **Note rapide** (couleur de post-it), **Page de notes** (une page modifiable sur l’accueil), **Pages** (récentes ou principales), **Caméras**, **Maison**, **Homelab**, **Allumer un PC** (voir [Allumer un ordinateur](#allumer-un-ordinateur)), **Wi-Fi invités** (un QR code que vos invités scannent avec l’appareil photo de leur téléphone pour rejoindre votre Wi-Fi, sans que vous dictiez le mot de passe ; touchez le code pour l’afficher en grand. Le nom du réseau et son mot de passe sont souvent écrits sous la box ; le mot de passe peut rester caché sous le code), **Raccourcis** (sites et pages de notes), **Image** (recadrée au format du widget), **Site web** (les tableaux de bord de votre réseau s’affichent en général, et un lien de vidéo YouTube ou Vimeo devient un lecteur ; les sites qui refusent de s’afficher dans une autre application, comme Google, sont proposés en **Ouvrir le site**. L’application pour Windows affiche tous les sites, y compris en http).
+
+## Widgets du téléphone
+
+Avec l’application Android, Ostal se pose aussi sur l’écran d’accueil du téléphone :
+
+- **Tâches** : une liste de tâches de l’accueil d’Ostal. Touchez une tâche pour la cocher ou la décocher, **+** pour en ajouter une (une petite fenêtre s’ouvre, sans lancer Ostal), **↻** pour actualiser, le titre pour ouvrir Ostal.
+- **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)) ; le widget affiche ensuite « Signal envoyé à 08:42 ».
+- **Raccourcis** : jusqu’à 6 boutons au choix, par exemple **Nouvelle page** (crée une page et l’ouvre), **Agenda**, **Papiers**, **Ajouter un papier**, **Atelier PDF**, **Maison**, **Caméras**.
+
+**Ajouter un widget** :
+
+1. Dans Ostal : **Réglages → Widgets du téléphone**, puis **Ajouter** à côté du widget voulu. Le téléphone demande où le poser.
+2. Ou, sur l’écran d’accueil du téléphone : appui long sur un espace vide → **Widgets** → **Ostal**, puis faites glisser le widget à sa place. Un appui long sur un widget posé permet de l’agrandir.
+
+**Réglages → Widgets du téléphone** permet aussi de choisir les raccourcis (cochez-les dans l’ordre voulu), la liste affichée par le widget Tâches s’il y en a plusieurs à l’accueil, et de poser **une icône seule** sur l’écran d’accueil (bouton **Icône** à côté d’un raccourci, par exemple « Atelier PDF »). Un appui long sur l’icône d’Ostal montre les 4 premiers raccourcis choisis.
+
+**Bon à savoir** :
+
+- Les widgets se mettent à jour à chaque ouverture d’Ostal et toutes les 30 minutes par le serveur ; **↻** les actualise tout de suite.
+- Sans serveur Ostal, ou hors connexion, les tâches cochées ou ajoutées sur le widget sont enregistrées à la prochaine ouverture d’Ostal. Le widget **Allumer l’ordinateur** demande un serveur Ostal.
+- Ces widgets demandent l’application Android d’octobre 2026 ou plus récente : si *Réglages → Widgets du téléphone* n’apparaît pas, installez le dernier `Ostal-Android.apk` ([dernière version](https://github.com/ShinezeoGame/Notes/releases/tag/latest)) par-dessus l’ancien, vos données restent.
 
 ## Personnaliser
 

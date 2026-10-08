@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Couleurs des widgets de l'écran d'accueil, thème sombre du téléphone. -->
+<resources>
+    <color name="widget_bg">#F21E1E23</color>
+    <color name="widget_tile">#FF2E2B40</color>
+    <color name="widget_text">#FFF2F2F4</color>
+    <color name="widget_muted">#FFA3A3AE</color>
+    <color name="widget_icon">#FFC6BCFF</color>
+    <color name="widget_accent">#FF8577FF</color>
+    <color name="widget_on_accent">#FFFFFFFF</color>
+    <color name="widget_check">#FF7A7A8C</color>
+</resources>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/android-widget-icons.mjs (icône « server » de l'application) : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5.3,4H18.7A1.8,1.8 0,0 1,20.5,5.8V9.2A1.8,1.8 0,0 1,18.7,11H5.3A1.8,1.8 0,0 1,3.5,9.2V5.8A1.8,1.8 0,0 1,5.3,4Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5.3,13H18.7A1.8,1.8 0,0 1,20.5,14.8V18.2A1.8,1.8 0,0 1,18.7,20H5.3A1.8,1.8 0,0 1,3.5,18.2V14.8A1.8,1.8 0,0 1,5.3,13Z" />
+    <path
+        android:fillColor="@color/widget_icon"
+        android:pathData="M6.2,7.5a1,1 0,1 0,2,0a1,1 0,1 0,-2,0Z" />
+    <path
+        android:fillColor="@color/widget_icon"
+        android:pathData="M6.2,16.5a1,1 0,1 0,2,0a1,1 0,1 0,-2,0Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,7.5L17,7.5" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,16.5L17,16.5" />
+</vector>

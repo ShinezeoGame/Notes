@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Couleurs des widgets de l'écran d'accueil (thème clair ; thème sombre : values-night). -->
+<resources>
+    <color name="widget_bg">#F5FFFFFF</color>
+    <color name="widget_tile">#FFEFECFF</color>
+    <color name="widget_text">#FF1F1F24</color>
+    <color name="widget_muted">#FF6B6B76</color>
+    <color name="widget_icon">#FF5A4BE0</color>
+    <color name="widget_accent">#FF6C5CFF</color>
+    <color name="widget_on_accent">#FFFFFFFF</color>
+    <color name="widget_check">#FF9A9AA6</color>
+</resources>

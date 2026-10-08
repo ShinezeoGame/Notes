@@ -43,6 +43,10 @@ export type Settings = {
   /** Rappels (papiers, agendas) activés sur cet appareil ; `remindersMode` : moyen retenu (voir lib/reminders.ts). */
   reminders: boolean;
   remindersMode: '' | 'native' | 'push' | 'page';
+  /** Widgets de l'écran d'accueil du téléphone : raccourcis choisis (vide : choix par défaut) et liste de tâches
+   *  affichée (vide : la première de l'accueil). Voir lib/phoneWidgets.ts. */
+  phoneShortcuts: string[];
+  phoneTaskList: string;
 };
 
 const STORAGE_KEY = 'notes.settings.v1';
@@ -100,6 +104,8 @@ function defaults(lang: Lang = 'en'): Settings {
     knowsNewName: true,
     reminders: false,
     remindersMode: '',
+    phoneShortcuts: [],
+    phoneTaskList: '',
   };
 }
 

@@ -3,6 +3,8 @@ import { useSyncExternalStore } from 'react';
 export type Route =
   | { name: 'home' }
   | { name: 'notes' }
+  /** Nouvelle page créée puis ouverte (raccourcis de l'écran d'accueil du téléphone). */
+  | { name: 'newPage' }
   | { name: 'page'; pageId: string }
   | { name: 'trash' }
   | { name: 'agenda' }
@@ -22,6 +24,7 @@ export function parseRoute(hash: string): Route {
   if ((m = /^\/p\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'page', pageId: m[1] };
   if (/^\/trash/.test(h)) return { name: 'trash' };
   if (/^\/notes/.test(h)) return { name: 'notes' };
+  if (/^\/nouvelle-page/.test(h)) return { name: 'newPage' };
   if (/^\/agenda/.test(h)) return { name: 'agenda' };
   // « #/dashboard » : ancienne adresse du homelab.
   if (/^\/(homelab|dashboard)/.test(h)) return { name: 'homelab' };
@@ -45,6 +48,8 @@ export function routeToHash(route: Route): string {
       return '#/trash';
     case 'notes':
       return '#/notes';
+    case 'newPage':
+      return '#/nouvelle-page';
     case 'agenda':
       return '#/agenda';
     case 'homelab':

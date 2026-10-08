@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Une tâche du widget « Tâches » (texte barré et grisé quand elle est faite : tk_text_done). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tk_row"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="38dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingEnd="6dp">
+    <ImageView
+        android:id="@+id/tk_check"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/widget_check_off"
+        android:contentDescription="@null" />
+    <TextView
+        android:id="@+id/tk_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="14sp"
+        android:textColor="@color/widget_text" />
+    <TextView
+        android:id="@+id/tk_text_done"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="14sp"
+        android:textColor="@color/widget_muted"
+        android:visibility="gone" />
+</LinearLayout>

@@ -56,6 +56,43 @@
             android:name=".ReminderReceiver"
             android:exported="false" />
 
+        <!-- Widgets de l'écran d'accueil : raccourcis, tâches (relues toutes les 30 minutes), allumer l'ordinateur -->
+        <receiver
+            android:name=".ShortcutsWidget"
+            android:label="@string/widget_shortcuts_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_shortcuts_info" />
+        </receiver>
+        <receiver
+            android:name=".TasksWidget"
+            android:label="@string/widget_tasks_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tasks_info" />
+        </receiver>
+        <receiver
+            android:name=".WakeWidget"
+            android:label="@string/widget_wake_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_wake_info" />
+        </receiver>
+        <!-- « + » du widget Tâches : petite fenêtre par-dessus l'écran d'accueil, hors de la liste des applications récentes -->
+        <activity
+            android:name=".TaskAddActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/android-widget-icons.mjs (icône « note » de l'application) : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6.7,3H17.3A2.2,2.2 0,0 1,19.5,5.2V18.8A2.2,2.2 0,0 1,17.3,21H6.7A2.2,2.2 0,0 1,4.5,18.8V5.2A2.2,2.2 0,0 1,6.7,3Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,8L16,8" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,12L16,12" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,16L12.5,16" />
+</vector>

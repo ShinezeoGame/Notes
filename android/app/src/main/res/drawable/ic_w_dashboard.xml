@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/android-widget-icons.mjs (icône « dashboard » de l'application) : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5.5,3.5H9.5A2,2 0,0 1,11.5,5.5V11.5A2,2 0,0 1,9.5,13.5H5.5A2,2 0,0 1,3.5,11.5V5.5A2,2 0,0 1,5.5,3.5Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M16,3.5H18.5A2,2 0,0 1,20.5,5.5V7.5A2,2 0,0 1,18.5,9.5H16A2,2 0,0 1,14,7.5V5.5A2,2 0,0 1,16,3.5Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M16,12.5H18.5A2,2 0,0 1,20.5,14.5V18.5A2,2 0,0 1,18.5,20.5H16A2,2 0,0 1,14,18.5V14.5A2,2 0,0 1,16,12.5Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5.5,16H9.5A2,2 0,0 1,11.5,18V18.5A2,2 0,0 1,9.5,20.5H5.5A2,2 0,0 1,3.5,18.5V18A2,2 0,0 1,5.5,16Z" />
+</vector>

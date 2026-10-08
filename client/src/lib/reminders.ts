@@ -250,8 +250,8 @@ export function refreshReminders() {
 
 let clicks = false;
 
-/** Notification touchée : la page qu'elle désigne (service worker, application Android). */
-function listenOpenRequests() {
+/** Notification, widget ou raccourci touché : la page qu'il désigne (service worker, application Android). */
+export function listenOpenRequests() {
   if (clicks) return;
   clicks = true;
   navigator.serviceWorker?.addEventListener('message', (e: MessageEvent) => {

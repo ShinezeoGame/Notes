@@ -3,6 +3,12 @@
 // serveur sans traduction ici s'affiche en français.
 
 export const EN_SERVER: Record<string, string> = {
+  // widgets.js : widgets de l'écran d'accueil du téléphone
+  'Liste de tâches invalide.': 'Invalid task list.',
+  'Cette liste de tâches n’existe plus.': 'This task list no longer exists.',
+  'Cette tâche n’existe plus.': 'This task no longer exists.',
+  'Tâche vide.': 'Empty task.',
+  'Action impossible.': 'Action not possible.',
   // backup.js : sauvegardes
   'Mot de passe : 6 caractères au moins.': 'Password: at least 6 characters.',
   'Le dossier des sauvegardes se règle sur le serveur.': 'The backup folder is set on the server.',

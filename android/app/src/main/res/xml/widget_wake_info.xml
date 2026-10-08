@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget « Allumer l'ordinateur » (WakeWidget) : un bouton par ordinateur réglé sur l'accueil d'Ostal. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_wake"
+    android:previewLayout="@layout/widget_wake_preview"
+    android:description="@string/widget_wake_desc"
+    android:widgetCategory="home_screen" />

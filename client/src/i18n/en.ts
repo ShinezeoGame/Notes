@@ -2165,6 +2165,25 @@ const UI: Record<string, string> = {
   'Un serveur Ostal (chez vous ou chez un proche) : c’est lui qui garde vos fichiers PDF.': 'An Ostal server (yours or a friend’s): it keeps your PDF files.',
   'Signer, remplir un formulaire, annoter, réorganiser les pages ou assembler plusieurs PDF, et transformer des photos en PDF.':
     'Sign, fill in a form, annotate, reorder pages or merge several PDFs, and turn photos into a PDF.',
+  // Réglages → Widgets du téléphone (application Android)
+  'Sur ce téléphone : appui long sur l’écran d’accueil → Widgets → Ostal, puis faites glisser le widget.': 'On this phone: touch and hold the home screen → Widgets → Ostal, then drag the widget.',
+  'Ce téléphone ne permet pas de poser une icône depuis Ostal : appui long sur l’icône d’Ostal, puis faites glisser le raccourci.': 'This phone can’t add an icon from Ostal: touch and hold Ostal’s icon, then drag the shortcut.',
+  '{n} raccourcis au plus : décochez-en un d’abord.': '{n} shortcuts at most: untick one first.',
+  'Cochez une tâche ou ajoutez-en une sans ouvrir Ostal.': 'Tick a task or add one without opening Ostal.',
+  'Allumer l’ordinateur': 'Turn on computer',
+  'Un bouton pour allumer le PC de la maison, même à distance.': 'A button to turn on the home PC, even when you’re away.',
+  'Une section ou une nouvelle page d’un geste.': 'A section or a new page in one tap.',
+  'Widgets du téléphone': 'Phone widgets',
+  'Mettez Ostal sur l’écran d’accueil du téléphone : vos tâches à cocher, un bouton pour allumer l’ordinateur, vos raccourcis.': 'Put Ostal on your phone’s home screen: tasks to tick, a button to turn on the computer, your shortcuts.',
+  'Sur l’écran d’accueil': 'On the home screen',
+  'Sur l’écran d’accueil ({n} fois)': 'On the home screen ({n} times)',
+  'Ajouter': 'Add',
+  'Pour le widget Tâches : ajoutez d’abord une liste « Tâches » à l’accueil d’Ostal.': 'For the Tasks widget: first add a “Tasks” list to Ostal’s home.',
+  'Liste affichée par le widget Tâches': 'List shown by the Tasks widget',
+  'Sans serveur Ostal, les tâches cochées sur le widget sont enregistrées à la prochaine ouverture d’Ostal, et le widget « Allumer l’ordinateur » ne fonctionne pas.': 'Without an Ostal server, tasks ticked on the widget are saved the next time you open Ostal, and the “Turn on computer” widget doesn’t work.',
+  'Pour le widget « Allumer l’ordinateur » : réglez d’abord le widget « Allumer un PC » de l’accueil d’Ostal.': 'For the “Turn on computer” widget: first set up the “Wake a PC” widget on Ostal’s home.',
+  'Cochez ceux du widget Raccourcis ({max} au plus) ; les {launcher} premiers apparaissent aussi en appui long sur l’icône d’Ostal.': 'Tick the ones for the Shortcuts widget ({max} at most); the first {launcher} also appear when you touch and hold Ostal’s icon.',
+  'Poser cette icône sur l’écran d’accueil': 'Put this icon on the home screen',
 };
 
 export const EN: Record<string, string> = { ...EN_SERVER, ...UI };

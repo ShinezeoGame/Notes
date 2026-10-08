@@ -148,7 +148,7 @@ export function defaultDashboard(doc: Y.Doc): DashboardData {
 }
 
 /** Tableau de bord enregistré, sinon celui de départ (enregistré à la première modification). */
-function current(doc: Y.Doc): DashboardData {
+export function current(doc: Y.Doc): DashboardData {
   return readData(doc) ?? defaultDashboard(doc);
 }
 

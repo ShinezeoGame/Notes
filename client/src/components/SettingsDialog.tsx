@@ -6,6 +6,9 @@ import { canShareLinks } from '../lib/api';
 import { desktop, isDesktopLocal, type DesktopUpdate } from '../lib/desktop';
 import { BackupSection } from './BackupDialog';
 import { RemindersSection } from './RemindersSection';
+import { PhoneWidgetsSection } from './PhoneWidgetsSection';
+import { phoneWidgetsAvailable } from '../lib/phoneWidgets';
+import type * as Y from 'yjs';
 import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
 import { USER_COLORS } from '../lib/ids';
 import { clearLocalDocs } from '../lib/yjs';
@@ -160,7 +163,7 @@ function InstallBlock() {
   );
 }
 
-type Props = { onClose: () => void; onTour: () => void };
+type Props = { onClose: () => void; onTour: () => void; /** Document de l'espace (widgets du téléphone). */ doc?: Y.Doc };
 
 type TestResult = { ok: boolean; text: string; pairable?: boolean };
 
@@ -189,7 +192,7 @@ async function testServer(url: string, wsId: string, key: string): Promise<TestR
   }
 }
 
-export function SettingsDialog({ onClose, onTour }: Props) {
+export function SettingsDialog({ onClose, onTour, doc }: Props) {
   const settings = useSettings();
   const [name, setName] = useState(isDefaultUserName(settings.userName) ? '' : settings.userName);
   const [color, setColor] = useState(settings.userColor);
@@ -342,6 +345,7 @@ export function SettingsDialog({ onClose, onTour }: Props) {
       ) : null}
 
       <RemindersSection />
+      {doc && phoneWidgetsAvailable() ? <PhoneWidgetsSection doc={doc} /> : null}
       {!settings.guest ? <BackupSection /> : null}
 
       <UpdatesSection />

@@ -74,7 +74,8 @@ import {
 } from './backup.js';
 import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, proxyCamera, testHome, verifyCamera } from './smarthome.js';
 import { paperFile, papersDirFor, paperType, removeAllPapers } from './papers.js';
-import { workspaceReminders } from './reminders.js';
+import { readWorkspace, workspaceReminders } from './reminders.js';
+import { addTask, setTaskDone, widgetData } from './widgets.js';
 import {
   PushError,
   addSubscription,
@@ -747,6 +748,38 @@ app.post('/api/wol/scan', requireOwner, requireHost, async (req, res) => {
   // L'appareil qui fait la recherche (l'ordinateur à régler, souvent) : signalé dans la liste.
   const you = String(req.ip || '').replace(/^::ffff:/, '');
   res.json({ ...data, devices: data.devices.map((d) => (d.ip === you ? { ...d, you: true } : d)) });
+});
+
+// ---------- Widgets de l'écran d'accueil du téléphone (application Android) ----------
+// Listes de tâches et ordinateurs de l'accueil, lus par les widgets même application fermée ; tâches cochées ou
+// ajoutées depuis le widget. Allumer un ordinateur : /api/wol/wake, comme le widget de l'accueil.
+app.get('/api/widgets', requireOwner, async (req, res) => {
+  const { doc, done } = await readWorkspace(req.wsId);
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json(widgetData(doc, { host: !isGuest(req.wsId) }));
+  } finally {
+    done();
+  }
+});
+
+async function widgetRoute(res, fn) {
+  try {
+    res.json(await fn());
+  } catch (err) {
+    if (!err.status) console.error('[widgets]', err);
+    res.status(err.status || 500).json({ error: err.status ? err.message : 'Action impossible.' });
+  }
+}
+
+app.post('/api/widgets/tasks/done', requireOwner, (req, res) => {
+  const { list, task, done } = req.body || {};
+  void widgetRoute(res, async () => ({ items: await setTaskDone(req.wsId, String(list ?? ''), String(task ?? ''), done === true) }));
+});
+
+app.post('/api/widgets/tasks/add', requireOwner, (req, res) => {
+  const { list, text, id } = req.body || {};
+  void widgetRoute(res, () => addTask(req.wsId, String(list ?? ''), String(text ?? ''), typeof id === 'string' ? id : ''));
 });
 
 // Récupération d'un flux iCal (Google Agenda "adresse secrète") côté serveur pour éviter CORS.

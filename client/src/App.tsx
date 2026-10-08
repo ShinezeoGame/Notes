@@ -37,7 +37,8 @@ import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, 
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { OstalLogo } from './components/Logo';
-import { startReminders } from './lib/reminders';
+import { listenOpenRequests, startReminders } from './lib/reminders';
+import { startPhoneWidgets } from './lib/phoneWidgets';
 import { t } from './lib/i18n';
 
 // Atelier PDF : chargé seulement quand on l'ouvre (bibliothèques PDF volumineuses).
@@ -55,6 +56,8 @@ export default function App() {
   else if (!settings.onboarded) content = <Onboarding />;
   else content = <OwnerApp />;
   useEffect(() => startUpdateChecks(), []);
+  // Page demandée par une notification, un widget ou un raccourci du téléphone : ouverte dès le démarrage.
+  useEffect(() => listenOpenRequests(), []);
   useEffect(() => {
     // Installation d'avant le nouveau nom : annoncé une fois.
     if (getSettings().knowsNewName) return;
@@ -124,6 +127,7 @@ type Dialog =
 function sectionOf(route: Route): SectionId {
   switch (route.name) {
     case 'notes':
+    case 'newPage':
     case 'page':
     case 'trash':
       return 'notes';
@@ -160,6 +164,9 @@ function useTyping(enabled: boolean): boolean {
   return enabled && typing;
 }
 
+/** Dernière page créée par le raccourci « Nouvelle page » (une seule, même si l'effet est rejoué). */
+let lastNewPage = 0;
+
 function OwnerApp() {
   const settings = useSettings();
   const route = useRoute();
@@ -184,6 +191,16 @@ function OwnerApp() {
   useEffect(() => {
     if (synced && store) startReminders(store.doc);
   }, [synced, store]);
+  // Widgets de l'écran d'accueil du téléphone : listes de tâches, ordinateurs et raccourcis tenus à jour.
+  useEffect(() => {
+    if (store && wsHandle.ready) startPhoneWidgets(store.doc);
+  }, [store, wsHandle.ready]);
+  // Raccourci « Nouvelle page » (widget, appui long sur l'icône d'Ostal) : page créée à la racine, puis ouverte.
+  useEffect(() => {
+    if (route.name !== 'newPage' || !store || !wsHandle.ready || Date.now() - lastNewPage < 2000) return;
+    lastNewPage = Date.now();
+    navigate({ name: 'page', pageId: store.createPage('', '') }, { replace: true });
+  }, [route.name, store, wsHandle.ready]);
 
   useEffect(() => {
     if (!serverBase()) return;
@@ -401,7 +418,7 @@ function OwnerApp() {
       </div>
 
       {dialog?.type === 'search' ? <SearchDialog store={store} onClose={() => setDialog(null)} onOpen={openPage} /> : null}
-      {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} onTour={() => setDialog({ type: 'tour' })} /> : null}
+      {dialog?.type === 'settings' ? <SettingsDialog onClose={() => setDialog(null)} onTour={() => setDialog({ type: 'tour' })} doc={store.doc} /> : null}
       {dialog?.type === 'homelab' ? <HomelabConfigDialog doc={store.doc} onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'link' ? <JoinDialog onClose={() => setDialog(null)} /> : null}
       {dialog?.type === 'tour' ? <WelcomeDialog doc={store.doc} appearance={appearance} tourOnly onClose={() => setDialog(null)} /> : null}

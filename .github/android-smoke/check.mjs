@@ -1,6 +1,6 @@
 // Pilote l'application installée sur l'émulateur par le débogage de sa WebView (APK debug) et vérifie chaque
 // étape sensible côté Android : liaison à un serveur, vérification en arrière-plan, notification, mise à jour,
-// fichiers de l'atelier PDF, rappels programmés par le téléphone.
+// fichiers de l'atelier PDF, rappels programmés par le téléphone, widgets de l'écran d'accueil et raccourcis.
 // Lancé par run.sh (serveur Ostal du runner joignable depuis l'émulateur en 10.0.2.2:3000).
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -482,6 +482,110 @@ try {
     adb('shell', 'am', 'start', '-n', `${PKG}/.MainActivity`, '--es', 'com.shinezeo.notes.OPEN_URL', "'#/agenda'");
     await until('section Agenda affichée', () => js("location.hash === '#/agenda' && !!document.querySelector('.ag-grid, .ag-list')"), 60_000, 2000);
     await assertAlive('après l’ouverture depuis un rappel');
+  });
+
+  // ---------- Widgets de l'écran d'accueil et raccourcis du lanceur (plugin natif Widgets) ----------
+
+  const widgets = (method, opts = {}) => js(`window.Capacitor.nativePromise('Widgets', '${method}', ${JSON.stringify(opts)})`, 60_000);
+  const settings = () => js("JSON.parse(localStorage.getItem('notes.settings.v1'))");
+  /** Espace de l'application modifié depuis le runner, comme le ferait un autre appareil. */
+  async function editWorkspace(fn) {
+    const s = await settings();
+    const doc = new Y.Doc();
+    const provider = new WebsocketProvider('ws://127.0.0.1:3000/ws', `ws_${s.workspaceId}`, doc, { WebSocketPolyfill: WebSocket, params: { key: s.workspaceKey } });
+    try {
+      await new Promise((resolve, reject) => {
+        provider.once('sync', resolve);
+        setTimeout(() => reject(new Error('espace non synchronisé')), 30_000);
+      });
+      doc.transact(() => fn(doc));
+      await sleep(2000);
+    } finally {
+      provider.destroy();
+    }
+  }
+  /** Ce que le serveur renvoie aux widgets (listes de tâches, ordinateurs). */
+  const serverWidgets = async () => {
+    const s = await settings();
+    return (await fetch('http://127.0.0.1:3000/api/widgets', { headers: { 'x-ws-id': s.workspaceId, 'x-ws-key': s.workspaceKey } })).json();
+  };
+  const serverTasks = async (list) => (await serverWidgets()).tasks.find((l) => l.id === list)?.items ?? [];
+  let listId = '';
+
+  await step('Widgets : Tâches, Allumer l’ordinateur et Raccourcis proposés par Android, affichés avec les tâches de l’accueil', async () => {
+    if (!(await js("(window.Capacitor?.PluginHeaders ?? []).some((h) => h.name === 'Widgets')"))) throw new Error('plugin Widgets absent');
+    // Widget refusé par Android (description XML invalide) : absent de cette liste.
+    const providers = adb('shell', 'dumpsys', 'appwidget');
+    for (const w of ['ShortcutsWidget', 'TasksWidget', 'WakeWidget']) {
+      if (!providers.includes(`${PKG}.${w}`) && !providers.includes(`/.${w}`)) throw new Error(`widget ${w} inconnu d’Android`);
+    }
+    listId = await until('listes de tâches transmises au téléphone', async () => (await widgets('state'))?.data?.tasks?.[0]?.id, 60_000, 2000);
+    await editWorkspace((doc) => doc.getMap(`dash-tasks:${listId}`).set('ci-task', JSON.stringify({ text: 'Tâche Ostal CI', done: false, order: 99, doneAt: 0 })));
+    await until('tâche transmise au widget', async () => (await widgets('state')).data.tasks[0].items.some((i) => i.id === 'ci-task'), 60_000, 2000);
+    // Chaque widget construit et affiché comme par l'écran d'accueil (vue interdite, ressource manquante : échec).
+    const views = await widgets('check');
+    const expect = { tasks: ['Tâches', 'Tâche Ostal CI'], shortcuts: ['Nouvelle page', 'Agenda', 'Atelier PDF'], wake: ['Allumer l’ordinateur', 'Réglez « Allumer un PC » sur l’accueil d’Ostal.'] };
+    for (const [kind, texts] of Object.entries(expect)) {
+      const missing = texts.filter((t) => !views[kind].includes(t));
+      if (missing.length) throw new Error(`widget ${kind} : ${missing.join(', ')} absent (${JSON.stringify(views[kind])})`);
+    }
+    if (views.previews.some((p) => !p.length)) throw new Error(`aperçus vides : ${JSON.stringify(views.previews)}`);
+    // Raccourcis du lanceur (appui long sur l'icône) : les premiers choisis.
+    await until('raccourcis du lanceur', () => ['sc_newPage', 'sc_agenda', 'sc_pdf'].every((id) => adb('shell', 'dumpsys', 'shortcut').includes(id)), 30_000, 2000);
+    await assertAlive('après l’affichage des widgets');
+  });
+
+  await step('Widgets : tâche cochée puis tâche ajoutée depuis le widget, enregistrées sur le serveur', async () => {
+    await widgets('act', { action: 'done', list: listId, task: 'ci-task', done: true });
+    if ((await widgets('state')).pending) throw new Error('action gardée en attente : serveur non joint');
+    await until('tâche cochée sur le serveur', async () => (await serverTasks(listId)).some((i) => i.id === 'ci-task' && i.done), 30_000, 1000);
+    await widgets('act', { action: 'add', list: listId, text: 'Ajoutée par le widget CI' });
+    await until('tâche ajoutée sur le serveur', async () => (await serverTasks(listId)).some((i) => i.text === 'Ajoutée par le widget CI'), 30_000, 1000);
+    // L'application ouverte reçoit les deux changements par le serveur.
+    await until('tâches à jour dans l’application', async () => {
+      const items = (await widgets('state')).data.tasks[0].items;
+      return items.some((i) => i.id === 'ci-task' && i.done) && items.some((i) => i.text === 'Ajoutée par le widget CI');
+    }, 60_000, 2000);
+  });
+
+  await step('Widgets : « + » ouvre la fenêtre « Nouvelle tâche », tâche tapée au clavier enregistrée', async () => {
+    // Ouverte par l'application au premier plan (Android interdit à une application en arrière-plan d'ouvrir une
+    // fenêtre ; le widget, touché, en a le droit).
+    await widgets('act', { action: 'openAdd', list: listId });
+    await until('fenêtre « Nouvelle tâche »', () => focused().includes('TaskAddActivity'), 30_000, 1000);
+    await sleep(1500);
+    adb('shell', 'input', 'text', 'Courses%sau%sclavier');
+    await sleep(1000);
+    adb('shell', 'input', 'keyevent', 'KEYCODE_ENTER');
+    await until('tâche du clavier sur le serveur', async () => (await serverTasks(listId)).some((i) => i.text === 'Courses au clavier'), 30_000, 1000);
+    await until('fenêtre fermée', () => !focused().includes('TaskAddActivity'), 15_000, 1000);
+    await assertAlive('après la fenêtre « Nouvelle tâche »');
+  });
+
+  await step('Widgets : « Allumer l’ordinateur » envoie le signal par le serveur', async () => {
+    adb('shell', 'am', 'start', '-n', `${PKG}/.MainActivity`);
+    await editWorkspace((doc) => {
+      const dash = doc.getMap('dashboard');
+      const d = JSON.parse(dash.get('config') ?? 'null');
+      if (!d) throw new Error('accueil non enregistré');
+      d.widgets.push({ id: 'ci-pc', type: 'wol', title: 'PC du bureau', config: { mac: '02:00:5e:10:00:01' } });
+      for (const items of Object.values(d.layouts ?? {})) items.push({ i: 'ci-pc', x: 0, y: 99, w: 2, h: 3 });
+      dash.set('config', JSON.stringify(d));
+    });
+    await until('ordinateur transmis au widget', async () => (await widgets('state')).data.computers?.some((c) => c.id === 'ci-pc'), 60_000, 2000);
+    const { status } = await widgets('act', { action: 'wake', computer: 'ci-pc' });
+    if (!/^Signal envoyé à /.test(status)) throw new Error(`état affiché : « ${status} »`);
+    const wake = (await widgets('check')).wake;
+    if (!wake.includes('PC du bureau') || !wake.includes(status)) throw new Error(`widget : ${JSON.stringify(wake)}`);
+  });
+
+  await step('Raccourci « Nouvelle page » (lanceur, widget) : une page créée et ouverte', async () => {
+    adb('shell', 'input', 'keyevent', 'KEYCODE_HOME');
+    await sleep(2000);
+    // Même intention que les raccourcis du lanceur et les boutons du widget Raccourcis.
+    adb('shell', 'am', 'start', '-a', 'com.shinezeo.notes.OPEN', '-n', `${PKG}/.MainActivity`, '--es', 'com.shinezeo.notes.OPEN_URL', "'#/nouvelle-page'");
+    await until('nouvelle page ouverte', () => js("/^#\\/p\\/[A-Za-z0-9_-]+$/.test(location.hash) && !!document.querySelector('.nb-editor .ProseMirror')"), 60_000, 2000);
+    await assertAlive('après le raccourci « Nouvelle page »');
   });
   ok = true;
 } catch (e) {

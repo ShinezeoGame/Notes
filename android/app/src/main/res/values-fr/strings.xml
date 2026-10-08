@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textes français des widgets de l'écran d'accueil (téléphone en français). -->
+<resources>
+    <string name="widget_shortcuts_label">Raccourcis Ostal</string>
+    <string name="widget_shortcuts_desc">Ouvrir une section d’Ostal ou créer une page d’un geste.</string>
+    <string name="widget_tasks_label">Tâches Ostal</string>
+    <string name="widget_tasks_desc">Votre liste de choses à faire : cochez ou ajoutez une tâche sans ouvrir l’application.</string>
+    <string name="widget_wake_label">Allumer l’ordinateur</string>
+    <string name="widget_wake_desc">Allume un ordinateur de la maison depuis le téléphone (Wake-on-LAN).</string>
+    <string name="widget_sc_new_page">Nouvelle page</string>
+    <string name="widget_sc_agenda">Agenda</string>
+    <string name="widget_sc_papers">Papiers</string>
+    <string name="widget_sc_pdf">PDF</string>
+    <string name="widget_tasks_title">Tâches</string>
+    <string name="widget_wake_title">Allumer l’ordinateur</string>
+    <string name="widget_preview_task1">Acheter du pain</string>
+    <string name="widget_preview_task2">Appeler le plombier</string>
+    <string name="widget_preview_task3">Arroser les plantes</string>
+    <string name="widget_preview_computer">PC du bureau</string>
+    <string name="widget_preview_wake">Toucher pour allumer</string>
+</resources>
