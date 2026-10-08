@@ -58,6 +58,11 @@ public class WidgetsPlugin extends Plugin {
             if (data != null) WidgetStore.replaceData(ctx, new JSONObject(data.toString()));
             applyLauncherShortcuts(ctx, WidgetStore.shortcuts(ctx));
             WidgetViews.updateAll(ctx);
+            // Widget « Films et séries » posé : dernières demandes relues (Seerr a pu être relié entre-temps).
+            if (WidgetViews.placed(ctx, SeerrWidget.class).length > 0) {
+                Context app = ctx.getApplicationContext();
+                new Thread(() -> WidgetActions.refreshSeerr(app), "notes-widget-seerr").start();
+            }
             call.resolve(info(ctx));
         } catch (Exception e) {
             fail(call, e, "Widgets non mis à jour.");
@@ -128,13 +133,27 @@ public class WidgetsPlugin extends Plugin {
 
     /**
      * Même action que toucher un widget (tests, aperçu) : cocher ou décocher (« done », « toggle »), ajouter (« add »),
-     * allumer un ordinateur (« wake »), relire (« refresh »), ouvrir la fenêtre « Nouvelle tâche » (« openAdd »).
+     * allumer un ordinateur (« wake »), relire (« refresh », « seerr » : demandes faites à Seerr), ouvrir la fenêtre
+     * « Nouvelle tâche » (« openAdd ») ou la recherche de films et séries (« openSearch »).
      */
     @PluginMethod
     public void act(PluginCall call) {
         Context ctx = getContext().getApplicationContext();
         String action = call.getString("action", "");
         String list = call.getString("list", "");
+        if ("openSearch".equals(action)) {
+            try {
+                ctx.startActivity(
+                    new Intent(ctx, SeerrSearchActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra(SeerrSearchActivity.EXTRA_QUERY, call.getString("query", ""))
+                );
+                call.resolve();
+            } catch (Exception e) {
+                fail(call, e, "Fenêtre non ouverte.");
+            }
+            return;
+        }
         if ("openAdd".equals(action)) {
             try {
                 ctx.startActivity(new Intent(ctx, TaskAddActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(WidgetViews.EXTRA_LIST, list));
@@ -163,6 +182,10 @@ public class WidgetsPlugin extends Plugin {
                             break;
                         case "refresh":
                             ret.put("refreshed", WidgetActions.refresh(ctx));
+                            break;
+                        case "seerr":
+                            WidgetActions.refreshSeerr(ctx);
+                            ret.put("seerr", new JSObject(WidgetStore.seerr(ctx).toString()));
                             break;
                         default:
                             call.reject("Action inconnue.");
@@ -218,8 +241,9 @@ public class WidgetsPlugin extends Plugin {
                 ret.put("shortcuts", texts(WidgetViews.shortcuts(ctx, options).apply(ctx, parent)));
                 ret.put("tasks", texts(WidgetViews.tasks(ctx, options).apply(ctx, parent)));
                 ret.put("wake", texts(WidgetViews.wake(ctx, options).apply(ctx, parent)));
+                ret.put("seerr", texts(WidgetViews.seerr(ctx, options).apply(ctx, parent)));
                 JSArray previews = new JSArray();
-                for (int layout : new int[] { R.layout.widget_tasks_preview, R.layout.widget_wake_preview }) {
+                for (int layout : new int[] { R.layout.widget_tasks_preview, R.layout.widget_wake_preview, R.layout.widget_seerr_preview }) {
                     previews.put(texts(new RemoteViews(ctx.getPackageName(), layout).apply(ctx, parent)));
                 }
                 ret.put("previews", previews);
@@ -251,6 +275,7 @@ public class WidgetsPlugin extends Plugin {
     private static Class<?> provider(String kind) {
         if ("tasks".equals(kind)) return TasksWidget.class;
         if ("wake".equals(kind)) return WakeWidget.class;
+        if ("seerr".equals(kind)) return SeerrWidget.class;
         return ShortcutsWidget.class;
     }
 
@@ -259,6 +284,7 @@ public class WidgetsPlugin extends Plugin {
         placed.put("shortcuts", WidgetViews.placed(ctx, ShortcutsWidget.class).length);
         placed.put("tasks", WidgetViews.placed(ctx, TasksWidget.class).length);
         placed.put("wake", WidgetViews.placed(ctx, WakeWidget.class).length);
+        placed.put("seerr", WidgetViews.placed(ctx, SeerrWidget.class).length);
         boolean pinWidgets = false;
         boolean pinShortcuts = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -333,6 +359,8 @@ public class WidgetsPlugin extends Plugin {
                 return R.drawable.ic_sc_tasks;
             case "computer":
                 return R.drawable.ic_sc_computer;
+            case "media":
+                return R.drawable.ic_sc_media;
             default:
                 return R.drawable.ic_sc_dashboard;
         }

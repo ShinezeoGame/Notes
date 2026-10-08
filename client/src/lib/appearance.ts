@@ -122,9 +122,9 @@ export const GRADIENTS: { id: string; label: string; css: string }[] = [
   { id: 'mint', label: t('Menthe'), css: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)' },
 ];
 
-export type SectionId = 'home' | 'notes' | 'agenda' | 'papers' | 'smarthome' | 'cameras' | 'homelab' | 'pdf';
+export type SectionId = 'home' | 'notes' | 'agenda' | 'papers' | 'smarthome' | 'cameras' | 'homelab' | 'media' | 'pdf';
 
-export const SECTION_IDS: SectionId[] = ['home', 'notes', 'agenda', 'papers', 'smarthome', 'cameras', 'homelab', 'pdf'];
+export const SECTION_IDS: SectionId[] = ['home', 'notes', 'agenda', 'papers', 'smarthome', 'cameras', 'homelab', 'media', 'pdf'];
 
 export type Appearance = {
   theme: ThemeId;

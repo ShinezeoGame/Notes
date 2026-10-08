@@ -39,6 +39,11 @@ final class WidgetViews {
         updateShortcuts(context);
         updateTasks(context);
         updateWake(context);
+        updateSeerr(context);
+    }
+
+    static void updateSeerr(Context context) {
+        update(context, SeerrWidget.class, WidgetViews::seerr);
     }
 
     static void updateShortcuts(Context context) {
@@ -112,6 +117,8 @@ final class WidgetViews {
                 return R.drawable.ic_w_tasks;
             case "computer":
                 return R.drawable.ic_w_computer;
+            case "media":
+                return R.drawable.ic_w_media;
             default:
                 return R.drawable.ic_w_dashboard;
         }
@@ -222,6 +229,95 @@ final class WidgetViews {
         }
         showList(rv, R.id.wk_list, R.id.wk_empty);
         return rv;
+    }
+
+    // ---------- Films et séries (Seerr) ----------
+
+    private static final int MAX_REQUESTS = 6;
+    /** Hauteur d'une demande (dp) et de la barre de recherche avec les marges : lignes affichées selon la hauteur. */
+    private static final int REQUEST_HEIGHT = 34;
+    private static final int SEARCH_BAR_HEIGHT = 62;
+
+    static RemoteViews seerr(Context context, Bundle options) {
+        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_seerr);
+        rv.removeAllViews(R.id.sr_list);
+        rv.setTextViewText(R.id.sr_hint, WidgetStore.tr(context, "Demander un film ou une série", "Request a movie or a show"));
+        rv.setContentDescription(R.id.sr_bar, WidgetStore.tr(context, "Rechercher un film ou une série", "Search for a movie or a show"));
+        rv.setContentDescription(R.id.sr_mic, WidgetStore.tr(context, "Dicter", "Speak"));
+        rv.setOnClickPendingIntent(R.id.sr_bar, searchIntent(context, false, 400));
+        rv.setOnClickPendingIntent(R.id.sr_mic, searchIntent(context, true, 401));
+        int height = options != null ? options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) : 0;
+        int fit = height > 0 ? Math.max(0, (height - SEARCH_BAR_HEIGHT) / REQUEST_HEIGHT) : 3;
+        if (fit == 0) {
+            // Widget d'une seule rangée : la barre de recherche seule.
+            rv.setViewVisibility(R.id.sr_list, View.GONE);
+            rv.setViewVisibility(R.id.sr_empty, View.GONE);
+            return rv;
+        }
+        JSONObject data = WidgetStore.seerr(context);
+        String state = data.optString("state", "");
+        JSONArray requests = data.optJSONArray("requests");
+        String message = null;
+        if ("noServer".equals(state) || !WidgetStore.hasServer(context)) message = WidgetStore.tr(context, "Un serveur Ostal est nécessaire.", "An Ostal server is needed.");
+        else if ("notConfigured".equals(state)) message = WidgetStore.tr(context, "Reliez Seerr dans Ostal : section Films et séries.", "Connect Seerr in Ostal: Movies & shows section.");
+        else if (requests == null || requests.length() == 0) {
+            message = state.isEmpty()
+                ? WidgetStore.tr(context, "Ouvrez Ostal une fois pour afficher vos demandes.", "Open Ostal once to show your requests.")
+                : WidgetStore.tr(context, "Vos demandes apparaîtront ici.", "Your requests will appear here.");
+        }
+        if (message != null) {
+            showMessage(rv, R.id.sr_list, R.id.sr_empty, message);
+            rv.setOnClickPendingIntent(R.id.sr_empty, open(context, "#/films", 402));
+            return rv;
+        }
+        for (int i = 0; i < requests.length() && i < Math.min(fit, MAX_REQUESTS); i++) {
+            JSONObject r = requests.optJSONObject(i);
+            if (r == null) continue;
+            String title = r.optString("title", "");
+            String label = mediaState(context, r.optString("state", ""));
+            RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_seerr_row);
+            row.setTextViewText(R.id.sr_title, title);
+            row.setTextViewText(R.id.sr_state, label);
+            row.setContentDescription(R.id.sr_row, label.isEmpty() ? title : title + " : " + label);
+            row.setOnClickPendingIntent(R.id.sr_row, open(context, mediaUrl(r.optString("mediaType"), r.optInt("tmdbId")), 410 + i));
+            rv.addView(R.id.sr_list, row);
+        }
+        showList(rv, R.id.sr_list, R.id.sr_empty);
+        return rv;
+    }
+
+    private static PendingIntent searchIntent(Context context, boolean voice, int requestCode) {
+        Intent intent = new Intent(context, SeerrSearchActivity.class)
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            .putExtra(SeerrSearchActivity.EXTRA_VOICE, voice);
+        return PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** Fiche d'un film ou d'une série dans Ostal. */
+    static String mediaUrl(String mediaType, int tmdbId) {
+        return tmdbId > 0 ? ("tv".equals(mediaType) ? "#/films/serie/" : "#/films/film/") + tmdbId : "#/films";
+    }
+
+    /** État d'un film, d'une série ou d'une demande (mêmes mots que l'application). */
+    static String mediaState(Context context, String state) {
+        switch (state) {
+            case "pending":
+                return WidgetStore.tr(context, "Demandé", "Requested");
+            case "waiting":
+                return WidgetStore.tr(context, "En attente d’accord", "Awaiting approval");
+            case "processing":
+                return WidgetStore.tr(context, "En cours", "In progress");
+            case "partial":
+                return WidgetStore.tr(context, "En partie disponible", "Partly available");
+            case "available":
+                return WidgetStore.tr(context, "Disponible", "Available");
+            case "declined":
+                return WidgetStore.tr(context, "Refusée", "Declined");
+            case "failed":
+                return WidgetStore.tr(context, "Échec", "Failed");
+            default:
+                return "";
+        }
     }
 
     // ---------- Outils ----------

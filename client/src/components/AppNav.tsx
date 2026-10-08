@@ -81,6 +81,14 @@ export const SECTIONS: Record<SectionId, { label: string; short: string; icon: I
     group: 'house',
     hint: t('L’état de vos serveurs et applications'),
   },
+  media: {
+    label: t('Films et séries'),
+    short: t('Films'),
+    icon: 'film',
+    hash: '#/films',
+    group: 'house',
+    hint: t('Demander un film ou une série à Seerr'),
+  },
   pdf: {
     label: t('Atelier PDF'),
     short: t('PDF'),

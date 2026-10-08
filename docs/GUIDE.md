@@ -18,6 +18,7 @@ Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom
 - [Maison connectée](#maison-connectée)
 - [Caméras de surveillance](#caméras-de-surveillance)
 - [Homelab](#homelab)
+- [Films et séries](#films-et-séries)
 - [Allumer un ordinateur](#allumer-un-ordinateur)
 - [Atelier PDF](#atelier-pdf)
 - [Sauvegardes](#sauvegardes)
@@ -94,7 +95,7 @@ L’accueil s’ouvre au démarrage. Un **accueil de départ** est proposé (hor
 
 Chaque taille d’écran a sa disposition : la première fois, celle de l’ordinateur est adaptée (un widget par ligne sur téléphone), puis vos changements sur ce type d’écran sont gardés. L’accueil est le même sur tous vos appareils, et le contenu des widgets (note rapide, tâches) est synchronisé en direct.
 
-Widgets : **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Météo** (Open-Meteo, gratuit et sans compte : l’appareil interroge directement open-meteo.com), **Agenda** (prochains événements ou mois), **Tâches**, **Recherche** (Google, DuckDuckGo, Qwant, Bing, Ecosia, Wikipédia, YouTube ou vos notes), **Note rapide** (couleur de post-it), **Page de notes** (une page modifiable sur l’accueil), **Pages** (récentes ou principales), **Caméras**, **Maison**, **Homelab**, **Allumer un PC** (voir [Allumer un ordinateur](#allumer-un-ordinateur)), **Wi-Fi invités** (un QR code que vos invités scannent avec l’appareil photo de leur téléphone pour rejoindre votre Wi-Fi, sans que vous dictiez le mot de passe ; touchez le code pour l’afficher en grand. Le nom du réseau et son mot de passe sont souvent écrits sous la box ; le mot de passe peut rester caché sous le code), **Raccourcis** (sites et pages de notes), **Image** (recadrée au format du widget), **Site web** (les tableaux de bord de votre réseau s’affichent en général, et un lien de vidéo YouTube ou Vimeo devient un lecteur ; les sites qui refusent de s’afficher dans une autre application, comme Google, sont proposés en **Ouvrir le site**. L’application pour Windows affiche tous les sites, y compris en http).
+Widgets : **Films et séries** (rechercher et demander un film ou une série à Seerr, dernières demandes), **Horloge** (numérique ou à aiguilles, autre fuseau horaire), **Météo** (Open-Meteo, gratuit et sans compte : l’appareil interroge directement open-meteo.com), **Agenda** (prochains événements ou mois), **Tâches**, **Recherche** (Google, DuckDuckGo, Qwant, Bing, Ecosia, Wikipédia, YouTube ou vos notes), **Note rapide** (couleur de post-it), **Page de notes** (une page modifiable sur l’accueil), **Pages** (récentes ou principales), **Caméras**, **Maison**, **Homelab**, **Allumer un PC** (voir [Allumer un ordinateur](#allumer-un-ordinateur)), **Wi-Fi invités** (un QR code que vos invités scannent avec l’appareil photo de leur téléphone pour rejoindre votre Wi-Fi, sans que vous dictiez le mot de passe ; touchez le code pour l’afficher en grand. Le nom du réseau et son mot de passe sont souvent écrits sous la box ; le mot de passe peut rester caché sous le code), **Raccourcis** (sites et pages de notes), **Image** (recadrée au format du widget), **Site web** (les tableaux de bord de votre réseau s’affichent en général, et un lien de vidéo YouTube ou Vimeo devient un lecteur ; les sites qui refusent de s’afficher dans une autre application, comme Google, sont proposés en **Ouvrir le site**. L’application pour Windows affiche tous les sites, y compris en http).
 
 ## Widgets du téléphone
 
@@ -102,7 +103,8 @@ Avec l’application Android, Ostal se pose aussi sur l’écran d’accueil du 
 
 - **Tâches** : une liste de tâches de l’accueil d’Ostal. Touchez une tâche pour la cocher ou la décocher, **+** pour en ajouter une (une petite fenêtre s’ouvre, sans lancer Ostal), **↻** pour actualiser, le titre pour ouvrir Ostal.
 - **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)) ; le widget affiche ensuite « Signal envoyé à 08:42 ».
-- **Raccourcis** : jusqu’à 6 boutons au choix, par exemple **Nouvelle page** (crée une page et l’ouvre), **Agenda**, **Papiers**, **Ajouter un papier**, **Atelier PDF**, **Maison**, **Caméras**.
+- **Raccourcis** : jusqu’à 6 boutons au choix, par exemple **Nouvelle page** (crée une page et l’ouvre), **Agenda**, **Papiers**, **Ajouter un papier**, **Atelier PDF**, **Maison**, **Caméras**, **Films et séries**.
+- **Films et séries** : une barre de recherche pour demander un film ou une série à Seerr, au clavier ou au micro (voir [Films et séries](#films-et-séries)).
 
 **Ajouter un widget** :
 
@@ -238,7 +240,7 @@ Tapez `/Caméra` dans une page pour y placer le direct d’une caméra (ou de to
 
 ## Homelab
 
-État et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Ostal lui-même : section **Homelab**, widget de l’accueil, ou bloc `/Homelab` dans une page. Glissez un module pour changer sa place. Bouton **Disposition** : tirez le bord d’un module pour l’agrandir, et décochez **Ranger par catégorie** pour placer applications et appareils librement, côte à côte (Jellyfin ou qBittorrent à côté du NAS, par exemple) ; cochée, chaque catégorie (Appareils, Médias, Téléchargements…) a sa rubrique.
+État et statistiques de vos applications (Sonarr, Radarr, Lidarr, Readarr, Prowlarr, Bazarr, Jellyfin, Emby, Plex, Seerr, Jellyseerr, Overseerr, qBittorrent, Transmission, Pi-hole, AdGuard Home, Portainer, Home Assistant, Uptime Kuma, Nextcloud, Immich, ou n’importe quelle URL) et de vos appareils (CPU, mémoire, disques, températures, uptime) via Glances, Proxmox VE, Synology DSM, TrueNAS ou l’hôte du serveur Ostal lui-même : section **Homelab**, widget de l’accueil, ou bloc `/Homelab` dans une page. Glissez un module pour changer sa place. Bouton **Disposition** : tirez le bord d’un module pour l’agrandir, et décochez **Ranger par catégorie** pour placer applications et appareils librement, côte à côte (Jellyfin ou qBittorrent à côté du NAS, par exemple) ; cochée, chaque catégorie (Appareils, Médias, Téléchargements…) a sa rubrique.
 
 Pour commencer, trois façons (dans la section vide, ou dans **Configurer**) :
 
@@ -253,6 +255,29 @@ Section **Homelab** → **Configurer** :
 - **Applications** : renseignez la clé API (ou les identifiants) de chacune pour obtenir les statistiques (file d’attente, éléments manquants, lectures en cours, demandes en attente, vitesses de téléchargement, requêtes bloquées, conteneurs actifs…). Sans clé, seule la disponibilité (en ligne / hors ligne, latence) est vérifiée. L’« URL interne » permet d’indiquer une adresse Docker (ex. `http://sonarr:8989`) différente de l’URL ouverte au clic.
 - **Appareils** : *Hôte de ce serveur Ostal* (aucune configuration ; en Docker, montez les volumes à surveiller et listez leurs points de montage), *Glances* (`glances -w` ou l’image Docker `nicolargo/glances`, port 61208 : le plus simple pour un NAS ou un serveur Linux), *Proxmox VE* (jeton API), *Synology DSM* (compte sans 2FA), *TrueNAS* (clé API).
 - Le bouton **Tester** de chaque formulaire valide la connexion depuis le serveur. Toutes les requêtes sont faites par le serveur Ostal (accès au réseau local sans CORS) ; les secrets ne sont jamais renvoyés au navigateur. L’actualisation est automatique (30 s par défaut).
+
+## Films et séries
+
+Demandez un film ou une série en un geste : Ostal le transmet à **Seerr** (ou Jellyseerr, Overseerr), qui le fait télécharger par Radarr ou Sonarr ; il apparaît ensuite dans Jellyfin ou Plex.
+
+**Relier Seerr** (une seule fois) : section **Films et séries** (groupe Maison), puis :
+
+1. **Chercher sur le réseau** remplit l’adresse de Seerr (sinon, saisissez-la, par exemple `http://192.168.1.20:5055`).
+2. **Clé API** : dans Seerr, **Paramètres → Général → Clé API** ; copiez-la.
+3. **Relier Seerr** : Ostal vérifie l’adresse et la clé, puis ajoute Seerr à votre homelab. Un Seerr déjà réglé dans le homelab (avec sa clé) est repris tout seul.
+
+**Demander** :
+
+- Tapez un titre dans la barre de recherche : les résultats s’affichent avec leur affiche et leur état (**Disponible**, **En cours**, **Demandé**…). **Demander** envoie la demande d’un film.
+- Une série : touchez-la (ou **Demander**) pour ouvrir sa fiche, cochez les saisons voulues (toutes celles qui manquent le sont d’office), puis **Demander**. Les saisons déjà disponibles ou demandées sont indiquées.
+- Sans recherche, la section montre vos **demandes récentes** et leur état, puis les **tendances** du moment.
+- Les demandes partent au nom de l’administrateur de Seerr : elles sont acceptées tout de suite.
+
+**Partout** :
+
+- **Accueil** : widget **Films et séries** (catalogue → Web et médias) : une barre de recherche et vos dernières demandes.
+- **Téléphone Android** : widget **Films et séries** sur l’écran d’accueil (voir [Widgets du téléphone](#widgets-du-téléphone)) : touchez la barre, tapez un titre (ou touchez le micro et dites-le), puis **Demander**, sans ouvrir Ostal. Pour une série : toutes les saisons, ou le choix des saisons dans Ostal. Agrandi, le widget montre aussi vos dernières demandes.
+- Raccourci **Films et séries** pour le widget Raccourcis ou l’appui long sur l’icône d’Ostal.
 
 ## Allumer un ordinateur
 

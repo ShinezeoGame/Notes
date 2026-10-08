@@ -18,4 +18,11 @@
     <string name="widget_preview_task3">Arroser les plantes</string>
     <string name="widget_preview_computer">PC du bureau</string>
     <string name="widget_preview_wake">Toucher pour allumer</string>
+    <string name="widget_seerr_label">Films et séries</string>
+    <string name="widget_seerr_desc">Cherchez un film ou une série et demandez-le à Seerr.</string>
+    <string name="widget_seerr_hint">Demander un film ou une série</string>
+    <string name="widget_preview_movie">Dune : Deuxième partie</string>
+    <string name="widget_preview_show">The Last of Us</string>
+    <string name="widget_preview_available">Disponible</string>
+    <string name="widget_preview_processing">En cours</string>
 </resources>

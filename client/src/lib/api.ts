@@ -5,6 +5,7 @@ import type { HomeEntity, HomeStates } from './smarthome';
 import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
 import type { WolScan, WolStatus, WolWake } from './wol';
 import type { DiscoverResult } from './homelabImport';
+import type { MediaDetails, MediaItem, MediaRequest, MediaType, SeerrStatus } from './seerr';
 import { t, tServer } from './i18n';
 
 export class ApiError extends Error {
@@ -163,6 +164,18 @@ export const api = {
   wolStatus: (target: { host: string; mac?: string }) =>
     request<WolStatus>(`/api/wol/status?${new URLSearchParams({ host: target.host, ...(target.mac ? { mac: target.mac } : {}) })}`, { auth: ownerAuth() }),
   wolScan: () => request<WolScan>('/api/wol/scan', { method: 'POST', auth: ownerAuth() }),
+  /** Films et séries : Seerr réglé dans le homelab, interrogé par le serveur (`lang` : langue des titres). */
+  seerrStatus: () => request<SeerrStatus>('/api/seerr/status', { auth: ownerAuth() }),
+  seerrSearch: (q: string, lang: string) =>
+    request<{ results: MediaItem[]; page: number; totalPages: number }>(`/api/seerr/search?${new URLSearchParams({ q, lang })}`, { auth: ownerAuth() }),
+  seerrTrending: (lang: string) => request<{ results: MediaItem[] }>(`/api/seerr/trending?lang=${lang}`, { auth: ownerAuth() }),
+  seerrRequests: (take: number, lang: string) => request<{ requests: MediaRequest[] }>(`/api/seerr/requests?take=${take}&lang=${lang}`, { auth: ownerAuth() }),
+  seerrMedia: (type: MediaType, id: number, lang: string) => request<MediaDetails>(`/api/seerr/media/${type}/${id}?lang=${lang}`, { auth: ownerAuth() }),
+  /** Demande d'un film, ou de saisons d'une série (absentes : toutes celles qui restent). */
+  seerrRequest: (mediaType: MediaType, mediaId: number, seasons?: number[]) =>
+    request<{ id: number; state: string }>('/api/seerr/request', { method: 'POST', body: JSON.stringify({ mediaType, mediaId, seasons }), auth: ownerAuth() }),
+  seerrTest: (cfg: { url: string; apiKey: string; insecure: boolean }) =>
+    request<{ ok: boolean; version?: string; error?: string }>('/api/seerr/test', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),
   fetchIcs: (url: string, auth: Auth) =>
     request<{ text: string }>('/api/ics/fetch', { method: 'POST', body: JSON.stringify({ url }), auth }),
   deletePdf: (id: string, files: string[]) =>

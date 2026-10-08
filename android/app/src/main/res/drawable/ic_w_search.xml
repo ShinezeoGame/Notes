@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/android-widget-icons.mjs (icône « search » de l'application) : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,10.5a6.5,6.5 0,1 0,13,0a6.5,6.5 0,1 0,-13,0Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M15.3,15.3L20.5,20.5" />
+</vector>

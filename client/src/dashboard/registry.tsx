@@ -18,6 +18,7 @@ import { SearchSettings, SearchWidget } from './widgets/Search';
 import { WolSettings, WolWidget } from './widgets/Wol';
 import { WifiSettings, WifiWidget } from './widgets/Wifi';
 import { PapersWidget } from './widgets/Papers';
+import { FilmsWidget } from './widgets/Films';
 import { t } from '../lib/i18n';
 
 export type WidgetDef = {
@@ -173,6 +174,16 @@ export const WIDGETS: Record<WidgetType, WidgetDef> = {
     group: 'Essentiels',
     Body: PapersWidget,
     section: 'papers',
+    needsServer: true,
+  },
+  seerr: {
+    label: t('Films et séries'),
+    icon: 'film',
+    description: t('Cherchez un film ou une série et demandez-le à Seerr ; vos dernières demandes et leur état.'),
+    showTitle: true,
+    group: 'Web et médias',
+    Body: FilmsWidget,
+    section: 'media',
     needsServer: true,
   },
   wifi: {

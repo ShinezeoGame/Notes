@@ -398,6 +398,12 @@ try {
     return /=null\b/.test(current) ? (lines.find((l) => l.includes('mFocusedApp=')) ?? '') : current;
   };
   const appInFront = () => focused().includes(`${PKG}/`);
+  /** Une fenêtre de l'application est au premier plan (activité affichée, même sous forme de petite fenêtre). */
+  const inFront = (activity) =>
+    focused().includes(activity) ||
+    adb('shell', 'dumpsys', 'activity', 'activities')
+      .split('\n')
+      .some((l) => /topResumedActivity=|ResumedActivity:/.test(l) && l.includes(activity));
 
   /**
    * Ferme une fenêtre d'Android ouverte par l'application (menu de partage, sélecteur de fichiers) avec Retour,
@@ -552,13 +558,13 @@ try {
     // Ouverte par l'application au premier plan (Android interdit à une application en arrière-plan d'ouvrir une
     // fenêtre ; le widget, touché, en a le droit).
     await widgets('act', { action: 'openAdd', list: listId });
-    await until('fenêtre « Nouvelle tâche »', () => focused().includes('TaskAddActivity'), 30_000, 1000);
+    await until('fenêtre « Nouvelle tâche »', () => inFront('TaskAddActivity'), 30_000, 1000);
     await sleep(1500);
     adb('shell', 'input', 'text', 'Courses%sau%sclavier');
     await sleep(1000);
     adb('shell', 'input', 'keyevent', 'KEYCODE_ENTER');
     await until('tâche du clavier sur le serveur', async () => (await serverTasks(listId)).some((i) => i.text === 'Courses au clavier'), 30_000, 1000);
-    await until('fenêtre fermée', () => !focused().includes('TaskAddActivity'), 15_000, 1000);
+    await until('fenêtre fermée', () => !inFront('TaskAddActivity'), 15_000, 1000);
     await assertAlive('après la fenêtre « Nouvelle tâche »');
   });
 
@@ -577,6 +583,63 @@ try {
     if (!/^Signal envoyé à /.test(status)) throw new Error(`état affiché : « ${status} »`);
     const wake = (await widgets('check')).wake;
     if (!wake.includes('PC du bureau') || !wake.includes(status)) throw new Error(`widget : ${JSON.stringify(wake)}`);
+  });
+
+  // ---------- Films et séries : widget « barre de recherche » et fenêtre de recherche (faux Seerr de run.sh) ----------
+
+  const seerrLog = async () => (await fetch('http://127.0.0.1:5055/__log')).json();
+
+  await step('Widget Films et séries : dernières demandes de Seerr affichées sous la barre de recherche', async () => {
+    // Seerr relié comme le fait la section Films et séries (ajouté au homelab de l'espace).
+    await editWorkspace((doc) =>
+      doc.getMap('homelab').set('config', JSON.stringify({ services: [{ id: 'ci-seerr', type: 'seerr', name: 'Seerr', url: 'http://127.0.0.1:5055', apiKey: 'cle-seerr', category: 'Médias', icon: '' }], devices: [] })),
+    );
+    const { seerr } = await widgets('act', { action: 'seerr' });
+    if (seerr?.state !== 'ok' || !seerr.requests?.some((r) => r.title === 'Arcane')) throw new Error(`demandes : ${JSON.stringify(seerr).slice(0, 300)}`);
+    const views = await widgets('check');
+    for (const text of ['Demander un film ou une série', 'Arcane', 'En partie disponible', 'Dune', 'Disponible']) {
+      if (!views.seerr.includes(text)) throw new Error(`widget : « ${text} » absent (${JSON.stringify(views.seerr)})`);
+    }
+    if (!views.previews.some((p) => p.includes('Disponible') || p.includes('Available'))) throw new Error(`aperçu : ${JSON.stringify(views.previews)}`);
+  });
+
+  /** Écran affiché, décrit par Android (textes et positions), pour toucher un bouton comme un utilisateur. */
+  const screenNodes = () => {
+    adb('shell', 'uiautomator', 'dump', '/sdcard/ostal-ui.xml');
+    const xml = adb('shell', 'cat', '/sdcard/ostal-ui.xml');
+    return [...xml.matchAll(/<node [^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)].map((m) => ({
+      text: m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
+      x: Math.round((Number(m[2]) + Number(m[4])) / 2),
+      y: Math.round((Number(m[3]) + Number(m[5])) / 2),
+    }));
+  };
+
+  await step('Recherche du widget : résultats de Seerr, « Demander » envoie la demande sans ouvrir Ostal', async () => {
+    // Ouverte par l'application au premier plan (comme le touché de la barre du widget).
+    await widgets('act', { action: 'openSearch', query: 'dune' });
+    await until('fenêtre de recherche', () => inFront('SeerrSearchActivity'), 30_000, 1000);
+    const nodes = await until('résultats affichés', () => {
+      const n = screenNodes();
+      return n.some((x) => x.text === 'Dune : Deuxième partie') && n.some((x) => x.text === 'Demander') ? n : null;
+    }, 60_000, 2500);
+    if (!nodes.some((x) => /Disponible/.test(x.text))) throw new Error(`état « Disponible » de Dune absent : ${nodes.map((x) => x.text).join(' | ')}`);
+    const button = nodes.find((x) => x.text === 'Demander');
+    adb('shell', 'input', 'tap', String(button.x), String(button.y));
+    await until('demande reçue par Seerr', async () => (await seerrLog()).some((l) => l === 'POST /api/v1/request'), 30_000, 1000);
+    const sent = await (await fetch('http://127.0.0.1:5055/api/v1/request?take=10', { headers: { 'x-api-key': 'cle-seerr' } })).json();
+    if (!sent.results.some((r) => r.media.tmdbId === 693134)) throw new Error('demande de « Dune : Deuxième partie » absente');
+    await until('état « En cours » affiché', () => screenNodes().some((x) => /En cours/.test(x.text)), 30_000, 2500);
+    await until(
+      'fenêtre fermée',
+      () => {
+        if (!inFront('SeerrSearchActivity')) return true;
+        adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
+        return false;
+      },
+      30_000,
+      2000,
+    );
+    await assertAlive('après la recherche de films et séries');
   });
 
   await step('Raccourci « Nouvelle page » (lanceur, widget) : une page créée et ouverte', async () => {

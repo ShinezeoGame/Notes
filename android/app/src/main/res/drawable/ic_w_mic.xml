@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/android-widget-icons.mjs (icône « mic » de l'application) : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,3H12A3,3 0,0 1,15,6V11.5A3,3 0,0 1,12,14.5H12A3,3 0,0 1,9,11.5V6A3,3 0,0 1,12,3Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5.5 11a6.5 6.5 0 0 0 13 0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_icon"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,17.5L12,21" />
+</vector>

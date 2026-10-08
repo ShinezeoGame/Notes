@@ -26,6 +26,9 @@ const WANTED = {
   refresh: 'refresh',
   power: 'power',
   monitor: 'computer',
+  film: 'media',
+  search: 'search',
+  mic: 'mic',
 };
 
 const n = (v) => Number(v.toFixed(3)).toString();
@@ -88,7 +91,7 @@ ${paths}
 }
 // Raccourcis du lanceur (appui long sur l'icône d'Ostal, ou posés sur l'écran d'accueil) : dessin blanc sur un rond
 // violet, comme le logo.
-const LAUNCHER = ['new_page', 'notes', 'agenda', 'papers', 'camera', 'pdf', 'home', 'cameras', 'homelab', 'dashboard', 'tasks', 'computer'];
+const LAUNCHER = ['new_page', 'notes', 'agenda', 'papers', 'camera', 'pdf', 'home', 'cameras', 'homelab', 'dashboard', 'tasks', 'computer', 'media'];
 for (const [icon, name] of Object.entries(WANTED)) {
   if (!LAUNCHER.includes(name)) continue;
   const paths = ICONS[icon]

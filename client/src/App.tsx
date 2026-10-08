@@ -37,6 +37,7 @@ import { cardLayout, cardOrder, configStatusKey, resetCardSizes, saveCardOrder, 
 import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { OstalLogo } from './components/Logo';
+import { MediaView } from './media/MediaView';
 import { listenOpenRequests, startReminders } from './lib/reminders';
 import { startPhoneWidgets } from './lib/phoneWidgets';
 import { t } from './lib/i18n';
@@ -111,7 +112,7 @@ function JoinView({ wsId, keyValue }: { wsId: string; keyValue: string }) {
 }
 
 /** Sections reliées au réseau du serveur, absentes d'un espace créé par une invitation. */
-const HOST_SECTIONS: SectionId[] = ['smarthome', 'cameras', 'homelab'];
+const HOST_SECTIONS: SectionId[] = ['smarthome', 'cameras', 'homelab', 'media'];
 
 type Dialog =
   | null
@@ -136,6 +137,7 @@ function sectionOf(route: Route): SectionId {
     case 'homelab':
     case 'smarthome':
     case 'cameras':
+    case 'media':
     case 'pdf':
       return route.name;
     default:
@@ -342,6 +344,7 @@ function OwnerApp() {
   else if (route.name === 'homelab') content = <HomelabSection doc={store.doc} onConfigure={() => setDialog({ type: 'homelab' })} />;
   else if (route.name === 'smarthome') content = <SmartHomeView doc={store.doc} />;
   else if (route.name === 'cameras') content = <CamerasView doc={store.doc} />;
+  else if (route.name === 'media') content = <MediaView doc={store.doc} query={route.query} detail={route.detail} />;
   else if (route.name === 'pdf')
     content = (
       <Suspense fallback={<div className="nb-center nb-loading">{t('Chargement de l’atelier PDF…')}</div>}>

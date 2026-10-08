@@ -76,6 +76,7 @@ import { callHome, cameraUrl, homeStates, isHomeConfigured, parseHomeConfig, pro
 import { paperFile, papersDirFor, paperType, removeAllPapers } from './papers.js';
 import { readWorkspace, workspaceReminders } from './reminders.js';
 import { addTask, setTaskDone, widgetData } from './widgets.js';
+import { details as seerrDetails, findSeerr, recentRequests, request as seerrRequest, search as seerrSearch, testSeerr, trending as seerrTrending } from './seerr.js';
 import {
   PushError,
   addSubscription,
@@ -615,6 +616,52 @@ app.post('/api/homelab/test', requireOwner, requireHost, async (req, res) => {
 app.post('/api/homelab/discover', requireOwner, requireHost, async (req, res) => {
   const data = await lanRoute(res, 'discover', {});
   if (data) res.json(data);
+});
+
+// ---------- Films et séries (Seerr, Jellyseerr ou Overseerr) ----------
+// Seerr est celui réglé dans le homelab de l'espace : le serveur l'interroge, la clé API reste ici (voir seerr.js).
+async function seerrRoute(req, res, fn) {
+  const seerr = findSeerr(await readHomelabConfig(req.wsId));
+  res.set('Cache-Control', 'no-store');
+  if (!seerr) return res.status(404).json({ error: 'Seerr n’est pas réglé : ajoutez-le au homelab, avec sa clé API.', configured: false });
+  try {
+    res.json(await fn(seerr));
+  } catch (err) {
+    if (!err.status) console.error('[seerr]', err);
+    res.status(err.status || 502).json({ error: err.status ? err.message : 'Seerr ne répond pas.' });
+  }
+}
+
+app.get('/api/seerr/status', requireOwner, requireHost, async (req, res) => {
+  const seerr = findSeerr(await readHomelabConfig(req.wsId));
+  res.json(seerr ? { configured: true, name: seerr.name, url: seerr.url, type: seerr.type } : { configured: false });
+});
+
+app.get('/api/seerr/search', requireOwner, requireHost, (req, res) =>
+  seerrRoute(req, res, (seerr) => seerrSearch(seerr, String(req.query.q ?? ''), { page: req.query.page, lang: req.query.lang })),
+);
+
+app.get('/api/seerr/trending', requireOwner, requireHost, (req, res) => seerrRoute(req, res, (seerr) => seerrTrending(seerr, { lang: req.query.lang })));
+
+app.get('/api/seerr/requests', requireOwner, requireHost, (req, res) =>
+  seerrRoute(req, res, (seerr) => recentRequests(seerr, { take: req.query.take, lang: req.query.lang })),
+);
+
+// Fiche d'un film ou d'une série (saisons et leur état, pour choisir celles à demander).
+app.get('/api/seerr/media/:type/:id', requireOwner, requireHost, (req, res) => {
+  const { type, id } = req.params;
+  if (!['movie', 'tv'].includes(type) || !/^\d{1,9}$/.test(id)) return res.status(400).json({ error: 'Demande invalide.' });
+  return seerrRoute(req, res, (seerr) => seerrDetails(seerr, type, Number(id), { lang: req.query.lang }));
+});
+
+app.post('/api/seerr/request', requireOwner, requireHost, (req, res) => {
+  const { mediaType, mediaId, seasons } = req.body || {};
+  return seerrRoute(req, res, (seerr) => seerrRequest(seerr, { mediaType, mediaId, seasons: Array.isArray(seasons) ? seasons.slice(0, 100) : 'all' }));
+});
+
+app.post('/api/seerr/test', requireOwner, requireHost, async (req, res) => {
+  const { url, apiKey, insecure } = req.body || {};
+  res.json(await testSeerr({ url: typeof url === 'string' ? url.slice(0, 500) : '', apiKey: typeof apiKey === 'string' ? apiKey.slice(0, 200) : '', insecure: insecure === true }));
 });
 
 // ---------- Widget « Site web » ----------

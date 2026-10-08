@@ -1,4 +1,4 @@
-// Tableau de bord homelab : vérification des applications (arr-stack, Jellyfin, Jellyseerr…)
+// Tableau de bord homelab : vérification des applications (arr-stack, Jellyfin, Seerr…)
 // et statistiques des appareils (hôte local, Glances, Proxmox, Synology DSM, TrueNAS).
 // Toutes les requêtes partent du serveur (accès LAN, pas de CORS) ; les secrets ne sont jamais renvoyés.
 import http from 'node:http';
@@ -162,6 +162,7 @@ const integrations = {
     };
   },
   overseerr: async (base, svc) => integrations.jellyseerr(base, svc),
+  seerr: async (base, svc) => integrations.jellyseerr(base, svc),
   qbittorrent: async (base, svc) => {
     const login = await httpRequest(`${base}/api/v2/auth/login`, {
       method: 'POST',
@@ -285,7 +286,7 @@ const integrations = {
 
 const NEEDS_CREDS = {
   sonarr: 'apiKey', radarr: 'apiKey', lidarr: 'apiKey', readarr: 'apiKey', whisparr: 'apiKey', prowlarr: 'apiKey', bazarr: 'apiKey',
-  jellyfin: 'apiKey', emby: 'apiKey', plex: 'apiKey', jellyseerr: 'apiKey', overseerr: 'apiKey', qbittorrent: 'username', transmission: null,
+  jellyfin: 'apiKey', emby: 'apiKey', plex: 'apiKey', jellyseerr: 'apiKey', overseerr: 'apiKey', seerr: 'apiKey', qbittorrent: 'username', transmission: null,
   pihole: null, adguard: 'username', portainer: 'apiKey', homeassistant: 'apiKey', uptimekuma: 'apiKey', nextcloud: 'username', immich: 'apiKey',
 };
 

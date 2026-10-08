@@ -9,7 +9,7 @@ import { t, tServer, locale } from './i18n';
 
 export type ServiceType =
   | 'sonarr' | 'radarr' | 'lidarr' | 'readarr' | 'prowlarr' | 'bazarr'
-  | 'jellyfin' | 'emby' | 'plex' | 'jellyseerr' | 'overseerr'
+  | 'jellyfin' | 'emby' | 'plex' | 'jellyseerr' | 'overseerr' | 'seerr'
   | 'qbittorrent' | 'transmission' | 'pihole' | 'adguard' | 'portainer'
   | 'homeassistant' | 'uptimekuma' | 'nextcloud' | 'immich' | 'generic';
 
@@ -203,6 +203,15 @@ export const SERVICE_TYPES: Record<
     label: 'Overseerr',
     icon: 'ticket',
     color: '#6366f1',
+    port: 5055,
+    auth: 'apiKey',
+    category: 'Médias',
+    help: t('Paramètres → Général → Clé API'),
+  },
+  seerr: {
+    label: 'Seerr',
+    icon: 'ticket',
+    color: '#8b5cf6',
     port: 5055,
     auth: 'apiKey',
     category: 'Médias',

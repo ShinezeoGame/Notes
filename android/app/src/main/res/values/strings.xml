@@ -22,4 +22,11 @@
     <string name="widget_preview_task3">Water the plants</string>
     <string name="widget_preview_computer">Office PC</string>
     <string name="widget_preview_wake">Tap to turn on</string>
+    <string name="widget_seerr_label">Movies &amp; shows</string>
+    <string name="widget_seerr_desc">Search for a movie or a show and request it from Seerr.</string>
+    <string name="widget_seerr_hint">Request a movie or a show</string>
+    <string name="widget_preview_movie">Dune: Part Two</string>
+    <string name="widget_preview_show">The Last of Us</string>
+    <string name="widget_preview_available">Available</string>
+    <string name="widget_preview_processing">In progress</string>
 </resources>

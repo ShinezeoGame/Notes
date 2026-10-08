@@ -19,6 +19,7 @@ import {
   type WidgetsInfo,
 } from '../lib/phoneWidgets';
 import { updateSettings, useSettings } from '../lib/settings';
+import { useSeerr } from '../lib/seerr';
 import { Icon } from '../icons/Icon';
 import type { IconName } from '../icons/registry';
 import { toast } from './Toast';
@@ -31,6 +32,7 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
   const lists = useMemo(() => taskLists(doc), [doc]);
   const pcs = useMemo(() => computers(doc), [doc]);
   const hasServer = Boolean(serverBase());
+  const seerr = useSeerr(doc);
 
   const refresh = useCallback(() => void widgetsInfo().then(setInfo, () => setInfo(null)), []);
   useEffect(() => {
@@ -76,6 +78,10 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
     { kind: 'wake', icon: 'power', title: t('Allumer l’ordinateur'), text: t('Un bouton pour allumer le PC de la maison, même à distance.') },
     { kind: 'shortcuts', icon: 'grid', title: t('Raccourcis'), text: t('Une section ou une nouvelle page d’un geste.') },
   ];
+  // Application Android assez récente, et serveur : barre de recherche de films et séries (Seerr).
+  if (info?.placed.seerr !== undefined && hasServer) {
+    widgets.push({ kind: 'seerr', icon: 'film', title: t('Films et séries'), text: t('Une barre de recherche pour demander un film ou une série à Seerr, micro compris.') });
+  }
 
   return (
     <section className="nb-settings-section">
@@ -83,7 +89,7 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
       <p className="nb-muted pw-intro">{t('Mettez Ostal sur l’écran d’accueil du téléphone : vos tâches à cocher, un bouton pour allumer l’ordinateur, vos raccourcis.')}</p>
       <ul className="pw-widgets">
         {widgets.map((w) => {
-          const placed = info?.placed[w.kind] ?? 0;
+          const placed = info?.placed[w.kind as keyof WidgetsInfo['placed']] ?? 0;
           return (
             <li key={w.kind} className="pw-widget">
               <span className="pw-widget-icon">
@@ -122,6 +128,9 @@ export function PhoneWidgetsSection({ doc }: { doc: Y.Doc }) {
         <p className="nb-muted pw-hint">{t('Sans serveur Ostal, les tâches cochées sur le widget sont enregistrées à la prochaine ouverture d’Ostal, et le widget « Allumer l’ordinateur » ne fonctionne pas.')}</p>
       ) : !pcs.length ? (
         <p className="nb-muted pw-hint">{t('Pour le widget « Allumer l’ordinateur » : réglez d’abord le widget « Allumer un PC » de l’accueil d’Ostal.')}</p>
+      ) : null}
+      {info?.placed.seerr !== undefined && hasServer && !seerr ? (
+        <p className="nb-muted pw-hint">{t('Pour le widget « Films et séries » : reliez d’abord Seerr, dans la section Films et séries.')}</p>
       ) : null}
 
       <h4 className="pw-sub">{t('Raccourcis')}</h4>

@@ -25,6 +25,8 @@ const RULES = [
   { kind: 'device', type: 'glances', title: /^Glances/i },
   { kind: 'service', type: 'jellyseerr', title: /Jellyseerr/i },
   { kind: 'service', type: 'overseerr', title: /Overseerr/i },
+  // Seerr : successeur de Jellyseerr et d'Overseerr (après eux : leur nom contient aussi « seerr »).
+  { kind: 'service', type: 'seerr', title: /\bSeerr\b/i },
   { kind: 'service', type: 'sonarr', title: /Sonarr/i },
   { kind: 'service', type: 'radarr', title: /Radarr/i },
   { kind: 'service', type: 'lidarr', title: /Lidarr/i },

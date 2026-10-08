@@ -47,7 +47,7 @@ Carte d’identité, passeport, carte grise, assurances, garanties : photographi
 
 ## 💡 La maison sous la main
 
-Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, votre PC à distance, et suivez vos caméras en direct et l’état de votre serveur maison.
+Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, votre PC à distance, suivez vos caméras en direct et l’état de votre serveur maison, et demandez un film ou une série à Seerr en tapant son titre.
 
 <img src="docs/captures/maison.webp" width="100%" alt="Les objets connectés : groupe « Lumières du salon », chauffage, volet, enceinte, porte d’entrée, sur l’ordinateur et sur le téléphone">
 
@@ -59,7 +59,7 @@ Surlignez, écrivez, signez, remplissez un formulaire, réorganisez les pages ou
 
 ## 📱 Partout avec vous
 
-Ordinateur, téléphone, tablette : tout se synchronise. Un QR code suffit pour retrouver vos pages sur le téléphone, et Ostal fonctionne même sans Internet.
+Ordinateur, téléphone, tablette : tout se synchronise. Un QR code suffit pour retrouver vos pages sur le téléphone, et Ostal fonctionne même sans Internet. Sur Android, vos tâches, un bouton pour allumer le PC, une barre de recherche de films et séries et vos raccourcis se posent même sur l’écran d’accueil.
 
 <img src="docs/captures/telephones.webp" width="100%" alt="Ostal sur trois téléphones : une recette, l’agenda de la semaine et l’accueil">
 

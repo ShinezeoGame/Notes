@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget « Films et séries » : une barre de recherche (fenêtre de recherche de SeerrSearchActivity, micro pour la
+     dictée) et, si le widget est assez haut, les dernières demandes faites à Seerr (lignes : widget_seerr_row.xml). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sr_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:background="@drawable/widget_bg">
+    <LinearLayout
+        android:id="@+id/sr_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="4dp"
+        android:background="@drawable/widget_search_bg">
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_w_search"
+            android:contentDescription="@null" />
+        <TextView
+            android:id="@+id/sr_hint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="15sp"
+            android:textColor="@color/widget_muted"
+            android:text="@string/widget_seerr_hint" />
+        <ImageView
+            android:id="@+id/sr_mic"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:src="@drawable/ic_w_mic"
+            android:contentDescription="@null" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/sr_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="4dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:orientation="vertical"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/sr_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:textSize="13sp"
+        android:textColor="@color/widget_muted"
+        android:visibility="gone" />
+</LinearLayout>

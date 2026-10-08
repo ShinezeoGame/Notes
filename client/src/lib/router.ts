@@ -13,6 +13,8 @@ export type Route =
   | { name: 'cameras' }
   | { name: 'pdf'; pdfId: string | null }
   | { name: 'papers'; paperId: string | null }
+  /** Films et séries (Seerr) : recherche en cours, fiche d'un film ou d'une série ouverte. */
+  | { name: 'media'; query: string; detail: { type: 'movie' | 'tv'; id: number } | null }
   | { name: 'shared'; token: string; pageId: string | null }
   | { name: 'join'; wsId: string; key: string }
   | { name: 'pair'; code: string }
@@ -32,6 +34,15 @@ export function parseRoute(hash: string): Route {
   if (/^\/cameras/.test(h)) return { name: 'cameras' };
   if ((m = /^\/pdf(?:\/([A-Za-z0-9_-]+))?/.exec(h))) return { name: 'pdf', pdfId: m[1] ?? null };
   if ((m = /^\/papiers(?:\/([A-Za-z0-9_-]+))?/.exec(h))) return { name: 'papers', paperId: m[1] ?? null };
+  if ((m = /^\/films(?:\/chercher\/([^/]*)|\/(film|serie)\/(\d{1,9}))?/.exec(h))) {
+    let query = '';
+    try {
+      query = decodeURIComponent(m[1] ?? '');
+    } catch {
+      /* adresse abîmée : recherche vide */
+    }
+    return { name: 'media', query, detail: m[2] ? { type: m[2] === 'film' ? 'movie' : 'tv', id: Number(m[3]) } : null };
+  }
   if ((m = /^\/s\/([A-Za-z0-9_-]+)(?:\/p\/([A-Za-z0-9_-]+))?/.exec(h)))
     return { name: 'shared', token: m[1], pageId: m[2] ?? null };
   if ((m = /^\/join\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'join', wsId: m[1], key: m[2] };
@@ -62,6 +73,9 @@ export function routeToHash(route: Route): string {
       return route.pdfId ? `#/pdf/${route.pdfId}` : '#/pdf';
     case 'papers':
       return route.paperId ? `#/papiers/${route.paperId}` : '#/papiers';
+    case 'media':
+      if (route.detail) return `#/films/${route.detail.type === 'movie' ? 'film' : 'serie'}/${route.detail.id}`;
+      return route.query ? `#/films/chercher/${encodeURIComponent(route.query)}` : '#/films';
     case 'shared':
       return route.pageId ? `#/s/${route.token}/p/${route.pageId}` : `#/s/${route.token}`;
     case 'join':

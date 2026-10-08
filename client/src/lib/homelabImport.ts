@@ -139,6 +139,7 @@ const HOMEPAGE_SERVICES: Record<string, ServiceType> = {
   plex: 'plex',
   jellyseerr: 'jellyseerr',
   overseerr: 'overseerr',
+  seerr: 'seerr',
   qbittorrent: 'qbittorrent',
   transmission: 'transmission',
   pihole: 'pihole',

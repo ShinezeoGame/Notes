@@ -14,10 +14,10 @@ import { Modal } from './Modal';
 import { t, tx } from '../lib/i18n';
 
 /** Sections reliées au réseau du serveur (matériel à la maison) : proposées décochées aux nouveaux venus. */
-const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab'];
+const HOUSE: SectionId[] = ['smarthome', 'cameras', 'homelab', 'media'];
 
 /** Sections qui ne fonctionnent qu'avec un serveur Ostal : indisponibles sur un appareil seul. */
-export const NEEDS_SERVER: SectionId[] = ['papers', 'smarthome', 'cameras', 'homelab', 'pdf'];
+export const NEEDS_SERVER: SectionId[] = ['papers', 'smarthome', 'cameras', 'homelab', 'media', 'pdf'];
 
 type Slide = { icon: IconName; title: string; text: ReactNode };
 

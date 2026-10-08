@@ -52,7 +52,7 @@ const files = [];
 
 /** Noms propres (marques, logiciels) : identiques dans toutes les langues. */
 const PROPER_NOUNS = new Set(
-  'Ostal Homelab PDF Windows Android Google Outlook Apple iCloud YouTube Vimeo Dailymotion Sonarr Radarr Lidarr Readarr Prowlarr Bazarr Jellyfin Emby Plex Jellyseerr Overseerr qBittorrent Transmission Pi-hole Portainer Nextcloud Immich Glances TrueNAS DuckDuckGo Qwant Bing Ecosia Open-Meteo Hikvision Dahua Reolink Tapo Foscam Amcrest Axis Ubiquiti Hue Sonos Chromecast'
+  'Ostal Homelab PDF Windows Android Google Outlook Apple iCloud YouTube Vimeo Dailymotion Sonarr Radarr Lidarr Readarr Prowlarr Bazarr Jellyfin Emby Plex Jellyseerr Overseerr Seerr qBittorrent Transmission Pi-hole Portainer Nextcloud Immich Glances TrueNAS DuckDuckGo Qwant Bing Ecosia Open-Meteo Hikvision Dahua Reolink Tapo Foscam Amcrest Axis Ubiquiti Hue Sonos Chromecast'
     .split(' ')
     .concat([
       'AdGuard Home',

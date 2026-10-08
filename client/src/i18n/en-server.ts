@@ -215,6 +215,18 @@ export const EN_SERVER: Record<string, string> = {
   'Réponse invalide du relais réseau.': 'Invalid response from the network relay.',
   'Erreur du relais réseau.': 'Network relay error.',
   'Action impossible sur le réseau local.': 'Could not do this on the local network.',
+  // Films et séries (Seerr)
+  'Seerr n’est pas réglé : ajoutez-le au homelab, avec sa clé API.': 'Seerr isn’t set up: add it to the homelab, with its API key.',
+  'Certificat de Seerr non reconnu : cochez « Ignorer le certificat » dans le homelab.': 'Seerr’s certificate isn’t recognised: tick “Ignore the certificate” in the homelab.',
+  'Seerr ne répond pas : vérifiez son adresse dans le homelab.': 'Seerr isn’t responding: check its address in the homelab.',
+  'Clé API refusée par Seerr : vérifiez-la dans le homelab.': 'Seerr refused the API key: check it in the homelab.',
+  'Déjà demandé.': 'Already requested.',
+  'Introuvable dans Seerr.': 'Not found in Seerr.',
+  'Réponse de Seerr illisible : est-ce bien Seerr à cette adresse ?': 'Unreadable answer from Seerr: is Seerr really at this address?',
+  'Aucune saison à demander.': 'No season to request.',
+  'Demande invalide.': 'Invalid request.',
+  'Adresse invalide : elle commence par http:// ou https://.': 'Invalid address: it starts with http:// or https://.',
+  'Clé API manquante.': 'Missing API key.',
 };
 
 /** Définition d'un flux vidéo dans un message du serveur (« 1920 × 1080 (H.264) », « définition inconnue »). */
@@ -238,6 +250,8 @@ export const EN_PATTERNS: [RegExp, string | ((...parts: string[]) => string)][] 
   [/^La caméra a répondu « (.*) » à cette adresse\.$/, 'The camera responded “$1” at this address.'],
   [/^Le serveur distant a répondu (\d+)\.$/, 'The remote server responded $1.'],
   [/^Home Assistant a répondu (\d+)\.$/, 'Home Assistant responded $1.'],
+  [/^Seerr a refusé : ([\s\S]*)$/, 'Seerr refused: $1'],
+  [/^Seerr a répondu : erreur (\d+)\.$/, 'Seerr responded: error $1.'],
   [/^Fichier trop volumineux \(max (\d+) Mo\)\.$/, 'File too large (max $1 MB).'],
   [/^(-?\d+(?:[.,]\d+)?) %$/, '$1%'],
 ];

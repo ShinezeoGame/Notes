@@ -27,6 +27,8 @@ final class WidgetStore {
     /** Actions à rejouer par l'application : [{ type: "done" | "add", list, task, done, text, at }]. */
     private static final String KEY_PENDING = "pending";
     private static final String KEY_STATUS = "status:";
+    /** Widget « Films et séries » : { state: "ok" | "notConfigured" | "noServer" | "error" | "offline", requests: [...] }. */
+    private static final String KEY_SEERR = "seerr";
 
     private WidgetStore() {}
 
@@ -313,5 +315,19 @@ final class WidgetStore {
 
     static String status(Context context, String computerId) {
         return prefs(context).getString(KEY_STATUS + computerId, "");
+    }
+
+    // ---------- Films et séries (Seerr) : dernières demandes ----------
+
+    static synchronized JSONObject seerr(Context context) {
+        try {
+            return new JSONObject(prefs(context).getString(KEY_SEERR, "{}"));
+        } catch (Exception e) {
+            return new JSONObject();
+        }
+    }
+
+    static synchronized void saveSeerr(Context context, JSONObject data) {
+        prefs(context).edit().putString(KEY_SEERR, data.toString()).apply();
     }
 }

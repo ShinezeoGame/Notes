@@ -3,8 +3,10 @@ package com.shinezeo.notes;
 import android.content.Context;
 import android.text.format.DateFormat;
 import android.util.Log;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.UUID;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -31,6 +33,56 @@ final class WidgetActions {
             WidgetViews.updateTasks(context);
             WidgetViews.updateWake(context);
         }
+    }
+
+    // ---------- Films et séries (Seerr) ----------
+
+    private static String lang(Context context) {
+        return WidgetStore.isFrench(context) ? "fr" : "en";
+    }
+
+    /** Relit les dernières demandes faites à Seerr (widget « Films et séries ») ; garde les précédentes en cas d'échec. */
+    static void refreshSeerr(Context context) {
+        JSONObject before = WidgetStore.seerr(context);
+        JSONObject out = new JSONObject();
+        try {
+            try {
+                if (!WidgetStore.hasServer(context)) {
+                    out.put("state", "noServer");
+                } else {
+                    JSONObject r = WidgetApi.request(context, "GET", "/api/seerr/requests?take=6&lang=" + lang(context), null);
+                    JSONArray requests = r.optJSONArray("requests");
+                    out.put("state", "ok").put("requests", requests == null ? new JSONArray() : requests);
+                }
+            } catch (WidgetApi.HttpError e) {
+                // 404 : Seerr pas encore relié (section Films et séries d'Ostal).
+                out.put("state", e.status == 404 ? "notConfigured" : "error");
+                if (e.status != 404 && before.optJSONArray("requests") != null) out.put("requests", before.optJSONArray("requests"));
+            } catch (Exception e) {
+                Log.w(TAG, "Demandes non relues", e);
+                out.put("state", "offline");
+                if (before.optJSONArray("requests") != null) out.put("requests", before.optJSONArray("requests"));
+            }
+        } catch (Exception ignored) {
+            // Valeurs simples.
+        }
+        WidgetStore.saveSeerr(context, out);
+        WidgetViews.updateSeerr(context);
+    }
+
+    /** Recherche d'un film ou d'une série (fenêtre de recherche du widget). */
+    static JSONArray seerrSearch(Context context, String query) throws Exception {
+        JSONObject r = WidgetApi.request(context, "GET", "/api/seerr/search?q=" + URLEncoder.encode(query, "UTF-8") + "&lang=" + lang(context), null);
+        JSONArray results = r.optJSONArray("results");
+        return results == null ? new JSONArray() : results;
+    }
+
+    /** Demande d'un film, ou de toutes les saisons restantes d'une série ; renvoie l'état de la demande. */
+    static String seerrRequest(Context context, String mediaType, int mediaId) throws Exception {
+        JSONObject body = new JSONObject().put("mediaType", mediaType).put("mediaId", mediaId);
+        String state = WidgetApi.request(context, "POST", "/api/seerr/request", body).optString("state", "processing");
+        refreshSeerr(context);
+        return state;
     }
 
     static void toggle(Context context, String listId, String taskId) {

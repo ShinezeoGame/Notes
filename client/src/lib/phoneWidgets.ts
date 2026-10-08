@@ -17,7 +17,7 @@ export const LAUNCHER_SHORTCUTS = 4;
 
 /** `icon` : dessin du widget Android (res/drawable/ic_w_…) ; `appIcon` : le même dans l'application. */
 export type PhoneShortcut = { id: string; label: string; url: string; icon: string; appIcon: IconName; needsServer?: boolean };
-export type WidgetKind = 'shortcuts' | 'tasks' | 'wake';
+export type WidgetKind = 'shortcuts' | 'tasks' | 'wake' | 'seerr';
 
 /** Raccourcis possibles, dans la langue de l'application (icônes : res/drawable/ic_w_… de l'application Android). */
 export function phoneShortcuts(): PhoneShortcut[] {
@@ -31,6 +31,7 @@ export function phoneShortcuts(): PhoneShortcut[] {
     { id: 'smarthome', label: t('Maison'), url: '#/maison', icon: 'home', appIcon: 'bulb', needsServer: true },
     { id: 'cameras', label: t('Caméras'), url: '#/cameras', icon: 'cameras', appIcon: 'cctv', needsServer: true },
     { id: 'homelab', label: t('Homelab'), url: '#/homelab', icon: 'homelab', appIcon: 'server', needsServer: true },
+    { id: 'media', label: t('Films et séries'), url: '#/films', icon: 'media', appIcon: 'film', needsServer: true },
     { id: 'home', label: t('Accueil'), url: '#/', icon: 'dashboard', appIcon: 'dashboard' },
   ];
 }
@@ -173,7 +174,8 @@ export function startPhoneWidgets(doc: Y.Doc) {
 
 // ---------- Réglages → Widgets du téléphone ----------
 
-export type WidgetsInfo = { placed: Record<WidgetKind, number>; pinWidgets: boolean; pinShortcuts: boolean };
+/** `placed.seerr` absent : application Android d'avant le widget « Films et séries ». */
+export type WidgetsInfo = { placed: Record<Exclude<WidgetKind, 'seerr'>, number> & { seerr?: number }; pinWidgets: boolean; pinShortcuts: boolean };
 
 export const widgetsInfo = () => callNative<WidgetsInfo>(NATIVE, 'info');
 
