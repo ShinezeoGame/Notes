@@ -102,7 +102,7 @@ Widgets : **Films et séries** (rechercher et demander un film ou une série à 
 Avec l’application Android, Ostal se pose aussi sur l’écran d’accueil du téléphone :
 
 - **Tâches** : une liste de tâches de l’accueil d’Ostal. Touchez une tâche pour la cocher ou la décocher, **+** pour en ajouter une (une petite fenêtre s’ouvre, sans lancer Ostal), **↻** pour actualiser, le titre pour ouvrir Ostal.
-- **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)) ; le widget affiche ensuite « Signal envoyé à 08:42 ». Il tient sur une seule rangée de l’écran d’accueil ; agrandi, il montre plusieurs ordinateurs.
+- **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)), avec son état : « Éteint · toucher pour allumer », « Démarrage… », « Allumé · toucher pour éteindre » (bouton plein quand il est allumé). Allumé, un appui ouvre « Éteindre … ? » (il faut Ostal pour Windows sur l’ordinateur, avec l’option **Pouvoir éteindre cet ordinateur depuis Ostal**). L’état est relu toutes les 30 minutes, à chaque ouverture d’Ostal et après chaque appui ; plus ancien, il affiche l’heure de la vérification. Le widget tient sur une seule rangée de l’écran d’accueil ; agrandi, il montre plusieurs ordinateurs.
 - **Raccourcis** : jusqu’à 6 boutons au choix, par exemple **Nouvelle page** (crée une page et l’ouvre), **Agenda**, **Papiers**, **Ajouter un papier**, **Atelier PDF**, **Maison**, **Caméras**, **Films et séries**.
 - **Films et séries** : une barre de recherche pour demander un film ou une série à Seerr, au clavier ou au micro (voir [Films et séries](#films-et-séries)).
 
@@ -283,7 +283,7 @@ Demandez un film ou une série en un geste : Ostal le transmet à **Seerr** (ou 
 
 ## Allumer un ordinateur
 
-Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à distance un ordinateur de la maison, depuis le téléphone ou de n’importe où : le serveur Ostal envoie sur son réseau le signal de réveil (Wake-on-LAN) que la carte réseau de l’ordinateur guette, même éteint. Le widget montre aussi si l’ordinateur est allumé : après un appui sur le bouton, il suit le démarrage (« Démarrage… 0:42 ») jusqu’à **Allumé**.
+Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à distance un ordinateur de la maison, depuis le téléphone ou de n’importe où : le serveur Ostal envoie sur son réseau le signal de réveil (Wake-on-LAN) que la carte réseau de l’ordinateur guette, même éteint. Le widget montre aussi si l’ordinateur est allumé : après un appui sur le bouton, il suit le démarrage (« Démarrage… 0:42 ») jusqu’à **Allumé**. Allumé, un nouvel appui l’**éteint** (voir ci-dessous).
 
 **Choisir l’ordinateur** :
 
@@ -299,6 +299,14 @@ Le widget **Allumer un PC** (catalogue de l’accueil, groupe Maison) allume à 
 3. Sous Windows, **Gestionnaire de périphériques → Cartes réseau →** votre carte Ethernet **→ Propriétés** : onglet *Gestion de l’alimentation*, cochez *Autoriser ce périphérique à sortir l’ordinateur du mode veille* ; onglet *Avancé*, mettez *Wake on Magic Packet* sur *Activé*.
 4. Désactivez le démarrage rapide de Windows : **Panneau de configuration → Options d’alimentation → Choisir l’action des boutons d’alimentation → Modifier des paramètres actuellement non disponibles**, puis décochez *Activer le démarrage rapide*. Avec lui, l’ordinateur ne s’éteint pas tout à fait et ne se réveille souvent pas.
 5. Éteignez-le normalement (**Démarrer → Arrêter**) et essayez le bouton du widget. Le réveil marche aussi depuis la mise en veille.
+
+**L’éteindre depuis le téléphone ou l’accueil** : le signal de réveil ne sait qu’allumer. Pour éteindre, Ostal pour Windows doit tourner sur l’ordinateur, relié au même serveur Ostal que le téléphone :
+
+1. Sur l’ordinateur, installez Ostal pour Windows (voir [Application Windows](#application-windows)) et ouvrez-y votre serveur Ostal (lien **Lier un appareil**, comme pour un téléphone).
+2. Dans Ostal sur cet ordinateur : **Réglages → Cet ordinateur**, cochez **Pouvoir éteindre cet ordinateur depuis Ostal**. Ostal démarre alors avec Windows et reste près de l’horloge, dans la zone de notification : fermer sa fenêtre ne le quitte plus (clic droit sur son icône → **Quitter**).
+3. Sur le widget **Allumer un PC** (accueil ou écran d’accueil du téléphone), l’ordinateur allumé affiche « Allumé · toucher pour éteindre ». Un appui demande confirmation, puis Windows s’arrête 30 secondes plus tard (pour annuler sur l’ordinateur : `shutdown /a` dans l’invite de commandes). Le widget suit l’extinction jusqu’à **Éteint**.
+
+Sans cette option, un appui sur un ordinateur allumé explique comment l’activer. Le réglage montre aussi les adresses MAC de l’ordinateur : celle du widget doit en faire partie (c’est le cas si l’ordinateur a été choisi par **Chercher sur le réseau**).
 
 **Bon à savoir** :
 

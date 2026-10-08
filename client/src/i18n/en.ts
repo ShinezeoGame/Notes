@@ -2054,6 +2054,20 @@ const UI: Record<string, string> = {
     'Still off after 3 minutes: check how the computer is set up (widget settings).',
   'Choisissez de nouveau l’ordinateur dans les réglages du widget.': 'Choose the computer again in the widget settings.',
   'Allumer {name}': 'Turn on {name}',
+  'Éteindre {name}': 'Turn off {name}',
+  'Éteindre {name} ?': 'Turn off {name}?',
+  'Extinction… {time}': 'Turning off… {time}',
+  'Pour l’éteindre d’ici : Ostal pour Windows, sur cet ordinateur.': 'To turn it off from here: Ostal for Windows, on that computer.',
+  'Pour l’éteindre d’ici : sur cet ordinateur, ouvrez Ostal pour Windows et cochez « Pouvoir éteindre cet ordinateur depuis Ostal » (Réglages).':
+    'To turn it off from here: on that computer, open Ostal for Windows and check “Allow turning off this computer from Ostal” (Settings).',
+  'Cet ordinateur': 'This computer',
+  'Pouvoir éteindre cet ordinateur depuis Ostal (téléphone, accueil)': 'Allow turning off this computer from Ostal (phone, home)',
+  'Sur le widget « Allumer un PC », un appui sur cet ordinateur allumé l’éteint (Windows s’arrête 30 secondes plus tard). Ostal démarre alors avec Windows et reste près de l’horloge, dans la zone de notification : fermer la fenêtre ne le quitte plus (clic droit sur son icône → Quitter).':
+    'On the “Wake a PC” widget, a tap on this computer while it is on turns it off (Windows shuts down 30 seconds later). Ostal then starts with Windows and stays next to the clock, in the notification area: closing the window no longer quits it (right-click its icon → Quit).',
+  'Adresses MAC de {name} : {macs}. Le widget doit utiliser l’une d’elles.': 'MAC addresses of {name}: {macs}. The widget must use one of them.',
+  'Cet ordinateur peut maintenant être éteint depuis Ostal.': 'This computer can now be turned off from Ostal.',
+  'Extinction à distance désactivée.': 'Remote turning off disabled.',
+  'Réglage impossible.': 'Setting failed.',
   'Aucun appareil trouvé : vérifiez que l’ordinateur est allumé et branché au même réseau que le serveur Ostal.':
     'No device found: check that the computer is on and connected to the same network as the Ostal server.',
   'Cet appareil': 'This device',

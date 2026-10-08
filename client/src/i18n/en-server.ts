@@ -221,6 +221,10 @@ export const EN_SERVER: Record<string, string> = {
   'Seerr ne répond pas : vérifiez son adresse dans le homelab.': 'Seerr isn’t responding: check its address in the homelab.',
   'Clé API refusée par Seerr : vérifiez-la dans le homelab.': 'Seerr refused the API key: check it in the homelab.',
   'Déjà demandé.': 'Already requested.',
+  'Adresses MAC manquantes.': 'Missing MAC addresses.',
+  'Cet ordinateur ne peut pas être éteint à distance : ouvrez-y Ostal pour Windows, avec l’option « Pouvoir éteindre cet ordinateur depuis Ostal ».':
+    'This computer cannot be turned off remotely: open Ostal for Windows on it, with the option “Allow turning off this computer from Ostal”.',
+  'Extinction impossible.': 'Could not turn it off.',
   'Introuvable dans Seerr.': 'Not found in Seerr.',
   'Réponse de Seerr illisible : est-ce bien Seerr à cette adresse ?': 'Unreadable answer from Seerr: is Seerr really at this address?',
   'Aucune saison à demander.': 'No season to request.',

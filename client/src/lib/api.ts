@@ -164,6 +164,9 @@ export const api = {
   wolStatus: (target: { host: string; mac?: string }) =>
     request<WolStatus>(`/api/wol/status?${new URLSearchParams({ host: target.host, ...(target.mac ? { mac: target.mac } : {}) })}`, { auth: ownerAuth() }),
   wolScan: () => request<WolScan>('/api/wol/scan', { method: 'POST', auth: ownerAuth() }),
+  /** Ordinateurs qui peuvent être éteints à distance (Ostal pour Windows, option « Pouvoir éteindre… »). */
+  powerAgents: () => request<{ agents: { mac: string; name: string }[] }>('/api/power/agents', { auth: ownerAuth() }),
+  powerOff: (mac: string) => request<{ ok: boolean; name: string }>('/api/power/off', { method: 'POST', body: JSON.stringify({ mac }), auth: ownerAuth() }),
   /** Films et séries : Seerr réglé dans le homelab, interrogé par le serveur (`lang` : langue des titres). */
   seerrStatus: () => request<SeerrStatus>('/api/seerr/status', { auth: ownerAuth() }),
   seerrSearch: (q: string, lang: string) =>

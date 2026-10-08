@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Un ordinateur du widget « Allumer l'ordinateur » : bouton rond, nom, état du dernier signal. -->
+<!-- Un ordinateur du widget « Allumer l'ordinateur » : bouton rond, nom, état (allumé, éteint, démarrage…). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/wk_row"
     android:layout_width="match_parent"

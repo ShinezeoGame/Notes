@@ -48,5 +48,13 @@ if (info) {
     installUpdate: () => ipcRenderer.send('melo:install-update'),
     setLanguage: (lang) => ipcRenderer.send('melo:lang', String(lang)),
     chooseFolder: (title) => ipcRenderer.invoke('melo:choose-folder', String(title || '')),
+    // Niveau 5 : extinction de cet ordinateur depuis un autre appareil.
+    power: () => ipcRenderer.invoke('melo:power'),
+    setPower: (enabled, where) =>
+      ipcRenderer.invoke('melo:set-power', enabled === true, {
+        server: String(where?.server ?? ''),
+        wsId: String(where?.wsId ?? ''),
+        key: String(where?.key ?? ''),
+      }),
   });
 }

@@ -59,6 +59,7 @@ import { createAppUpdates } from './appUpdates.js';
 import { checkFrame } from './frames.js';
 import { claimPairing, startPairing } from './pairing.js';
 import { lanAction } from './wol.js';
+import { agentsOnline, requestOff, waitOrder } from './power.js';
 import {
   BackupError,
   backupFile,
@@ -795,6 +796,37 @@ app.post('/api/wol/scan', requireOwner, requireHost, async (req, res) => {
   // L'appareil qui fait la recherche (l'ordinateur à régler, souvent) : signalé dans la liste.
   const you = String(req.ip || '').replace(/^::ffff:/, '');
   res.json({ ...data, devices: data.devices.map((d) => (d.ip === you ? { ...d, you: true } : d)) });
+});
+
+// ---------- Éteindre un ordinateur (application Ostal pour Windows, voir power.js) ----------
+// L'application Windows attend ses ordres (requête longue, adresses MAC de ses cartes réseau) ; le téléphone ou
+// l'accueil envoie « éteindre » pour l'adresse MAC de l'ordinateur réglé.
+app.get('/api/power/wait', requireOwner, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  let stop = () => {};
+  try {
+    stop = waitOrder(req.wsId, req.query.macs, req.query.name, (result) => {
+      if (!res.headersSent) res.json(result);
+    });
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+  // Connexion fermée avant un ordre (application quittée, réseau coupé).
+  res.on('close', () => stop());
+});
+
+app.get('/api/power/agents', requireOwner, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ agents: agentsOnline(req.wsId) });
+});
+
+app.post('/api/power/off', requireOwner, requireHost, async (req, res) => {
+  try {
+    res.json(requestOff(req.wsId, req.body?.mac));
+  } catch (err) {
+    if (!err.status) console.error('[power]', err);
+    res.status(err.status || 500).json({ error: err.status ? err.message : 'Extinction impossible.' });
+  }
 });
 
 // ---------- Widgets de l'écran d'accueil du téléphone (application Android) ----------

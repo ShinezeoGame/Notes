@@ -1703,6 +1703,7 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .pw-widget-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: calc(14px * var(--ui-scale)); color: var(--text-strong); }
 .pw-widget-text .nb-muted { font-size: calc(12.5px * var(--ui-scale)); }
 .pw-intro { margin: 0 0 8px; font-size: calc(13px * var(--ui-scale)); }
+.dp-note { margin: 6px 0 0; font-size: calc(12.5px * var(--ui-scale)); }
 .pw-hint { margin: 6px 0 10px; font-size: calc(12.5px * var(--ui-scale)); }
 .pw-list { margin-top: 10px; }
 .pw-sub { margin: 16px 0 6px; font-size: calc(13.5px * var(--ui-scale)); color: var(--text-strong); }

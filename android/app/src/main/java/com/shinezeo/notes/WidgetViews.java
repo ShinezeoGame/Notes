@@ -8,10 +8,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
+import android.text.format.DateFormat;
 import android.text.Spanned;
 import android.text.style.StrikethroughSpan;
 import android.view.View;
 import android.widget.RemoteViews;
+import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -25,6 +27,10 @@ final class WidgetViews {
     private static final int MAX_COMPUTERS = 4;
     /** Hauteur d'un ordinateur (dp) dans le widget « Allumer l'ordinateur ». */
     private static final int COMPUTER_HEIGHT = 48;
+    /** État d'un ordinateur plus ancien : heure de la vérification affichée. */
+    private static final long STALE_MS = 20 * 60_000L;
+    /** Message (signal envoyé, refus…) affiché tant que l'état n'a pas été relu, au plus ce délai. */
+    private static final long MESSAGE_MS = 10 * 60_000L;
     /** Largeur d'un raccourci (dp) : au-delà de la largeur du widget, les derniers sont masqués. */
     private static final int SHORTCUT_WIDTH = 64;
     private static final int[] SLOTS = { R.id.sc_slot1, R.id.sc_slot2, R.id.sc_slot3, R.id.sc_slot4, R.id.sc_slot5, R.id.sc_slot6 };
@@ -248,26 +254,79 @@ final class WidgetViews {
             String id = pc.optString("id");
             String name = pc.optString("name", "").trim();
             if (name.isEmpty()) name = WidgetStore.tr(context, "Ordinateur", "Computer");
-            String status = WidgetStore.status(context, id);
+            JSONObject state = WidgetStore.power(context, id);
+            String phase = state.optString("phase");
+            boolean online = state.has("online") && state.optBoolean("online") && phase.isEmpty();
             RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_wake_row);
+            // Bouton plein : allumé, ou état inconnu (ordinateur réglé sans adresse IP) ; éteint ou en cours : discret.
+            boolean lit = online || (!state.has("online") && phase.isEmpty());
             if (theme != null) {
-                WidgetTheme.background(row, R.id.wk_button, theme.accent);
-                WidgetTheme.icon(row, R.id.wk_button, theme.onAccent);
+                WidgetTheme.background(row, R.id.wk_button, lit ? theme.accent : theme.tile);
+                WidgetTheme.icon(row, R.id.wk_button, lit ? theme.onAccent : phase.isEmpty() ? theme.muted : theme.accent);
                 row.setTextColor(R.id.wk_name, theme.text);
                 row.setTextColor(R.id.wk_status, theme.muted);
+            } else if (!lit) {
+                row.setInt(R.id.wk_button, "setBackgroundResource", R.drawable.widget_power_off_bg);
+                row.setImageViewResource(R.id.wk_button, R.drawable.ic_w_power);
             }
             row.setTextViewText(R.id.wk_name, name);
-            row.setTextViewText(R.id.wk_status, status.isEmpty() ? WidgetStore.tr(context, "Toucher pour allumer", "Tap to turn on") : status);
-            row.setContentDescription(R.id.wk_row, WidgetStore.tr(context, "Allumer ", "Turn on ") + name);
-            Intent wake = new Intent(context, WakeWidget.class)
-                .setAction(WakeWidget.ACTION_WAKE)
-                .setData(Uri.parse("ostal-widget://wake/" + Uri.encode(id)))
-                .putExtra(EXTRA_COMPUTER, id);
-            row.setOnClickPendingIntent(R.id.wk_row, PendingIntent.getBroadcast(context, 0, wake, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            row.setTextViewText(R.id.wk_status, powerLine(context, state));
+            PendingIntent tap;
+            if (!phase.isEmpty()) {
+                // Démarrage ou extinction en cours : état relu.
+                row.setContentDescription(R.id.wk_row, name + " : " + powerLine(context, state));
+                Intent check = new Intent(context, WakeWidget.class)
+                    .setAction(WakeWidget.ACTION_CHECK)
+                    .setData(Uri.parse("ostal-widget://check/" + Uri.encode(id)));
+                tap = PendingIntent.getBroadcast(context, 0, check, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            } else if (online) {
+                row.setContentDescription(R.id.wk_row, WidgetStore.tr(context, "Éteindre ", "Turn off ") + name);
+                Intent ask = new Intent(context, PowerActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    .setData(Uri.parse("ostal-widget://off/" + Uri.encode(id)))
+                    .putExtra(EXTRA_COMPUTER, id);
+                tap = PendingIntent.getActivity(context, 0, ask, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            } else {
+                row.setContentDescription(R.id.wk_row, WidgetStore.tr(context, "Allumer ", "Turn on ") + name);
+                Intent wake = new Intent(context, WakeWidget.class)
+                    .setAction(WakeWidget.ACTION_WAKE)
+                    .setData(Uri.parse("ostal-widget://wake/" + Uri.encode(id)))
+                    .putExtra(EXTRA_COMPUTER, id);
+                tap = PendingIntent.getBroadcast(context, 0, wake, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            }
+            row.setOnClickPendingIntent(R.id.wk_row, tap);
             rv.addView(R.id.wk_list, row);
         }
         showList(rv, R.id.wk_list, R.id.wk_empty);
         return rv;
+    }
+
+    /** État affiché sous le nom d'un ordinateur : démarrage, extinction, dernier message, allumé ou éteint. */
+    static String powerLine(Context context, JSONObject state) {
+        long now = System.currentTimeMillis();
+        String phase = state.optString("phase");
+        if ("booting".equals(phase)) {
+            return WidgetStore.tr(context, "Démarrage… (signal envoyé à ", "Starting… (signal sent at ") + time(context, state.optLong("since")) + ")";
+        }
+        if ("stopping".equals(phase)) return WidgetStore.tr(context, "Extinction…", "Turning off…");
+        String msg = state.optString("msg");
+        long msgAt = state.optLong("msgAt");
+        boolean freshMsg = !msg.isEmpty() && now - msgAt < MESSAGE_MS;
+        long checked = state.optLong("checked");
+        if (freshMsg && msgAt >= checked) return msg;
+        if (!state.has("online")) return freshMsg ? msg : WidgetStore.tr(context, "Toucher pour allumer", "Tap to turn on");
+        if (state.optBoolean("other")) return WidgetStore.tr(context, "Adresse IP prise par un autre appareil", "IP address taken by another device");
+        boolean online = state.optBoolean("online");
+        String word = online ? WidgetStore.tr(context, "Allumé", "On") : WidgetStore.tr(context, "Éteint", "Off");
+        if (now - checked > STALE_MS) return word + WidgetStore.tr(context, " · vérifié à ", " · checked at ") + time(context, checked);
+        if (!online) return word + WidgetStore.tr(context, " · toucher pour allumer", " · tap to turn on");
+        // Allumé, extinction impossible d'ici (Ostal pour Windows n'y attend pas d'ordres) : appui = explication.
+        if (state.has("canOff") && !state.optBoolean("canOff")) return word;
+        return word + WidgetStore.tr(context, " · toucher pour éteindre", " · tap to turn off");
+    }
+
+    private static String time(Context context, long at) {
+        return DateFormat.getTimeFormat(context).format(new Date(at));
     }
 
     // ---------- Films et séries (Seerr) ----------

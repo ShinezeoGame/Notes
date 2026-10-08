@@ -52,6 +52,11 @@
             android:name=".ReminderJob"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
+        <!-- Suivi d'un ordinateur allumé ou éteint depuis le widget « Allumer l'ordinateur » -->
+        <service
+            android:name=".WakeStatusJob"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
@@ -96,6 +101,14 @@
         <!-- « + » du widget Tâches : petite fenêtre par-dessus l'écran d'accueil, hors de la liste des applications récentes -->
         <activity
             android:name=".TaskAddActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!-- « Éteindre … ? » du widget « Allumer l'ordinateur » : même genre de fenêtre -->
+        <activity
+            android:name=".PowerActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:noHistory="true"

@@ -9,8 +9,8 @@ import org.json.JSONObject;
 /**
  * Données des widgets de l'écran d'accueil : réglages envoyés par l'application (serveur, espace, langue, raccourcis,
  * liste de tâches affichée), dernières données lues (listes de tâches et ordinateurs de l'accueil d'Ostal), actions
- * faites sans pouvoir joindre le serveur (rejouées par l'application à sa prochaine ouverture) et état du dernier
- * signal envoyé à chaque ordinateur.
+ * faites sans pouvoir joindre le serveur (rejouées par l'application à sa prochaine ouverture) et état de chaque
+ * ordinateur (allumé ou éteint, démarrage ou extinction en cours, dernier message).
  */
 final class WidgetStore {
 
@@ -26,7 +26,12 @@ final class WidgetStore {
     private static final String KEY_DATA = "data";
     /** Actions à rejouer par l'application : [{ type: "done" | "add", list, task, done, text, at }]. */
     private static final String KEY_PENDING = "pending";
-    private static final String KEY_STATUS = "status:";
+    /**
+     * État d'un ordinateur : { online (absent : inconnu), other (adresse IP prise par un autre appareil), checked (heure de
+     * la vérification), canOff (Ostal pour Windows attend les ordres ; absent : inconnu), phase ("booting", "stopping" ou
+     * ""), since (début de la phase), msg, msgAt (dernier message : signal envoyé, refus…) }.
+     */
+    private static final String KEY_POWER = "power:";
     /** Widget « Films et séries » : { state: "ok" | "notConfigured" | "noServer" | "error" | "offline", requests: [...] }. */
     private static final String KEY_SEERR = "seerr";
     /** Couleurs des widgets choisies dans l'application (thème d'Ostal ou couleurs personnalisées) ; absentes : téléphone. */
@@ -309,14 +314,18 @@ final class WidgetStore {
         return list;
     }
 
-    // ---------- Dernier signal envoyé à un ordinateur ----------
+    // ---------- État des ordinateurs ----------
 
-    static void saveStatus(Context context, String computerId, String text) {
-        prefs(context).edit().putString(KEY_STATUS + computerId, text).apply();
+    static synchronized JSONObject power(Context context, String computerId) {
+        try {
+            return new JSONObject(prefs(context).getString(KEY_POWER + computerId, "{}"));
+        } catch (Exception e) {
+            return new JSONObject();
+        }
     }
 
-    static String status(Context context, String computerId) {
-        return prefs(context).getString(KEY_STATUS + computerId, "");
+    static synchronized void savePower(Context context, String computerId, JSONObject state) {
+        prefs(context).edit().putString(KEY_POWER + computerId, state.toString()).apply();
     }
 
     // ---------- Couleurs ----------

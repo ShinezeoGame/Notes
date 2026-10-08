@@ -1,12 +1,14 @@
 // Widget « Allumer un PC » : réveille un ordinateur du réseau local (Wake-on-LAN : le serveur Ostal envoie le signal
 // sur son réseau) et montre s'il est allumé. Réglages : l'ordinateur choisi parmi les appareils trouvés sur le réseau,
-// ou ses adresses saisies.
+// ou ses adresses saisies. Allumé, il s'éteint d'un appui si Ostal pour Windows y tourne (option « Pouvoir éteindre cet
+// ordinateur depuis Ostal »).
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { isHost, parseMac, relayWarning, type WolDevice, type WolScan, type WolStatus } from '../../lib/wol';
 import { Icon } from '../../icons/Icon';
 import { str, type SettingsProps, type WidgetProps } from '../types';
 import { t, tServer } from '../../lib/i18n';
+import { toast } from '../../components/Toast';
 
 /** Attente du démarrage après le signal, et rythme des vérifications. */
 const BOOT_TIMEOUT = 180_000;
@@ -19,7 +21,7 @@ const minutes = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-type Phase = 'idle' | 'sending' | 'booting' | 'sent' | 'failed';
+type Phase = 'idle' | 'sending' | 'booting' | 'sent' | 'failed' | 'stopping';
 
 export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
   const mac = parseMac(str(widget.config.mac));
@@ -34,12 +36,15 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
+  /** Ostal pour Windows attend des ordres sur cet ordinateur : il peut être éteint d'ici. */
+  const [canOff, setCanOff] = useState(false);
 
   const check = useCallback(async () => {
     if (!host) return null;
     try {
-      const s = await api.wolStatus({ host, mac: mac ?? undefined });
+      const [s, agents] = await Promise.all([api.wolStatus({ host, mac: mac ?? undefined }), api.powerAgents().catch(() => null)]);
       setStatus(s);
+      if (agents) setCanOff(agents.agents.some((a) => a.mac === mac));
       setError('');
       return s;
     } catch (err) {
@@ -52,7 +57,7 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
 
   // État vérifié régulièrement page visible, et au retour sur la page ; pendant un démarrage, la boucle ci-dessous
   // s'en charge.
-  const booting = phase === 'booting';
+  const booting = phase === 'booting' || phase === 'stopping';
   useEffect(() => {
     if (!host || booting) return;
     void check();
@@ -73,8 +78,9 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
     const loop = async () => {
       const s = await check();
       if (cancelled) return;
-      if (s?.online) setPhase('idle');
-      else if (Date.now() - startedAt > BOOT_TIMEOUT) setPhase('failed');
+      // Démarrage : jusqu'à ce qu'il réponde ; extinction : jusqu'à ce qu'il ne réponde plus.
+      if (phase === 'stopping' ? s && !s.online : s?.online) setPhase('idle');
+      else if (Date.now() - startedAt > BOOT_TIMEOUT) setPhase(phase === 'stopping' ? 'idle' : 'failed');
       else timer = window.setTimeout(loop, CHECK_BOOTING);
     };
     timer = window.setTimeout(loop, CHECK_BOOTING);
@@ -84,7 +90,7 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
       window.clearTimeout(timer);
       window.clearInterval(clock);
     };
-  }, [booting, check, startedAt]);
+  }, [booting, check, startedAt, phase]);
 
   useEffect(() => {
     if (phase !== 'sent') return;
@@ -122,11 +128,33 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
     }
   };
 
+  const off = async () => {
+    if (!canOff) {
+      // Explication complète en message ; rappel court dans le widget (petit).
+      setError(t('Pour l’éteindre d’ici : Ostal pour Windows, sur cet ordinateur.'));
+      toast(t('Pour l’éteindre d’ici : sur cet ordinateur, ouvrez Ostal pour Windows et cochez « Pouvoir éteindre cet ordinateur depuis Ostal » (Réglages).'), 'info', {
+        duration: 9000,
+      });
+      return;
+    }
+    if (!confirm(t('Éteindre {name} ?', { name }))) return;
+    setError('');
+    try {
+      await api.powerOff(mac);
+      setStartedAt(Date.now());
+      setNow(Date.now());
+      setPhase('stopping');
+    } catch (err) {
+      setError(errorText(err));
+    }
+  };
+
   const online = Boolean(host && status?.online);
   const busy = phase === 'sending' || booting;
   let tone: 'on' | 'off' | 'busy' | 'warn' | 'unknown' = 'unknown';
   let label = '';
   if (phase === 'sending') [tone, label] = ['busy', t('Envoi du signal…')];
+  else if (phase === 'stopping') [tone, label] = ['busy', t('Extinction… {time}', { time: minutes(now - startedAt) })];
   else if (booting) [tone, label] = ['busy', t('Démarrage… {time}', { time: minutes(now - startedAt) })];
   else if (phase === 'sent') [tone, label] = ['on', t('Signal envoyé')];
   else if (online) [tone, label] = ['on', t('Allumé')];
@@ -146,10 +174,10 @@ export function WolWidget({ widget, editing, openSettings }: WidgetProps) {
       <button
         type="button"
         className={`w-wol-btn${busy ? ' is-busy' : ''}`}
-        onClick={() => void wake()}
-        disabled={editing || busy || online}
-        aria-label={t('Allumer {name}', { name })}
-        title={online ? t('Allumé') : t('Allumer')}
+        onClick={() => void (online ? off() : wake())}
+        disabled={editing || busy}
+        aria-label={online ? t('Éteindre {name}', { name }) : t('Allumer {name}', { name })}
+        title={online ? t('Éteindre') : t('Allumer')}
       >
         <Icon name="power" size={26} strokeWidth={2.2} />
       </button>

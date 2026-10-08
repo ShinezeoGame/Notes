@@ -7,6 +7,7 @@ import { desktop, isDesktopLocal, type DesktopUpdate } from '../lib/desktop';
 import { BackupSection } from './BackupDialog';
 import { RemindersSection } from './RemindersSection';
 import { PhoneWidgetsSection } from './PhoneWidgetsSection';
+import { DesktopPowerSection, desktopPowerAvailable } from './DesktopPowerSection';
 import { phoneWidgetsAvailable } from '../lib/phoneWidgets';
 import type * as Y from 'yjs';
 import { isInstalledApp, promptInstall, useInstallState } from '../lib/pwa';
@@ -346,6 +347,7 @@ export function SettingsDialog({ onClose, onTour, doc }: Props) {
 
       <RemindersSection />
       {doc && phoneWidgetsAvailable() ? <PhoneWidgetsSection doc={doc} /> : null}
+      {desktopPowerAvailable() && !settings.guest ? <DesktopPowerSection /> : null}
       {!settings.guest ? <BackupSection /> : null}
 
       <UpdatesSection />

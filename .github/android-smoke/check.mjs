@@ -587,6 +587,100 @@ try {
     if (!wake.includes('PC du bureau') || !wake.includes(status)) throw new Error(`widget : ${JSON.stringify(wake)}`);
   });
 
+  /** Écran affiché, décrit par Android (textes et positions), pour toucher un bouton comme un utilisateur. */
+  const screenNodes = () => {
+    adb('shell', 'uiautomator', 'dump', '/sdcard/ostal-ui.xml');
+    const xml = adb('shell', 'cat', '/sdcard/ostal-ui.xml');
+    return [...xml.matchAll(/<node [^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)].map((m) => ({
+      text: m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
+      x: Math.round((Number(m[2]) + Number(m[4])) / 2),
+      y: Math.round((Number(m[3]) + Number(m[5])) / 2),
+    }));
+  };
+
+  await step('Widgets : « Allumer l’ordinateur » montre s’il est allumé ; « Éteindre » passe par Ostal pour Windows', async () => {
+    // « PC du bureau » : adresse IP du runner (allumé pour le serveur) ; « Portable » : adresse jamais joignable.
+    const { localNetworks } = await import('../../server/src/wol.js');
+    const runnerIp = localNetworks()[0]?.address;
+    if (!runnerIp) throw new Error('adresse du runner introuvable');
+    await editWorkspace((doc) => {
+      const dash = doc.getMap('dashboard');
+      const d = JSON.parse(dash.get('config'));
+      d.widgets = d.widgets.map((w) => (w.id === 'ci-pc' ? { ...w, config: { ...w.config, host: runnerIp } } : w));
+      d.widgets.push({ id: 'ci-pc2', type: 'wol', title: 'Portable', config: { mac: '02:00:5e:10:00:02', host: '192.0.2.1' } });
+      for (const items of Object.values(d.layouts ?? {})) items.push({ i: 'ci-pc2', x: 2, y: 99, w: 2, h: 3 });
+      dash.set('config', JSON.stringify(d));
+    });
+    // Faux « Ostal pour Windows » sur le PC du bureau : attend les ordres du serveur comme desktop/main.cjs.
+    const s = await settings();
+    const orders = [];
+    let agentOn = true;
+    const agent = (async () => {
+      while (agentOn) {
+        try {
+          const r = await fetch(`http://127.0.0.1:3000/api/power/wait?macs=02:00:5e:10:00:01&name=PC-CI`, { headers: { 'x-ws-id': s.workspaceId, 'x-ws-key': s.workspaceKey } });
+          const order = await r.json();
+          if (order.action) orders.push(order);
+        } catch {
+          await sleep(1000);
+        }
+      }
+    })();
+    try {
+      await until(
+        'ordinateurs transmis au widget',
+        async () => {
+          const pcs = (await widgets('state')).data.computers ?? [];
+          return pcs.some((c) => c.id === 'ci-pc' && c.host === runnerIp) && pcs.some((c) => c.id === 'ci-pc2');
+        },
+        60_000,
+        2000,
+      );
+      const { power } = await widgets('act', { action: 'power' });
+      const pick = (p) => [p?.online, p?.canOff];
+      if (JSON.stringify([pick(power['ci-pc']), pick(power['ci-pc2'])]) !== JSON.stringify([[true, true], [false, false]])) {
+        throw new Error(`état des ordinateurs : ${JSON.stringify(power)}`);
+      }
+      const wake = (await widgets('check')).wake;
+      for (const text of ['PC du bureau', 'Allumé · toucher pour éteindre', 'Portable', 'Éteint · toucher pour allumer']) {
+        if (!wake.includes(text)) throw new Error(`widget : « ${text} » absent (${JSON.stringify(wake)})`);
+      }
+
+      // Portable : Ostal pour Windows n'y attend pas d'ordres → la fenêtre explique comment le permettre.
+      await widgets('act', { action: 'openOff', computer: 'ci-pc2' });
+      await until('fenêtre « Éteindre »', () => inFront('PowerActivity'), 30_000, 1000);
+      const explain = await until('explication', () => {
+        const n = screenNodes();
+        return n.some((x) => /Pour l’éteindre d’ici/.test(x.text)) ? n : null;
+      }, 30_000, 2000);
+      const ok = explain.find((x) => /^compris$/i.test(x.text));
+      if (!ok) throw new Error(`bouton « Compris » absent : ${explain.map((x) => x.text).join(' | ')}`);
+      adb('shell', 'input', 'tap', String(ok.x), String(ok.y));
+      await until('fenêtre fermée', () => !inFront('PowerActivity'), 15_000, 1000);
+
+      // PC du bureau : confirmation, puis ordre reçu par l'application de l'ordinateur.
+      await widgets('act', { action: 'openOff', computer: 'ci-pc' });
+      await until('fenêtre « Éteindre PC du bureau ? »', () => inFront('PowerActivity'), 30_000, 1000);
+      const ask = await until('confirmation', () => {
+        const n = screenNodes();
+        return n.some((x) => x.text === 'Éteindre PC du bureau ?') ? n : null;
+      }, 30_000, 2000);
+      const confirm = ask.find((x) => /^éteindre$/i.test(x.text));
+      if (!confirm) throw new Error(`bouton « Éteindre » absent : ${ask.map((x) => x.text).join(' | ')}`);
+      adb('shell', 'input', 'tap', String(confirm.x), String(confirm.y));
+      await until('ordre reçu par l’ordinateur', async () => orders.some((o) => o.action === 'off' && o.mac === '02:00:5E:10:00:01'), 30_000, 1000);
+      await until('« Extinction… » affiché', async () => (await widgets('check')).wake.includes('Extinction…'), 30_000, 2000);
+
+      // Portable déjà éteint : le serveur refuse (aucune application) et le widget le dit.
+      const { status } = await widgets('act', { action: 'off', computer: 'ci-pc2' });
+      if (status !== 'Déjà éteint') throw new Error(`état affiché : « ${status} »`);
+      await assertAlive('après « Éteindre »');
+    } finally {
+      agentOn = false;
+      void agent;
+    }
+  });
+
   // ---------- Films et séries : widget « barre de recherche » et fenêtre de recherche (faux Seerr de run.sh) ----------
 
   const seerrLog = async () => (await fetch('http://127.0.0.1:5055/__log')).json();
@@ -604,17 +698,6 @@ try {
     }
     if (!views.previews.some((p) => p.includes('Disponible') || p.includes('Available'))) throw new Error(`aperçu : ${JSON.stringify(views.previews)}`);
   });
-
-  /** Écran affiché, décrit par Android (textes et positions), pour toucher un bouton comme un utilisateur. */
-  const screenNodes = () => {
-    adb('shell', 'uiautomator', 'dump', '/sdcard/ostal-ui.xml');
-    const xml = adb('shell', 'cat', '/sdcard/ostal-ui.xml');
-    return [...xml.matchAll(/<node [^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)].map((m) => ({
-      text: m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
-      x: Math.round((Number(m[2]) + Number(m[4])) / 2),
-      y: Math.round((Number(m[3]) + Number(m[5])) / 2),
-    }));
-  };
 
   await step('Recherche du widget : résultats de Seerr, « Demander » envoie la demande sans ouvrir Ostal', async () => {
     // Ouverte par l'application au premier plan (comme le touché de la barre du widget).

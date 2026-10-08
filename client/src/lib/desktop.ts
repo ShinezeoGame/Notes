@@ -30,7 +30,13 @@ type DesktopBridge = {
   setLanguage?: (lang: 'en' | 'fr') => void;
   /** Niveau 4 : choix d'un dossier de l'ordinateur (sauvegardes) ; null si annulé. */
   chooseFolder?: (title: string) => Promise<string | null>;
+  /** Niveau 5 : extinction de cet ordinateur depuis un autre appareil (réglage, adresses MAC, nom). */
+  power?: () => Promise<DesktopPower | null>;
+  /** Niveau 5 : active ou non l'extinction à distance ; serveur et espace où l'application attend les ordres. */
+  setPower?: (enabled: boolean, where: { server: string; wsId: string; key: string }) => Promise<DesktopPower | null>;
 };
+
+export type DesktopPower = { enabled: boolean; macs: string[]; name: string };
 
 export function desktop(): DesktopBridge | null {
   return (window as unknown as { meloDesktop?: DesktopBridge }).meloDesktop ?? null;

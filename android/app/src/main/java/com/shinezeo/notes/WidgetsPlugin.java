@@ -65,9 +65,18 @@ public class WidgetsPlugin extends Plugin {
             applyLauncherShortcuts(ctx, WidgetStore.shortcuts(ctx));
             WidgetViews.updateAll(ctx);
             // Widget « Films et séries » posé : dernières demandes relues (Seerr a pu être relié entre-temps).
+            Context app = ctx.getApplicationContext();
             if (WidgetViews.placed(ctx, SeerrWidget.class).length > 0) {
-                Context app = ctx.getApplicationContext();
                 new Thread(() -> WidgetActions.refreshSeerr(app), "notes-widget-seerr").start();
+            }
+            // Widget « Allumer l'ordinateur » posé : ordinateurs allumés ou éteints.
+            if (WidgetViews.placed(ctx, WakeWidget.class).length > 0) {
+                new Thread(
+                    () -> {
+                        if (WidgetActions.checkPower(app)) WakeStatusJob.start(app);
+                    },
+                    "notes-widget-power"
+                ).start();
             }
             call.resolve(info(ctx));
         } catch (Exception e) {
@@ -139,8 +148,9 @@ public class WidgetsPlugin extends Plugin {
 
     /**
      * Même action que toucher un widget (tests, aperçu) : cocher ou décocher (« done », « toggle »), ajouter (« add »),
-     * allumer un ordinateur (« wake »), relire (« refresh », « seerr » : demandes faites à Seerr), ouvrir la fenêtre
-     * « Nouvelle tâche » (« openAdd ») ou la recherche de films et séries (« openSearch »).
+     * allumer ou éteindre un ordinateur (« wake », « off »), relire (« refresh », « power » : état des ordinateurs,
+     * « seerr » : demandes faites à Seerr), ouvrir la fenêtre « Nouvelle tâche » (« openAdd »), « Éteindre … ? »
+     * (« openOff ») ou la recherche de films et séries (« openSearch »).
      */
     @PluginMethod
     public void act(PluginCall call) {
@@ -153,6 +163,17 @@ public class WidgetsPlugin extends Plugin {
                     new Intent(ctx, SeerrSearchActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         .putExtra(SeerrSearchActivity.EXTRA_QUERY, call.getString("query", ""))
+                );
+                call.resolve();
+            } catch (Exception e) {
+                fail(call, e, "Fenêtre non ouverte.");
+            }
+            return;
+        }
+        if ("openOff".equals(action)) {
+            try {
+                ctx.startActivity(
+                    new Intent(ctx, PowerActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(WidgetViews.EXTRA_COMPUTER, call.getString("computer", ""))
                 );
                 call.resolve();
             } catch (Exception e) {
@@ -186,6 +207,20 @@ public class WidgetsPlugin extends Plugin {
                         case "wake":
                             ret.put("status", WidgetActions.wake(ctx, call.getString("computer", "")));
                             break;
+                        case "off":
+                            ret.put("status", WidgetActions.powerOff(ctx, call.getString("computer", "")));
+                            break;
+                        case "power": {
+                            ret.put("active", WidgetActions.checkPower(ctx));
+                            JSObject states = new JSObject();
+                            JSONArray computers = WidgetStore.data(ctx).optJSONArray("computers");
+                            for (int i = 0; computers != null && i < computers.length(); i++) {
+                                String id = computers.optJSONObject(i) == null ? "" : computers.optJSONObject(i).optString("id");
+                                if (!id.isEmpty()) states.put(id, new JSObject(WidgetStore.power(ctx, id).toString()));
+                            }
+                            ret.put("power", states);
+                            break;
+                        }
                         case "refresh":
                             ret.put("refreshed", WidgetActions.refresh(ctx));
                             break;

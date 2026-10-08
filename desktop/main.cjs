@@ -2,15 +2,17 @@
 // intégré (lancé en arrière-plan, joignable de cet ordinateur seulement), ou le serveur Ostal d'un proche ou le vôtre.
 // Le pont `window.meloDesktop` (preload.cjs) permet à l'application de passer de l'un à l'autre, lui transmet les PDF
 // ouverts avec Ostal et les mises à jour téléchargées.
-const { app, BrowserWindow, Menu, dialog, ipcMain, session, shell, utilityProcess } = require('electron');
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, session, shell, utilityProcess } = require('electron');
+const { execFile } = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 /** Port du serveur intégré : toujours le même, car l'adresse de la page décide où sont rangées les données. */
 const PORT = 47821;
 const LOCAL = `http://127.0.0.1:${PORT}`;
 /** Fonctions offertes par le pont (voir client/src/lib/desktop.ts) : augmenter à chaque ajout. */
-const BRIDGE_API = 4;
+const BRIDGE_API = 5;
 /** Taille maximale d'un PDF ouvert avec Ostal. */
 const MAX_OPEN_BYTES = 200 * 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
@@ -43,7 +45,8 @@ function log(...parts) {
 
 /**
  * { server: adresse du serveur distant affiché (null : espace de cet ordinateur), bounds, maximized, lang: langue
- * choisie dans Ostal ('en', 'fr' ; null : pas encore connue) }
+ * choisie dans Ostal ('en', 'fr' ; null : pas encore connue), power: extinction à distance ({ enabled, server, wsId,
+ * key } : serveur et espace où attendre les ordres) }
  */
 let config = readConfig();
 let win = null;
@@ -63,10 +66,22 @@ function readConfig() {
       bounds: c.bounds ?? null,
       maximized: Boolean(c.maximized),
       lang: c.lang === 'en' || c.lang === 'fr' ? c.lang : null,
+      power: cleanPower(c.power),
     };
   } catch {
-    return { server: null, bounds: null, maximized: false, lang: null };
+    return { server: null, bounds: null, maximized: false, lang: null, power: cleanPower(null) };
   }
+}
+
+/** Réglage « Pouvoir éteindre cet ordinateur depuis Ostal » lu ou reçu de l'application. */
+function cleanPower(p) {
+  const c = p && typeof p === 'object' ? p : {};
+  return {
+    enabled: c.enabled === true,
+    server: typeof c.server === 'string' ? normalizeServer(c.server) : null,
+    wsId: typeof c.wsId === 'string' ? c.wsId.slice(0, 100) : '',
+    key: typeof c.key === 'string' ? c.key.slice(0, 200) : '',
+  };
 }
 
 /** Textes de l'application elle-même (menus, erreurs du serveur intégré), dans la langue choisie dans Ostal. */
@@ -83,6 +98,9 @@ const TEXTS = {
     noAnswer: 'it does not respond',
     portUsed: (port) => `port ${port} is already used by another program`,
     stopped: (code) => `unexpected stop (code ${code})`,
+    open: 'Open Ostal',
+    trayTip: 'Ostal: this computer can be turned off from your phone',
+    shutdown: 'Ostal: turning off requested from another device. To cancel: shutdown /a',
   },
   fr: {
     reload: 'Recharger',
@@ -96,6 +114,9 @@ const TEXTS = {
     noAnswer: 'il ne répond pas',
     portUsed: (port) => `le port ${port} est déjà utilisé par un autre programme`,
     stopped: (code) => `arrêt inattendu (code ${code})`,
+    open: 'Ouvrir Ostal',
+    trayTip: 'Ostal : cet ordinateur peut être éteint depuis le téléphone',
+    shutdown: 'Ostal : extinction demandée depuis un autre appareil. Pour annuler : shutdown /a',
   },
 };
 
@@ -253,12 +274,28 @@ function createWindow() {
     },
   });
   if (config.maximized) win.maximize();
-  win.once('ready-to-show', () => win.show());
+  // Lancé avec Windows pour l'extinction à distance : la fenêtre reste cachée (icône dans la zone de notification).
+  win.once('ready-to-show', () => {
+    if (!(START_HIDDEN && config.power.enabled)) win.show();
+  });
   log('fenêtre créée');
-  win.on('close', () => {
+  win.on('close', (e) => {
     config.maximized = win.isMaximized();
     if (!config.maximized && !win.isMinimized()) config.bounds = win.getBounds();
     saveConfig();
+    // Extinction à distance active : Ostal reste ouvert dans la zone de notification (Quitter : menu de l'icône).
+    if (config.power.enabled && !quitting && !sessionEnding) {
+      e.preventDefault();
+      win.hide();
+    }
+  });
+  // Windows s'arrête ou la session se ferme (extinction demandée d'ici, entre autres) : la fenêtre ne retient rien.
+  win.on('query-session-end', () => {
+    sessionEnding = true;
+  });
+  win.on('session-end', () => {
+    sessionEnding = true;
+    app.quit();
   });
   win.on('closed', () => {
     win = null;
@@ -439,6 +476,108 @@ function send(channel, payload) {
 
 // ---------- Pont avec l'application (preload.cjs) ----------
 
+// ---------- Éteindre cet ordinateur depuis un autre appareil ----------
+// Option de l'application (Réglages → Cet ordinateur) : Ostal démarre avec Windows, reste dans la zone de
+// notification et attend les ordres du serveur (server/src/power.js) avec les adresses MAC de ses cartes réseau ;
+// « éteindre » lance l'arrêt de Windows dans 30 secondes (annulable par shutdown /a).
+
+const START_HIDDEN = process.argv.includes('--hidden');
+let tray = null;
+let agentRun = 0;
+/** Requête longue en cours (abandonnée quand le réglage change). */
+let agentAbort = null;
+let sessionEnding = false;
+
+/** Adresses MAC des cartes réseau de cet ordinateur (celle du réveil Wake-on-LAN en fait partie). */
+function macAddresses() {
+  return [
+    ...new Set(
+      Object.values(os.networkInterfaces())
+        .flat()
+        .filter((i) => i && !i.internal && i.mac && i.mac !== '00:00:00:00:00:00')
+        .map((i) => i.mac.toLowerCase()),
+    ),
+  ];
+}
+
+function showWindow() {
+  if (!win) createWindow();
+  else {
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  }
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Démarrage avec Windows, icône de la zone de notification et attente des ordres, selon le réglage. */
+function applyPower() {
+  const p = config.power;
+  if (app.isPackaged && process.platform === 'win32') app.setLoginItemSettings({ openAtLogin: p.enabled, args: ['--hidden'] });
+  if (p.enabled && !tray) {
+    try {
+      tray = new Tray(ICON);
+      tray.setToolTip(text().trayTip);
+      tray.setContextMenu(
+        Menu.buildFromTemplate([
+          { label: text().open, click: showWindow },
+          { type: 'separator' },
+          { label: text().quit, click: () => app.quit() },
+        ]),
+      );
+      tray.on('click', showWindow);
+    } catch (err) {
+      // Sans icône, la fenêtre se rouvre en relançant Ostal.
+      log('icône de la zone de notification impossible :', err.message);
+      tray = null;
+    }
+  } else if (!p.enabled && tray) {
+    tray.destroy();
+    tray = null;
+  }
+  const run = ++agentRun;
+  agentAbort?.abort();
+  agentAbort = null;
+  if (p.enabled && p.server && p.wsId && p.key) void waitOrders(run);
+}
+
+/** Attend les ordres du serveur (requêtes longues), tant que le réglage n'a pas changé. */
+async function waitOrders(run) {
+  const p = config.power;
+  log('extinction à distance : en attente des ordres de', p.server);
+  while (run === agentRun && !quitting) {
+    try {
+      const query = new URLSearchParams({ macs: macAddresses().join(','), name: os.hostname() });
+      agentAbort = new AbortController();
+      const res = await fetch(`${p.server}/api/power/wait?${query}`, {
+        headers: { 'x-ws-id': p.wsId, 'x-ws-key': p.key },
+        signal: AbortSignal.any([agentAbort.signal, AbortSignal.timeout(45_000)]),
+      });
+      if (run !== agentRun) return;
+      if (!res.ok) {
+        log('extinction à distance : réponse', res.status);
+        await delay(res.status === 401 || res.status === 403 ? 300_000 : 30_000);
+        continue;
+      }
+      const order = await res.json();
+      if (order?.action === 'off') powerOff();
+    } catch (err) {
+      if (run !== agentRun) return;
+      log('extinction à distance : serveur injoignable,', err.message);
+      await delay(15_000);
+    }
+  }
+}
+
+function powerOff() {
+  log('extinction demandée depuis un autre appareil');
+  if (process.platform !== 'win32') return;
+  execFile('shutdown', ['/s', '/t', '30', '/c', text().shutdown], { windowsHide: true }, (err) => {
+    if (err) log('extinction impossible :', err.message);
+  });
+}
+
 /** Seules les pages d'Ostal (serveur intégré, serveur choisi, page d'erreur) utilisent le pont. */
 function trusted(e) {
   const url = e.senderFrame?.url ?? '';
@@ -484,6 +623,23 @@ ipcMain.handle('melo:choose-folder', async (e, title) => {
   if (!trusted(e)) return null;
   const r = await dialog.showOpenDialog(win, { title: String(title || ''), properties: ['openDirectory', 'createDirectory', 'promptToCreate'] });
   return r.canceled ? null : (r.filePaths[0] ?? null);
+});
+
+// Niveau 5 : extinction de cet ordinateur depuis un autre appareil (réglage et serveur où attendre les ordres).
+ipcMain.handle('melo:power', (e) => (trusted(e) ? { enabled: config.power.enabled, macs: macAddresses(), name: os.hostname() } : null));
+
+ipcMain.handle('melo:set-power', (e, enabled, where) => {
+  if (!trusted(e)) return null;
+  const w = where && typeof where === 'object' ? where : {};
+  const next = cleanPower({ enabled: enabled === true, server: w.server, wsId: w.wsId, key: w.key });
+  const changed = JSON.stringify(next) !== JSON.stringify(config.power);
+  config.power = next;
+  if (changed) {
+    saveConfig();
+    log('extinction à distance :', next.enabled ? 'activée' : 'désactivée');
+    applyPower();
+  }
+  return { enabled: next.enabled, macs: macAddresses(), name: os.hostname() };
 });
 
 ipcMain.on('melo:install-update', (e) => {
@@ -536,6 +692,7 @@ if (!app.requestSingleInstanceLock()) {
     log('deuxième lancement reçu');
     if (win) {
       if (win.isMinimized()) win.restore();
+      win.show();
       win.focus();
     }
     openFiles(filesFromArgv(argv));
@@ -551,6 +708,7 @@ if (!app.requestSingleInstanceLock()) {
     allowAnyFrame();
     openFiles(filesFromArgv(process.argv));
     createWindow();
+    applyPower();
     await openCurrent();
     setupUpdates();
   });

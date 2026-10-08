@@ -10,7 +10,7 @@
     <string name="widget_tasks_label">Ostal tasks</string>
     <string name="widget_tasks_desc">Your to-do list: tick a task or add one without opening the app.</string>
     <string name="widget_wake_label">Turn on computer</string>
-    <string name="widget_wake_desc">Turns on a computer at home from your phone (Wake-on-LAN).</string>
+    <string name="widget_wake_desc">Turns a computer at home on or off from your phone, and shows whether it is on.</string>
     <string name="widget_sc_new_page">New page</string>
     <string name="widget_sc_agenda">Calendar</string>
     <string name="widget_sc_papers">Papers</string>
@@ -20,7 +20,7 @@
     <string name="widget_preview_task2">Call the plumber</string>
     <string name="widget_preview_task3">Water the plants</string>
     <string name="widget_preview_computer">Office PC</string>
-    <string name="widget_preview_wake">Tap to turn on</string>
+    <string name="widget_preview_wake">On · tap to turn off</string>
     <string name="widget_seerr_label">Movies &amp; shows</string>
     <string name="widget_seerr_desc">Search for a movie or a show and request it from Seerr.</string>
     <string name="widget_seerr_hint">Request a movie or a show</string>
