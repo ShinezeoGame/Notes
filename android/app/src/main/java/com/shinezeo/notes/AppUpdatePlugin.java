@@ -42,7 +42,7 @@ import org.json.JSONObject;
 public class AppUpdatePlugin extends Plugin {
 
     /** Fonctions natives offertes au client web ; à augmenter à chaque ajout (MIN_NATIVE_API côté client). */
-    static final int NATIVE_API = 5;
+    static final int NATIVE_API = 6;
 
     static final String NOTIFICATIONS = "notifications";
     private static final String BUNDLES_DIR = "bundles";

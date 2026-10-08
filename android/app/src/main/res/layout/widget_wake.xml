@@ -1,54 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget « Allumer l'ordinateur » : un bouton par ordinateur réglé sur l'accueil d'Ostal (lignes : widget_wake_row.xml). -->
+<!-- Widget « Allumer l'ordinateur » : un bouton par ordinateur réglé sur l'accueil d'Ostal (lignes : widget_wake_row.xml),
+     sans barre de titre pour tenir sur une seule rangée de l'écran d'accueil. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/wk_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingStart="14dp"
-    android:paddingEnd="8dp"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
     android:paddingTop="6dp"
-    android:paddingBottom="10dp"
+    android:paddingBottom="6dp"
     android:background="@drawable/widget_bg">
-    <LinearLayout
-        android:id="@+id/wk_title_bar"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-        <ImageView
-            android:id="@+id/wk_icon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_w_computer"
-            android:contentDescription="@null" />
-        <TextView
-            android:id="@+id/wk_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/widget_text"
-            android:text="@string/widget_wake_title" />
-    </LinearLayout>
     <LinearLayout
         android:id="@+id/wk_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:orientation="vertical" />
     <TextView
         android:id="@+id/wk_empty"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingStart="8dp"
-        android:paddingEnd="14dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textSize="13sp"
         android:textColor="@color/widget_muted"
         android:visibility="gone" />

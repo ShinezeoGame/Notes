@@ -23,6 +23,8 @@ final class WidgetViews {
     static final String EXTRA_COMPUTER = "com.shinezeo.notes.widget.COMPUTER";
     private static final int MAX_TASKS = 12;
     private static final int MAX_COMPUTERS = 4;
+    /** Hauteur d'un ordinateur (dp) dans le widget « Allumer l'ordinateur ». */
+    private static final int COMPUTER_HEIGHT = 48;
     /** Largeur d'un raccourci (dp) : au-delà de la largeur du widget, les derniers sont masqués. */
     private static final int SHORTCUT_WIDTH = 64;
     private static final int[] SLOTS = { R.id.sc_slot1, R.id.sc_slot2, R.id.sc_slot3, R.id.sc_slot4, R.id.sc_slot5, R.id.sc_slot6 };
@@ -226,12 +228,8 @@ final class WidgetViews {
         WidgetTheme theme = WidgetTheme.of(context);
         if (theme != null) {
             WidgetTheme.background(rv, R.id.wk_root, theme.bg);
-            WidgetTheme.icon(rv, R.id.wk_icon, theme.icon);
-            rv.setTextColor(R.id.wk_title, theme.text);
             rv.setTextColor(R.id.wk_empty, theme.muted);
         }
-        rv.setTextViewText(R.id.wk_title, WidgetStore.tr(context, "Allumer l’ordinateur", "Turn on computer"));
-        rv.setOnClickPendingIntent(R.id.wk_title_bar, open(context, "#/", 300));
         JSONArray computers = WidgetStore.data(context).optJSONArray("computers");
         String message = null;
         if (!WidgetStore.hasServer(context)) message = WidgetStore.tr(context, "Un serveur Ostal est nécessaire pour allumer un ordinateur.", "An Ostal server is needed to turn on a computer.");
@@ -241,7 +239,10 @@ final class WidgetViews {
             rv.setOnClickPendingIntent(R.id.wk_empty, open(context, "#/", 301));
             return rv;
         }
-        for (int i = 0; i < computers.length() && i < MAX_COMPUTERS; i++) {
+        // Sans barre de titre : autant d'ordinateurs que la hauteur du widget en permet (au moins un).
+        int height = options != null ? options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) : 0;
+        int fit = height > 0 ? Math.max(1, (height - 12) / COMPUTER_HEIGHT) : MAX_COMPUTERS;
+        for (int i = 0; i < computers.length() && i < Math.min(fit, MAX_COMPUTERS); i++) {
             JSONObject pc = computers.optJSONObject(i);
             if (pc == null) continue;
             String id = pc.optString("id");

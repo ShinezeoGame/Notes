@@ -530,7 +530,7 @@ try {
     await until('tâche transmise au widget', async () => (await widgets('state')).data.tasks[0].items.some((i) => i.id === 'ci-task'), 60_000, 2000);
     // Chaque widget construit et affiché comme par l'écran d'accueil (vue interdite, ressource manquante : échec).
     const views = await widgets('check');
-    const expect = { tasks: ['Tâches', 'Tâche Ostal CI'], shortcuts: ['Nouvelle page', 'Agenda', 'Atelier PDF'], wake: ['Allumer l’ordinateur', 'Réglez « Allumer un PC » sur l’accueil d’Ostal.'] };
+    const expect = { tasks: ['Tâches', 'Tâche Ostal CI'], shortcuts: ['Nouvelle page', 'Agenda', 'Atelier PDF'], wake: ['Réglez « Allumer un PC » sur l’accueil d’Ostal.'] };
     for (const [kind, texts] of Object.entries(expect)) {
       const missing = texts.filter((t) => !views[kind].includes(t));
       if (missing.length) throw new Error(`widget ${kind} : ${missing.join(', ')} absent (${JSON.stringify(views[kind])})`);

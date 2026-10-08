@@ -102,7 +102,7 @@ Widgets : **Films et séries** (rechercher et demander un film ou une série à 
 Avec l’application Android, Ostal se pose aussi sur l’écran d’accueil du téléphone :
 
 - **Tâches** : une liste de tâches de l’accueil d’Ostal. Touchez une tâche pour la cocher ou la décocher, **+** pour en ajouter une (une petite fenêtre s’ouvre, sans lancer Ostal), **↻** pour actualiser, le titre pour ouvrir Ostal.
-- **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)) ; le widget affiche ensuite « Signal envoyé à 08:42 ».
+- **Allumer l’ordinateur** : un bouton par ordinateur réglé dans le widget **Allumer un PC** de l’accueil (voir [Allumer un ordinateur](#allumer-un-ordinateur)) ; le widget affiche ensuite « Signal envoyé à 08:42 ». Il tient sur une seule rangée de l’écran d’accueil ; agrandi, il montre plusieurs ordinateurs.
 - **Raccourcis** : jusqu’à 6 boutons au choix, par exemple **Nouvelle page** (crée une page et l’ouvre), **Agenda**, **Papiers**, **Ajouter un papier**, **Atelier PDF**, **Maison**, **Caméras**, **Films et séries**.
 - **Films et séries** : une barre de recherche pour demander un film ou une série à Seerr, au clavier ou au micro (voir [Films et séries](#films-et-séries)).
 
