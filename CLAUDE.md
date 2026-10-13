@@ -11,6 +11,17 @@ première réponse de chaque session, en français. L'utilisateur n'est pas dév
 restent complètes et claires. Il change de niveau avec `/caveman full` ou `/caveman ultra` et revient aux réponses
 normales avec « stop caveman ».
 
+## Façon de coder (ponytail)
+
+L'utilisateur a demandé le skill ponytail (`.claude/skills/ponytail/`, repris de
+[DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) v5.2.0, licence MIT ; seulement les skills, sans
+les hooks du plugin) : l'appliquer au niveau `full` à toute tâche de code dès la première de chaque session (le plus
+petit changement complet, réutiliser l'existant, un petit test pour la logique risquée, finir la réponse par ce qui
+n'a pas été vérifié). Les règles de ce fichier priment (commentaires en français ; le marqueur `shortcut:` reste tel
+quel). Il change de niveau avec `/ponytail lite` ou `/ponytail ultra` et l'arrête avec « stop ponytail ». Autres
+commandes : `/ponytail-review` (relecture d'un changement), `/ponytail-audit` (tout le dépôt), `/ponytail-debt`,
+`/ponytail-gain`, `/ponytail-help`.
+
 ## Carte du code (graphify)
 
 [graphify](https://github.com/Graphify-Labs/graphify) dresse la carte du code (symboles, fichiers, lignes, qui appelle
