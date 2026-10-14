@@ -97,6 +97,15 @@ export const SECTIONS: Record<SectionId, { label: string; short: string; icon: I
     group: 'tools',
     hint: t('Signer, remplir, annoter et assembler des PDF'),
   },
+  // Visible seulement quand l'espace a des documents ou des sites perso (voir PersoView).
+  perso: {
+    label: t('Perso'),
+    short: t('Perso'),
+    icon: 'user',
+    hash: '#/perso',
+    group: 'tools',
+    hint: t('Vos documents et sites, rien qu’à vous'),
+  },
 };
 
 /** Sections visibles réunies par groupe (groupes vides retirés), dans l'ordre choisi à l'intérieur de chaque groupe. */

@@ -127,7 +127,8 @@ export function WelcomeDialog({ doc, appearance, tourOnly, onClose }: Props) {
   };
 
   if (step < 0) {
-    const groups = groupSections(appearance.sections).filter((g) => g.id !== 'main');
+    // Section Perso : jamais proposée ici (elle apparaît d'elle-même avec son premier document).
+    const groups = groupSections(appearance.sections, ['perso']).filter((g) => g.id !== 'main');
     return (
       <Modal
         title={t('Bienvenue !')}

@@ -21,6 +21,7 @@ Ostal s’appelait Melo jusqu’en octobre 2026 : même application, nouveau nom
 - [Films et séries](#films-et-séries)
 - [Allumer un ordinateur](#allumer-un-ordinateur)
 - [Atelier PDF](#atelier-pdf)
+- [Espace perso](#espace-perso)
 - [Sauvegardes](#sauvegardes)
 
 ## Installer Ostal
@@ -332,6 +333,16 @@ Section **Atelier PDF** (groupe Outils). L’original n’est jamais modifié et
 Sur Android, **Ouvrir avec Ostal** (depuis Gmail, WhatsApp, Fichiers…) et **Partager → Ostal** (PDF ou photos) importent directement dans l’atelier. Sur ordinateur, l’application installée apparaît dans **Ouvrir avec** pour les fichiers PDF.
 
 Bon à savoir : le texte déjà écrit dans un PDF ne se modifie pas (un PDF n’est pas un document Word) ; cachez-le avec **Masquer** et écrivez par-dessus avec **Texte**. À l’export, ce que couvre un masque est effacé pour de bon (sauf si vous décochez l’option) : sans cette option, le texte couvert resterait dans le fichier. Les signatures dessinées sont gardées dans votre espace (synchronisées sur vos appareils) ; supprimez-les depuis la fenêtre **Signature**.
+
+## Espace perso
+
+La section **Perso** range vos propres documents et sites, rien qu’à vous : ils vivent dans votre espace, sur votre serveur Ostal, et ne s’affichent que sur vos appareils (pas dans le code d’Ostal, ni chez les personnes invitées sur votre serveur). Elle n’apparaît dans la navigation qu’une fois un premier élément ajouté ; pour la trouver la première fois : **Réglages → Réglages avancés → Ouvrir l’espace perso**.
+
+- **Ajouter un document HTML** : une page enregistrée sur l’appareil (fichier `.html`), par exemple une feuille de route avec des cases à cocher. Elle s’affiche telle quelle dans Ostal. Les cases cochées et les champs remplis sont retenus et suivent sur tous vos appareils, en direct ; la carte du document indique combien de cases sont cochées. **Nouvelle version** remplace le document en gardant les cases déjà cochées (mêmes identifiants dans la page).
+- **Ajouter un site** : son adresse (et un nom, facultatif). Il s’affiche dans Ostal ; s’il refuse d’être affiché dans une autre application, Ostal propose de l’ouvrir. **Ouvrir dans le navigateur** l’ouvre à part.
+- Crayon : renommer (et changer l’adresse d’un site) ; corbeille : supprimer.
+
+Le document s’affiche dans un cadre isolé : il ne peut rien lire d’Ostal (ni votre clé, ni vos pages). Ses scripts tournent, mais sans stockage propre au navigateur.
 
 ## Sauvegardes
 

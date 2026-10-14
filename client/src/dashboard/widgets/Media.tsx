@@ -183,7 +183,7 @@ function webUrl(url: string): string {
  */
 type FrameState = 'checking' | 'ok' | 'refused' | 'insecure';
 
-function useFrameState(src: string, player: boolean): FrameState {
+export function useFrameState(src: string, player: boolean): FrameState {
   const [state, setState] = useState<FrameState>('checking');
   useEffect(() => {
     // Lecteur vidéo (YouTube, Vimeo…) fait pour être intégré ; application Windows : tous les sites s'affichent.

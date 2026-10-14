@@ -1630,6 +1630,21 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .pp-group--renew h2 { color: var(--warning); }
 .pp-count { font-weight: 400; font-size: calc(13px * var(--ui-scale)); }
 .pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+/* Section Perso : documents HTML et sites du propriétaire de l'espace */
+.ps-intro { max-width: 70ch; margin: 0 0 14px; font-size: calc(13.5px * var(--ui-scale)); }
+.ps-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.ps-empty { margin: 8px 0; }
+.ps-missing { margin: 0 0 12px; }
+.ps-view { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.ps-toolbar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); flex: none;
+  padding-left: calc(12px + var(--safe-left)); padding-right: calc(12px + var(--safe-right));
+}
+.ps-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-strong); }
+.ps-frame { flex: 1; min-height: 0; width: 100%; border: none; display: block; background: var(--bg); }
+.ps-frame--checking { background: var(--bg-hover); }
+.ps-blocked { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
+@media (max-width: 600px) { .ps-label { display: none; } }
 .pp-card {
   display: flex; align-items: center; gap: 12px; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated);
   color: var(--text); font: inherit; text-align: left; cursor: pointer;

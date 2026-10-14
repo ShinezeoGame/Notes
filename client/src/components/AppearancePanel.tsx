@@ -24,6 +24,7 @@ import { ImageCropDialog, renderCropArea, type CropState } from './ImageCropDial
 import { serverBase } from '../lib/api';
 import { isDesktopLocal } from '../lib/desktop';
 import { SECTIONS, groupSections } from './AppNav';
+import { usePerso } from '../lib/perso';
 import { Icon } from '../icons/Icon';
 import { t } from '../lib/i18n';
 
@@ -65,6 +66,8 @@ function Range({
 
 export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) {
   const ctx = useAppCtx();
+  // Section Perso : proposée ici une fois un premier document ou site ajouté.
+  const persoItems = usePerso(doc);
   const [draft, setDraft] = useState(appearance);
   const pending = useRef<Appearance | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -385,7 +388,7 @@ export function AppearancePanel({ doc, appearance, onPreview, onClose }: Props) 
             <h3>{t('Sections')}</h3>
             <p className="nb-muted ap-hint">{t('Sections affichées dans la navigation, et leur ordre dans chaque groupe.')}</p>
             <div className="ap-sections">
-              {groupSections(draft.sections).map((g) => (
+              {groupSections(draft.sections, persoItems.length ? [] : ['perso']).map((g) => (
                 <div key={g.id} className="ap-section-group" role="group" aria-label={g.label || t('Accueil')}>
                   {g.label ? <div className="ap-section-group-label">{g.label}</div> : null}
                   {g.ids.map((id, i) => {

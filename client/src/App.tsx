@@ -38,6 +38,8 @@ import { Icon } from './icons/Icon';
 import { PageIcon, encodePageIcon } from './icons/pageIcon';
 import { OstalLogo } from './components/Logo';
 import { MediaView } from './media/MediaView';
+import { PersoView } from './components/PersoView';
+import { usePerso } from './lib/perso';
 import { listenOpenRequests, startReminders } from './lib/reminders';
 import { startPhoneWidgets } from './lib/phoneWidgets';
 import { t } from './lib/i18n';
@@ -139,6 +141,7 @@ function sectionOf(route: Route): SectionId {
     case 'cameras':
     case 'media':
     case 'pdf':
+    case 'perso':
       return route.name;
     default:
       return 'home';
@@ -272,6 +275,8 @@ function OwnerApp() {
   );
 
   const homelabConfigured = useHomelabConfiguredFlag(wsHandle.handle?.doc ?? null);
+  // Section Perso : dans la navigation seulement une fois un document ou un site ajouté (jamais pour un invité).
+  const persoItems = usePerso(wsHandle.handle?.doc ?? null);
   const pdfName = usePdfName(wsHandle.handle?.doc ?? null, pdfId);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -345,6 +350,7 @@ function OwnerApp() {
   else if (route.name === 'smarthome') content = <SmartHomeView doc={store.doc} />;
   else if (route.name === 'cameras') content = <CamerasView doc={store.doc} />;
   else if (route.name === 'media') content = <MediaView doc={store.doc} query={route.query} detail={route.detail} />;
+  else if (route.name === 'perso' && !settings.guest) content = <PersoView doc={store.doc} itemId={route.itemId} />;
   else if (route.name === 'pdf')
     content = (
       <Suspense fallback={<div className="nb-center nb-loading">{t('Chargement de l’atelier PDF…')}</div>}>
@@ -363,7 +369,11 @@ function OwnerApp() {
     <AppNav
       active={section}
       sections={look.sections}
-      hidden={settings.guest ? [...look.hidden, ...HOST_SECTIONS] : look.hidden}
+      hidden={[
+        ...look.hidden,
+        ...(settings.guest ? HOST_SECTIONS : []),
+        ...(settings.guest || !persoItems.length ? (['perso'] as SectionId[]) : []),
+      ]}
       status={status}
       mobile={isMobile}
       onNavigate={goSection}

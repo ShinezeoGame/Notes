@@ -28,6 +28,7 @@ import {
   useUpdateState,
 } from '../lib/updates';
 import { t, tx, tServer } from '../lib/i18n';
+import { navigate } from '../lib/router';
 
 /** Application pour ordinateur sur son propre espace : sa version vient de l'installateur, pas d'un serveur. */
 function DesktopUpdates() {
@@ -440,6 +441,23 @@ export function SettingsDialog({ onClose, onTour, doc }: Props) {
         <p className="nb-muted">
           {t('Sans ID client, vous pouvez toujours importer un fichier .ics ou l’adresse secrète iCal de votre agenda Google.')}
         </p>
+        {!settings.guest ? (
+          <div className="nb-field">
+            <span>{t('Espace perso : vos documents HTML et vos sites, rien qu’à vous (la section apparaît avec le premier ajouté)')}</span>
+            <div>
+              <button
+                type="button"
+                className="nb-btn"
+                onClick={() => {
+                  onClose();
+                  navigate('#/perso');
+                }}
+              >
+                <Icon name="user" size={15} /> {t('Ouvrir l’espace perso')}
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="nb-field nb-settings-danger">
           <span>{t('Zone sensible')}</span>
           <div>

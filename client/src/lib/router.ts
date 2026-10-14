@@ -15,6 +15,8 @@ export type Route =
   | { name: 'papers'; paperId: string | null }
   /** Films et séries (Seerr) : recherche en cours, fiche d'un film ou d'une série ouverte. */
   | { name: 'media'; query: string; detail: { type: 'movie' | 'tv'; id: number } | null }
+  /** Section Perso : document ou site ouvert. */
+  | { name: 'perso'; itemId: string | null }
   | { name: 'shared'; token: string; pageId: string | null }
   | { name: 'join'; wsId: string; key: string }
   | { name: 'pair'; code: string }
@@ -43,6 +45,7 @@ export function parseRoute(hash: string): Route {
     }
     return { name: 'media', query, detail: m[2] ? { type: m[2] === 'film' ? 'movie' : 'tv', id: Number(m[3]) } : null };
   }
+  if ((m = /^\/perso(?:\/([A-Za-z0-9_-]+))?/.exec(h))) return { name: 'perso', itemId: m[1] ?? null };
   if ((m = /^\/s\/([A-Za-z0-9_-]+)(?:\/p\/([A-Za-z0-9_-]+))?/.exec(h)))
     return { name: 'shared', token: m[1], pageId: m[2] ?? null };
   if ((m = /^\/join\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)/.exec(h))) return { name: 'join', wsId: m[1], key: m[2] };
@@ -76,6 +79,8 @@ export function routeToHash(route: Route): string {
     case 'media':
       if (route.detail) return `#/films/${route.detail.type === 'movie' ? 'film' : 'serie'}/${route.detail.id}`;
       return route.query ? `#/films/chercher/${encodeURIComponent(route.query)}` : '#/films';
+    case 'perso':
+      return route.itemId ? `#/perso/${route.itemId}` : '#/perso';
     case 'shared':
       return route.pageId ? `#/s/${route.token}/p/${route.pageId}` : `#/s/${route.token}`;
     case 'join':
