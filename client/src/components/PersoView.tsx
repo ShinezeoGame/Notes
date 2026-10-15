@@ -9,7 +9,7 @@ import { toast } from './Toast';
 import { navigate } from '../lib/router';
 import { t } from '../lib/i18n';
 import { useFrameState } from '../dashboard/widgets/Media';
-import { PrioritiesView } from './PrioritiesView';
+import { Priorities } from './PrioritiesView';
 import {
   MAX_DOC_BYTES,
   addDoc,
@@ -157,15 +157,12 @@ function ItemDialog({ item, onSave, onClose }: { item?: PersoItem; onSave: (titl
   );
 }
 
-/** Page intégrée : mails, agenda et tâches classés par urgence. */
-const PRIORITIES = 'priorites';
-
 export function PersoView({ doc, itemId }: Props) {
   const items = usePerso(doc);
-  if (itemId === PRIORITIES) return <PrioritiesView doc={doc} />;
   const item = itemId ? items.find((i) => i.id === itemId) : undefined;
   if (itemId && item) return <ItemView key={item.id} doc={doc} item={item} />;
-  return <PersoList doc={doc} items={items} missing={Boolean(itemId)} />;
+  // « priorites » : ancienne adresse de la page Priorités, désormais en haut de la section.
+  return <PersoList doc={doc} items={items} missing={Boolean(itemId) && itemId !== 'priorites'} />;
 }
 
 function PersoList({ doc, items, missing }: { doc: Y.Doc; items: PersoItem[]; missing: boolean }) {
@@ -182,6 +179,8 @@ function PersoList({ doc, items, missing }: { doc: Y.Doc; items: PersoItem[]; mi
       <h1 className="nb-page-title-static">
         <Icon name="user" size={34} /> {t('Perso')}
       </h1>
+      <Priorities doc={doc} />
+      <h2 className="ps-docs-title">{t('Documents et sites')}</h2>
       <p className="nb-muted ps-intro">
         {t(
           'Vos documents et vos sites, rien qu’à vous : rangés dans votre espace, sur votre serveur, et affichés sur vos seuls appareils. Les cases cochées dans un document sont retenues et suivent sur tous vos appareils.',
@@ -194,21 +193,13 @@ function PersoList({ doc, items, missing }: { doc: Y.Doc; items: PersoItem[]; mi
           <Icon name="globe" size={15} /> {t('Ajouter un site')}
         </button>
       </div>
-      <div className="pp-grid ps-grid">
-        <button type="button" className="pp-card" onClick={() => navigate(`#/perso/${PRIORITIES}`)}>
-          <span className="pp-card-icon">
-            <Icon name="flag" size={20} />
-          </span>
-          <span className="pp-card-body">
-            <b className="pp-card-title">{t('Priorités')}</b>
-            <span className="pp-card-meta">{t('Mails, agenda et tâches classés par urgence')}</span>
-          </span>
-          <Icon name="chevronRight" size={16} />
-        </button>
-        {items.map((i) => (
-          <ItemCard key={i.id} doc={doc} item={i} />
-        ))}
-      </div>
+      {items.length ? (
+        <div className="pp-grid ps-grid">
+          {items.map((i) => (
+            <ItemCard key={i.id} doc={doc} item={i} />
+          ))}
+        </div>
+      ) : null}
       {adding ? (
         <ItemDialog
           onClose={() => setAdding(false)}

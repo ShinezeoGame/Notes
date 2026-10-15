@@ -1,4 +1,4 @@
-// Page « Priorités » de la section Perso : mails (lus par le serveur, voir server/src/mail.js), événements des agendas
+// « Priorités », en haut de la section Perso : mails (lus par le serveur, voir server/src/mail.js), événements des agendas
 // et tâches de l'accueil, classés par urgence (lib/priorities.ts). Une tâche se coche ici ; un mail Gmail s'ouvre dans
 // Gmail ; un événement mène à l'agenda.
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -56,7 +56,7 @@ function useMail() {
   return { state, setState, error, reload: () => load(true) };
 }
 
-export function PrioritiesView({ doc }: { doc: Y.Doc }) {
+export function Priorities({ doc }: { doc: Y.Doc }) {
   const ctx = useAppCtx();
   const { events } = useAgenda(doc);
   useEffect(() => autoRefreshIcs(doc, ctx.fetchIcs), [doc, ctx.fetchIcs]);
@@ -72,71 +72,63 @@ export function PrioritiesView({ doc }: { doc: Y.Doc }) {
 
   const s = mail.state;
   return (
-    <div className="ps-view">
-      <div className="ps-toolbar">
-        <button type="button" className="nb-btn nb-btn--sm" onClick={() => navigate('#/perso')} aria-label={t('Retour à Perso')}>
-          <Icon name="chevronLeft" size={15} /> {t('Perso')}
-        </button>
-        <b className="ps-title">{t('Priorités')}</b>
-        <button type="button" className="nb-icon-btn" onClick={() => void mail.reload()} aria-label={t('Actualiser')} title={t('Actualiser')}>
-          <Icon name="refresh" size={16} />
-        </button>
-      </div>
-      <div className="nb-page pr-page">
-        <div className="pr-mailbar">
-          <Icon name="mail" size={15} />
-          {s?.configured ? (
-            <>
-              <span className="pr-mailbar-text">
-                {s.email}
-                {s.at ? ` · ${t('relus à {time}', { time: timeFmt.format(new Date(s.at)) })}` : ''}
-              </span>
-              <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditing(true)}>
-                {t('Modifier')}
-              </button>
-            </>
-          ) : (
-            <span className="pr-mailbar-text">{s ? t('Messagerie pas encore reliée.') : t('Chargement…')}</span>
-          )}
-        </div>
-        {mail.error || s?.error ? <div className="nb-error pr-error">{mail.error || tServer(s?.error ?? '')}</div> : null}
-        {s && (!s.configured || editing) ? (
-          <MailForm
-            current={s}
-            onDone={(next) => {
-              mail.setState(next);
-              setEditing(false);
-            }}
-            onCancel={s.configured ? () => setEditing(false) : undefined}
-          />
-        ) : null}
-        {items.length ? (
-          BUCKETS.map((bucket) => {
-            const list = items.filter((i) => i.bucket === bucket);
-            if (!list.length) return null;
-            return (
-              <section key={bucket} className={`pr-bucket pr-bucket--${bucket}`}>
-                <h2>
-                  {BUCKET_LABEL[bucket]} <span className="pr-count">{list.length}</span>
-                </h2>
-                <ul className="pr-list">
-                  {list.map((p) => (
-                    <PriorityRow key={p.key} doc={doc} p={p} />
-                  ))}
-                </ul>
-              </section>
-            );
-          })
-        ) : (
-          <p className="nb-muted">{t('Rien à traiter pour l’instant.')}</p>
-        )}
-        <p className="nb-muted pr-help">
-          {t(
-            'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Les mails déjà lus et non étoilés ne sont pas repris.',
-          )}
-        </p>
-      </div>
+    <>
+    <div className="pr-mailbar">
+      <Icon name="mail" size={15} />
+      {s?.configured ? (
+        <>
+          <span className="pr-mailbar-text">
+            {s.email}
+            {s.at ? ` · ${t('relus à {time}', { time: timeFmt.format(new Date(s.at)) })}` : ''}
+          </span>
+          <button type="button" className="nb-btn nb-btn--sm" onClick={() => setEditing(true)}>
+            {t('Modifier')}
+          </button>
+          <button type="button" className="nb-icon-btn nb-icon-btn--sm" onClick={() => void mail.reload()} aria-label={t('Actualiser')} title={t('Actualiser')}>
+            <Icon name="refresh" size={15} />
+          </button>
+        </>
+      ) : (
+        <span className="pr-mailbar-text">{s ? t('Messagerie pas encore reliée.') : t('Chargement…')}</span>
+      )}
     </div>
+    {mail.error || s?.error ? <div className="nb-error pr-error">{mail.error || tServer(s?.error ?? '')}</div> : null}
+    {s && (!s.configured || editing) ? (
+      <MailForm
+        current={s}
+        onDone={(next) => {
+          mail.setState(next);
+          setEditing(false);
+        }}
+        onCancel={s.configured ? () => setEditing(false) : undefined}
+      />
+    ) : null}
+    {items.length ? (
+      BUCKETS.map((bucket) => {
+        const list = items.filter((i) => i.bucket === bucket);
+        if (!list.length) return null;
+        return (
+          <section key={bucket} className={`pr-bucket pr-bucket--${bucket}`}>
+            <h2>
+              {BUCKET_LABEL[bucket]} <span className="pr-count">{list.length}</span>
+            </h2>
+            <ul className="pr-list">
+              {list.map((p) => (
+                <PriorityRow key={p.key} doc={doc} p={p} />
+              ))}
+            </ul>
+          </section>
+        );
+      })
+    ) : (
+      <p className="nb-muted">{t('Rien à traiter pour l’instant.')}</p>
+    )}
+    <p className="nb-muted pr-help">
+      {t(
+        'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Les mails déjà lus et non étoilés ne sont pas repris.',
+      )}
+    </p>
+    </>
   );
 }
 
