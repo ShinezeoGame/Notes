@@ -15,6 +15,8 @@ export type Priority =
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+/** Mails repris au plus : les plus pressants, puis les plus récents. */
+export const MAIL_MAX = 6;
 
 /** Mots d'un message ou d'une tâche qui pressent (sans accents ni majuscules). */
 const URGENT_WORDS = /\b(urgent|urgence|asap|relance|dernier rappel|mise en demeure|action requise|action required|impaye|echeance|deadline|immediat)/;
@@ -34,7 +36,9 @@ function eventBucket(ev: AgendaEvent, now: number): Bucket | null {
 function mailBucket(m: Mail, now: number): Bucket | null {
   if (m.flagged || (m.unread && looksUrgent(m.subject))) return 'urgent';
   if (!m.unread) return null;
-  return m.important || now - new Date(m.date).getTime() < DAY ? 'today' : 'week';
+  const age = now - new Date(m.date).getTime();
+  if (age < DAY) return 'today';
+  return m.important && age < 3 * DAY ? 'week' : null;
 }
 
 /** Tâche urgente : mot qui presse, ou « ! » au début ou à la fin (« ! payer le loyer »). */
@@ -44,7 +48,7 @@ const KIND_ORDER = { event: 0, mail: 1, task: 2 };
 
 /**
  * Éléments classés : par seau d'urgence, puis événements (par heure), mails (plus récents d'abord), tâches (ordre de la
- * liste). Jours fériés et vacances scolaires exclus : rien à faire.
+ * liste). Jours fériés et vacances scolaires exclus : rien à faire. Mails limités à MAIL_MAX.
  */
 export function prioritize(input: { events: AgendaEvent[]; mails: Mail[]; lists: TaskList[]; now?: number }): Priority[] {
   const now = input.now ?? Date.now();
@@ -64,5 +68,8 @@ export function prioritize(input: { events: AgendaEvent[]; mails: Mail[]; lists:
       if (!task.done) out.push({ kind: 'task', key: `t:${list.id}:${task.id}`, bucket: taskBucket(task.text), at: order++, list, task });
     }
   }
-  return out.sort((a, b) => BUCKETS.indexOf(a.bucket) - BUCKETS.indexOf(b.bucket) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.at - b.at);
+  let mails = 0;
+  return out
+    .sort((a, b) => BUCKETS.indexOf(a.bucket) - BUCKETS.indexOf(b.bucket) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.at - b.at)
+    .filter((p) => p.kind !== 'mail' || ++mails <= MAIL_MAX);
 }

@@ -8,7 +8,7 @@ import { api, type MailState } from '../lib/api';
 import { autoRefreshIcs, useAgenda } from '../lib/agenda';
 import { formatDay, formatTimeRange } from '../lib/ics';
 import { applyWidgetActions, taskLists } from '../lib/phoneWidgets';
-import { BUCKETS, prioritize, type Bucket, type Priority } from '../lib/priorities';
+import { BUCKETS, MAIL_MAX, prioritize, type Bucket, type Priority } from '../lib/priorities';
 import { navigate } from '../lib/router';
 import { useAppCtx } from '../editor/context';
 import { t, locale, tServer } from '../lib/i18n';
@@ -104,28 +104,31 @@ export function Priorities({ doc }: { doc: Y.Doc }) {
       />
     ) : null}
     {items.length ? (
-      BUCKETS.map((bucket) => {
-        const list = items.filter((i) => i.bucket === bucket);
-        if (!list.length) return null;
-        return (
-          <section key={bucket} className={`pr-bucket pr-bucket--${bucket}`}>
-            <h2>
-              {BUCKET_LABEL[bucket]} <span className="pr-count">{list.length}</span>
-            </h2>
-            <ul className="pr-list">
-              {list.map((p) => (
-                <PriorityRow key={p.key} doc={doc} p={p} />
-              ))}
-            </ul>
-          </section>
-        );
-      })
+      <div className="pr-columns">
+        {BUCKETS.map((bucket) => {
+          const list = items.filter((i) => i.bucket === bucket);
+          if (!list.length) return null;
+          return (
+            <section key={bucket} className={`pr-bucket pr-bucket--${bucket}`}>
+              <h2>
+                {BUCKET_LABEL[bucket]} <span className="pr-count">{list.length}</span>
+              </h2>
+              <ul className="pr-list">
+                {list.map((p) => (
+                  <PriorityRow key={p.key} doc={doc} p={p} />
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
     ) : (
       <p className="nb-muted">{t('Rien à traiter pour l’instant.')}</p>
     )}
     <p className="nb-muted pr-help">
       {t(
-        'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Les mails déjà lus et non étoilés ne sont pas repris.',
+        'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Mails : les {count} plus importants, parmi les étoilés et les non lus récents.',
+        { count: MAIL_MAX },
       )}
     </p>
     </>

@@ -1651,7 +1651,8 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .pr-mailbar-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pr-error { margin-bottom: 10px; }
 .pr-form { max-width: 520px; padding: 14px; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated); }
-.pr-bucket { margin: 0 0 18px; }
+.pr-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; align-items: start; margin-bottom: 14px; }
+.pr-bucket { min-width: 0; }
 .pr-bucket h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: calc(15px * var(--ui-scale)); color: var(--text-strong); }
 .pr-bucket--urgent h2 { color: var(--danger); }
 .pr-count { font-weight: 400; font-size: calc(12.5px * var(--ui-scale)); color: var(--text-muted); }

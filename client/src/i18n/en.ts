@@ -2063,8 +2063,8 @@ const UI: Record<string, string> = {
   'relus à {time}': 'checked at {time}',
   'Messagerie pas encore reliée.': 'Mailbox not connected yet.',
   'Rien à traiter pour l’instant.': 'Nothing to handle for now.',
-  'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Les mails déjà lus et non étoilés ne sont pas repris.':
-    'Urgent: event in less than 3 hours, starred mail or unread mail that presses (“urgent”, “reminder”, “deadline”…), task that starts or ends with “!”. Mail already read and not starred is left out.',
+  'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Mails : les {count} plus importants, parmi les étoilés et les non lus récents.':
+    'Urgent: event in less than 3 hours, starred mail or unread mail that presses (“urgent”, “reminder”, “deadline”…), task that starts or ends with “!”. Mail: the {count} most important, among starred and recent unread mail.',
   'Marquer « {task} » comme faite': 'Mark “{task}” as done',
   'Fait': 'Done',
   '(sans objet)': '(no subject)',
