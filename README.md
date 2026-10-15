@@ -39,7 +39,7 @@ Tapez `/tableau` dans une page : formules en français (`SOMME`, `SI`, `RECHERCH
 
 ## 📅 Tous vos agendas au même endroit
 
-Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section. Les jours fériés et les vacances scolaires s’y ajoutent tout seuls.
+Google, Outlook, Apple, le travail, l’école : un seul calendrier, chaque agenda dans sa couleur, sur l’accueil et dans sa propre section. Les jours fériés et les vacances scolaires s’y ajoutent tout seuls. Dans la section **Perso**, vos rendez-vous, vos tâches et vos mails importants se rangent en colonnes, du plus urgent au moins pressé.
 
 <img src="docs/captures/agenda.webp" width="100%" alt="Le mois d’octobre avec les agendas Personnel, Travail et École, les vacances de la Toussaint (zone C) et le 1er novembre, ajoutés tout seuls">
 
@@ -51,7 +51,7 @@ Carte d’identité, passeport, carte grise, assurances, garanties : photographi
 
 ## 💡 La maison sous la main
 
-Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, votre PC à distance, suivez vos caméras en direct et l’état de votre serveur maison, et demandez un film ou une série à Seerr en tapant son titre.
+Lumières, volets, chauffage, prises, enceintes : tout se pilote d’un geste, pièce par pièce, grâce à Home Assistant. Allumez tout le salon d’un seul bouton, allumez et éteignez votre PC à distance, suivez vos caméras en direct et l’état de votre serveur maison, et demandez un film ou une série à Seerr en tapant son titre.
 
 <img src="docs/captures/maison.webp" width="100%" alt="Les objets connectés : groupe « Lumières du salon », chauffage, volet, enceinte, porte d’entrée, sur l’ordinateur et sur le téléphone">
 
@@ -63,7 +63,7 @@ Surlignez, écrivez, signez, remplissez un formulaire, réorganisez les pages ou
 
 ## 📱 Partout avec vous
 
-Ordinateur, téléphone, tablette : tout se synchronise. Un QR code suffit pour retrouver vos pages sur le téléphone, et Ostal fonctionne même sans Internet. Sur Android, vos tâches, un bouton pour allumer le PC, une barre de recherche de films et séries et vos raccourcis se posent même sur l’écran d’accueil.
+Ordinateur, téléphone, tablette : tout se synchronise. Un QR code suffit pour retrouver vos pages sur le téléphone, et Ostal fonctionne même sans Internet. Sur Android, vos tâches, un bouton pour allumer et éteindre le PC, une barre de recherche de films et séries et vos raccourcis se posent même sur l’écran d’accueil.
 
 <img src="docs/captures/telephones.webp" width="100%" alt="Ostal sur trois téléphones : une recette, l’agenda de la semaine et l’accueil">
 
