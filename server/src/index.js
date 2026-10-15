@@ -60,6 +60,7 @@ import { checkFrame } from './frames.js';
 import { claimPairing, startPairing } from './pairing.js';
 import { lanAction } from './wol.js';
 import { agentsOnline, requestOff, waitOrder } from './power.js';
+import { mailFor, mailSettings, removeMail, saveMail } from './mail.js';
 import {
   BackupError,
   backupFile,
@@ -663,6 +664,37 @@ app.post('/api/seerr/request', requireOwner, requireHost, (req, res) => {
 app.post('/api/seerr/test', requireOwner, requireHost, async (req, res) => {
   const { url, apiKey, insecure } = req.body || {};
   res.json(await testSeerr({ url: typeof url === 'string' ? url.slice(0, 500) : '', apiKey: typeof apiKey === 'string' ? apiKey.slice(0, 200) : '', insecure: insecure === true }));
+});
+
+// ---------- Mails de la page « Priorités » (section Perso, voir mail.js) ----------
+// Propriétaire du serveur seulement : la boîte est lue depuis le serveur, avec des identifiants gardés sur le serveur.
+const mailError = (res, err) => {
+  if (!err.status) console.error('[mail]', err);
+  res.status(err.status || 500).json({ error: err.status ? err.message : 'Lecture des mails impossible.' });
+};
+
+app.get('/api/perso/mail', requireOwner, requireHost, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await mailFor(req.wsId, { fresh: req.query.fresh === '1' });
+    res.json(data ? { configured: true, ...data } : { configured: false });
+  } catch (err) {
+    // Réponse 200 : l'application garde l'adresse réglée et affiche le message.
+    res.json({ configured: true, ...mailSettings(req.wsId), messages: [], error: err.status ? err.message : 'Lecture des mails impossible.' });
+  }
+});
+
+app.post('/api/perso/mail', requireOwner, requireHost, async (req, res) => {
+  try {
+    res.json({ configured: true, ...(await saveMail(req.wsId, req.body ?? {})) });
+  } catch (err) {
+    mailError(res, err);
+  }
+});
+
+app.delete('/api/perso/mail', requireOwner, requireHost, (req, res) => {
+  removeMail(req.wsId);
+  res.json({ configured: false });
 });
 
 // ---------- Widget « Site web » ----------

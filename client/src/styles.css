@@ -1645,6 +1645,29 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ps-frame--checking { background: var(--bg-hover); }
 .ps-blocked { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
 @media (max-width: 600px) { .ps-label { display: none; } }
+/* Page « Priorités » (section Perso) */
+.pr-page { flex: 1; min-height: 0; overflow-y: auto; padding-top: 16px; }
+.pr-mailbar { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: calc(13px * var(--ui-scale)); margin-bottom: 10px; }
+.pr-mailbar-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-error { margin-bottom: 10px; }
+.pr-form { max-width: 520px; padding: 14px; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated); }
+.pr-bucket { margin: 0 0 18px; }
+.pr-bucket h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: calc(15px * var(--ui-scale)); color: var(--text-strong); }
+.pr-bucket--urgent h2 { color: var(--danger); }
+.pr-count { font-weight: 400; font-size: calc(12.5px * var(--ui-scale)); color: var(--text-muted); }
+.pr-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated); overflow: hidden; }
+.pr-item { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; }
+.pr-item + .pr-item { border-top: 1px solid var(--border); }
+.pr-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 0; border: none; background: none; color: var(--text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+span.pr-row { cursor: default; }
+.pr-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 8px 0; }
+.pr-row .pr-body { padding: 0; }
+.pr-title { color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-title--unread { font-weight: 600; }
+.pr-meta { color: var(--text-muted); font-size: calc(12.5px * var(--ui-scale)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-check { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--border-strong); border-radius: 6px; background: none; color: transparent; cursor: pointer; }
+.pr-check:hover { border-color: var(--accent); color: var(--accent); }
+.pr-help { font-size: calc(12.5px * var(--ui-scale)); max-width: 70ch; }
 .pp-card {
   display: flex; align-items: center; gap: 12px; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated);
   color: var(--text); font: inherit; text-align: left; cursor: pointer;

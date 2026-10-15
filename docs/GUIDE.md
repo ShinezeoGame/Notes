@@ -342,6 +342,10 @@ La section **Perso** range vos propres documents et sites, rien qu’à vous : i
 - **Ajouter un site** : son adresse (et un nom, facultatif). Il s’affiche dans Ostal ; s’il refuse d’être affiché dans une autre application, Ostal propose de l’ouvrir. **Ouvrir dans le navigateur** l’ouvre à part.
 - Crayon : renommer (et changer l’adresse d’un site) ; corbeille : supprimer.
 
+**Priorités** (en tête de la section) : vos mails, votre agenda et les tâches de l’accueil réunis et classés par urgence : **Urgent** (événement dans moins de 3 heures, mail étoilé, mail non lu qui presse : « urgent », « relance », « échéance »…, tâche qui commence ou finit par « ! »), **Aujourd’hui**, **Cette semaine**, **Quand vous pouvez**. Une tâche se coche directement ; un événement mène à l’agenda ; un mail Gmail s’ouvre dans Gmail. Les mails déjà lus et non étoilés ne sont pas repris.
+
+Pour les mails, la page demande votre adresse et un **mot de passe d’application** (Gmail : compte Google → Sécurité → Validation en deux étapes → Mots de passe des applications ; il faut la validation en deux étapes). Votre serveur Ostal lit alors la boîte de réception des 14 derniers jours, sans rien modifier ni marquer comme lu ; les identifiants restent sur le serveur. **Modifier → Ne plus lire mes mails** les efface. Autres messageries : le serveur IMAP est deviné d’après l’adresse (sinon, indiquez-le).
+
 Le document s’affiche dans un cadre isolé : il ne peut rien lire d’Ostal (ni votre clé, ni vos pages). Ses scripts tournent, mais sans stockage propre au navigateur.
 
 ## Sauvegardes

@@ -6,6 +6,7 @@ import type { Camera, CamerasStatus, CameraTestResult } from './cameras';
 import type { WolScan, WolStatus, WolWake } from './wol';
 import type { DiscoverResult } from './homelabImport';
 import type { MediaDetails, MediaItem, MediaRequest, MediaType, SeerrStatus } from './seerr';
+import type { Mail } from './priorities';
 import { t, tServer } from './i18n';
 
 export class ApiError extends Error {
@@ -41,6 +42,7 @@ export type BackupStatus = {
   lastError: { message: string; at: number } | null;
   list: BackupEntry[];
 };
+export type MailState = { configured: boolean; email?: string; host?: string; messages?: Mail[]; at?: number; error?: string };
 export type RestoreResult = { ok: boolean; gen: string; wsId: string | null };
 /** Rappel calculé par le serveur (server/src/reminders.js). */
 export type Reminder = { key: string; at: number; kind: 'paper' | 'event'; title: string; body: string; url: string };
@@ -167,6 +169,11 @@ export const api = {
   /** Ordinateurs qui peuvent être éteints à distance (Ostal pour Windows, option « Pouvoir éteindre… »). */
   powerAgents: () => request<{ agents: { mac: string; name: string }[] }>('/api/power/agents', { auth: ownerAuth() }),
   powerOff: (mac: string) => request<{ ok: boolean; name: string }>('/api/power/off', { method: 'POST', body: JSON.stringify({ mac }), auth: ownerAuth() }),
+  /** Mails de la page « Priorités » (section Perso), lus par le serveur ; identifiants gardés sur le serveur. */
+  persoMail: (fresh = false) => request<MailState>(`/api/perso/mail${fresh ? '?fresh=1' : ''}`, { auth: ownerAuth() }),
+  savePersoMail: (cfg: { email: string; password: string; host: string }) =>
+    request<MailState>('/api/perso/mail', { method: 'POST', body: JSON.stringify(cfg), auth: ownerAuth() }),
+  removePersoMail: () => request<MailState>('/api/perso/mail', { method: 'DELETE', auth: ownerAuth() }),
   /** Films et séries : Seerr réglé dans le homelab, interrogé par le serveur (`lang` : langue des titres). */
   seerrStatus: () => request<SeerrStatus>('/api/seerr/status', { auth: ownerAuth() }),
   seerrSearch: (q: string, lang: string) =>

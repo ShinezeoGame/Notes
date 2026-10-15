@@ -222,6 +222,12 @@ export const EN_SERVER: Record<string, string> = {
   'Clé API refusée par Seerr : vérifiez-la dans le homelab.': 'Seerr refused the API key: check it in the homelab.',
   'Déjà demandé.': 'Already requested.',
   'Adresses MAC manquantes.': 'Missing MAC addresses.',
+  'Adresse e-mail invalide.': 'Invalid email address.',
+  'Serveur de messagerie invalide.': 'Invalid mail server.',
+  'Mot de passe manquant.': 'Missing password.',
+  'Identifiants refusés. Pour Gmail, utilisez un mot de passe d’application (pas votre mot de passe habituel).':
+    'Credentials refused. For Gmail, use an app password (not your usual password).',
+  'Lecture des mails impossible.': 'Could not read the mail.',
   'Cet ordinateur ne peut pas être éteint à distance : ouvrez-y Ostal pour Windows, avec l’option « Pouvoir éteindre cet ordinateur depuis Ostal ».':
     'This computer cannot be turned off remotely: open Ostal for Windows on it, with the option “Allow turning off this computer from Ostal”.',
   'Extinction impossible.': 'Could not turn it off.',
@@ -256,6 +262,7 @@ export const EN_PATTERNS: [RegExp, string | ((...parts: string[]) => string)][] 
   [/^Home Assistant a répondu (\d+)\.$/, 'Home Assistant responded $1.'],
   [/^Seerr a refusé : ([\s\S]*)$/, 'Seerr refused: $1'],
   [/^Seerr a répondu : erreur (\d+)\.$/, 'Seerr responded: error $1.'],
+  [/^Serveur de messagerie injoignable \(([^)]*)\)\.$/, 'Mail server unreachable ($1).'],
   [/^Fichier trop volumineux \(max (\d+) Mo\)\.$/, 'File too large (max $1 MB).'],
   [/^(-?\d+(?:[.,]\d+)?) %$/, '$1%'],
 ];

@@ -9,6 +9,7 @@ import { toast } from './Toast';
 import { navigate } from '../lib/router';
 import { t } from '../lib/i18n';
 import { useFrameState } from '../dashboard/widgets/Media';
+import { PrioritiesView } from './PrioritiesView';
 import {
   MAX_DOC_BYTES,
   addDoc,
@@ -156,8 +157,12 @@ function ItemDialog({ item, onSave, onClose }: { item?: PersoItem; onSave: (titl
   );
 }
 
+/** Page intégrée : mails, agenda et tâches classés par urgence. */
+const PRIORITIES = 'priorites';
+
 export function PersoView({ doc, itemId }: Props) {
   const items = usePerso(doc);
+  if (itemId === PRIORITIES) return <PrioritiesView doc={doc} />;
   const item = itemId ? items.find((i) => i.id === itemId) : undefined;
   if (itemId && item) return <ItemView key={item.id} doc={doc} item={item} />;
   return <PersoList doc={doc} items={items} missing={Boolean(itemId)} />;
@@ -189,15 +194,21 @@ function PersoList({ doc, items, missing }: { doc: Y.Doc; items: PersoItem[]; mi
           <Icon name="globe" size={15} /> {t('Ajouter un site')}
         </button>
       </div>
-      {items.length ? (
-        <div className="pp-grid ps-grid">
-          {items.map((i) => (
-            <ItemCard key={i.id} doc={doc} item={i} />
-          ))}
-        </div>
-      ) : (
-        <p className="nb-muted ps-empty">{t('Rien pour l’instant. Ajoutez une page HTML enregistrée sur votre appareil, ou l’adresse d’un site.')}</p>
-      )}
+      <div className="pp-grid ps-grid">
+        <button type="button" className="pp-card" onClick={() => navigate(`#/perso/${PRIORITIES}`)}>
+          <span className="pp-card-icon">
+            <Icon name="flag" size={20} />
+          </span>
+          <span className="pp-card-body">
+            <b className="pp-card-title">{t('Priorités')}</b>
+            <span className="pp-card-meta">{t('Mails, agenda et tâches classés par urgence')}</span>
+          </span>
+          <Icon name="chevronRight" size={16} />
+        </button>
+        {items.map((i) => (
+          <ItemCard key={i.id} doc={doc} item={i} />
+        ))}
+      </div>
       {adding ? (
         <ItemDialog
           onClose={() => setAdding(false)}
