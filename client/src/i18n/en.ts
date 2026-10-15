@@ -2063,8 +2063,6 @@ const UI: Record<string, string> = {
   'relus à {time}': 'checked at {time}',
   'Messagerie pas encore reliée.': 'Mailbox not connected yet.',
   'Rien à traiter pour l’instant.': 'Nothing to handle for now.',
-  'Urgent : événement dans moins de 3 heures, mail étoilé ou non lu qui presse (« urgent », « relance », « échéance »…), tâche qui commence ou finit par « ! ». Mails : les {count} plus importants, parmi les étoilés et les non lus récents.':
-    'Urgent: event in less than 3 hours, starred mail or unread mail that presses (“urgent”, “reminder”, “deadline”…), task that starts or ends with “!”. Mail: the {count} most important, among starred and recent unread mail.',
   'Marquer « {task} » comme faite': 'Mark “{task}” as done',
   'Fait': 'Done',
   '(sans objet)': '(no subject)',
@@ -2087,8 +2085,6 @@ const UI: Record<string, string> = {
   'Ajouter un site': 'Add a site',
   'Nom affiché (facultatif)': 'Displayed name (optional)',
   'Document ajouté à votre espace perso.': 'Document added to your personal space.',
-  'Vos documents et vos sites, rien qu’à vous : rangés dans votre espace, sur votre serveur, et affichés sur vos seuls appareils. Les cases cochées dans un document sont retenues et suivent sur tous vos appareils.':
-    'Your documents and sites, just for you: kept in your space, on your server, and shown only on your own devices. Boxes checked in a document are remembered and follow you on all your devices.',
   'Cet élément a été supprimé.': 'This item was deleted.',
   'Ajouter un document HTML': 'Add an HTML document',
   'Site externe · {host}': 'External site · {host}',

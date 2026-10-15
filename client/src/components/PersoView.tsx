@@ -181,11 +181,6 @@ function PersoList({ doc, items, missing }: { doc: Y.Doc; items: PersoItem[]; mi
       </h1>
       <Priorities doc={doc} />
       <h2 className="ps-docs-title">{t('Documents et sites')}</h2>
-      <p className="nb-muted ps-intro">
-        {t(
-          'Vos documents et vos sites, rien qu’à vous : rangés dans votre espace, sur votre serveur, et affichés sur vos seuls appareils. Les cases cochées dans un document sont retenues et suivent sur tous vos appareils.',
-        )}
-      </p>
       {missing ? <div className="nb-error ps-missing">{t('Cet élément a été supprimé.')}</div> : null}
       <div className="ps-actions">
         <HtmlPicker label={t('Ajouter un document HTML')} icon="upload" primary onPick={(f) => void pick(f)} />

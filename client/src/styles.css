@@ -1631,7 +1631,6 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .pp-count { font-weight: 400; font-size: calc(13px * var(--ui-scale)); }
 .pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
 /* Section Perso : documents HTML et sites du propriétaire de l'espace */
-.ps-intro { max-width: 70ch; margin: 0 0 14px; font-size: calc(13.5px * var(--ui-scale)); }
 .ps-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
 .ps-empty { margin: 8px 0; }
 .ps-missing { margin: 0 0 12px; }
@@ -1646,7 +1645,7 @@ body:has(.nb-tabbar) .nb-toasts { bottom: calc(80px + var(--safe-bottom)); }
 .ps-blocked { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
 @media (max-width: 600px) { .ps-label { display: none; } }
 /* Page « Priorités » (section Perso) */
-.ps-docs-title { margin: 28px 0 6px; font-size: calc(17px * var(--ui-scale)); color: var(--text-strong); }
+.ps-docs-title { margin: 28px 0 12px; font-size: calc(17px * var(--ui-scale)); color: var(--text-strong); }
 .pr-mailbar { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: calc(13px * var(--ui-scale)); margin-bottom: 10px; }
 .pr-mailbar-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pr-error { margin-bottom: 10px; }
@@ -1668,7 +1667,6 @@ span.pr-row { cursor: default; }
 .pr-meta { color: var(--text-muted); font-size: calc(12.5px * var(--ui-scale)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pr-check { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--border-strong); border-radius: 6px; background: none; color: transparent; cursor: pointer; }
 .pr-check:hover { border-color: var(--accent); color: var(--accent); }
-.pr-help { font-size: calc(12.5px * var(--ui-scale)); max-width: 70ch; }
 .pp-card {
   display: flex; align-items: center; gap: 12px; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated);
   color: var(--text); font: inherit; text-align: left; cursor: pointer;
