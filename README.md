@@ -11,9 +11,9 @@ Gratuite, sans compte, sur Windows, Android et dans le navigateur.
 &nbsp;
 [![Télécharger pour Android](https://img.shields.io/badge/T%C3%A9l%C3%A9charger%20pour%20Android-2eaf7d?style=for-the-badge)](https://github.com/ShinezeoGame/Notes/releases/download/latest/Ostal-Android.apk)
 
-<a href="docs/ostal-bande-annonce.mp4"><img src="docs/captures/bande-annonce.avif" width="100%" alt="Bande-annonce d’Ostal : l’accueil et ses widgets, les thèmes, les notes, les papiers et leurs rappels, les priorités, les films et séries, les widgets du téléphone qui allument le PC, l’atelier PDF, les sauvegardes, sur ordinateur et sur téléphone"></a>
+<a href="docs/ostal-bande-annonce.mp4"><img src="docs/captures/bande-annonce.avif" width="100%" alt="Bande-annonce d’Ostal : l’accueil et ses widgets, les thèmes, les notes, les papiers et leurs rappels, les films et séries, les widgets du téléphone qui allument le PC, l’atelier PDF, les sauvegardes, sur ordinateur et sur téléphone"></a>
 
-▶️ **[La bande-annonce avec le son](docs/ostal-bande-annonce.mp4)** (1 min)
+▶️ **[La bande-annonce avec le son](docs/ostal-bande-annonce.mp4)** (46 s)
 
 </div>
 
